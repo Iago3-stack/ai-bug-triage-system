@@ -1,0 +1,19 @@
+[
+  {
+    "Nome": "João Silva",
+    "E-mail": "joao.silva@empresa.com",
+    "Telefone": "(11) 98888-7777",
+    "Cargo/Função": "Analista de RH",
+    "TipoVinculo": "CLT",
+    "Documento": "123.456.789-00",
+    "Salario": "R$ 4.500,00",
+    "Data de Admissão": "2022-03-14",
+    "Observações": "",
+    "Ausências": [
+      {
+        "Data": "2024-02-05",
+        "Motivo": "Doença"
+      }
+    ]
+  }
+]

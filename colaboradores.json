@@ -1,0 +1,20 @@
+[
+    {
+        "nome": "Felipe melo",
+        "email": "iago321@gmail.com",
+        "telefone": "98985914235",
+        "cargo": "Fornecedor",
+        "data_admissao": "21/6/2025",
+        "modalidade": "CLT",
+        "salario": 157080.0,
+        "documento_fiscal": "60843288544",
+        "id": 1,
+        "historico_ausencias": [
+            {
+                "data": "21/09/2025",
+                "tipo": "FALTA",
+                "observacao": "não veio"
+            }
+        ]
+    }
+]

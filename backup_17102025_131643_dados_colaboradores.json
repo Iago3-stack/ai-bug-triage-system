@@ -1,0 +1,87 @@
+[
+    {
+        "id": 1,
+        "nome": "Iago",
+        "modalidade": "CLT",
+        "salario": 1450.44,
+        "cargo": "—",
+        "data_admissao": "10/17/25-10-25",
+        "historico_ausencias": [],
+        "documento_fiscal": ""
+    },
+    {
+        "id": 3,
+        "nome": "Iago Junio",
+        "modalidade": "CLT",
+        "salario": 1475.44,
+        "cargo": "—",
+        "data_admissao": "10/17/25-10-25",
+        "historico_ausencias": [],
+        "documento_fiscal": ""
+    },
+    {
+        "id": 4,
+        "nome": "Iago Nunes",
+        "modalidade": "PJ",
+        "salario": 4441.66,
+        "cargo": "—",
+        "data_admissao": "10/17/25-10-25",
+        "historico_ausencias": [],
+        "documento_fiscal": ""
+    },
+    {
+        "id": 5,
+        "nome": "Iago",
+        "email": "iago234@gmail.com",
+        "telefone": "98988654",
+        "modalidade": "CLT",
+        "salario": 4157.44,
+        "cargo": "—",
+        "data_admissao": "10/17/25-10-25",
+        "historico_ausencias": [],
+        "documento_fiscal": ""
+    },
+    {
+        "id": 6,
+        "nome": "Iago felipe",
+        "email": "iagof322@gmail.com",
+        "telefone": "22375844",
+        "modalidade": "CLT",
+        "salario": 4571.885,
+        "cargo": "—",
+        "data_admissao": "10/17/25-10-25",
+        "historico_ausencias": [],
+        "documento_fiscal": ""
+    },
+    {
+        "nome": "Iago junio vieira",
+        "email": "iagoj323@gmail.com",
+        "telefone": "32456789",
+        "modalidade": "CLT",
+        "salario": 1452.55,
+        "id": 7,
+        "historico_ausencias": [
+            {
+                "data": "2025-09-15",
+                "tipo": "FÉRIAS",
+                "observacao": "de 15 dias ",
+                "registro": "2025-10-14 12:40:15"
+            }
+        ],
+        "cargo": "—",
+        "data_admissao": "10/17/25-10-25",
+        "documento_fiscal": ""
+    },
+    {
+        "nome": "Thamires almeida",
+        "email": "tata321@gmail.com",
+        "telefone": "98985914235",
+        "modalidade": "CLT",
+        "salario": 12344.47,
+        "id": 8,
+        "historico_ausencias": [],
+        "cargo": "—",
+        "data_admissao": "10/17/25-10-25",
+        "documento_fiscal": ""
+    }
+]

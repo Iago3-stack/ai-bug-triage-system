@@ -1,0 +1,17 @@
+{
+  "theme": "dark",
+  "language": "English (US)",
+  "company": {
+    "name": "",
+    "cnpj": "",
+    "logo_path": ""
+  },
+  "email_smtp": {
+    "sender": "",
+    "password": ""
+  },
+  "license": {
+    "type": "permanent",
+    "until": "Não Expira"
+  }
+}

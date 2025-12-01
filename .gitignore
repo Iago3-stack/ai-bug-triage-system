@@ -1,0 +1,48 @@
+# Arquivos de sistema
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Ambientes virtuais
+venv/
+env/
+ENV/
+.venv
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Dados locais (não fazer commit)
+atividades.json
+historico.json
+*.csv
+*.xlsx
+
+# Backups
+backup_*/
+*.bak
+*.tmp
+
+# Logs
+*.log
+log_*.txt
+
+# Credenciais (nunca fazer commit!)
+credentials.json
+.env
+secrets.py
+
+# Arquivos temporários
+temp/
+tmp/
+*.temp

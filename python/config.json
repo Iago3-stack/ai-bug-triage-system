@@ -1,0 +1,17 @@
+{
+  "theme": "dark",
+  "language": "Português (BR)",
+  "license": {
+    "type": "trial",
+    "until": "2026-12-31"
+  },
+  "email_smtp": {
+    "sender": "",
+    "password": ""
+  },
+  "company": {
+    "name": "",
+    "cnpj": "",
+    "logo_path": ""
+  }
+}

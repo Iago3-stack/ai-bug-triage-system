@@ -1,0 +1,29 @@
+{
+  "1": {
+    "Nome": "Alice Silva",
+    "Cargo/Função": "Gerente",
+    "TipoVinculo": "CLT",
+    "Documento": "123.456.789-00",
+    "Salario": "R$ 8.000,00",
+    "Data de Admissão": "2018-03-15",
+    "Observações": "Meta 100%"
+  },
+  "2": {
+    "Nome": "Bruno Mendes",
+    "Cargo/Função": "Desenvolvedor",
+    "TipoVinculo": "PJ",
+    "Documento": "44.555.666/0001-10",
+    "Salario": "R$ 6.500,00",
+    "Data de Admissão": "2022-10-01",
+    "Observações": "Contrato anual"
+  },
+  "3": {
+    "Nome": "Carla Oliveira",
+    "Cargo/Função": "Estagiária",
+    "TipoVinculo": "Estágio",
+    "Documento": "999.888.777-66",
+    "Salario": "R$ 1.500,00",
+    "Data de Admissão": "2024-01-20",
+    "Observações": "Formato de data correta ISO."
+  }
+}

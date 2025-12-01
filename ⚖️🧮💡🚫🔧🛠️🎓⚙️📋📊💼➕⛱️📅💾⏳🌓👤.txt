@@ -1,0 +1,26 @@
+
+
+💡 🚫  🔧 🛠️  🎓  ⚙️   📋  📊  💼  ➕  "#1E3A8A"
+
+
+⛱️ 📅  💾 ⏳   🌓  👤   💲    🧩  📥  🔄   ✅   📢  📄  ✏️  ⚠️  👓  🏢 
+ 
+ 🚀
+
+🧑‍💼  📧  📞 🔍  📝  🗂️  🌙 / ☀️ 🔭  🌐 s 📱   🤖
+
+
+
+if tipo == "CLT":
+  💡🚫  🔧🛠️🎓  ⚙️   📋  📊  💼   ➕  "#1E3A8A"
+    icone = "🪪"                                           
+elif tipo == "PJ":
+    icone = "🏢"
+elif tipo == "Freelancer":
+    icone = "👔"
+else:
+    icone = "🤝"
+ 
+"#FFFFFF" 
+
+✨

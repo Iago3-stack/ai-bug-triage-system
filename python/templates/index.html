@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="jumbotron text-center">
+        <h1 class="display-4">Bem-vindo ao Site Teste!</h1>
+        <p class="lead">Este é um projeto mais completo usando Python/Flask e Bootstrap 5.</p>
+        <hr class="my-4">
+        {% if 'username' in session %}
+            <p>Você está logado. Explore a seção de itens!</p>
+            <a class="btn btn-primary btn-lg" href="{{ url_for('itens') }}" role="button">Ver Itens</a>
+        {% else %}
+            <p>Por favor, faça login para explorar mais funcionalidades.</p>
+            <a class="btn btn-primary btn-lg" href="{{ url_for('login') }}" role="button">Entrar</a>
+        {% endif %}
+    </div>
+{% endblock %}
