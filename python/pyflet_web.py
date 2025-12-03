@@ -36,7 +36,10 @@ def salvar_json(dados_usuario):
             return
 
     lista_de_cadastros.append(dados_usuario)
-    
+    # Validar se o CPF já existe no cadastro
+    if any(cadastro.get('CPF') == dados_usuario['CPF'] for cadastro in lista_de_cadastros):
+        print(f"AVISO: CPF {dados_usuario['CPF']} já cadastrado.")
+        return
     try:
         with open(NOME_ARQUIVO, 'w', encoding='utf-8') as arquivo:
             json.dump(lista_de_cadastros, arquivo, indent=4, ensure_ascii=False)

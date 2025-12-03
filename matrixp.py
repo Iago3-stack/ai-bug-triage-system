@@ -7,20 +7,20 @@ import sys
 # Frases e Nomes para misturar com os números.
 # O gênio pode customizar esta lista como quiser!
 CONTEUDO_GENIAL = [
-'0000000000000000++++0000000000000000=  ==========   ++++++++++++++++++++++++++++++++ !-----------------!',
-'0000000000000000++++0000000000000000=  ==========      +++++++++++++++++++++++         !-------------!',
-'0000000000000000++++0000000000000000=  ==========           ++++++++++++++++             !----------!',
-'0000000000000000++++0000000000000000=  ==========               ++++++++                   !-------!',
-'iniciando o programa! rastreando o sistema de arquivos!'
-'1... 2... 3... 4... 5... 6... 7... 8... 9... 10... 11... 12... 13... 14... 15...'
-'Atenção seus sitema estar sendo acessado remotamente!'
-'==9(copiando arquivos para o destino final HTTPS://www.google.com.br/LOCAL:)',
-'👽 olá amigo estou invandindo seu sistema...', '🌏servidor iniciado atraves da porta local 8888:0',
-'transferencia iniciada... ',
-'movendo informações para um banco de dados...'
-'transferencia concluida com sucesso...'
-'modificando as chaves do sistema...'
-'chave criptografada com sucesso...'
+    '0000000000000000++++0000000000000000=  ==========   +++++++++++++++++++++++++++++++ !-----------------!',
+    '0000000000000000++++0000000000000000=  ==========      +++++++++++++++++++++++         !-------------!',
+    '0000000000000000++++0000000000000000=  ==========           ++++++++++++++++             !----------!',
+    '0000000000000000++++0000000000000000=  ==========               ++++++++                   !-------!',
+    'iniciando o programa! rastreando o sistema de arquivos!'
+    '1... 2... 3... 4... 5... 6... 7... 8... 9... 10... 11... 12... 13... 14... 15...'
+    'Atenção seus sitema estar sendo acessado remotamente!'
+    '==9(copiando arquivos para o destino final HTTPS://www.google.com.br/LOCAL:)',
+    '👽 olá amigo estou invandindo seu sistema...', '🌏servidor iniciado atraves da porta local 8888:0',
+    'transferencia iniciada... ',
+    'movendo informações para um banco de dados...'
+    'transferencia concluida com sucesso...'
+    'modificando as chaves do sistema...'
+    'chave criptografada com sucesso...'
 
 ]
 

@@ -36,38 +36,12 @@ class ActivityItem(ft.Container):
 
 # Classe principal da aplicação
 class TaskManager(ft.Row):
-        def load_atividades(self):
-            import os, json
-            if os.path.exists("atividades.json"):
-                try:
-                    with open("atividades.json", "r", encoding="utf-8") as f:
-                        data = json.load(f)
-                    self.atividades = data.get("atividades", {})
-                    self.activity_id_counter = data.get("activity_id_counter", 0)
-                except Exception:
-                    self.atividades = {}
-                    self.activity_id_counter = 0
-            else:
-                self.atividades = {}
-                self.activity_id_counter = 0
-
-        def save_atividades(self):
-            import json
-            try:
-                with open("atividades.json", "w", encoding="utf-8") as f:
-                    json.dump({
-                        "atividades": self.atividades,
-                        "activity_id_counter": self.activity_id_counter
-                    }, f, ensure_ascii=False, indent=2)
-            except Exception:
-                pass
-        def __init__(self, page: ft.Page):
-            super().__init__()
-            self.page = page
-            self.atividades = {}
-            self.activity_id_counter = 0
-            self.selected_activity = None
-            self.load_atividades()
+    def __init__(self, page: ft.Page):
+        super().__init__()
+        self.page = page
+        self.atividades = {}
+        self.activity_id_counter = 0
+        self.selected_activity = None
         
         # --- Coluna da Esquerda (Lista e Adicionar) ---
         self.new_activity = ft.TextField(hint_text="Nova atividade", expand=True, on_submit=self.add_clicked)
@@ -200,6 +174,9 @@ class TaskManager(ft.Row):
             self.right_panel_content.visible = False
             self.selected_activity = None # Limpa a seleção
             self.update_activity_list()
+
+    def save_atividades(self):
+        pass
 
 def main(page: ft.Page):
     page.title = "IAgo - 🗃️ Gerenciador de Atividades"
