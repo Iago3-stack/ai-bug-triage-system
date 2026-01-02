@@ -15,7 +15,7 @@ class ColetorDeDados:
         self.valor = None
         self.horas = None
         self.total = None
-        print("Coletor de Dados inicializado...")
+        print("🗂️  -Coletor de Dados inicializado...")
 
     def perguntar_ux(self):
         """
@@ -128,7 +128,7 @@ class ColetorDeDados:
                 print(f'Atençao (horas): {e}')
         
         while self.total is None:
-            total = valor * horas
+            total = self.valor * self.horas
             self.total = total
 
         print('\n--CADASTRO DA SEGUNDA FASE REALIZADO COM SUCESSO--\n')
@@ -136,12 +136,13 @@ class ColetorDeDados:
 
     def resumo_dois(self):
         """
-        vamos exibir o resumo da sehunda fase 
+        Vamos exibir o resumo da segunda fase.
         """
         if self.trabalho and self.valor and self.horas and self.total:
             print(f'Resumo: você trabalha na {self.trabalho} ganha {self.valor} por horas e trabalha {self.horas} horas por mes e seu salario e de {self.total}')
         else:
             print('Por favor verifique se todos os campos estão preenchidos corretamente')
+            return None
 
 # Bloco principal de execução
 if __name__ == "__main__":
