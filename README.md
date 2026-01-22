@@ -16,6 +16,7 @@ O sistema utiliza uma abordagem de **Triagem de Duas Camadas**:
 * **Lógica:** Híbrida (Baseada em Regras + Análise de Sentimento)
 
 ---
+# "Explorando como NLP e Análise de Sentimento podem melhorar a experiência do cliente (CX) em fluxos conversacionais."
 
 ## 📌 Project Overview (English)
 This project is a hybrid triage engine designed for **Quality Assurance Engineering**. It combines traditional technical logic with **Artificial Intelligence (NLP)** to automatically prioritize software bug reports.
