@@ -46,3 +46,4 @@ secrets.py
 temp/
 tmp/
 *.temp
+.ai_env/
