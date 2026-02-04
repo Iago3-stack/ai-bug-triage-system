@@ -40,10 +40,16 @@ descricao_bug = st.text_area("Entrada do Usuário (Relato do Bug):", height=150,
 
 if st.button("Executar Triagem Inteligente"):
         if descricao_bug:
-            analise = TextBlob(descricao_bug)
-            polaridade = analise.sentiment.polarity # Pega o "tom" da mensagem
+            # --- LÓGICA DE TRADUÇÃO E SENTIMENTO ---
+            try:
+                # Traduz de Português para Inglês para o TextBlob entender a "raiva"
+                analise_traduzida = TextBlob(descricao_bug).translate(from_lang='pt', to='en')
+                polaridade = analise_traduzida.sentiment.polarity
+            except Exception:
+                # Se der erro (ex: sem internet), usa o texto original
+                polaridade = TextBlob(descricao_bug).sentiment.polarity
             
-            # Define a Gravidade e o Sentimento com base na polaridade
+            # --- CLASSIFICAÇÃO DE PRIORIDADE ---
             if polaridade < -0.3:
                 gravidade = "CRÍTICA 🚨"
                 sentimento = "Frustrado/Urgente"
@@ -54,30 +60,27 @@ if st.button("Executar Triagem Inteligente"):
                 gravidade = "NORMAL ✅"
                 sentimento = "Neutro/Calmo"
 
-            # --- MONTAGEM DO RELATÓRIO (O que faltava) ---
+            # --- MONTAGEM DO RELATÓRIO GHERKIN ---
             relatorio = f"""### 🛡️ Relatório de Triagem Técnica
 **Resumo do Incidente:** {descricao_bug[:100]}...
 **Prioridade Sugerida:** {gravidade}
 **Análise de Sentimento:** {sentimento} (Score: {polaridade:.2f})
 
 **Cenário Gherkin:**
-- DADO QUE o sistema recebeu um relato de erro
+- DADO QUE o sistema recebeu um relato de erro em PT-BR
 - QUANDO o agente processa a entrada: "{descricao_bug[:50]}..."
 - ENTÃO a prioridade deve ser classificada como {gravidade}."""
 
-            # --- EXIBIÇÃO NO SITE ---
+            # --- EXIBIÇÃO NO DASHBOARD ---
             st.divider()
             c1, c2, c3 = st.columns(3)
             c1.metric("Gravidade IA", gravidade)
             c2.metric("Sentimento", f"{polaridade:.2f}")
-            c3.metric("Status", "Pronto para Report")
+            c3.metric("Status", "Análise Concluída")
 
-            st.success(f"### 📝 Relatório Gerado com Sucesso!")
-            
-            # Exibe o relatório formatado para cópia
+            st.success("### 📝 Relatório Gerado com Sucesso!")
             st.code(relatorio, language="markdown")
-            
-            st.info("💡 Copie o código acima para anexar ao seu card no Jira ou GitHub.")
+            st.info("💡 Dica: O sistema traduziu seu texto internamente para garantir precisão na análise de humor.")
 # --- RODAPÉ DE CONTATO ---
 st.sidebar.markdown("### Contate-me")
 st.sidebar.write("📧 [Enviar E-mail](mailto:viago4415@gmail.com)")
