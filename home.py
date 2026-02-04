@@ -9,6 +9,10 @@ st.set_page_config(page_title="Iago Nunes | IA & QA Portfolio", page_icon="🤖"
 col_foto, col_info = st.columns([1, 3])
 with col_info:
     st.title("Iago Nunes")
+    st.write("Bem-vindo ao meu site!🌐️")
+    st.write("Aqui você pode encontrar informações sobre mim e meus projetos 🇧🇷️.")
+with col_foto:    
+    st.image("o novo.jpg", width=200,caption="Iago Nunes")
     st.markdown("#### 🚀 QA Automation Engineer | AI & Machine Learning | Student of UNIASSELVI")
     st.write("📍 São Luís, MA (Disponível para Remote Global)")
     st.markdown("""
@@ -17,10 +21,13 @@ Sou um entusiasta de tecnologia e estudante de **IA & Machine Learning**, focado
 Minha missão no laboratório **Hack28** é desenvolver ferramentas que não apenas encontrem falhas, mas que tragam insights valiosos para o negócio usando **NLP** e **Engenharia de Prompt**.
 
 **O que eu busco:** Oportunidades **Home Office** onde eu possa aplicar automação híbrida para acelerar ciclos de entrega e elevar o padrão de qualidade dos produtos.
+
+Atualmente, dedico meus estudos na UNIASSELVI para aprofundar conhecimentos em Redes Neurais e Modelos de Linguagem (LLMs). No meu dia a dia, utilizo o Linux Mint como base para desenvolver scripts em Python que integram APIs de inteligência artificial à automação de testes, buscando sempre reduzir o tempo de triagem de bugs e melhorar a precisão dos relatórios técnicos.
 """)
 
 # --- SOBRE O PROJETO ---
 st.divider()
+st.write("Atualmente, dedico meus estudos na UNIASSELVI para aprofundar conhecimentos em Redes Neurais e Modelos de Linguagem (LLMs). No meu dia a dia, utilizo o Linux Mint como base para desenvolver scripts em Python que integram APIs de inteligência artificial à automação de testes, buscando sempre reduzir o tempo de triagem de bugs e melhorar a precisão dos relatórios técnicos.")
 st.subheader("🤖 Agente de Triagem e Documentação de Bugs 2026")
 st.info("Esta ferramenta demonstra o uso de NLP para automatizar a triagem técnica e emocional de falhas de software.")
 
