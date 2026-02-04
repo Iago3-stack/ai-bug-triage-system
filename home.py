@@ -9,8 +9,8 @@ st.set_page_config(page_title="Iago Nunes | IA & QA Portfolio", page_icon="🤖"
 col_foto, col_info = st.columns([1, 2])
 with col_info:
     st.title("Iago Nunes")
-    st.write("Bem-vindo ao meu site!🌐️")
-    st.write("Aqui você pode encontrar informações sobre mim e meus projetos 🇧🇷️.")
+    st.write("Bem-vindo 🤝️ ao meu site!🌐️")
+    st.write("Aqui👇️ você pode encontrar informações sobre mim e meus projetos 🇧🇷️.")
 with col_foto:    
     st.image("o novo.png", width=250,caption="Iago Nunes")
     st.markdown("#### 🚀 QA Automation Engineer | AI & Machine Learning | Student of UNIASSELVI")
@@ -19,7 +19,7 @@ with col_foto:
     st.divider()
 esq, centro, dir = st.columns([1, 4, 1])
 with centro:
-     st.subheader("🎯 Sobre Mim")    
+     st.subheader("🎯 Sobre Mim 🧔🏾‍♂️️")    
     
      st.markdown("""
 Sou um entusiasta de tecnologia e estudante de **IA & Machine Learning**, focado em transformar a garantia de qualidade (QA) através da automação inteligente. 
@@ -40,29 +40,33 @@ descricao_bug = st.text_area("Entrada do Usuário (Relato do Bug):", height=150,
 
 if st.button("Executar Triagem Inteligente"):
     if descricao_bug:
-        # Lógica de NLP
         analise = TextBlob(descricao_bug)
-        sentimento = analise.sentiment.polarity
+        polaridade = analise.sentiment.polarity # Pega o "tom" da mensagem
         
-        # Dashboard de Resultados
+        # Define a Gravidade e o Sentimento com base na polaridade
+        if polaridade < -0.3:
+            gravidade = "CRÍTICA 🚨"
+            sentimento = "Frustrado/Urgente"
+            cor = "red"
+        elif polaridade < 0:
+            gravidade = "MÉDIA ⚠️"
+            sentimento = "Negativo/Insatisfeito"
+            cor = "orange"
+        else:
+            gravidade = "NORMAL ✅"
+            sentimento = "Neutro/Calmo"
+            cor = "green"
+
+        # Exibição melhorada para o usuário
+        st.divider()
         c1, c2, c3 = st.columns(3)
-        c1.metric("Gravidade IA", "ALTA" if sentimento < -0.2 else "NORMAL")
-        c2.metric("Sentimento", f"{sentimento:.2f}")
+        c1.metric("Gravidade IA", gravidade)
+        c2.metric("Sentimento", f"{polaridade:.2f}")
         c3.metric("Status", "Pronto para Report")
 
-        # --- AÇÃO DO AGENTE (A sugestão 3) ---
-        st.subheader("📝 Relatório Técnico Gerado")
-        
-        # Simulando a tradução para formato técnico (Gherkin)
-        relatorio = f"""
-        **Título do Bug:** Falha de processamento reportada pelo usuário.
-        **Prioridade:** {'🚨 CRÍTICA' if sentimento < -0.2 else '✅ MÉDIA'}
-        **Contexto Técnico:** Usuário demonstra frustração nível {sentimento:.2f}.
-        **Cenário Sugerido (Gherkin):**
-        - DADO QUE o usuário está na tela de interação
-        - QUANDO realiza a ação: "{descricao_bug[:30]}..."
-        - ENTÃO o sistema deve processar sem erros de polaridade negativa.
-        """
+        st.success(f"### 📝 Relatório Técnico Gerado\n"
+                   f"**Contexto Emocional:** Usuário demonstra nível de {sentimento}.\n\n"
+                   f"**Sugestão de Prioridade:** {gravidade}")
         st.code(relatorio, language="markdown")
         st.success("Relatório pronto para ser copiado para o Jira/GitHub!")
 
@@ -83,4 +87,4 @@ st.sidebar.markdown(f"""
     </button>
 </a>
 """, unsafe_allow_html=True)
-st.sidebar.info("Executado em: Linux Mint Debian (Hack28)")
+st.sidebar.info("Executado em: Linux Mint Debian Lab 🧠️ (Hack28)☢️")
