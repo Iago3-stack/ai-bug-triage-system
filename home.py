@@ -12,7 +12,7 @@ with col_info:
     st.write("Bem-vindo ao meu site!🌐️")
     st.write("Aqui você pode encontrar informações sobre mim e meus projetos 🇧🇷️.")
 with col_foto:    
-    st.image("o novo.jpg", width=200,caption="Iago Nunes")
+    st.image("o novo.png", width=200,caption="Iago Nunes")
     st.markdown("#### 🚀 QA Automation Engineer | AI & Machine Learning | Student of UNIASSELVI")
     st.write("📍 São Luís, MA (Disponível para Remote Global)")
     st.markdown("""
