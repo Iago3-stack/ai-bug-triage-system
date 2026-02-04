@@ -6,23 +6,26 @@ import pandas as pd
 st.set_page_config(page_title="Iago Nunes | IA & QA Portfolio", page_icon="🤖", layout="wide")
 
 # --- CABEÇALHO ---
-col_foto, col_info = st.columns([1, 3])
+col_foto, col_info = st.columns([1, 2])
 with col_info:
     st.title("Iago Nunes")
     st.write("Bem-vindo ao meu site!🌐️")
     st.write("Aqui você pode encontrar informações sobre mim e meus projetos 🇧🇷️.")
 with col_foto:    
-    st.image("o novo.png", width=200,caption="Iago Nunes")
+    st.image("o novo.png", width=250,caption="Iago Nunes")
     st.markdown("#### 🚀 QA Automation Engineer | AI & Machine Learning | Student of UNIASSELVI")
     st.write("📍 São Luís, MA (Disponível para Remote Global)")
-    st.markdown("""
-### 🎯 Sobre Mim
+    
+    st.divider()
+esq, centro, dir = st.columns([1, 4, 1])
+with centro:
+     st.subheader("🎯 Sobre Mim")    
+    
+     st.markdown("""
 Sou um entusiasta de tecnologia e estudante de **IA & Machine Learning**, focado em transformar a garantia de qualidade (QA) através da automação inteligente. 
 Minha missão no laboratório **Hack28** é desenvolver ferramentas que não apenas encontrem falhas, mas que tragam insights valiosos para o negócio usando **NLP** e **Engenharia de Prompt**.
 
 **O que eu busco:** Oportunidades **Home Office** onde eu possa aplicar automação híbrida para acelerar ciclos de entrega e elevar o padrão de qualidade dos produtos.
-
-Atualmente, dedico meus estudos na UNIASSELVI para aprofundar conhecimentos em Redes Neurais e Modelos de Linguagem (LLMs). No meu dia a dia, utilizo o Linux Mint como base para desenvolver scripts em Python que integram APIs de inteligência artificial à automação de testes, buscando sempre reduzir o tempo de triagem de bugs e melhorar a precisão dos relatórios técnicos.
 """)
 
 # --- SOBRE O PROJETO ---
