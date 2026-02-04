@@ -87,6 +87,8 @@ if st.button("Executar Triagem Inteligente"):
 
             st.success("### 📝 Relatório Gerado!")
             st.code(relatorio, language="markdown")
+                st.info("📋 O relatório está pronto para ser copiado para o Jira ou GitHub!")
+            st.success("Triagem finalizada com sucesso! ✅")
 # --- RODAPÉ DE CONTATO ---
 st.sidebar.markdown("### Contate-me")
 st.sidebar.write("📧 [Enviar E-mail](mailto:viago4415@gmail.com)")
