@@ -8,7 +8,7 @@ st.set_page_config(page_title="Iago Nunes | IA & QA Portfolio", page_icon="🤖"
 # --- CABEÇALHO ---
 col_foto, col_info = st.columns([1, 2])
 with col_info:
-    st.title("Iago Nunes")
+    st.title("Iago Nunes©️")
     st.write("Bem-vindo 🤝️ ao meu site!🌐️")
     st.write("Aqui👇️ você pode encontrar informações sobre mim e meus projetos 🇧🇷️.")
 with col_foto:    
@@ -40,16 +40,23 @@ descricao_bug = st.text_area("Entrada do Usuário (Relato do Bug):", height=150,
 
 if st.button("Executar Triagem Inteligente"):
         if descricao_bug:
-            # --- LÓGICA DE TRADUÇÃO E SENTIMENTO ---
+            # --- 1. TENTATIVA DE TRADUÇÃO (NLP DINÂMICO) ---
             try:
-                # Traduz de Português para Inglês para o TextBlob entender a "raiva"
-                analise_traduzida = TextBlob(descricao_bug).translate(from_lang='pt', to='en')
-                polaridade = analise_traduzida.sentiment.polarity
-            except Exception:
-                # Se der erro (ex: sem internet), usa o texto original
-                polaridade = TextBlob(descricao_bug).sentiment.polarity
-            
-            # --- CLASSIFICAÇÃO DE PRIORIDADE ---
+                # Forçamos a tradução para o inglês
+                traducao = TextBlob(descricao_bug).translate(from_lang='pt', to='en')
+                polaridade = traducao.sentiment.polarity
+            except:
+                # --- 2. FALLBACK: PALAVRAS-CHAVE (SE A TRADUÇÃO FALHAR) ---
+                # Se não houver internet ou a API de tradução falhar, buscamos no braço:
+                texto_limpo = descricao_bug.lower()
+                palavras_criticas = ['ódio', 'raiva', 'ruim', 'péssimo', 'erro', 'urgente', 'lixo', 'bug']
+                
+                if any(word in texto_limpo for word in palavras_criticas):
+                    polaridade = -0.7  # Força prioridade CRÍTICA
+                else:
+                    polaridade = 0.0  # Mantém Neutro
+
+            # --- 3. DEFINIÇÃO DE GRAVIDADE ---
             if polaridade < -0.3:
                 gravidade = "CRÍTICA 🚨"
                 sentimento = "Frustrado/Urgente"
@@ -60,27 +67,26 @@ if st.button("Executar Triagem Inteligente"):
                 gravidade = "NORMAL ✅"
                 sentimento = "Neutro/Calmo"
 
-            # --- MONTAGEM DO RELATÓRIO GHERKIN ---
+            # --- 4. RELATÓRIO GHERKIN ---
             relatorio = f"""### 🛡️ Relatório de Triagem Técnica
-**Resumo do Incidente:** {descricao_bug[:100]}...
-**Prioridade Sugerida:** {gravidade}
+**Resumo:** {descricao_bug[:100]}...
+**Prioridade:** {gravidade}
 **Análise de Sentimento:** {sentimento} (Score: {polaridade:.2f})
 
 **Cenário Gherkin:**
-- DADO QUE o sistema recebeu um relato de erro em PT-BR
+- DADO QUE o sistema recebeu um relato de erro
 - QUANDO o agente processa a entrada: "{descricao_bug[:50]}..."
-- ENTÃO a prioridade deve ser classificada como {gravidade}."""
+- ENTÃO a prioridade deve ser definida como {gravidade}."""
 
-            # --- EXIBIÇÃO NO DASHBOARD ---
+            # --- 5. INTERFACE DASHBOARD ---
             st.divider()
             c1, c2, c3 = st.columns(3)
             c1.metric("Gravidade IA", gravidade)
             c2.metric("Sentimento", f"{polaridade:.2f}")
-            c3.metric("Status", "Análise Concluída")
+            c3.metric("Status", "Análise Híbrida OK")
 
-            st.success("### 📝 Relatório Gerado com Sucesso!")
+            st.success("### 📝 Relatório Gerado!")
             st.code(relatorio, language="markdown")
-            st.info("💡 Dica: O sistema traduziu seu texto internamente para garantir precisão na análise de humor.")
 # --- RODAPÉ DE CONTATO ---
 st.sidebar.markdown("### Contate-me")
 st.sidebar.write("📧 [Enviar E-mail](mailto:viago4415@gmail.com)")
