@@ -39,37 +39,45 @@ descricao_bug = st.text_area("Entrada do Usuário (Relato do Bug):", height=150,
                              placeholder="Ex: Estou tentando pagar e o botão não responde, estou muito frustrado!")
 
 if st.button("Executar Triagem Inteligente"):
-    if descricao_bug:
-        analise = TextBlob(descricao_bug)
-        polaridade = analise.sentiment.polarity # Pega o "tom" da mensagem
-        
-        # Define a Gravidade e o Sentimento com base na polaridade
-        if polaridade < -0.3:
-            gravidade = "CRÍTICA 🚨"
-            sentimento = "Frustrado/Urgente"
-            cor = "red"
-        elif polaridade < 0:
-            gravidade = "MÉDIA ⚠️"
-            sentimento = "Negativo/Insatisfeito"
-            cor = "orange"
-        else:
-            gravidade = "NORMAL ✅"
-            sentimento = "Neutro/Calmo"
-            cor = "green"
+        if descricao_bug:
+            analise = TextBlob(descricao_bug)
+            polaridade = analise.sentiment.polarity # Pega o "tom" da mensagem
+            
+            # Define a Gravidade e o Sentimento com base na polaridade
+            if polaridade < -0.3:
+                gravidade = "CRÍTICA 🚨"
+                sentimento = "Frustrado/Urgente"
+            elif polaridade < 0:
+                gravidade = "MÉDIA ⚠️"
+                sentimento = "Negativo/Insatisfeito"
+            else:
+                gravidade = "NORMAL ✅"
+                sentimento = "Neutro/Calmo"
 
-        # Exibição melhorada para o usuário
-        st.divider()
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Gravidade IA", gravidade)
-        c2.metric("Sentimento", f"{polaridade:.2f}")
-        c3.metric("Status", "Pronto para Report")
+            # --- MONTAGEM DO RELATÓRIO (O que faltava) ---
+            relatorio = f"""### 🛡️ Relatório de Triagem Técnica
+**Resumo do Incidente:** {descricao_bug[:100]}...
+**Prioridade Sugerida:** {gravidade}
+**Análise de Sentimento:** {sentimento} (Score: {polaridade:.2f})
 
-        st.success(f"### 📝 Relatório Técnico Gerado\n"
-                   f"**Contexto Emocional:** Usuário demonstra nível de {sentimento}.\n\n"
-                   f"**Sugestão de Prioridade:** {gravidade}")
-        st.code(relatorio, language="markdown")
-        st.success("Relatório pronto para ser copiado para o Jira/GitHub!")
+**Cenário Gherkin:**
+- DADO QUE o sistema recebeu um relato de erro
+- QUANDO o agente processa a entrada: "{descricao_bug[:50]}..."
+- ENTÃO a prioridade deve ser classificada como {gravidade}."""
 
+            # --- EXIBIÇÃO NO SITE ---
+            st.divider()
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Gravidade IA", gravidade)
+            c2.metric("Sentimento", f"{polaridade:.2f}")
+            c3.metric("Status", "Pronto para Report")
+
+            st.success(f"### 📝 Relatório Gerado com Sucesso!")
+            
+            # Exibe o relatório formatado para cópia
+            st.code(relatorio, language="markdown")
+            
+            st.info("💡 Copie o código acima para anexar ao seu card no Jira ou GitHub.")
 # --- RODAPÉ DE CONTATO ---
 st.sidebar.markdown("### Contate-me")
 st.sidebar.write("📧 [Enviar E-mail](mailto:viago4415@gmail.com)")
