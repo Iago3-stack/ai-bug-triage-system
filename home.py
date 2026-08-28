@@ -3,6 +3,7 @@ import pandas as pd
 from urllib.parse import quote
 
 from triagem import triar
+import ia
 
 # Configure com o endpoint do seu Jira Cloud (opcional).
 # Enquanto vazio, o botão "Novo Item no Jira" exibe um aviso.
@@ -81,6 +82,26 @@ if st.button("Executar Triagem Inteligente"):
 - QUANDO o agente processa a entrada: "{descricao_limpa[:50]}..."
 - ENTÃO a prioridade deve ser definida como {gravidade}."""
 
+            # --- 2.5 ANÁLISE POR IA (LLM opcional; fallback seguro) ---
+            # Se não houver chave GEMINI_API_KEY configurada (st.secrets ou .env),
+            # a análise LLM é pulada e o motor local segue no comando.
+            resultado_llm = None
+            erro_llm = None
+            if ia._chave():
+                with st.spinner("🔮 IA analisando causa raiz... (pode levar ~15s)"):
+                    resultado_llm, erro_llm = ia.analisar_llm(descricao_limpa)
+                if resultado_llm:
+                    llm_modelo = ia.MODELO
+                    relatorio += f"""
+---
+🔮 **Análise por IA ({llm_modelo}):**
+- Severidade sugerida: {resultado_llm['severidade']}
+- Categoria: {resultado_llm['categoria']}
+- Causa raiz provável: {resultado_llm['causa_raiz']}
+- Resumo técnico: {resultado_llm['resumo_tecnico']}
+- Passos para reproduzir:
+""" + "\n".join(f"\t{i}. {p}" for i, p in enumerate(resultado_llm["passos_repro"], 1))
+
             # --- 3. HISTÓRICO DA SESSÃO ---
             if "historico" not in st.session_state:
                 st.session_state["historico"] = []
@@ -100,6 +121,20 @@ if st.button("Executar Triagem Inteligente"):
 
             st.markdown("### 📝 Relatório Gerado! ✅")
             st.code(relatorio, language="markdown")
+
+            if resultado_llm:
+                st.markdown("### 🔮 Análise por IA (Gemini)")
+                ca, cb, cc = st.columns(3)
+                ca.metric("Severidade (IA)", resultado_llm["severidade"].upper())
+                cb.metric("Categoria", resultado_llm["categoria"].capitalize())
+                cc.metric("Modelo", ia.MODELO.replace("gemini-", "Gemini "))
+                st.write(f"**Causa raiz provável:** {resultado_llm['causa_raiz']}")
+                st.write("**Passos para reproduzir:**")
+                for i, p in enumerate(resultado_llm["passos_repro"], 1):
+                    st.write(f"{i}. {p}")
+                st.caption("💡 Análise gerada por LLM — use como suporte à triagem determinística do motor local.")
+            elif erro_llm:
+                st.info("🔮 Análise por IA indisponível no momento (API instável/sem resposta). O motor local determinístico segue no controle.")
 
             # --- 5. EXPORTAR: baixar relatório + abrir no GitHub (e no Jira, se configurado) ---
             colunas = st.columns(3) if JIRA_CREATE_URL else st.columns(2)

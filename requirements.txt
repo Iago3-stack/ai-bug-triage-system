@@ -2,3 +2,8 @@
 # TextBlob foi removido: a antiga chamada ao Google Translate falha em datacenter.
 streamlit==1.62.0
 pandas==3.0.5
+# Fase 3 — análise por IA via Google Gemini (google-genai).
+# A chave GEMINI_API_KEY NUNCA vai para o repositório:
+#   - Streamlit Cloud: Settings -> Secrets -> GEMINI_API_KEY
+#   - Local: arquivo .env (ignorado pelo .gitignore)
+google-genai==2.20.0
