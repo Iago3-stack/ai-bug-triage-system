@@ -1,60 +1,76 @@
-# 🤖 AI-Powered Bug Triage System (IA + QA) Main.py
+# 🤖 AI Bug Triage System — IA + QA
 
-[English version below]
+> 🌐 *English readers: this document is in PT-BR, but your browser can translate it automatically (right-click → "Translate").*
 
-## 📌 Visão Geral (Português)
-Este projeto é um motor de **triagem híbrida** desenvolvido para Engenharia de Garantia de Qualidade (QA). Ele combina a lógica técnica tradicional com **Inteligência Artificial (NLP)** para priorizar automaticamente relatórios de erros (bugs).
+Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garantia de Qualidade (QA). Ele combina processamento de linguagem natural (NLP) com lógica de regras para **priorizar automaticamente** relatos de erros e gerar **documentação técnica em formato Gherkin** — pronto para copiar para Jira ou GitHub Issues.
 
-### 🚀 Como funciona
-O sistema utiliza uma abordagem de **Triagem em Duas Camadas**:
-1. **Camada Técnica:** Analisa palavras-chave críticas (ex: "crash", "security", "payment").
-2. **Camada de IA (NLP):** Utiliza a biblioteca **TextBlob** para analisar o sentimento do usuário. Se uma frustração elevada for detectada, a prioridade é aumentada automaticamente.
-
-### 🛠️ Tecnologias
-- **Python 3.x**
-- **TextBlob** (Natural Language Processing)
-- **Lógica:** Híbrida (Baseada em Regras + Análise de Sentimento)
+🚀 **Aplicação publicada:** [ai-bug-triage-system.streamlit.app](https://ai-bug-triage-system-d6vigycbjt4qxez2wrvsxf.streamlit.app/)
 
 ---
 
-## 📌 Project Overview (English)
-This project is a **hybrid triage engine** developed for Quality Assurance (QA) Engineering. It combines traditional technical logic with **Artificial Intelligence (NLP)** to automatically prioritize software bug reports.
+## ⭐ Funcionalidades (MVP atual)
 
-### 🚀 How it Works
-The system utilizes a **Two-Layer Triage** approach:
-1. **Technical Layer:** Scans for critical keywords (e.g., "crash", "security", "payment").
-2. **AI Layer (NLP):** Uses the **TextBlob** library to analyze user sentiment. If high frustration is detected, the priority is automatically escalated, even if technical keywords are missing.
-
-### 🛠️ Technologies
-- **Python 3.x**
-- **TextBlob** (Natural Language Processing)
-- **Logic:** Hybrid (Rule-Based + Sentiment Analysis)
-
----
-**Developed by Iago Nunes** - AI & Machine Learning Student | QA Enthusiast
+- **Triagem em duas camadas**
+  1. **Camada técnica**: termos críticos (crash, pagamento, login, segurança, 500...) escalam a severidade.
+  2. **Camada NLP**: análise de sentimento por **léxico em português** + **detecção de negação** ("não funciona", "não consigo", "parou de responder"...).
+- **100% offline e determinístico**: o motor `triagem.py` usa apenas a biblioteca padrão do Python — sem API de tradução, sem internet, sem custo e com resultado sempre reproduzível.
+- **Transparência de QA**: o relatório informa o **motor de análise** usado e os **fatores identificados** em cada triagem.
+- **Sem falsos positivos técnicos**: palavras como *erro*, *bug* e *falha* são vocabulário normal de teste e **não** disparam severidade sozinhas.
+- **Relatório Gherkin** (`Dado/Quando/Então`) baseado na prioridade detectada.
+- **Exportação**: baixar relatório (`.md`), abrir **Issue no GitHub** pré-preenchida ou enviar ao **Jira** (configurável).
+- **Histórico da sessão** em tabela (`pandas`) com opção de limpar.
+- Interface com identidade visual própria (tema Streamlit em `config.toml`).
 
 ---
-🤖 Segunda versão com interface web AI Bug Triage System - Iago Nunes home.py
 
-Sistema inteligente desenvolvido para otimizar a triagem de bugs utilizando Processamento de Linguagem Natural (NLP). Este projeto transforma relatos de utilizadores em documentação técnica estruturada (Gherkin), facilitando o trabalho de equipas de QA e Desenvolvimento.
+## 🛠️ Tecnologias
 
-## 🌐 Versão Web do Projeto
-🚀 O sistema está disponível para testes em tempo real através do Streamlit Cloud:
-🔗 [Aceder ao AI Bug Triage System](https://ai-bug-triage-system-d6vigycbjt4qxez2wrvsxf.streamlit.app/)
-
-## 🛠️ Tecnologias Utilizadas
-- **Python**: Lógica de backend e processamento.
-- **Streamlit**: Interface de utilizador e deploy na nuvem.
-- **TextBlob**: Análise de sentimento e polaridade para definir a gravidade do bug.
-- **Ambiente**: Desenvolvido em Linux Mint Debian (Laboratório Hack28).
----
-## ⚠️ Status do Projeto
-Atualmente em **Fase Alpha**. Próximas atualizações incluirão integração com **LLMs (Gemini/GPT)** para análises de causa raiz automatizadas.
-
-## 🚀 Roadmap de Evolução
-- [ ] **Integração com LLMs**: Utilização de modelos como Gemini ou GPT para análise de causa raiz.
-- [ ] **Exportação Direta**: Integração com APIs do Jira e GitHub Issues.
-- [ ] **Relatórios Customizados**: Diferentes templates de saída baseados na prioridade detetada.
+- **Python 3.13** — lógica e motor NLP (biblioteca `re` / stdlib)
+- **Streamlit 1.62** — interface web e deploy na nuvem
+- **pandas** — tabela de histórico de triagens
+- Desenvolvido em **Linux Mint Debian** (Laboratório Hack28)
 
 ---
-**Desenvolvido por: Iago Nunes** | QA Automation Engineer | Estudante de IA & ML na UNIASSELVI.
+
+## ▶️ Como rodar localmente
+
+```bash
+git clone https://github.com/Iago3-stack/ai-bug-triage-system.git
+cd ai-bug-triage-system
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+streamlit run home.py
+```
+
+Teste rápido do motor sem interface:
+
+```bash
+python triagem.py
+```
+
+---
+
+## 📁 Estrutura
+
+| Arquivo | Papel |
+|---|---|
+| `home.py` | Interface web (Streamlit): cabeçalho, ferramenta, export e histórico |
+| `triagem.py` | Motor NLP: léxico PT, padrões de negação e classificação de severidade |
+| `requirements.txt` | Dependências pinadas |
+| `.streamlit/config.toml` | Tema e configurações da app |
+
+---
+
+## 🚧 Roadmap
+
+- [x] **Fase 1** — Motor NLP offline (léxico PT + negação, sem TextBlob/Google Translate)
+- [x] **Fase 2** — Exportação do relatório, histórico de sessão e identidade visual
+- [ ] **Fase 3** — Integração com **LLMs** (Gemini) para análise de causa raiz
+- [ ] Exportação direta via **API do Jira**
+- [ ] Testes unitários do motor (`pytest`)
+- [ ] Persistência do histórico (banco de dados)
+
+---
+
+**Desenvolvido por [Iago Nunes](https://github.com/Iago3-stack)** | QA Automation Engineer | Estudante de IA & Machine Learning na UNIASSELVI.
