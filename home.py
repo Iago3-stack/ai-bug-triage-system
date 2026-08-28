@@ -92,6 +92,12 @@ if st.button("Executar Triagem Inteligente"):
                     resultado_llm, erro_llm = ia.analisar_llm(descricao_limpa)
                 if resultado_llm:
                     llm_modelo = ia.MODELO
+                    # Regra de reconciliação: o mais grave vence, e divergência vira alerta.
+                    sev_local = {"NORMAL ✅": 1, "MÉDIA ⚠️": 2, "CRÍTICA 🚨": 4}[gravidade]
+                    sev_ia = {"baixa": 1, "media": 2, "alta": 3, "critica": 4}.get(resultado_llm["severidade"], 2)
+                    sev_final = max(sev_local, sev_ia)
+                    prioridade_final = {1: "NORMAL ✅", 2: "MÉDIA ⚠️", 3: "ALTA 🚨", 4: "CRÍTICA 🚨"}[sev_final]
+                    divergente = sev_local != sev_ia
                     relatorio += f"""
 ---
 🔮 **Análise por IA ({llm_modelo}):**
@@ -100,7 +106,11 @@ if st.button("Executar Triagem Inteligente"):
 - Causa raiz provável: {resultado_llm['causa_raiz']}
 - Resumo técnico: {resultado_llm['resumo_tecnico']}
 - Passos para reproduzir:
-""" + "\n".join(f"\t{i}. {p}" for i, p in enumerate(resultado_llm["passos_repro"], 1))
+""" + "\n".join(f"\t{i}. {p}" for i, p in enumerate(resultado_llm["passos_repro"], 1)) + f"""
+
+- **Prioridade final (máx. entre motores): {prioridade_final}**
+- **Divergência entre motores: {'SIM ⚠️' if divergente else 'não'}**
+"""
 
             # --- 3. HISTÓRICO DA SESSÃO ---
             if "historico" not in st.session_state:
@@ -133,6 +143,13 @@ if st.button("Executar Triagem Inteligente"):
                 for i, p in enumerate(resultado_llm["passos_repro"], 1):
                     st.write(f"{i}. {p}")
                 st.caption("💡 Análise gerada por LLM — use como suporte à triagem determinística do motor local.")
+
+                st.markdown("---")
+                st.markdown(f"## 🎯 Prioridade Final: {prioridade_final}")
+                if divergente:
+                    st.warning(f"⚠️ Divergência detectada: motor local **{gravidade}** x IA **{resultado_llm['severidade'].upper()}**. Sinais conflitantes — revisão humana recomendada.")
+                else:
+                    st.success("✅ Motores concordam na prioridade.")
             elif erro_llm:
                 st.info("🔮 Análise por IA indisponível no momento (API instável/sem resposta). O motor local determinístico segue no controle.")
 

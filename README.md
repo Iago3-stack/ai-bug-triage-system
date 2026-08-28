@@ -14,6 +14,7 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
   1. **Camada técnica**: termos críticos (crash, pagamento, login, segurança, 500...) escalam a severidade.
   2. **Camada NLP**: análise de sentimento por **léxico em português** + **detecção de negação** ("não funciona", "não consigo", "parou de responder"...).
 - **Análise por IA (Fase 3)**: quando houver chave `GEMINI_API_KEY`, o app chama o **Google Gemini** e complementa a triagem com severidade sugerida, categoria, **causa raiz provável**, passos para reproduzir e resumo técnico — tudo em JSON estruturado, com **fallback automático** para o motor local se a API falhar.
+- **Prioridade final reconciliada**: os dois motores são combinados pela regra do **maior vence** (nenhum alerta grave é ignorado) e o app **sinaliza divergência** quando discordam, recomendando revisão humana.
 - **100% offline e determinístico**: o motor `triagem.py` usa apenas a biblioteca padrão do Python — sem API de tradução, sem internet, sem custo e com resultado sempre reproduzível.
 - **Transparência de QA**: o relatório informa o **motor de análise** usado e os **fatores identificados** em cada triagem.
 - **Sem falsos positivos técnicos**: palavras como *erro*, *bug* e *falha* são vocabulário normal de teste e **não** disparam severidade sozinhas.

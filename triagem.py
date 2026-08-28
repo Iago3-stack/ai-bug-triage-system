@@ -107,7 +107,12 @@ def triar(descricao):
     score = score_lexico + score_negacao
 
     termos = [t for t in acertos_lexico if t not in PALAVRAS_TECNICAS_INERTES]
-    fatores = list(termos) + ([f"negação ({n} padrões)" for n in [len(acertos_negacao)] if n])
+    n_negacoes = len(acertos_negacao)
+    neg_fatores = []
+    if n_negacoes:
+        neg_fatores.append(f"negação ({n_negacoes} padrão negado)" if n_negacoes == 1
+                           else f"negação ({n_negacoes} padrões)")
+    fatores = list(termos) + neg_fatores
     tem_emocional = any(t in EMOCIONAIS_NEGATIVAS for t in acertos_lexico)
 
     if score <= -2.0:
