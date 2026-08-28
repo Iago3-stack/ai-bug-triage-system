@@ -29,7 +29,7 @@ with col_info:
     st.write("Aqui👇️ você pode encontrar informações sobre mim e meus projetos 🇧🇷️.")
 with col_foto:    
     st.image("o novo.png", width=250,caption="Iago Nunes")
-    st.markdown("#### 🚀 QA Automation Engineer | AI & Machine Learning | Student of UNIASSELVI")
+    st.markdown("#### 🚀 Construo automação de QA com IA (NLP + Gemini) | Auxiliar Administrativo | Graduando IA & ML Uniasselvi (Dez/2027)")
     st.write("📍 São Luís, MA (Disponível para Remote Global)")
     
     st.divider()
