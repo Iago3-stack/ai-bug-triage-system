@@ -1,5 +1,7 @@
 # 🤖 AI Bug Triage System — IA + QA
 
+![Demo do app](assets/screenshot.png)
+
 > 🌐 *English readers: this document is in PT-BR, but your browser can translate it automatically (right-click → "Translate").*
 
 Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garantia de Qualidade (QA). Ele combina processamento de linguagem natural (NLP) com lógica de regras para **priorizar automaticamente** relatos de erros e gerar **documentação técnica em formato Gherkin** — pronto para copiar para Jira ou GitHub Issues.
