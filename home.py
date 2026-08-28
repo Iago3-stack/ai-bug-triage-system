@@ -1,6 +1,5 @@
 import streamlit as st
-from textblob import TextBlob
-import pandas as pd
+from triagem import triar
 
 # Configuração e Estilo
 st.set_page_config(page_title="Iago Nunes | IA & QA Portfolio", page_icon="🤖", layout="wide")
@@ -40,55 +39,42 @@ descricao_bug = st.text_area("Entrada do Usuário (Relato do Bug):", height=150,
 
 if st.button("Executar Triagem Inteligente"):
         if descricao_bug:
-            # --- 1. TENTATIVA DE TRADUÇÃO (NLP DINÂMICO) ---
-            try:
-                # Forçamos a tradução para o inglês
-                traducao = TextBlob(descricao_bug).translate(from_lang='pt', to='en')
-                polaridade = traducao.sentiment.polarity
-            except:
-                # --- 2. FALLBACK: PALAVRAS-CHAVE (SE A TRADUÇÃO FALHAR) ---
-                # Se não houver internet ou a API de tradução falhar, buscamos no braço:
-                texto_limpo = descricao_bug.lower()
-                palavras_criticas = ['ódio', 'raiva', 'ruim', 'péssimo', 'erro', 'urgente', 'lixo', 'bug']
-                
-                if any(word in texto_limpo for word in palavras_criticas):
-                    polaridade = -0.7  # Força prioridade CRÍTICA
-                else:
-                    polaridade = 0.0  # Mantém Neutro
+            # --- 1. TRIAGEM NLP (MOTOR LOCAL, DETERMINÍSTICO E OFFLINE) ---
+            # O motor triagem.py analisa léxico PT + padrões de negação,
+            # sem depender de internet nem de API de tradução.
+            resultado = triar(descricao_bug)
+            gravidade = resultado["gravidade"]
+            sentimento = resultado["sentimento"]
+            polaridade = resultado["score"]
+            fatores = resultado["fatores"]
+            motor = resultado["motor"]
 
-            # --- 3. DEFINIÇÃO DE GRAVIDADE ---
-            if polaridade < -0.3:
-                gravidade = "CRÍTICA 🚨"
-                sentimento = "Frustrado/Urgente"
-            elif polaridade < 0:
-                gravidade = "MÉDIA ⚠️"
-                sentimento = "Negativo/Insatisfeito"
-            else:
-                gravidade = "NORMAL ✅"
-                sentimento = "Neutro/Calmo"
-
-            # --- 4. RELATÓRIO GHERKIN ---
+            # --- 2. RELATÓRIO GHERKIN ---
             relatorio = f"""### 🛡️ Relatório de Triagem Técnica
 **Resumo:** {descricao_bug[:100]}...
 **Prioridade:** {gravidade}
 **Análise de Sentimento:** {sentimento} (Score: {polaridade:.2f})
+**Motor de análise:** {motor}
+**Fatores identificados:** {', '.join(fatores) or 'Nenhum (relato neutro)'}
 
 **Cenário Gherkin:**
 - DADO QUE o sistema recebeu um relato de erro
 - QUANDO o agente processa a entrada: "{descricao_bug[:50]}..."
 - ENTÃO a prioridade deve ser definida como {gravidade}."""
 
-            # --- 5. INTERFACE DASHBOARD ---
+            # --- 3. INTERFACE DASHBOARD ---
             st.divider()
             c1, c2, c3 = st.columns(3)
             c1.metric("Gravidade IA", gravidade)
             c2.metric("Sentimento", f"{polaridade:.2f}")
-            c3.metric("Status", "Análise Híbrida OK")
+            c3.metric("Status", "Análise Determinística OK")
 
-            st.success("### 📝 Relatório Gerado!")
+            st.markdown("### 📝 Relatório Gerado! ✅")
             st.code(relatorio, language="markdown")
             st.info("📋 O relatório está pronto para ser copiado para o Jira ou GitHub!")
             st.success("Triagem finalizada com sucesso! ✅")
+        else:
+            st.warning("Digite a descrição do bug para executar a triagem.")
 # --- RODAPÉ DE CONTATO ---
 st.sidebar.markdown("### Contate-me")
 st.sidebar.write("📧 [Enviar E-mail](mailto:viago4415@gmail.com)")

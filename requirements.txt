@@ -1,2 +1,3 @@
-streamlit
-textblob
+# O motor de triagem (triagem.py) usa apenas a biblioteca padrão do Python.
+# TextBlob foi removido: a antiga chamada ao Google Translate falha em datacenter.
+streamlit==1.62.0
