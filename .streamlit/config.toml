@@ -1,0 +1,9 @@
+[theme]
+# Identidade visual: verde WhatsApp (#25D366) para combinar com o CTA da sidebar
+base = "light"
+primaryColor = "#25D366"
+secondaryBackgroundColor = "#F4F6F8"
+textColor = "#1D1D1F"
+
+[browser]
+gatherUsageStats = false

@@ -1,8 +1,24 @@
 import streamlit as st
+import pandas as pd
+from urllib.parse import quote
+
 from triagem import triar
+
+# Configure com o endpoint do seu Jira Cloud (opcional).
+# Enquanto vazio, o botão "Novo Item no Jira" exibe um aviso.
+JIRA_CREATE_URL = ""
 
 # Configuração e Estilo
 st.set_page_config(page_title="Iago Nunes | IA & QA Portfolio", page_icon="🤖", layout="wide")
+
+# Esconde rodapé "Made with Streamlit" e o menu principal (visual mais limpo)
+st.markdown("""
+<style>
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    .stDeployButton {display: none;}
+</style>
+""", unsafe_allow_html=True)
 
 # --- CABEÇALHO ---
 col_foto, col_info = st.columns([1, 2])
@@ -49,9 +65,12 @@ if st.button("Executar Triagem Inteligente"):
             fatores = resultado["fatores"]
             motor = resultado["motor"]
 
+            # Trata aspas digitadas pelo usuário (evita aspas duplicadas no relatório)
+            descricao_limpa = descricao_bug.strip().strip('"\'')
+
             # --- 2. RELATÓRIO GHERKIN ---
             relatorio = f"""### 🛡️ Relatório de Triagem Técnica
-**Resumo:** {descricao_bug[:100]}...
+**Resumo:** {descricao_limpa[:100]}...
 **Prioridade:** {gravidade}
 **Análise de Sentimento:** {sentimento} (Score: {polaridade:.2f})
 **Motor de análise:** {motor}
@@ -59,10 +78,20 @@ if st.button("Executar Triagem Inteligente"):
 
 **Cenário Gherkin:**
 - DADO QUE o sistema recebeu um relato de erro
-- QUANDO o agente processa a entrada: "{descricao_bug[:50]}..."
+- QUANDO o agente processa a entrada: "{descricao_limpa[:50]}..."
 - ENTÃO a prioridade deve ser definida como {gravidade}."""
 
-            # --- 3. INTERFACE DASHBOARD ---
+            # --- 3. HISTÓRICO DA SESSÃO ---
+            if "historico" not in st.session_state:
+                st.session_state["historico"] = []
+            st.session_state["historico"].append({
+                "Relato": descricao_bug,
+                "Score": round(polaridade, 2),
+                "Gravidade": gravidade,
+                "Sentimento": sentimento,
+            })
+
+            # --- 4. INTERFACE DASHBOARD ---
             st.divider()
             c1, c2, c3 = st.columns(3)
             c1.metric("Gravidade IA", gravidade)
@@ -71,8 +100,36 @@ if st.button("Executar Triagem Inteligente"):
 
             st.markdown("### 📝 Relatório Gerado! ✅")
             st.code(relatorio, language="markdown")
-            st.info("📋 O relatório está pronto para ser copiado para o Jira ou GitHub!")
+
+            # --- 5. EXPORTAR: baixar relatório + abrir no GitHub/Jira ---
+            col_exp, col_gh, col_jira = st.columns(3)
+            col_exp.download_button(
+                "📥 Baixar relatório (.md)",
+                data=relatorio.encode("utf-8"),
+                file_name="relatorio_triagem_bug.md",
+                mime="text/markdown",
+            )
+            titulo = quote(descricao_limpa[:80])
+            corpo = quote(relatorio[:1200])
+            col_gh.link_button(
+                "🐙 Nova Issue no GitHub",
+                f"https://github.com/iago3-stack/ai-bug-triage-system/issues/new?title={titulo}&body={corpo}",
+            )
+            if JIRA_CREATE_URL:
+                col_jira.link_button("📋 Novo Item no Jira",
+                                     f"{JIRA_CREATE_URL}?summary={titulo}&description={corpo}")
+            else:
+                col_jira.caption("⚙️ Configure `JIRA_CREATE_URL` no topo do código para ativar o botão Jira.")
+
+            st.info("📋 O relatório também pode ser copiado direto da caixa acima para o Jira ou GitHub!")
             st.success("Triagem finalizada com sucesso! ✅")
+
+            # --- 6. HISTÓRICO (TABELA pandas) ---
+            with st.expander(f"📊 Histórico de triagens desta sessão ({len(st.session_state['historico'])})"):
+                st.dataframe(pd.DataFrame(st.session_state["historico"]),
+                             use_container_width=True, hide_index=True)
+                if st.button("🗑️ Limpar histórico"):
+                    st.session_state["historico"] = []
         else:
             st.warning("Digite a descrição do bug para executar a triagem.")
 # --- RODAPÉ DE CONTATO ---
