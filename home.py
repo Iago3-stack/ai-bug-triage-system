@@ -101,9 +101,9 @@ if st.button("Executar Triagem Inteligente"):
             st.markdown("### 📝 Relatório Gerado! ✅")
             st.code(relatorio, language="markdown")
 
-            # --- 5. EXPORTAR: baixar relatório + abrir no GitHub/Jira ---
-            col_exp, col_gh, col_jira = st.columns(3)
-            col_exp.download_button(
+            # --- 5. EXPORTAR: baixar relatório + abrir no GitHub (e no Jira, se configurado) ---
+            colunas = st.columns(3) if JIRA_CREATE_URL else st.columns(2)
+            colunas[0].download_button(
                 "📥 Baixar relatório (.md)",
                 data=relatorio.encode("utf-8"),
                 file_name="relatorio_triagem_bug.md",
@@ -111,15 +111,13 @@ if st.button("Executar Triagem Inteligente"):
             )
             titulo = quote(descricao_limpa[:80])
             corpo = quote(relatorio[:1200])
-            col_gh.link_button(
+            colunas[1].link_button(
                 "🐙 Nova Issue no GitHub",
                 f"https://github.com/iago3-stack/ai-bug-triage-system/issues/new?title={titulo}&body={corpo}",
             )
             if JIRA_CREATE_URL:
-                col_jira.link_button("📋 Novo Item no Jira",
-                                     f"{JIRA_CREATE_URL}?summary={titulo}&description={corpo}")
-            else:
-                col_jira.caption("⚙️ Configure `JIRA_CREATE_URL` no topo do código para ativar o botão Jira.")
+                colunas[2].link_button("📋 Novo Item no Jira",
+                                       f"{JIRA_CREATE_URL}?summary={titulo}&description={corpo}")
 
             st.info("📋 O relatório também pode ser copiado direto da caixa acima para o Jira ou GitHub!")
             st.success("Triagem finalizada com sucesso! ✅")
