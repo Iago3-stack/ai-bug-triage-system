@@ -135,7 +135,7 @@ if st.button("Executar Triagem Inteligente"):
 # --- RODAPÉ DE CONTATO ---
 st.sidebar.markdown("### Contate-me")
 st.sidebar.write("📧 [Enviar E-mail](mailto:viago4415@gmail.com)")
-st.sidebar.write("🔗 [Meu LinkedIn](https://www.linkedin.com/in/iago-nunes%E2%9D%87%EF%B8%8F-897a5832b?lipi=urn%3Ali%3Apage%3Ad_flagship3_profile_view_base_contact_details%3BtQ3Tyk98R5mM9Ej2tDUiTw%3D%3D)")
+st.sidebar.write("🔗 [Meu LinkedIn](https://www.linkedin.com/in/iago-nunes-897a5832b/?lipi=urn%3Ali%3Apage%3Ad_flagship3_profile_view_base_contact_details%3B%2F15y3S36T5SI8UZodVDXGw%3D%3D)")
 # --- CONTATO DIRETO (WhatsApp) ---
 # Substitua pelo seu número real com DDD
 numero_whatsapp = "5598985914235" 
