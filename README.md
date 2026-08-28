@@ -83,4 +83,10 @@ python ia.py        # análise por IA (Gemini) — exige a chave
 
 ---
 
-**Desenvolvido por [Iago Nunes](https://github.com/Iago3-stack)** | QA Automation Engineer | Estudante de IA & Machine Learning na UNIASSELVI.
+## 📜 Licença e autoria
+
+**Autor:** [Iago Nunes (Iago3-stack)](https://github.com/Iago3-stack) — QA Automation Engineer | Estudante de IA & Machine Learning na UNIASSELVI.
+
+Este projeto é distribuído sob a **licença MIT** (ver arquivo [`LICENSE`](LICENSE)). Qualquer uso, cópia ou modificação **deve manter a atribuição de crédito** ao autor original — remover ou ocultar a autoria viola a licença.
+
+O histórico completo de construção (commits, datas e motivações) está público em [github.com/Iago3-stack/ai-bug-triage-system](https://github.com/Iago3-stack/ai-bug-triage-system).
