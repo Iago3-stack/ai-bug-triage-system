@@ -1,0 +1,12 @@
+.venv
+__pycache__
+*.pyc
+.env
+.git
+*.csv
+*.xlsx
+atividades.json
+historico.json
+backup_*
+*.bak
+*.log
