@@ -26,19 +26,23 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Compute lowercase image name
+        run: |
+          echo "IMAGE_LOWER=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
+
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_LOWER }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_LOWER }}:${{ github.sha }}
 
       - name: Show image digest
         run: |
           echo "Imagem publicada no GHCR."
           echo "Para rodar quando tiver Docker:"
-          echo "docker run -p 8501:8501 -e GEMINI_API_KEY=SEU_KEY ghcr.io/${GITHUB_REPOSITORY}:latest"
+          echo "docker run -p 8501:8501 -e GEMINI_API_KEY=SEU_KEY ${{ env.REGISTRY }}/${{ env.IMAGE_LOWER }}:latest"
 #
 # disparo manual: Actions > docker-image.yml > Run workflow
