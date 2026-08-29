@@ -36,4 +36,4 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
       - name: Show image digest
-        run: echo "Imagem publicada — você pode rodar assim (quando tiver Docker): docker run -p 8501:8501 -e GEMINI_API_KEY=SEU_KEY ghcr.io/${{ env.IMAGE_NAME }}:latest"
+        run: echo "Imagem publicada — você pode rodar assim (quando tiver Docker): docker run -p 8501:8501 -e GEMINI_API_KEY=SEU_KEY ghcr.io/${{ env.IMAGE_NAME }}:latest"# disparo manual via Actions -> workflow_dispatch
