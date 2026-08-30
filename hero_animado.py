@@ -20,13 +20,15 @@ CSS = """
   100% { transform: translateX(-100%); }
 }
 .hero-card {
+  max-width: 640px;
+  margin: 0 auto;
   border: 1px solid rgba(46,124,246,.4);
-  border-radius: 16px;
-  padding: 18px 12px 14px;
+  border-radius: 18px;
+  padding: 24px 18px 16px;
   background: linear-gradient(135deg, rgba(46,124,246,.09), rgba(139,92,246,.12));
   text-align: center;
   animation: float_item 4s ease-in-out infinite;
-  box-shadow: 0 6px 26px rgba(46,124,246,.18);
+  box-shadow: 0 8px 30px rgba(46,124,246,.2);
 }
 .hero-grad {
   background: linear-gradient(90deg, #2E7CF6, #F6821D, #25D366, #2E7CF6);
@@ -91,17 +93,17 @@ def render():
     _css()
     st.markdown("""
 <div class="hero-card">
-  <div style="font-size:26px">🤖⚡</div>
-  <div class="hero-grad" style="font-size:19px">QA Automation + IA</div>
-  <div style="margin-top:11px"><span class="hero-dot"></span>&nbsp;<b>Disponível para vagas</b></div>
-  <div style="font-size:13px;color:#444;margin-top:3px">Remote Global · São Luís, MA</div>
-  <div style="margin-top:12px">
+  <div style="font-size:34px">🤖⚡</div>
+  <div class="hero-grad" style="font-size:23px">QA Automation + IA</div>
+  <div style="margin-top:13px"><span class="hero-dot"></span>&nbsp;<b>Disponível para vagas</b></div>
+  <div style="font-size:14px;color:#444;margin-top:4px">Remote Global · São Luís, MA</div>
+  <div style="margin-top:14px">
     <span class="hero-pill" style="background:rgba(37,211,102,.16);color:#1e8f4b">💡 NLP PT</span>
     <span class="hero-pill" style="background:rgba(246,130,29,.16);color:#d97706">🧠 Gemini</span>
     <span class="hero-pill" style="background:rgba(46,124,246,.16);color:#1d63d8">🚀 Streamlit</span>
   </div>
   <div class="hero-marquee"><span>{}</span></div>
-  <div style="margin-top:10px;font-weight:700">⚡ Vamos construir?</div>
+  <div style="margin-top:12px;font-weight:700">⚡ Vamos construir?</div>
 </div>
 """.format(MARQUEE_TEXT), unsafe_allow_html=True)
 

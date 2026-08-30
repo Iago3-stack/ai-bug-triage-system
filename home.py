@@ -35,7 +35,11 @@ with col_foto:
     st.write("📍 São Luís, MA (Disponível para Remote Global)")
     
     st.divider()
-esq, centro, dir = st.columns([1, 4, 1])
+
+# HERO animado centralizado: abaixo do Bem-vindo/digitação e acima do Sobre Mim
+hero_animado.render()
+
+esq, centro = st.columns([1, 8])
 with centro:
      st.subheader("🎯 Sobre Mim 🧔🏾‍♂️️")    
     
@@ -45,8 +49,6 @@ Minha missão no laboratório **Hack28** é desenvolver ferramentas que não ape
 
 **O que eu busco:** Oportunidades **Home Office** onde eu possa aplicar automação híbrida para acelerar ciclos de entrega e elevar o padrão de qualidade dos produtos.
 """)
-with dir:
-    hero_animado.render()
 
 # --- SOBRE O PROJETO ---
 st.divider()
