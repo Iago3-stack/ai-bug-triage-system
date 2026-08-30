@@ -202,4 +202,9 @@ st.sidebar.markdown(f"""
 with st.sidebar:
     st.markdown("### Contate-me")
     hero_animado.render_contato()
-st.sidebar.info("Executado em: Linux Mint Debian Lab 🧠️ (Hack28)☢️")
+st.sidebar.markdown("""
+<div style="margin-top:14px;padding:10px 12px;border:1px solid rgba(46,124,246,.28);border-radius:10px;background:rgba(46,124,246,.06);font-size:13px;line-height:1.6">
+  🐧 <b>Linux Mint Debian</b> · 🧠 Lab <b>Hack28</b><br/>
+  ⚡ <i>Automatizando qualidade — um bug de cada vez.</i>
+</div>
+""", unsafe_allow_html=True)
