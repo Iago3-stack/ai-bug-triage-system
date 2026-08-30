@@ -44,10 +44,13 @@ with centro:
      st.subheader("🎯 Sobre Mim 🧔🏾‍♂️️")    
     
      st.markdown("""
-Sou um entusiasta de tecnologia e estudante de **IA & Machine Learning**, focado em transformar a garantia de qualidade (QA) através da automação inteligente. 
-Minha missão no laboratório **Hack28** é desenvolver ferramentas que não apenas encontrem falhas, mas que tragam insights valiosos para o negócio usando **NLP** e **Engenharia de Prompt**.
+Sou um entusiasta de tecnologia e estudante de **IA & Machine Learning**, focado em transformar a garantia de qualidade (QA) através da automação inteligente. Minha missão no laboratório **Hack28** é construir ferramentas que não apenas encontrem falhas, mas que tragam **insights valiosos para o negócio** usando **NLP** e **Engenharia de Prompt**.
 
-**O que eu busco:** Oportunidades **Home Office** onde eu possa aplicar automação híbrida para acelerar ciclos de entrega e elevar o padrão de qualidade dos produtos.
+🚀 **Hoje:** Já coloco IA em produção lucidamente — motor NLP determinístico + Gemini com fallback automático, aplicação pública, open-source e **container publicada no GHCR**.
+
+🌟 **Visão:** evoluir esse mesmo motor para a próxima geração — **agentes de IA, RAG e MLOps** — transformando QA de "caça-bugs" em **inteligência de produto**. Com a graduação em IA & ML (UNIASSELVI · Dez/2027), esse caminho está documentado passo a passo no meu GitHub aberto.
+
+**O que eu busco agora:** Oportunidades **Home Office / Remote** para aplicar automação híbrida, acelerar ciclos de entrega e elevar o padrão de qualidade — fazendo parte de um time que constrói o futuro do software.
 """)
 
 # --- SOBRE O PROJETO ---
