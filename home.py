@@ -4,6 +4,7 @@ from urllib.parse import quote
 
 from triagem import triar
 import ia
+import hero_animado
 
 # Configure com o endpoint do seu Jira Cloud (opcional).
 # Enquanto vazio, o botão "Novo Item no Jira" exibe um aviso.
@@ -25,6 +26,7 @@ st.markdown("""
 col_foto, col_info = st.columns([1, 2])
 with col_info:
     st.title("Iago Nunes©️")
+    hero_animado.linha()
     st.write("Bem-vindo 🤝️ ao meu site!🌐️")
     st.write("Aqui👇️ você pode encontrar informações sobre mim e meus projetos 🇧🇷️.")
 with col_foto:    
@@ -43,6 +45,8 @@ Minha missão no laboratório **Hack28** é desenvolver ferramentas que não ape
 
 **O que eu busco:** Oportunidades **Home Office** onde eu possa aplicar automação híbrida para acelerar ciclos de entrega e elevar o padrão de qualidade dos produtos.
 """)
+with dir:
+    hero_animado.render()
 
 # --- SOBRE O PROJETO ---
 st.divider()
