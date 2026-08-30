@@ -156,6 +156,60 @@ def _contato_icon(nome: str) -> str:
     href = "data:image/svg+xml;base64," + _B64[nome]
     return f'<img src="{href}" width="17" height="17" style="vertical-align:middle; margin-right:9px"/>'
 
+TYPING_CSS = """
+<style>
+.type-stack {
+  font-family: 'Fira Code', 'Courier New', monospace;
+  font-size: 16px;
+  color: #2E7CF6;
+  text-align: center;
+  min-height: 80px;
+  padding: 6px 0;
+}
+.type-line {
+  display: block;
+  max-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  margin: 2px auto;
+}
+.tl1 { animation: type1 12s steps(28, end) 0s infinite; }
+.tl2 { animation: type2 12s steps(28, end) 0s infinite; }
+.tl3 { animation: type3 12s steps(28, end) 0s infinite; }
+@keyframes type1 {
+  0% { max-width: 0; }
+  6% { max-width: 0; }
+  18% { max-width: 30em; }
+  96% { max-width: 30em; }
+  100% { max-width: 0; }
+}
+@keyframes type2 {
+  0% { max-width: 0; }
+  24% { max-width: 0; }
+  36% { max-width: 30em; }
+  96% { max-width: 30em; }
+  100% { max-width: 0; }
+}
+@keyframes type3 {
+  0% { max-width: 0; }
+  42% { max-width: 0; }
+  54% { max-width: 30em; }
+  96% { max-width: 30em; }
+  100% { max-width: 0; }
+}
+</style>
+"""
+
+def typing_frases():
+    st.markdown(TYPING_CSS, unsafe_allow_html=True)
+    st.markdown("""
+<div class="type-stack">
+  <div class="type-line tl1">Bem-vindo ao meu site!</div>
+  <div class="type-line tl2">Informações sobre mim e meus projetos</div>
+  <div class="type-line tl3">QA + IA construído no Lab Hack28</div>
+</div>
+""", unsafe_allow_html=True)
+
 def render_contato():
     st.markdown(CONTATO_CSS, unsafe_allow_html=True)
     botoes = "\n".join(

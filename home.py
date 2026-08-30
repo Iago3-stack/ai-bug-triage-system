@@ -28,7 +28,7 @@ with col_info:
     st.title("Iago Nunes©️")
     hero_animado.linha()
     st.markdown('<img src="https://capsule-render.vercel.app/api?type=soft&color=gradient&customColorList=20,24,25&height=56&section=header&text=Bem-vindo%20ao%20meu%20site&fontSize=22&fontColor=fff&fontAlignY=62" width="100%" />', unsafe_allow_html=True)
-    st.markdown('<img src="https://readme-typing-svg.demolab.com/?font=Fira+Code&size=16&pause=800&color=2E7CF6&center=true&vCenter=true&width=720&lines=Bem-vindo+ao+meu+site!;Informa%C3%A7%C3%B5es+sobre+mim+e+meus+projetos;QA+%2B+IA+constru%C3%ADdo+no+Lab+Hack28" alt="Typing SVG" />', unsafe_allow_html=True)
+    hero_animado.typing_frases()
 with col_foto:    
     st.image("o novo.png", width=250,caption="Iago Nunes")
     st.markdown("#### 🚀 Construo automação de QA com IA (NLP + Gemini) | Auxiliar Administrativo | Graduando IA & ML Uniasselvi (Dez/2027)")
