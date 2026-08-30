@@ -8,6 +8,14 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
 
 🚀 **Aplicação publicada:** [ai-bug-triage-system.streamlit.app](https://ai-bug-triage-system-d6vigycbjt4qxez2wrvsxf.streamlit.app/)
 
+<div align="center">
+  <a href="https://github.com/Iago3-stack/ai-bug-triage-system/stargazers">
+    <img src="https://img.shields.io/github/stars/Iago3-stack/ai-bug-triage-system?style=for-the-badge&color=2E7CF6&logo=github&logoColor=white&label=❤️%20Estrelas" />
+  </a>
+</div>
+
+> ⭐ **Se esta triagem te ajudou, dá uma estrelinha no projeto** — quanto mais estrelas, mais QAs encontram o app na busca do GitHub. É de graça!
+
 ---
 
 ## ⭐ Funcionalidades (MVP atual)
