@@ -186,9 +186,9 @@ if st.button("Executar Triagem Inteligente"):
 st.sidebar.markdown("### ⭐ Apoie o projeto")
 st.sidebar.write("Se esta triagem te ajudou, dá uma estrelinha no repositório — é de graça e ajuda mais QAs a encontrarem o app.")
 
-repo_url = "https://github.com/Iago3-stack/ai-bug-triage-system"
+repo_url = "https://github.com/Iago3-stack/ai-bug-triage-system/"
 st.sidebar.markdown(f"""
-<a href="{repo_url}/stargazers" target="_blank">
+<a href="{repo_url}" target="_blank">
     <button style="background-color: #2E7CF6; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%;">
         ⭐ Dar estrela no GitHub
     </button>
