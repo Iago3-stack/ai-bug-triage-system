@@ -10,7 +10,7 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
 
 <div align="center">
   <a href="https://github.com/Iago3-stack/ai-bug-triage-system/stargazers">
-    <img src="https://img.shields.io/github/stars/Iago3-stack/ai-bug-triage-system?style=for-the-badge&color=2E7CF6&logo=github&logoColor=white&label=❤️%20Estrelas" />
+    <img src="https://img.shields.io/github/stars/Iago3-stack/ai-bug-triage-system?style=for-the-badge&color=2E7CF6&logo=github&logoColor=white&label=Estrelas" />
   </a>
 </div>
 
