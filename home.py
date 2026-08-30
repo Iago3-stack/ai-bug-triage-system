@@ -27,8 +27,8 @@ col_foto, col_info = st.columns([1, 2])
 with col_info:
     st.title("Iago Nunes©️")
     hero_animado.linha()
-    st.write("Bem-vindo 🤝️ ao meu site!🌐️")
-    st.write("Aqui👇️ você pode encontrar informações sobre mim e meus projetos 🇧🇷️.")
+    st.markdown('<img src="https://capsule-render.vercel.app/api?type=soft&color=gradient&customColorList=20,24,25&height=56&section=header&text=Bem-vindo%20ao%20meu%20site&fontSize=22&fontColor=fff&fontAlignY=62" width="100%" />', unsafe_allow_html=True)
+    st.caption("🤝️ A seguir, informações sobre mim e meus projetos 🇧🇷️")
 with col_foto:    
     st.image("o novo.png", width=250,caption="Iago Nunes")
     st.markdown("#### 🚀 Construo automação de QA com IA (NLP + Gemini) | Auxiliar Administrativo | Graduando IA & ML Uniasselvi (Dez/2027)")
