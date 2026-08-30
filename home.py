@@ -25,7 +25,7 @@ st.markdown("""
 # --- CABEÇALHO ---
 col_foto, col_info = st.columns([1, 2])
 with col_info:
-    st.title("Iago Nunes©️")
+    st.markdown('<h1 style="font-weight:700; line-height:1.2; letter-spacing:-0.02em; padding:0; margin:0; color:black">Iago Nunes<span style="font-size:0.5em; vertical-align:super; font-weight:400; color:#6b7280; margin-left:2px">©</span></h1>', unsafe_allow_html=True)
     hero_animado.linha()
     st.markdown('<img src="https://capsule-render.vercel.app/api?type=soft&color=gradient&customColorList=20,24,25&height=56&section=header&text=Bem-vindo%20ao%20meu%20site&fontSize=22&fontColor=fff&fontAlignY=62" width="100%" />', unsafe_allow_html=True)
     hero_animado.typing_frases()
