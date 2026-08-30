@@ -19,9 +19,13 @@ CSS = """
   0% { transform: translateX(100%); }
   100% { transform: translateX(-100%); }
 }
+.hero-wrap {
+  display: flex;
+  justify-content: center;
+}
 .hero-card {
   max-width: 640px;
-  margin: 0 auto;
+  width: 100%;
   border: 1px solid rgba(46,124,246,.4);
   border-radius: 18px;
   padding: 24px 18px 16px;
@@ -92,6 +96,7 @@ def linha():
 def render():
     _css()
     st.markdown("""
+<div class="hero-wrap">
 <div class="hero-card">
   <div style="font-size:34px">🤖⚡</div>
   <div class="hero-grad" style="font-size:23px">QA Automation + IA</div>
@@ -104,6 +109,7 @@ def render():
   </div>
   <div class="hero-marquee"><span>{}</span></div>
   <div style="margin-top:12px;font-weight:700">⚡ Vamos construir?</div>
+</div>
 </div>
 """.format(MARQUEE_TEXT), unsafe_allow_html=True)
 
