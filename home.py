@@ -182,6 +182,18 @@ if st.button("Executar Triagem Inteligente"):
                     st.session_state["historico"] = []
         else:
             st.warning("Digite a descrição do bug para executar a triagem.")
+# --- CTA: ESTRELA NO GITHUB ---
+st.sidebar.markdown("### ⭐ Apoie o projeto")
+st.sidebar.write("Se esta triagem te ajudou, dá uma estrelinha no repositório — é de graça e ajuda mais QAs a encontrarem o app.")
+
+repo_url = "https://github.com/Iago3-stack/ai-bug-triage-system"
+st.sidebar.markdown(f"""
+<a href="{repo_url}/stargazers" target="_blank">
+    <button style="background-color: #2E7CF6; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%;">
+        ⭐ Dar estrela no GitHub
+    </button>
+</a>
+""", unsafe_allow_html=True)
 # --- RODAPÉ DE CONTATO ---
 st.sidebar.markdown("### Contate-me")
 st.sidebar.write("📧 [Enviar E-mail](mailto:viago4415@gmail.com)")
