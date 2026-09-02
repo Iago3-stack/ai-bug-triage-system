@@ -8,7 +8,11 @@
 
 Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garantia de Qualidade (QA). Ele combina processamento de linguagem natural (NLP) com lógica de regras para **priorizar automaticamente** relatos de erros e gerar **documentação técnica em formato Gherkin** — pronto para copiar para Jira ou GitHub Issues.
 
-🚀 **Aplicação publicada:** [ai-bug-triage-system.streamlit.app](https://ai-bug-triage-system-d6vigycbjt4qxez2wrvsxf.streamlit.app/)
+<div align="center">
+  <a href="https://ai-bug-triage-system-d6vigycbjt4qxez2wrvsxf.streamlit.app/">
+    <img src="https://img.shields.io/badge/Aplica%C3%A7%C3%A3o%20Publicada-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white" alt="Aplicação publicada" />
+  </a>
+</div>
 
 <div align="center">
   <a href="https://github.com/Iago3-stack/ai-bug-triage-system/stargazers">
