@@ -80,25 +80,32 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
   <img src="https://capsule-render.vercel.app/api?type=soft&color=gradient&customColorList=20,24,25&height=64&section=header&text=Como%20Rodar%20Localmente&fontSize=24&fontColor=fff&fontAlignY=58" width="100%" />
 </div>
 
+<div align="center">
+  <img src="https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white" />
+  <img src="https://img.shields.io/badge/Python%20venv-3776AB?style=for-the-badge&logo=python&logoColor=white" />
+  <img src="https://img.shields.io/badge/pip-3776AB?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white" />
+</div>
+
 ```bash
-git clone https://github.com/Iago3-stack/ai-bug-triage-system.git
-cd ai-bug-triage-system
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-streamlit run home.py
+git clone https://github.com/Iago3-stack/ai-bug-triage-system.git   # 📥 clona o repo
+cd ai-bug-triage-system                                             # 📂 entra na pasta
+python3 -m venv .venv                                                # 🐍 cria o ambiente virtual
+source .venv/bin/activate                                            # ⚡ ativa o venv
+pip install -r requirements.txt                                      # 📦 instala as dependências
+streamlit run home.py                                                # 🚀 roda a aplicação
 ```
 
 A análise por IA usa a chave `GEMINI_API_KEY` (gratuita em [aistudio.google.com/apikey](https://aistudio.google.com/apikey)). Sem a chave, o app funciona normalmente só com o motor local:
 
-- **Local**: crie um arquivo `.env` na raiz com `GEMINI_API_KEY=...` (ele é ignorado pelo `.gitignore`).
-- **Streamlit Cloud**: `Settings → Secrets → GEMINI_API_KEY` (nunca coloque a chave em código ou no repositório).
+- 🔑 **Local**: crie um arquivo `.env` na raiz com `GEMINI_API_KEY=...` (ele é ignorado pelo `.gitignore`).
+- ☁️ **Streamlit Cloud**: `Settings → Secrets → GEMINI_API_KEY` (nunca coloque a chave em código ou no repositório).
 
-Teste rápido dos motores sem interface:
+🧪 Teste rápido dos motores sem interface:
 
 ```bash
-python triagem.py   # motor determinístico local
-python ia.py        # análise por IA (Gemini) — exige a chave
+python triagem.py   # 🟢 motor determinístico local
+python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 ```
 
 ---
@@ -109,11 +116,11 @@ python ia.py        # análise por IA (Gemini) — exige a chave
 
 | Arquivo | Papel |
 |---|---|
-| `home.py` | Interface web (Streamlit): cabeçalho, ferramenta, export e histórico |
-| `triagem.py` | Motor NLP: léxico PT, padrões de negação e classificação de severidade (offline) |
-| `ia.py` | Análise por IA via Google Gemini: causa raiz, categoria e passos (com fallback) |
-| `requirements.txt` | Dependências pinadas |
-| `.streamlit/config.toml` | Tema e configurações da app |
+| 🖥️ `home.py` | Interface web (Streamlit): cabeçalho, ferramenta, export e histórico |
+| 🧠 `triagem.py` | Motor NLP: léxico PT, padrões de negação e classificação de severidade (offline) |
+| 🔮 `ia.py` | Análise por IA via Google Gemini: causa raiz, categoria e passos (com fallback) |
+| 📦 `requirements.txt` | Dependências pinadas |
+| 🎨 `.streamlit/config.toml` | Tema e configurações da app |
 
 ---
 
@@ -121,12 +128,17 @@ python ia.py        # análise por IA (Gemini) — exige a chave
   <img src="https://capsule-render.vercel.app/api?type=soft&color=gradient&customColorList=20,24,25&height=64&section=header&text=Roadmap&fontSize=24&fontColor=fff&fontAlignY=58" width="100%" />
 </div>
 
-- [x] **Fase 1** — Motor NLP offline (léxico PT + negação, sem TextBlob/Google Translate)
-- [x] **Fase 2** — Exportação do relatório, histórico de sessão e identidade visual
-- [x] **Fase 3** — Integração com **LLMs** (Gemini) para análise de causa raiz, categoria e passos — com fallback automático
-- [ ] Exportação direta via **API do Jira**
-- [ ] Testes unitários do motor (`pytest`)
-- [ ] Persistência do histórico (banco de dados)
+<div align="center">
+  <img src="https://img.shields.io/badge/3%20conclu%C3%ADdas-4CAF50?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/3%20em%20aberto-FF9800?style=for-the-badge" />
+</div>
+
+- ✅ **Fase 1** — Motor NLP offline (léxico PT + negação, sem TextBlob/Google Translate)
+- ✅ **Fase 2** — Exportação do relatório, histórico de sessão e identidade visual
+- ✅ **Fase 3** — Integração com **LLMs** (Gemini) para análise de causa raiz, categoria e passos — com fallback automático
+- ⬜ **Exportação direta via API do Jira**
+- ⬜ **Testes unitários do motor (`pytest`)**
+- ⬜ **Persistência do histórico (banco de dados)**
 
 ---
 
@@ -134,8 +146,14 @@ python ia.py        # análise por IA (Gemini) — exige a chave
   <img src="https://capsule-render.vercel.app/api?type=soft&color=gradient&customColorList=20,24,25&height=64&section=header&text=Licen%C3%A7a%20e%20Autoria&fontSize=24&fontColor=fff&fontAlignY=58" width="100%" />
 </div>
 
-**Autor:** [Iago Nunes (Iago3-stack)](https://github.com/Iago3-stack) — QA Automation Engineer | Estudante de IA & Machine Learning na UNIASSELVI.
+<div align="center">
+  <img src="https://img.shields.io/badge/Licen%C3%A7a-MIT-4CAF50?style=for-the-badge&logo=opensourceinitiative&logoColor=white" />
+  <img src="https://img.shields.io/badge/Autor-Iago%20Nunes-2E7CF6?style=for-the-badge&logo=github&logoColor=white" />
+  <img src="https://img.shields.io/badge/GitHub-Iago3%20stack-181717?style=for-the-badge&logo=github&logoColor=white" />
+</div>
 
-Este projeto é distribuído sob a **licença MIT** (ver arquivo [`LICENSE`](LICENSE)). Qualquer uso, cópia ou modificação **deve manter a atribuição de crédito** ao autor original — remover ou ocultar a autoria viola a licença.
+**🧑‍💻 Autor:** [Iago Nunes (Iago3-stack)](https://github.com/Iago3-stack) — QA Automation Engineer | Estudante de IA & Machine Learning na UNIASSELVI.
 
-O histórico completo de construção (commits, datas e motivações) está público em [github.com/Iago3-stack/ai-bug-triage-system](https://github.com/Iago3-stack/ai-bug-triage-system).
+📜 Este projeto é distribuído sob a **licença MIT** (ver arquivo [`LICENSE`](LICENSE)). Qualquer uso, cópia ou modificação **deve manter a atribuição de crédito** ao autor original — remover ou ocultar a autoria viola a licença.
+
+🕓 O histórico completo de construção (commits, datas e motivações) está público em [github.com/Iago3-stack/ai-bug-triage-system](https://github.com/Iago3-stack/ai-bug-triage-system).
