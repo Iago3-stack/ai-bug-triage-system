@@ -43,11 +43,19 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
   <img src="https://capsule-render.vercel.app/api?type=soft&color=gradient&customColorList=20,24,25&height=64&section=header&text=Tecnologias&fontSize=24&fontColor=fff&fontAlignY=58" width="100%" />
 </div>
 
-- **Python 3.13** — lógica e motor NLP (biblioteca `re` / stdlib)
-- **Streamlit 1.62** — interface web e deploy na nuvem
-- **Google Gemini (`google-genai`)** — análise de causa raiz via LLM (Fase 3)
-- **pandas** — tabela de histórico de triagens
-- Desenvolvido em **Linux Mint Debian** (Laboratório Hack28)
+<div align="center">
+  <img src="https://img.shields.io/badge/Python%203.13-3776AB?style=for-the-badge&logo=python&logoColor=white" />
+  <img src="https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white" />
+  <img src="https://img.shields.io/badge/Google%20Gemini-8E75B2?style=for-the-badge&logo=googlegemini&logoColor=white" />
+  <img src="https://img.shields.io/badge/pandas-150458?style=for-the-badge&logo=pandas&logoColor=white" />
+  <img src="https://img.shields.io/badge/Linux%20Mint-87CF3E?style=for-the-badge&logo=linuxmint&logoColor=white" />
+</div>
+
+- 🐍 **Python 3.13** — lógica e motor NLP (biblioteca `re` / stdlib)
+- 🚀 **Streamlit 1.62** — interface web e deploy na nuvem
+- 🔮 **Google Gemini (`google-genai`)** — análise de causa raiz via LLM (Fase 3)
+- 🐼 **pandas** — tabela de histórico de triagens
+- 🐧 Desenvolvido em **Linux Mint Debian** (Laboratório Hack28)
 
 ---
 
