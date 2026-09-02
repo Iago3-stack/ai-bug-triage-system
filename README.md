@@ -1,4 +1,6 @@
-# 🤖 AI Bug Triage System — IA + QA
+<div align="center">
+  <img src="https://capsule-render.vercel.app/api?type=soft&color=gradient&customColorList=20,24,25&height=80&section=header&text=AI%20Bug%20Triage%20System&fontSize=22&fontColor=fff&fontAlignY=60" width="100%" />
+</div>
 
 ![Tela do app](assets/screenshot.png)
 
@@ -18,7 +20,9 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
 
 ---
 
-## ⭐ Funcionalidades (MVP atual)
+<div align="center">
+  <img src="https://capsule-render.vercel.app/api?type=soft&color=gradient&customColorList=20,24,25&height=64&section=header&text=Funcionalidades%20-%20MVP%20Atual&fontSize=24&fontColor=fff&fontAlignY=58" width="100%" />
+</div>
 
 - **Triagem em duas camadas**
   1. **Camada técnica**: termos críticos (crash, pagamento, login, segurança, 500...) escalam a severidade.
@@ -35,7 +39,9 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
 
 ---
 
-## 🛠️ Tecnologias
+<div align="center">
+  <img src="https://capsule-render.vercel.app/api?type=soft&color=gradient&customColorList=20,24,25&height=64&section=header&text=Tecnologias&fontSize=24&fontColor=fff&fontAlignY=58" width="100%" />
+</div>
 
 - **Python 3.13** — lógica e motor NLP (biblioteca `re` / stdlib)
 - **Streamlit 1.62** — interface web e deploy na nuvem
@@ -45,7 +51,9 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
 
 ---
 
-## ▶️ Como rodar localmente
+<div align="center">
+  <img src="https://capsule-render.vercel.app/api?type=soft&color=gradient&customColorList=20,24,25&height=64&section=header&text=Como%20Rodar%20Localmente&fontSize=24&fontColor=fff&fontAlignY=58" width="100%" />
+</div>
 
 ```bash
 git clone https://github.com/Iago3-stack/ai-bug-triage-system.git
@@ -70,7 +78,9 @@ python ia.py        # análise por IA (Gemini) — exige a chave
 
 ---
 
-## 📁 Estrutura
+<div align="center">
+  <img src="https://capsule-render.vercel.app/api?type=soft&color=gradient&customColorList=20,24,25&height=64&section=header&text=Estrutura&fontSize=24&fontColor=fff&fontAlignY=58" width="100%" />
+</div>
 
 | Arquivo | Papel |
 |---|---|
@@ -82,7 +92,9 @@ python ia.py        # análise por IA (Gemini) — exige a chave
 
 ---
 
-## 🚧 Roadmap
+<div align="center">
+  <img src="https://capsule-render.vercel.app/api?type=soft&color=gradient&customColorList=20,24,25&height=64&section=header&text=Roadmap&fontSize=24&fontColor=fff&fontAlignY=58" width="100%" />
+</div>
 
 - [x] **Fase 1** — Motor NLP offline (léxico PT + negação, sem TextBlob/Google Translate)
 - [x] **Fase 2** — Exportação do relatório, histórico de sessão e identidade visual
@@ -93,7 +105,9 @@ python ia.py        # análise por IA (Gemini) — exige a chave
 
 ---
 
-## 📜 Licença e autoria
+<div align="center">
+  <img src="https://capsule-render.vercel.app/api?type=soft&color=gradient&customColorList=20,24,25&height=64&section=header&text=Licen%C3%A7a%20e%20Autoria&fontSize=24&fontColor=fff&fontAlignY=58" width="100%" />
+</div>
 
 **Autor:** [Iago Nunes (Iago3-stack)](https://github.com/Iago3-stack) — QA Automation Engineer | Estudante de IA & Machine Learning na UNIASSELVI.
 
