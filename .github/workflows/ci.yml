@@ -1,0 +1,32 @@
+name: CI - Testes (pytest)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Instalar dependências de produção
+        run: pip install -r requirements.txt
+
+      - name: Instalar dependências de teste
+        run: pip install -r requirements-dev.txt
+
+      - name: Rodar testes unitários
+        run: pytest -v
+
+#
+# Este workflow roda automaticamente a cada push/PR na branch main.
+# Resultado: badge verde "build passing" no README.

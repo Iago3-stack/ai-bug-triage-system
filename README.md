@@ -18,6 +18,9 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
   <a href="https://github.com/Iago3-stack/ai-bug-triage-system/stargazers">
     <img src="https://img.shields.io/github/stars/Iago3-stack/ai-bug-triage-system?style=for-the-badge&color=2E7CF6&logo=github&logoColor=white&label=Estrelas" />
   </a>
+  <a href="https://github.com/Iago3-stack/ai-bug-triage-system/actions/workflows/ci.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/Iago3-stack/ai-bug-triage-system/ci.yml?style=for-the-badge&logo=githubactions&logoColor=white&label=Testes%20CI" />
+  </a>
 </div>
 
 > ⭐ **Se esta triagem te ajudou, dá uma estrelinha no projeto** — quanto mais estrelas, mais QAs encontram o app na busca do GitHub. É de graça!
@@ -129,15 +132,15 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 </div>
 
 <div align="center">
-  <img src="https://img.shields.io/badge/3%20conclu%C3%ADdas-4CAF50?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/3%20em%20aberto-FF9800?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/4%20conclu%C3%ADdas-4CAF50?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/2%20em%20aberto-FF9800?style=for-the-badge" />
 </div>
 
 - ✅ **Fase 1** — Motor NLP offline (léxico PT + negação, sem TextBlob/Google Translate)
 - ✅ **Fase 2** — Exportação do relatório, histórico de sessão e identidade visual
 - ✅ **Fase 3** — Integração com **LLMs** (Gemini) para análise de causa raiz, categoria e passos — com fallback automático
+- ✅ **Testes unitários do motor (`pytest`)** — 12 testes, rodam automaticamente via CI (GitHub Actions)
 - ⬜ **Exportação direta via API do Jira**
-- ⬜ **Testes unitários do motor (`pytest`)**
 - ⬜ **Persistência do histórico (banco de dados)**
 
 ---
