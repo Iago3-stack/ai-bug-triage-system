@@ -1,6 +1,8 @@
 # 🤖 AI Bug Triage System — IA + QA
 
-![Demo do app](assets/screenshot.png)
+![Demo animada do app](assets/demo.gif)
+
+![Tela do app](assets/screenshot.png)
 
 > 🌐 *English readers: this document is in PT-BR, but your browser can translate it automatically (right-click → "Translate").*
 
