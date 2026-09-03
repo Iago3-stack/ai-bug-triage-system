@@ -124,14 +124,24 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
   <img src="https://capsule-render.vercel.app/api?type=soft&color=gradient&customColorList=20,24,25&height=64&section=header&text=Estrutura&fontSize=24&fontColor=fff&fontAlignY=58" width="100%" />
 </div>
 
+> 🧩 **Conheça a engenharia por trás do AI Bug Triage System** — o processo completo de requisitos, casos de teste e estratégia de QA está em [📚 docs/](docs/README.md).
+
+<div align="center">
+  <a href="docs/01-requisitos.md"><img src="https://img.shields.io/badge/Requisitos-2E7CF6?style=for-the-badge&logo=bookstack&logoColor=white" /></a>
+  <a href="docs/02-casos-de-teste.md"><img src="https://img.shields.io/badge/Casos%20de%20Teste-4CAF50?style=for-the-badge&logo=checkmarx&logoColor=white" /></a>
+  <a href="docs/03-arquitetura.md"><img src="https://img.shields.io/badge/Arquitetura-9C27B0?style=for-the-badge&logo=diagramdotnet&logoColor=white" /></a>
+  <a href="docs/04-estrategia-de-qualidade.md"><img src="https://img.shields.io/badge/Estrat%C3%A9gia%20de%20QA-FF9800?style=for-the-badge&logo=quality&logoColor=white" /></a>
+</div>
+
 | Arquivo | Papel |
 |---|---|
 | 🖥️ `home.py` | Interface web (Streamlit): cabeçalho, ferramenta, export e histórico |
 | 🧠 `triagem.py` | Motor NLP: léxico PT, padrões de negação e classificação de severidade (offline) |
 | 🔮 `ia.py` | Análise por IA via Google Gemini: causa raiz, categoria e passos (com fallback) |
+| 🧪 `test_triagem.py` | 12 testes unitários do motor (rodam no CI) |
 | 📦 `requirements.txt` | Dependências pinadas |
 | 🎨 `.streamlit/config.toml` | Tema e configurações da app |
-| 📚 `docs/` | [Documentação de Engenharia de Software](docs/README.md) — requisitos, casos de teste, arquitetura e estratégia de QA |
+| 📚 `docs/` | Documentação de engenharia e qualidade |
 
 ---
 
