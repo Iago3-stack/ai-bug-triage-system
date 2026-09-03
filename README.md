@@ -24,7 +24,6 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
 </div>
 
 <div align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/Licen%C3%A7a-MIT-4CAF50?style=for-the-badge&logo=opensourceinitiative&logoColor=white" /></a>
   <img src="https://img.shields.io/github/repo-size/Iago3-stack/ai-bug-triage-system?style=for-the-badge&label=Tamanho" />
   <img src="https://img.shields.io/github/last-commit/Iago3-stack/ai-bug-triage-system?style=for-the-badge&label=%C3%9Altima%20atividade" />
   <img src="https://img.shields.io/badge/release-v1.0.0-2E7CF6?style=for-the-badge" />
@@ -158,7 +157,7 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 
 <div align="center">
   <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/Changelog-4CAF50?style=for-the-badge&logo=github&logoColor=white" /></a>
-  <a href="https://github.com/Iago3-stack/ai-bug-triage-system/stargazers"><img src="https://img.shields.io/badge/Licen%C3%A7a-MIT-4CAF50?style=for-the-badge&logo=opensourceinitiative&logoColor=white" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/Licen%C3%A7a-MIT-4CAF50?style=for-the-badge&logo=opensourceinitiative&logoColor=white" /></a>
   <img src="https://img.shields.io/badge/Autor-Iago%20Nunes-2E7CF6?style=for-the-badge&logo=github&logoColor=white" />
   <img src="https://img.shields.io/badge/GitHub-Iago3%20stack-181717?style=for-the-badge&logo=github&logoColor=white" />
 </div>
