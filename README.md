@@ -23,6 +23,13 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
   </a>
 </div>
 
+<div align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/Licen%C3%A7a-MIT-4CAF50?style=for-the-badge&logo=opensourceinitiative&logoColor=white" /></a>
+  <img src="https://img.shields.io/github/repo-size/Iago3-stack/ai-bug-triage-system?style=for-the-badge&label=Tamanho" />
+  <img src="https://img.shields.io/github/last-commit/Iago3-stack/ai-bug-triage-system?style=for-the-badge&label=%C3%9Altima%20atividade" />
+  <img src="https://img.shields.io/badge/release-v1.0.0-2E7CF6?style=for-the-badge" />
+</div>
+
 > ⭐ **Se esta triagem te ajudou, dá uma estrelinha no projeto** — quanto mais estrelas, mais QAs encontram o app na busca do GitHub. É de graça!
 
 ---
