@@ -63,6 +63,12 @@ st.info("Esta ferramenta demonstra o uso de NLP para automatizar a triagem técn
 descricao_bug = st.text_area("Entrada do Usuário (Relato do Bug):", height=150, 
                              placeholder="Ex: Estou tentando pagar e o botão não responde, estou muito frustrado!")
 
+usar_llm = st.checkbox(
+    "🔮 Usar IA (Gemini) para esta triagem",
+    value=True,
+    help="Ativa a análise por LLM. Se desmarcado, só o motor local determinístico roda."
+)
+
 if st.button("Executar Triagem Inteligente"):
         if descricao_bug:
             # --- 1. TRIAGEM NLP (MOTOR LOCAL, DETERMINÍSTICO E OFFLINE) ---
@@ -96,7 +102,7 @@ if st.button("Executar Triagem Inteligente"):
             # a análise LLM é pulada e o motor local segue no comando.
             resultado_llm = None
             erro_llm = None
-            if ia._chave():
+            if usar_llm and ia._chave():
                 with st.spinner("🔮 IA analisando causa raiz... (pode levar ~15s)"):
                     resultado_llm, erro_llm = ia.analisar_llm(descricao_limpa)
                 if resultado_llm:
