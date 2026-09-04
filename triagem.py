@@ -31,6 +31,8 @@ LE_XICO = {
     "bloqueando": -1.5, "bloqueou": -1.5, "bloqueado": -1.0,
     "quebrou": -1.5, "quebrado": -1.2, "parou": -1.2, "parando": -1.2,
     "ruim": -1.0,
+    # Lentidão percebida (média; cobre lento/lenta/lentamente/lentidão)
+    "lento": -0.7, "lenta": -0.7, "lentidão": -0.8, "lentamente": -0.7,
     # Positivos (dão equilíbrio e evitam falso-positivo)
     # "funciona" puro fica de fora: ele aparece dentro de "não funciona",
     # e se somaria contra a própria negação.

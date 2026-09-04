@@ -29,6 +29,11 @@ def test_botao_nao_responde_eh_media_ou_critica():
     assert "MÉDIA" in r["gravidade"] or "CRÍTICA" in r["gravidade"]
 
 
+def test_botao_nao_funciona_eh_media():
+    r = triar("o botão não funciona")
+    assert "MÉDIA" in r["gravidade"]
+
+
 # --- Falso-positivo: "erro" e "bug" são vocab de teste, não escalam sozinhos ---
 def test_erro_de_digitacao_nao_dispara():
     r = triar("achei um erro de digitação no rodapé da página")
