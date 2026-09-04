@@ -30,7 +30,7 @@ with col_info:
     st.markdown('<img src="https://capsule-render.vercel.app/api?type=soft&color=gradient&customColorList=20,24,25&height=56&section=header&text=Bem-vindo%20ao%20meu%20site&fontSize=22&fontColor=fff&fontAlignY=62" width="100%" />', unsafe_allow_html=True)
     hero_animado.typing_frases()
 with col_foto:    
-    st.image("o novo.png", width=250,caption="Iago Nunes")
+    st.image("assets/o novo.png", width=250,caption="Iago Nunes")
     st.markdown("#### 🚀 Construo automação de QA com IA (NLP + Gemini) | Auxiliar Administrativo | Graduando IA & ML Uniasselvi (Dez/2027)")
     st.write("📍 São Luís, MA (Disponível para Remote Global)")
     

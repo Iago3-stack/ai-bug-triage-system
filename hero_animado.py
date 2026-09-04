@@ -83,9 +83,6 @@ CSS = """
 
 MARQUEE_TEXT = "QA • IA • NLP • Gemini • Streamlit • Python • Linux • "
 
-def linha():
-    st.markdown('<div class="hero-line"></div>', unsafe_allow_html=True)
-
 def _css():
     st.markdown(CSS, unsafe_allow_html=True)
 
