@@ -97,3 +97,15 @@ def test_lentidao_flexoes_eh_media():
 def test_lente_nao_dispara_falso_positivo():
     r = triar("troquei a lente da câmera do aplicativo")
     assert "NORMAL" in r["gravidade"]
+
+
+def test_lento_nao_conta_duplo():
+    r = triar("o app está lento e carrega lentamente")
+    assert r["score"] == -0.7
+    assert sum(1 for f in r["fatores"] if "lent" in f) == 1
+
+
+def test_lento_maiusculo_e_composto():
+    r = triar("O sistema está LENTÍSSIMO e o botão não responde")
+    assert "CRÍTICA" in r["gravidade"]
+    assert any("lent" in f for f in r["fatores"])

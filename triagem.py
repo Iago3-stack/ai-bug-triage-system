@@ -3,6 +3,7 @@
 # e a lista genérica de palavras-chave antiga.
 
 import re
+import unicodedata
 
 
 # --- 1. LÉXICO: termos mapeados para pesos de severidade ---
@@ -38,11 +39,12 @@ LE_XICO = {
     "perfeito": 1.0, "excelente": 1.0, "ótimo": 1.0, "ótima": 1.0, "amei": 1.0,
 }
 
-# Padrões de léxico por RAIZ (regex): captura flexões/derivações de uma vez.
-# \blent(?!e)\w* cobre lento/lenta/lentos/lentas/lentamente/lentidão/lentíssimo...
-# e o lookahead (?!e) exclui "lente"/"lentes" (falso positivo).
+# Padrões de léxico por RAIZ (regex compilados): cobrem flexões/derivações de uma vez.
+# \blent(?!es?\b)\w* captura lento/lenta/lentos/lentas/lentamente/lentidão/lentíssimo/lentinho...
+# e o lookahead (?!es?\b) exclui apenas "lente"/"lentes" (falsos positivos).
+# O peso é somado UMA vez por padrão, mesmo se houver vários matches no texto.
 PADROES_LEXICO = [
-    (r"\blent(?!e)\w*", -0.7, "lento/lenta/lentidão"),
+    (re.compile(r"\blent(?!es?\b)\w*", re.UNICODE), -0.7),
 ]
 
 # Termos puramente técnicos que NÃO devem escalar severidade sozinhos
@@ -88,10 +90,11 @@ def _aplicar_lexico(texto):
         if termo in texto:
             score += LE_XICO[termo]
             acertos.append(termo)
-    for padrao, peso, rotulo in PADROES_LEXICO:
-        if re.search(padrao, texto):
+    for padrao, peso in PADROES_LEXICO:
+        matches = [m.group() for m in padrao.finditer(texto)]
+        if matches:
             score += peso
-            acertos.append(rotulo)
+            acertos.append(matches[0])
     return score, acertos
 
 
@@ -111,7 +114,7 @@ def triar(descricao):
 
     Retorna um dicionário com score, gravidade, sentimento, fatores e motor.
     """
-    texto = descricao.lower()
+    texto = unicodedata.normalize("NFC", descricao.lower())
 
     score_lexico, acertos_lexico = _aplicar_lexico(texto)
     score_negacao, acertos_negacao = _aplicar_negacoes(texto)
