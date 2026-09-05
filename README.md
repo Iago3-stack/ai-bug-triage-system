@@ -53,8 +53,8 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
 
 - 🔵 **Triagem em duas camadas**
   1. **Camada técnica**: termos críticos (crash, pagamento, login, segurança, 500...) escalam a severidade.
-  2. **Camada NLP**: análise de sentimento por **léxico em português** + **detecção de negação** ("não funciona", "não consigo", "parou de responder"...).
-- 🟣 **Análise por IA (Fase 3)**: quando houver chave `GEMINI_API_KEY`, o app chama o **Google Gemini** e complementa a triagem com severidade sugerida, categoria, **causa raiz provável**, passos para reproduzir e resumo técnico — tudo em JSON estruturado, com **fallback automático** para o motor local se a API falhar.
+  2. **Camada NLP**: análise de sentimento por **léxico em português** + **detecção de negação** ("não funciona", "não consigo", "parou de responder"...) + **padrões por raiz (regex)** — *lentidão* dispensa enumerar toda flexão (`lento`, `lenta`, `lentíssimo`, `lentamente`...) e o lookahead `(?!es?\b)` exclui o falso positivo *lente/lentes*.
+- 🟣 **Análise por IA (Fase 3)**: se houver chave `GEMINI_API_KEY` **e o checkbox 🔮 estiver marcado**, o app chama o **Google Gemini** e complementa a triagem com severidade sugerida, categoria, **causa raiz provável**, passos para reproduzir e resumo técnico — tudo em JSON estruturado, com **fallback automático** para o motor local se a API falhar (ou se o usuário desligar a IA para aquela triagem).
 - 🟢 **Prioridade final reconciliada**: os dois motores são combinados pela regra do **maior vence** (nenhum alerta grave é ignorado) e o app **sinaliza divergência** quando discordam, recomendando revisão humana.
 - ⚠️ **100% offline e determinístico**: o motor `triagem.py` usa apenas a biblioteca padrão do Python — sem API de tradução, sem internet, sem custo e com resultado sempre reproduzível.
 - 🔷 **Transparência de QA**: o relatório informa o **motor de análise** usado e os **fatores identificados** em cada triagem.
@@ -138,7 +138,7 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 | 🖥️ `home.py` | Interface web (Streamlit): cabeçalho, ferramenta, export e histórico |
 | 🧠 `triagem.py` | Motor NLP: léxico PT, padrões de negação e classificação de severidade (offline) |
 | 🔮 `ia.py` | Análise por IA via Google Gemini: causa raiz, categoria e passos (com fallback) |
-| 🧪 `test_triagem.py` | 12 testes unitários do motor (rodam no CI) |
+| 🧪 `test_triagem.py` | 18 testes unitários do motor (rodam no CI) |
 | 📦 `requirements.txt` | Dependências pinadas |
 | 🎨 `.streamlit/config.toml` | Tema e configurações da app |
 | 📚 `docs/` | Documentação de engenharia e qualidade |
