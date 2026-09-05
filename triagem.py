@@ -31,14 +31,19 @@ LE_XICO = {
     "bloqueando": -1.5, "bloqueou": -1.5, "bloqueado": -1.0,
     "quebrou": -1.5, "quebrado": -1.2, "parou": -1.2, "parando": -1.2,
     "ruim": -1.0,
-    # Lentidão percebida (média; cobre lento/lenta/lentamente/lentidão)
-    "lento": -0.7, "lenta": -0.7, "lentidão": -0.8, "lentamente": -0.7,
     # Positivos (dão equilíbrio e evitam falso-positivo)
     # "funciona" puro fica de fora: ele aparece dentro de "não funciona",
     # e se somaria contra a própria negação.
     "funcionou": 1.0, "funcionando": 0.6,
     "perfeito": 1.0, "excelente": 1.0, "ótimo": 1.0, "ótima": 1.0, "amei": 1.0,
 }
+
+# Padrões de léxico por RAIZ (regex): captura flexões/derivações de uma vez.
+# \blent(?!e)\w* cobre lento/lenta/lentos/lentas/lentamente/lentidão/lentíssimo...
+# e o lookahead (?!e) exclui "lente"/"lentes" (falso positivo).
+PADROES_LEXICO = [
+    (r"\blent(?!e)\w*", -0.7, "lento/lenta/lentidão"),
+]
 
 # Termos puramente técnicos que NÃO devem escalar severidade sozinhos
 # (ex: "erro" e "bug" são palavras do vocabulário de teste, não emoção)
@@ -83,6 +88,10 @@ def _aplicar_lexico(texto):
         if termo in texto:
             score += LE_XICO[termo]
             acertos.append(termo)
+    for padrao, peso, rotulo in PADROES_LEXICO:
+        if re.search(padrao, texto):
+            score += peso
+            acertos.append(rotulo)
     return score, acertos
 
 

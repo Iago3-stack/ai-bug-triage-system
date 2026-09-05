@@ -81,3 +81,19 @@ def test_aplicar_negacoes_detecta_padrao():
     score, acertos = _aplicar_negacoes("o botão não funciona")
     assert score < 0
     assert len(acertos) >= 1
+
+
+# --- Lentidão por raiz (regex PADROES_LEXICO) ---
+def test_lento_e_lenta_eh_media():
+    assert "MÉDIA" in triar("o app ficou muito lento")["gravidade"]
+    assert "MÉDIA" in triar("a página está lenta")["gravidade"]
+
+
+def test_lentidao_flexoes_eh_media():
+    r = triar("o aplicativo está lentíssimo hoje")
+    assert "MÉDIA" in r["gravidade"]
+
+
+def test_lente_nao_dispara_falso_positivo():
+    r = triar("troquei a lente da câmera do aplicativo")
+    assert "NORMAL" in r["gravidade"]
