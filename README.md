@@ -26,7 +26,8 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
 <div align="center">
   <img src="https://img.shields.io/github/repo-size/Iago3-stack/ai-bug-triage-system?style=for-the-badge&label=Tamanho" />
   <img src="https://img.shields.io/github/last-commit/Iago3-stack/ai-bug-triage-system?style=for-the-badge&label=%C3%9Altima%20atividade" />
-  <img src="https://img.shields.io/badge/release-v1.0.0-2E7CF6?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/release%20v1.0.0-2E7CF6?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/release%20v1.1.0-4CAF50?style=for-the-badge" />
   <a href="docs/README.md"><img src="https://img.shields.io/badge/Doc.%20de%20Engenharia-9C27B0?style=for-the-badge&logo=bookstack&logoColor=white" /></a>
 </div>
 
