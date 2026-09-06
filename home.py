@@ -7,6 +7,7 @@ import ia
 import hero_animado
 import jira_client
 import persistencia
+import guardrails
 
 # Configuração e Estilo
 st.set_page_config(page_title="Iago Nunes | IA & QA Portfolio", page_icon="🤖", layout="wide")
@@ -82,6 +83,20 @@ if st.button("Executar Triagem Inteligente"):
             # Trata aspas digitadas pelo usuário (evita aspas duplicadas no relatório)
             descricao_limpa = descricao_bug.strip().strip('"\'')
 
+            # Guardrails: bloqueia vazamento de credenciais/PII (token, chave, e-mail).
+            # Se detectar, mascara o relato e avisa — nada sensível vai pro Gemini,
+            # pro Jira, pro GitHub nem pro histórico persistido.
+            flag_seguranca = None
+            sensiveis = guardrails.detectar(descricao_limpa)
+            if sensiveis:
+                descricao_limpa = guardrails.mascarar(descricao_limpa)
+                flag_seguranca = (
+                    "🔒 **Credencial/PII detectada no relato** (" + ", ".join(sensiveis)
+                    + "). A informação sensível foi **mascarada** e não será enviada "
+                    "à IA, ao Jira, ao GitHub ou ao histórico."
+                )
+            st.session_state["flag_seguranca"] = flag_seguranca
+
             # --- 2. RELATÓRIO GHERKIN ---
             relatorio = f"""### 🛡️ Relatório de Triagem Técnica
 **Resumo:** {descricao_limpa[:100]}...
@@ -129,7 +144,7 @@ if st.button("Executar Triagem Inteligente"):
             if "historico" not in st.session_state:
                 st.session_state["historico"] = []
             st.session_state["historico"].append({
-                "Relato": descricao_bug,
+                "Relato": descricao_limpa,
                 "Score": round(polaridade, 2),
                 "Gravidade": gravidade,
                 "Sentimento": sentimento,
@@ -179,6 +194,9 @@ if st.button("Executar Triagem Inteligente"):
 # --- RENDERIZAÇÃO DO RESULTADO (fora do if do botão: não some em reruns) ---
 r = st.session_state.get("resultado")
 if r:
+    flag_seguranca = st.session_state.get("flag_seguranca")
+    if flag_seguranca:
+        st.warning(flag_seguranca)
     relatorio = r["relatorio"]
     gravidade = r["gravidade"]
     descricao_limpa = r["descricao_limpa"]

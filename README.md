@@ -163,7 +163,9 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 | 🧪 `test_triagem.py` | 18 testes unitários do motor (rodam no CI) |
 | 🧪 `test_jira_client.py` | 13 testes unitários do cliente Jira (rodam no CI) |
 | 📁 `persistencia.py` | Histórico persistido em `data/historico.jsonl` (JSONL local, gitignored) com snapshot fiel da triagem |
+| 🛡️ `guardrails.py` | Bloqueia vazamento de credenciais/PII: mascara tokens, chaves e e-mails antes de IA/Jira/GitHub/histórico |
 | 🧪 `test_persistencia.py` | 7 testes unitários da persistência (rodam no CI) |
+| 🧪 `test_guardrails.py` | 9 testes de detecção/máscara de credenciais e PII (rodam no CI) |
 | 📦 `requirements.txt` | Dependências pinadas |
 | 🎨 `.streamlit/config.toml` | Tema e configurações da app |
 | 📚 `docs/` | Documentação de engenharia e qualidade |
@@ -175,19 +177,19 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 </div>
 
 <div align="center">
-  <img src="https://img.shields.io/badge/7%20conclu%C3%ADdas-4CAF50?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/3%20em%20aberto-FF9800?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/8%20conclu%C3%ADdas-4CAF50?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/2%20em%20aberto-FF9800?style=for-the-badge" />
 </div>
 
 - ✅ **Fase 1** — Motor NLP offline (léxico PT + negação, sem TextBlob/Google Translate)
 - ✅ **Fase 2** — Exportação do relatório, histórico de sessão e identidade visual
 - ✅ **Fase 3** — Integração com **LLMs** (Gemini) para análise de causa raiz, categoria e passos — com fallback automático
 - ✅ **Seletor de IA por triagem (checkbox 🔮)** — você decide quando o Gemini entra: desligue para triagem 100% local ou ligue para ganhar causa raiz e passos
-- ✅ **Testes unitários do motor (`pytest`)** — 40 testes (motor + Jira + persistência), rodam automaticamente via CI (GitHub Actions)
+- ✅ **Testes unitários do motor (`pytest`)** — 50 testes (motor + Jira + persistência + guardrails), rodam automaticamente via CI (GitHub Actions)
 - ✅ **Exportação via API do Jira** — cria issue do tipo Tarefa no `iagoqa.atlassian.net` (prioridade mapeada automaticamente)
 - ✅ **Persistência do histórico (JSONL)** — cada triagem vira um snapshot fiel em `data/historico.jsonl` (local, gitignored): com IA salva o relatório completo; sem IA, só o léxico. Seletor de data + download do relatório
+- ✅ **Guardrails de entrada/saída (PII/credenciais)** — detecta e mascara token Atlassian, chaves Gemini/Google/OpenAI, tokens GitHub e e-mails digitados no relato: nada sensível vai para o Gemini, o Jira, o GitHub ou o histórico
 - ⬜ **Dashboard de QA** — agregados do histórico (CRÍTICAs por semana, função que mais falha, ticket médio)
-- ⬜ **Guardrails de entrada/saída** — validar relato (PII/credenciais) e filtrar resposta antes de exibir
 - ⬜ **RAG no histórico** — o Gemini consulta triagens passadas para responder "isso já aconteceu? como resolvemos?"
 
 ---

@@ -42,6 +42,7 @@ O sistema trabalha com **dois motores de análise** que se **reconciliam** pela 
 | `ia.py` | Análise por IA (Gemini): causa raiz, categoria, passos — **com fallback** | google-genai |
 | `jira_client.py` | Exportação Jira (REST v3): cria issues tipo `Tarefa`, prioridade mapeada | **stdlib apenas** |
 | `persistencia.py` | Histórico persistido em `data/historico.jsonl` (JSONL, fuso Brasil) | **stdlib apenas** |
+| `guardrails.py` | Detecta/mascara credenciais e PII no relato (tokens, chaves, e-mails) | **stdlib apenas** |
 | `test_triagem.py` | Testes unitários do motor | pytest |
 | `test_jira_client.py` | Testes do cliente Jira | pytest |
 | `test_persistencia.py` | Testes da persistência (fuso, append, filtro por data, vínculo Jira) | pytest |
