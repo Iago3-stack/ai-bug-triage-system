@@ -306,7 +306,7 @@ if not jira_client.configurado():
         j_email = st.text_input("E-mail Atlassian", key="jira_email")
         j_token = st.text_input("API Token", type="password", key="jira_token")
         j_key = st.text_input("Chave do projeto", placeholder="ex.: KAN", key="jira_key")
-        j_issue_type = st.text_input("Tipo de item (padrão: Bug)", placeholder="ex.: Tarefa", key="jira_issue_type")
+        j_issue_type = st.text_input("Tipo de item (padrão: Tarefa)", placeholder="ex.: Tarefa", key="jira_issue_type")
         if st.button("Salvar configuração (sessão)", use_container_width=True):
             jira_client.configurar(j_email, j_token, j_key, j_issue_type)
             if jira_client.configurado():

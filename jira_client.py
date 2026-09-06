@@ -38,7 +38,7 @@ JIRA_BASE_URL = _env_var("JIRA_URL", "https://iagoqa.atlassian.net").rstrip("/")
 JIRA_EMAIL = _env_var("JIRA_EMAIL")
 JIRA_API_TOKEN = _env_var("JIRA_API_TOKEN")
 JIRA_PROJECT_KEY = _env_var("JIRA_PROJECT_KEY")
-JIRA_ISSUE_TYPE = _env_var("JIRA_ISSUE_TYPE", "Bug")
+JIRA_ISSUE_TYPE = _env_var("JIRA_ISSUE_TYPE", "Tarefa")
 
 # Mapeia a gravidade da triagem para a prioridade padrão do Jira.
 PRIORIDADES_JIRA = {

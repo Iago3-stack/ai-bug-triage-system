@@ -20,6 +20,16 @@ def test_registrar_e_carregar(tmp_path, monkeypatch):
     assert registros[0]["resumo"] == "bug 1"
 
 
+def test_timestamp_usa_fuso_local_brasil(tmp_path, monkeypatch):
+    from datetime import datetime
+    _caminho_tmp(tmp_path, monkeypatch)
+    registro = persistencia.registrar_triagem({"resumo": "fuso"})
+    agora_local = datetime.now(persistencia._FUSO)
+    # o data_hora deve trazer o offset -03:00 (Brasília) e bater com a hora local
+    assert registro["data_hora"].endswith("-03:00")
+    assert registro["data_hora"][11:13] == agora_local.strftime("%H")
+
+
 def test_append_acumula_varias_triagens(tmp_path, monkeypatch):
     _caminho_tmp(tmp_path, monkeypatch)
     persistencia.registrar_triagem({"resumo": "a"})

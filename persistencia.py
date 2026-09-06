@@ -3,9 +3,11 @@ import os
 import pathlib
 import uuid
 from datetime import date, datetime
+from zoneinfo import ZoneInfo
 
 _RAIZ = pathlib.Path(__file__).resolve().parent
 _ARQUIVO_PADRAO = _RAIZ / "data" / "historico.jsonl"
+_FUSO = ZoneInfo(os.environ.get("PERSISTENCIA_FUSO", "America/Sao_Paulo"))
 
 
 def _caminho() -> pathlib.Path:
@@ -27,7 +29,7 @@ def _reescrever(registros: list[dict]) -> None:
 
 
 def registrar_triagem(dados: dict) -> dict:
-    agora = datetime.now().astimezone()
+    agora = datetime.now(_FUSO)
     registro = {
         "id": uuid.uuid4().hex[:12],
         "data_hora": agora.isoformat(timespec="seconds"),
