@@ -14,6 +14,9 @@ _PADROES: dict[str, re.Pattern] = {
     "token GitHub (clássico)": re.compile(r"gh[pousr]_[A-Za-z0-9]{30,}"),
     "token GitHub (fine-grained)": re.compile(r"github_pat_[A-Za-z0-9_]{40,}"),
     "e-mail": re.compile(r"(?<![A-Za-z0-9])[A-Za-z0-9._%+\-]+@[A-Za-z0-9\-]+(?:\.[A-Za-z0-9\-]+)+"),
+    "senha (com números)": re.compile(r"\b(?:senha|pin)\b[:\s\-]*\d[\d\s.\-]{5,}"),
+    "telefone": re.compile(r"\(?\d{2}\)?\s*\d{4,5}[-.\s]?\d{4}"),
+    "CPF": re.compile(r"\d{3}\.?\d{3}\.?\d{3}[-.]?\d{2}"),
 }
 
 MANCER_ADOR = "***"
