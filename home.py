@@ -6,6 +6,7 @@ from triagem import triar
 import ia
 import hero_animado
 import jira_client
+import persistencia
 
 # Configuração e Estilo
 st.set_page_config(page_title="Iago Nunes | IA & QA Portfolio", page_icon="🤖", layout="wide")
@@ -134,6 +135,33 @@ if st.button("Executar Triagem Inteligente"):
                 "Sentimento": sentimento,
             })
 
+            # --- 3.5 PERSISTÊNCIA (JSONL): snapshot fiel do que foi executado ---
+            snapshot = {
+                "resumo": descricao_limpa[:100],
+                "descricao": descricao_limpa,
+                "motor": motor,
+                "gravidade": gravidade,
+                "score": round(polaridade, 2),
+                "sentimento": sentimento,
+                "fatores": fatores,
+                "usou_ia": bool(usar_llm),
+            }
+            if resultado_llm:
+                snapshot.update({
+                    "modelo_ia": llm_modelo,
+                    "severidade_ia": resultado_llm["severidade"],
+                    "categoria_ia": resultado_llm["categoria"],
+                    "causa_raiz_ia": resultado_llm["causa_raiz"],
+                    "resumo_tecnico_ia": resultado_llm["resumo_tecnico"],
+                    "passos_ia": resultado_llm["passos_repro"],
+                    "prioridade_final": prioridade_final,
+                    "divergente": divergente,
+                })
+            else:
+                snapshot["erro_ia"] = erro_llm
+            snapshot["relatorio_completo"] = relatorio
+            persistencia.registrar_triagem(snapshot)
+
             # --- 4. GUARDA O RESULTADO (sobrevive a reruns dos botões de exportação) ---
             st.session_state["resultado"] = {
                 "descricao_limpa": descricao_limpa,
@@ -212,6 +240,7 @@ if r:
                 )
             if ok_export:
                 st.session_state["exportacao_jira"] = (True, resultado_jira["key"], resultado_jira["url"])
+                persistencia.registrar_exportacao_jira(resultado_jira["key"], resultado_jira["url"])
             else:
                 st.session_state["exportacao_jira"] = (False, None, erro_jira)
         else:
@@ -236,6 +265,40 @@ if r:
                      use_container_width=True, hide_index=True)
         if st.button("🗑️ Limpar histórico"):
             st.session_state["historico"] = []
+
+# --- 6.5 HISTÓRICO PERSISTIDO (JSONL) ---
+registros_totais = persistencia.carregar_registros()
+if registros_totais:
+    with st.expander(f"📁 Histórico persistido (JSONL) — {len(registros_totais)} triagem(ns) salva(s)"):
+        datas = persistencia.datas_disponiveis()
+        data_sel = st.selectbox("📅 Escolha a data", datas, key="hp_data")
+        do_dia = persistencia.registros_por_data(data_sel)
+        st.dataframe(pd.DataFrame([
+            {
+                "Hora": r["data_hora"][11:19],
+                "Resumo": r["resumo"],
+                "Gravidade": r["gravidade"],
+                "Score": r["score"],
+                "IA": "sim" if r.get("usou_ia") else "não",
+                "Jira": r.get("jira_key") or "—",
+            } for r in do_dia
+        ]), use_container_width=True, hide_index=True)
+        rotulos = [
+            f"{r['data_hora'][11:19]} · {r['gravidade']} · score {r['score']:.2f} · "
+            f"IA {'sim' if r.get('usou_ia') else 'não'} · Jira {r.get('jira_key') or '—'}"
+            for r in do_dia
+        ]
+        indice = st.selectbox("📄 Selecione o relatório", range(len(do_dia)),
+                              format_func=lambda i: rotulos[i], key="hp_rel")
+        reg = do_dia[indice]
+        st.code(reg["relatorio_completo"], language="markdown")
+        st.download_button(
+            "📥 Baixar relatório desta triagem (.md)",
+            data=reg["relatorio_completo"].encode("utf-8"),
+            file_name=f"relatorio_{reg['data']}_{reg['data_hora'][11:16].replace(':', 'h')}.md",
+            mime="text/markdown",
+            key="hp_download",
+        )
 # --- CONFIGURAÇÃO DO JIRA (sidebar) ---
 if not jira_client.configurado():
     with st.sidebar.expander("🔑 Jira — configurar exportação"):

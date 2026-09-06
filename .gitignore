@@ -28,6 +28,7 @@ atividades.json
 historico.json
 *.csv
 *.xlsx
+data/
 
 # Backups
 backup_*/

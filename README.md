@@ -48,6 +48,7 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
   <img src="https://img.shields.io/badge/Relat%C3%B3rio%20Gherkin-25D366?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Exporta%C3%A7%C3%A3o%20(MD%2FGitHub%2FJira)-FF9800?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Hist%C3%B3rico%20de%20sess%C3%A3o-9E9E9E?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Hist%C3%B3rico%20persistido%20%28JSONL%29-25D366?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Sem%20falsos%20positivos-607D8B?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Identidade%20visual-FF4B4B?style=for-the-badge" />
 </div>
@@ -160,7 +161,9 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 | 🔗 `jira_client.py` | Cliente da API REST v3 do Jira: cria issues (Bug) com prioridade mapeada |
 | 🔮 `ia.py` | Análise por IA via Google Gemini: causa raiz, categoria e passos (com fallback) |
 | 🧪 `test_triagem.py` | 18 testes unitários do motor (rodam no CI) |
-| 🧪 `test_jira_client.py` | 9 testes unitários do cliente Jira (rodam no CI) |
+| 🧪 `test_jira_client.py` | 13 testes unitários do cliente Jira (rodam no CI) |
+| 📁 `persistencia.py` | Histórico persistido em `data/historico.jsonl` (JSONL local, gitignored) com snapshot fiel da triagem |
+| 🧪 `test_persistencia.py` | 7 testes unitários da persistência (rodam no CI) |
 | 📦 `requirements.txt` | Dependências pinadas |
 | 🎨 `.streamlit/config.toml` | Tema e configurações da app |
 | 📚 `docs/` | Documentação de engenharia e qualidade |
@@ -172,17 +175,17 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 </div>
 
 <div align="center">
-  <img src="https://img.shields.io/badge/6%20conclu%C3%ADdas-4CAF50?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/2%20em%20aberto-FF9800?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/7%20conclu%C3%ADdas-4CAF50?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/1%20em%20aberto-FF9800?style=for-the-badge" />
 </div>
 
 - ✅ **Fase 1** — Motor NLP offline (léxico PT + negação, sem TextBlob/Google Translate)
 - ✅ **Fase 2** — Exportação do relatório, histórico de sessão e identidade visual
 - ✅ **Fase 3** — Integração com **LLMs** (Gemini) para análise de causa raiz, categoria e passos — com fallback automático
 - ✅ **Seletor de IA por triagem (checkbox 🔮)** — você decide quando o Gemini entra: desligue para triagem 100% local ou ligue para ganhar causa raiz e passos
-- ✅ **Testes unitários do motor (`pytest`)** — 27 testes (motor + cliente Jira), rodam automaticamente via CI (GitHub Actions)
-- ✅ **Exportação via API do Jira** — cria issue do tipo Bug no `iagoqa.atlassian.net` (prioridade mapeada automaticamente)
-- ⬜ **Persistência do histórico (banco de dados)**
+- ✅ **Testes unitários do motor (`pytest`)** — 40 testes (motor + Jira + persistência), rodam automaticamente via CI (GitHub Actions)
+- ✅ **Exportação via API do Jira** — cria issue do tipo Tarefa no `iagoqa.atlassian.net` (prioridade mapeada automaticamente)
+- ✅ **Persistência do histórico (JSONL)** — cada triagem vira um snapshot fiel em `data/historico.jsonl` (local, gitignored): com IA salva o relatório completo; sem IA, só o léxico. Seletor de data + download do relatório
 
 ---
 
