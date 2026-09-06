@@ -95,10 +95,10 @@ if st.button("Executar Triagem Inteligente"):
 - ENTÃO a prioridade deve ser definida como {gravidade}."""
 
             # --- 2.5 ANÁLISE POR IA (LLM opcional; fallback seguro) ---
-            # Se não houver chave GEMINI_API_KEY configurada (st.secrets ou .env),
-            # a análise LLM é pulada e o motor local segue no comando.
             resultado_llm = None
             erro_llm = None
+            prioridade_final = None
+            divergente = None
             if usar_llm and ia._chave():
                 with st.spinner("🔮 IA analisando causa raiz... (pode levar ~15s)"):
                     resultado_llm, erro_llm = ia.analisar_llm(descricao_limpa)
@@ -134,85 +134,108 @@ if st.button("Executar Triagem Inteligente"):
                 "Sentimento": sentimento,
             })
 
-            # --- 4. INTERFACE DASHBOARD ---
-            st.divider()
-            c1, c2, c3 = st.columns(3)
-            c1.metric("Gravidade IA", gravidade)
-            c2.metric("Sentimento", f"{polaridade:.2f}")
-            c3.metric("Status", "Análise Determinística OK")
-
-            st.markdown("### 📝 Relatório Gerado! ✅")
-            st.code(relatorio, language="markdown")
-
-            if resultado_llm:
-                st.markdown("### 🔮 Análise por IA (Gemini)")
-                ca, cb, cc = st.columns(3)
-                ca.metric("Severidade (IA)", resultado_llm["severidade"].upper())
-                cb.metric("Categoria", resultado_llm["categoria"].capitalize())
-                cc.metric("Modelo", ia.MODELO.replace("gemini-", "Gemini "))
-                st.write(f"**Causa raiz provável:** {resultado_llm['causa_raiz']}")
-                st.write("**Passos para reproduzir:**")
-                for i, p in enumerate(resultado_llm["passos_repro"], 1):
-                    st.write(f"{i}. {p}")
-                st.caption("💡 Análise gerada por LLM — use como suporte à triagem determinística do motor local.")
-
-                st.markdown("---")
-                st.markdown(f"## 🎯 Prioridade Final: {prioridade_final}")
-                if divergente:
-                    st.warning(f"⚠️ Divergência detectada: motor local **{gravidade}** x IA **{resultado_llm['severidade'].upper()}**. Sinais conflitantes — revisão humana recomendada.")
-                else:
-                    st.success("✅ Motores concordam na prioridade.")
-            elif erro_llm:
-                st.info("🔮 Análise por IA indisponível no momento (API instável/sem resposta). O motor local determinístico segue no controle.")
-
-            # --- 5. EXPORTAR: baixar relatório + abrir no GitHub + enviar ao Jira ---
-            colunas = st.columns(3)
-            colunas[0].download_button(
-                "📥 Baixar relatório (.md)",
-                data=relatorio.encode("utf-8"),
-                file_name="relatorio_triagem_bug.md",
-                mime="text/markdown",
-            )
-            titulo = quote(descricao_limpa[:80])
-            corpo = quote(relatorio[:1200])
-            colunas[1].link_button(
-                "🐙 Nova Issue no GitHub",
-                f"https://github.com/iago3-stack/ai-bug-triage-system/issues/new?title={titulo}&body={corpo}",
-            )
-            if colunas[2].button("📋 Exportar para Jira", use_container_width=True, key="btn_exportar_jira"):
-                if jira_client.configurado():
-                    with st.spinner("📋 Enviando issue ao Jira..."):
-                        ok_export, resultado_jira, erro_jira = jira_client.criar_issue(
-                            descricao_limpa[:100], relatorio, gravidade
-                        )
-                    if ok_export:
-                        st.session_state["exportacao_jira"] = (True, resultado_jira["key"], resultado_jira["url"])
-                    else:
-                        st.session_state["exportacao_jira"] = (False, None, erro_jira)
-                else:
-                    st.session_state["exportacao_jira"] = (
-                        False, None, "Configure o e-mail, o API token e a chave do projeto no sidebar."
-                    )
-
-            if "exportacao_jira" in st.session_state:
-                ok_export, chave_issue, detalhe = st.session_state["exportacao_jira"]
-                if ok_export:
-                    st.success(f"✅ Issue **{chave_issue}** criada no Jira!")
-                    st.markdown(f"[🔗 Abrir issue no Jira]({detalhe})")
-                else:
-                    st.error(f"❌ Não foi possível exportar para o Jira: {detalhe}")
-
-            st.info("📋 O relatório também pode ser copiado direto da caixa acima para o Jira ou GitHub!")
-            st.success("Triagem finalizada com sucesso! ✅")
-
-            # --- 6. HISTÓRICO (TABELA pandas) ---
-            with st.expander(f"📊 Histórico de triagens desta sessão ({len(st.session_state['historico'])})"):
-                st.dataframe(pd.DataFrame(st.session_state["historico"]),
-                             use_container_width=True, hide_index=True)
-                if st.button("🗑️ Limpar histórico"):
-                    st.session_state["historico"] = []
+            # --- 4. GUARDA O RESULTADO (sobrevive a reruns dos botões de exportação) ---
+            st.session_state["resultado"] = {
+                "descricao_limpa": descricao_limpa,
+                "relatorio": relatorio,
+                "gravidade": gravidade,
+                "polaridade": polaridade,
+                "resultado_llm": resultado_llm,
+                "erro_llm": erro_llm,
+                "prioridade_final": prioridade_final,
+                "divergente": divergente,
+            }
         else:
             st.warning("Digite a descrição do bug para executar a triagem.")
+
+# --- RENDERIZAÇÃO DO RESULTADO (fora do if do botão: não some em reruns) ---
+r = st.session_state.get("resultado")
+if r:
+    relatorio = r["relatorio"]
+    gravidade = r["gravidade"]
+    descricao_limpa = r["descricao_limpa"]
+    resultado_llm = r["resultado_llm"]
+    erro_llm = r["erro_llm"]
+    prioridade_final = r["prioridade_final"]
+    divergente = r["divergente"]
+
+    # --- 4. INTERFACE DASHBOARD ---
+    st.divider()
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Gravidade IA", gravidade)
+    c2.metric("Sentimento", f"{r['polaridade']:.2f}")
+    c3.metric("Status", "Análise Determinística OK")
+
+    st.markdown("### 📝 Relatório Gerado! ✅")
+    st.code(relatorio, language="markdown")
+
+    if resultado_llm:
+        st.markdown("### 🔮 Análise por IA (Gemini)")
+        ca, cb, cc = st.columns(3)
+        ca.metric("Severidade (IA)", resultado_llm["severidade"].upper())
+        cb.metric("Categoria", resultado_llm["categoria"].capitalize())
+        cc.metric("Modelo", ia.MODELO.replace("gemini-", "Gemini "))
+        st.write(f"**Causa raiz provável:** {resultado_llm['causa_raiz']}")
+        st.write("**Passos para reproduzir:**")
+        for i, p in enumerate(resultado_llm["passos_repro"], 1):
+            st.write(f"{i}. {p}")
+        st.caption("💡 Análise gerada por LLM — use como suporte à triagem determinística do motor local.")
+
+        st.markdown("---")
+        st.markdown(f"## 🎯 Prioridade Final: {prioridade_final}")
+        if divergente:
+            st.warning(f"⚠️ Divergência detectada: motor local **{gravidade}** x IA **{resultado_llm['severidade'].upper()}**. Sinais conflitantes — revisão humana recomendada.")
+        else:
+            st.success("✅ Motores concordam na prioridade.")
+    elif erro_llm:
+        st.info("🔮 Análise por IA indisponível no momento (API instável/sem resposta). O motor local determinístico segue no controle.")
+
+    # --- 5. EXPORTAR: baixar relatório + abrir no GitHub + enviar ao Jira ---
+    colunas = st.columns(3)
+    colunas[0].download_button(
+        "📥 Baixar relatório (.md)",
+        data=relatorio.encode("utf-8"),
+        file_name="relatorio_triagem_bug.md",
+        mime="text/markdown",
+    )
+    titulo = quote(descricao_limpa[:80])
+    corpo = quote(relatorio[:1200])
+    colunas[1].link_button(
+        "🐙 Nova Issue no GitHub",
+        f"https://github.com/iago3-stack/ai-bug-triage-system/issues/new?title={titulo}&body={corpo}",
+    )
+    if colunas[2].button("📋 Exportar para Jira", use_container_width=True, key="btn_exportar_jira"):
+        if jira_client.configurado():
+            with st.spinner("📋 Enviando issue ao Jira..."):
+                ok_export, resultado_jira, erro_jira = jira_client.criar_issue(
+                    descricao_limpa[:100], relatorio, gravidade
+                )
+            if ok_export:
+                st.session_state["exportacao_jira"] = (True, resultado_jira["key"], resultado_jira["url"])
+            else:
+                st.session_state["exportacao_jira"] = (False, None, erro_jira)
+        else:
+            st.session_state["exportacao_jira"] = (
+                False, None, "Configure o e-mail, o API token e a chave do projeto no sidebar."
+            )
+
+    if "exportacao_jira" in st.session_state:
+        ok_export, chave_issue, detalhe = st.session_state["exportacao_jira"]
+        if ok_export:
+            st.success(f"✅ Issue **{chave_issue}** criada no Jira!")
+            st.markdown(f"[🔗 Abrir issue no Jira]({detalhe})")
+        else:
+            st.error(f"❌ Não foi possível exportar para o Jira: {detalhe}")
+
+    st.info("📋 O relatório também pode ser copiado direto da caixa acima para o Jira ou GitHub!")
+    st.success("Triagem finalizada com sucesso! ✅")
+
+    # --- 6. HISTÓRICO (TABELA pandas) ---
+    with st.expander(f"📊 Histórico de triagens desta sessão ({len(st.session_state['historico'])})"):
+        st.dataframe(pd.DataFrame(st.session_state["historico"]),
+                     use_container_width=True, hide_index=True)
+        if st.button("🗑️ Limpar histórico"):
+            st.session_state["historico"] = []
 # --- CONFIGURAÇÃO DO JIRA (sidebar) ---
 if not jira_client.configurado():
     with st.sidebar.expander("🔑 Jira — configurar exportação", expanded=True):
