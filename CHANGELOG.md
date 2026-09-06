@@ -4,6 +4,11 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v1.2.1] - 2026-09-06
+
+### Corrigido
+- **Teste do guardrails dependia do `.env` local** — `test_detectar_token_atlassian` usava o token real do ambiente, que só existe na sua máquina; no CI (sem `.env`) o token ficava vazio e o teste falhava (49/50). Agora usa token sintético no padrão `ATATT3xFfG...`, deixando o **CI verde**.
+
 ## [v1.2.0] - 2026-09-06
 
 ### Corrigido

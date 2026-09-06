@@ -2,10 +2,8 @@ import guardrails
 
 
 def test_detectar_token_atlassian():
-    import jira_client
-    jira_client._ler_env()
-    token = jira_client.JIRA_API_TOKEN
-    assert guardrails.detectar(f"bug ao usar {token} no login") == ["token Atlassian"]
+    token_sintetico = "ATATT3xFfG" + "A" * 50
+    assert guardrails.detectar(f"bug ao usar {token_sintetico} no login") == ["token Atlassian"]
 
 
 def test_detectar_chave_gemini():
