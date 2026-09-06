@@ -28,6 +28,7 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
   <img src="https://img.shields.io/github/last-commit/Iago3-stack/ai-bug-triage-system?style=for-the-badge&label=%C3%9Altima%20atividade" />
   <img src="https://img.shields.io/badge/release%20v1.0.0-2E7CF6?style=for-the-badge" />
   <img src="https://img.shields.io/badge/release%20v1.1.0-4CAF50?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/release%20v1.2.0-FF7043?style=for-the-badge" />
   <a href="docs/README.md"><img src="https://img.shields.io/badge/Doc.%20de%20Engenharia-9C27B0?style=for-the-badge&logo=bookstack&logoColor=white" /></a>
 </div>
 
@@ -161,10 +162,10 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 | 🔗 `jira_client.py` | Cliente da API REST v3 do Jira: cria issues (Tarefa) com prioridade mapeada |
 | 🔮 `ia.py` | Análise por IA via Google Gemini: causa raiz, categoria e passos (com fallback) |
 | 🧪 `test_triagem.py` | 18 testes unitários do motor (rodam no CI) |
-| 🧪 `test_jira_client.py` | 13 testes unitários do cliente Jira (rodam no CI) |
+| 🧪 `test_jira_client.py` | 15 testes unitários do cliente Jira (rodam no CI) |
 | 📁 `persistencia.py` | Histórico persistido em `data/historico.jsonl` (JSONL local, gitignored) com snapshot fiel da triagem |
 | 🛡️ `guardrails.py` | Bloqueia vazamento de credenciais/PII: mascara tokens, chaves e e-mails antes de IA/Jira/GitHub/histórico |
-| 🧪 `test_persistencia.py` | 7 testes unitários da persistência (rodam no CI) |
+| 🧪 `test_persistencia.py` | 8 testes unitários da persistência (rodam no CI) |
 | 🧪 `test_guardrails.py` | 9 testes de detecção/máscara de credenciais e PII (rodam no CI) |
 | 📦 `requirements.txt` | Dependências pinadas |
 | 🎨 `.streamlit/config.toml` | Tema e configurações da app |

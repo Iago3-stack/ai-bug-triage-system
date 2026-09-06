@@ -4,7 +4,7 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
-## [Não lançado]
+## [v1.2.0] - 2026-09-06
 
 ### Corrigido
 - **Credenciais do Jira não eram lidas do `.env`** — `jira_client` agora usa `_env_var()` (variável de ambiente com fallback no `.env`), mesmo padrão do `ia.py`; sem isso o `streamlit run` mostrava o opção "configurar no sidebar" mesmo com `.env` preenchida.
@@ -12,6 +12,10 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 - **HTTP 400 ao exportar para o Jira com dados do sidebar** — a chave do projeto e o tipo de item digitados são normalizados (`strip` + chave em maiúsculas), evitando erro por espaço ou caixa errada (`kan` → `KAN`).
 - **Fuso horário do histórico** — `persistencia.py` usa `ZoneInfo("America/Sao_Paulo")` em vez de `astimezone()`; no servidor da Streamlit Cloud (UTC) a hora caía 3h à frente. Agora o `data_hora` sai sempre no fuso local brasileiro (`-03:00`).
 - **Tipo de item padrão `Bug` → `Tarefa`** — o projeto de template Kanban (ex.: `KAN`) não aceita `Bug` e devolvia HTTP 400 enganoso ("projeto não existe"). O default agora é `Tarefa`, compatível; o placeholder do sidebar também foi atualizado.
+
+### Alterado
+- **Spinner da IA acolhedor** — o texto durante a análise por IA agora é "🔮 A IA está analisando sua triagem — pode levar um pouco..." (sem prazo fixo que gerava ansiedade).
+- **Configuração do Jira recolhida por padrão** — o expander "🔑 Jira — configurar exportação" do sidebar começa fechado, deixando a interface mais limpa para quem usa `.env`/Secrets.
 
 ### Adicionado
 - **Guardrails de entrada/saída (PII/credenciais)** — novo `guardrails.py`: detecta e **mascara** tokens Atlassian, chaves Gemini/Google/OpenAI, tokens GitHub e e-mails digitados no relato. Se detectar, o texto sensível nunca vai para o Gemini, o Jira, o GitHub nem o histórico — só o aviso "máscara aplicada" aparece. Testes (9 novos). Total da suíte: **50 testes**.
