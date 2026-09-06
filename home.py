@@ -100,7 +100,7 @@ if st.button("Executar Triagem Inteligente"):
             prioridade_final = None
             divergente = None
             if usar_llm and ia._chave():
-                with st.spinner("🔮 IA analisando causa raiz... (pode levar ~15s)"):
+                with st.spinner("🔮 A IA está analisando sua triagem — pode levar um pouco..."):
                     resultado_llm, erro_llm = ia.analisar_llm(descricao_limpa)
                 if resultado_llm:
                     llm_modelo = ia.MODELO
