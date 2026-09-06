@@ -42,10 +42,11 @@ O sistema trabalha com **dois motores de análise** que se **reconciliam** pela 
 | `ia.py` | Análise por IA (Gemini): causa raiz, categoria, passos — **com fallback** | google-genai |
 | `jira_client.py` | Exportação Jira (REST v3): cria issues tipo `Tarefa`, prioridade mapeada | **stdlib apenas** |
 | `persistencia.py` | Histórico persistido em `data/historico.jsonl` (JSONL, fuso Brasil) | **stdlib apenas** |
-| `guardrails.py` | Detecta/mascara credenciais e PII no relato (tokens, chaves, e-mails) | **stdlib apenas** |
-| `test_triagem.py` | Testes unitários do motor | pytest |
-| `test_jira_client.py` | Testes do cliente Jira | pytest |
-| `test_persistencia.py` | Testes da persistência (fuso, append, filtro por data, vínculo Jira) | pytest |
+| `guardrails.py` | Detecta/mascara credenciais e PII no relato (tokens, chaves, e-mails, senhas numéricas, telefones, CPFs) | **stdlib apenas** |
+| `test_triagem.py` | Testes unitários do motor (18) | pytest |
+| `test_jira_client.py` | Testes do cliente Jira (15) | pytest |
+| `test_persistencia.py` | Testes da persistência (8): fuso, append, filtro por data, vínculo Jira | pytest |
+| `test_guardrails.py` | Testes dos guardrails (9): detecção/máscara de PII e falso-positivo | pytest |
 | `.streamlit/config.toml` | Tema e configurações visuais | streamlit |
 
 ## 3. Decisões de design
@@ -58,9 +59,10 @@ O sistema trabalha com **dois motores de análise** que se **reconciliam** pela 
 ## 4. Fluxo de processamento
 
 1. Usuário informa a descrição do bug.
-2. `home.py` chama `triagem.py` → score local (léxico + negação) e sentimento.
-3. Se houver chave `GEMINI_API_KEY`, `ia.py` enriquece com causa raiz/categoria; se falhar, **fallback** para o local.
-4. O **reconciliador** combina os resultados (maior vence) e marca divergência quando discordam.
-5. Gera o relatório com severidade, fatores e **Gherkin**.
-6. Usuário pode **exportar** (.md), abrir **Issue** no GitHub ou enviar ao **Jira**; histórico fica na tabela da sessão.
-7. Cada triagem é **persistida** como snapshot fiel em `data/historico.jsonl` (JSONL local, fuso `America/Sao_Paulo`); a issue do Jira criada depois é vinculada ao último registro.
+2. `home.py` chama `guardrails.py` → se houver credencial/PII (token, chave, e-mail, senha numérica, telefone, CPF), o relato é **mascarado** e o usuário é avisado — nada sensível segue para os próximos passos.
+3. `home.py` chama `triagem.py` → score local (léxico + negação) e sentimento.
+4. Se houver chave `GEMINI_API_KEY`, `ia.py` enriquece com causa raiz/categoria; se falhar, **fallback** para o local.
+5. O **reconciliador** combina os resultados (maior vence) e marca divergência quando discordam.
+6. Gera o relatório com severidade, fatores e **Gherkin**.
+7. Usuário pode **exportar** (.md), abrir **Issue** no GitHub ou enviar ao **Jira**; histórico fica na tabela da sessão.
+8. Cada triagem é **persistida** como snapshot fiel em `data/historico.jsonl` (JSONL local, fuso `America/Sao_Paulo`); a issue do Jira criada depois é vinculada ao último registro.

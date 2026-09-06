@@ -1,6 +1,6 @@
 # 02 — Casos de Teste
 
-Casos de teste documentados em **Gherkin** (padrão BDD) para validar o motor de triagem. Estes casos espelham os **12 testes automatizados** de `test_triagem.py`, que rodam no **CI** (GitHub Actions) a cada push.
+Casos de teste documentados em **Gherkin** (padrão BDD) para validar o motor de triagem. Estes casos espelham os testes automatizados de `test_triagem.py` (motor: **18 testes**), que rodam no **CI** (GitHub Actions) a cada push junto com os demais (Jira, persistência e guardrails — **55 no total**).
 
 ## Matriz de casos de teste
 
@@ -44,4 +44,22 @@ pip install -r requirements-dev.txt
 pytest -v
 ```
 
-Resultado esperado: **12 passed** (também validado automaticamente pelo CI).
+Resultado esperado: **55 passed** (18 do motor + 15 do Jira + 8 da persistência + 9 dos guardrails — também validado automaticamente pelo CI).
+
+## Guardrails (casos de teste da camada de segurança)
+
+A camada `guardrails.py` detecta e mascara credenciais/PII antes do envio a IA/Jira/GitHub/histórico (**9 testes**):
+
+| ID | Cenário | Entrada (relato) | Esperado |
+|---|---|---|---|
+| GR-01 | Token Atlassian | `ATATT3xFfG...` | detectado + mascarado |
+| GR-02 | Chave Gemini/Google | `AQ.Ab...` / `AIza...` | detectado + mascarado |
+| GR-03 | Chave OpenAI / GitHub | `sk-...` / `ghp_...` / `github_pat_...` | detectado + mascarado |
+| GR-04 | E-mail | `teste.qa@exemplo.com` | detectado + mascarado |
+| GR-05 | **Senha numérica** | `senha 4323454321` | detectado + mascarado |
+| GR-06 | **Telefone** | `(11) 98888-7777` | detectado + mascarado |
+| GR-07 | **CPF** | `123.456.789-00` | detectado + mascarado |
+| GR-08 | Texto comum | "o app travou no pagamento" | **nada** detectado (falso-positivo zero) |
+| GR-09 | Número comum | "versão 2026 do sistema" | **não** mascarar |
+
+> Aviso exibido ao usuário: "🔒 Credencial/PII detectada no relato (e-mail, senha (com números), telefone, CPF). A informação sensível foi mascarada e não será enviada à IA, ao Jira, ao GitHub ou ao histórico."

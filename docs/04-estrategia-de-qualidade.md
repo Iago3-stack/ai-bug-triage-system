@@ -12,10 +12,11 @@ O objetivo deste documento é mostrar que o app não foi apenas "escrito e publi
 |---|---|
 | **Determinismo** | Motor local 100% offline, mesma entrada → mesma saída (RNF-01) |
 | **Controle de falso-positivo** | Palavras de vocabulário de teste (`erro`, `bug`...) não disparam severidade (RF-05) |
-| **Cobertura de testes** | 12 testes `pytest` cobrindo severidade, negação, sentimento e determinismo |
+| **Cobertura de testes** | 55 testes `pytest` — motor (18), Jira (15), persistência (8) e guardrails (9) — cobrindo severidade, negação, sentimento, determinismo, exportação, fuso e PII |
 | **Automação (CI)** | GitHub Actions roda os testes a cada push → badge de qualidade |
 | **Transparência** | Relatório informa o motor usado (auditoria) |
 | **Robustez** | Fallback automático para o motor local quando a IA falha |
+| **Privacidade (Guardrails)** | Credenciais/PII (tokens, chaves, e-mails, senhas numéricas, telefones e CPFs) são detectadas e **mascaradas** antes do envio a IA/Jira/GitHub/histórico |
 
 ## 3. Como o processo QA reduz risco
 
@@ -34,4 +35,5 @@ O objetivo deste documento é mostrar que o app não foi apenas "escrito e publi
 
 - ~~Integração direta com a **API do Jira**~~ ✅ — exportação nativa via `jira_client.py` (REST v3, tipo `Tarefa`).
 - ~~**Persistência** do histórico~~ ✅ — snapshot fiel em `data/historico.jsonl` (JSONL local, gitignored): com IA grava o relatório completo; sem IA, só o léxico. Seletor de data + download em Markdown. *Futuro:* migrar para banco quando houver necessidade de consultas/agregações ou página por visitante.
-- Ampliar a **cobertura de testes** (novos cenários de negação e edge cases).
+- ~~**Guardrails de PII/credenciais**~~ ✅ — `guardrails.py` mascara tokens, chaves, e-mails, senhas numéricas, telefones e CPFs antes do envio a IA/Jira/GitHub/histórico (descoberto em teste real e validado com relato contendo os 4 tipos de dados).
+- Ampliar ainda mais a **cobertura de testes** (novos cenários de negação, edge cases e guardrails).
