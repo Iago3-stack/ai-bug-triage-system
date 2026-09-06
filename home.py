@@ -238,7 +238,7 @@ if r:
             st.session_state["historico"] = []
 # --- CONFIGURAÇÃO DO JIRA (sidebar) ---
 if not jira_client.configurado():
-    with st.sidebar.expander("🔑 Jira — configurar exportação", expanded=True):
+    with st.sidebar.expander("🔑 Jira — configurar exportação"):
         st.caption("Cole suas credenciais para ativar o botão 'Exportar para Jira'.")
         j_email = st.text_input("E-mail Atlassian", key="jira_email")
         j_token = st.text_input("API Token", type="password", key="jira_token")
