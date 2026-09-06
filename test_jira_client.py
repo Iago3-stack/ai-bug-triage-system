@@ -72,6 +72,19 @@ def test_configurado_false_com_algum_campo_vazio(monkeypatch):
     assert jira_client.configurado() is False
 
 
+# --- Normalização de entradas digitadas no sidebar ---
+def test_configurar_normaliza_chave_do_projeto(monkeypatch):
+    monkeypatch.setattr(jira_client, "JIRA_PROJECT_KEY", "xpto")
+    jira_client.configurar(project_key="  kan  ")
+    assert jira_client.JIRA_PROJECT_KEY == "KAN"
+
+
+def test_payload_normaliza_chave_inclusive_com_espacos():
+    jira_client.JIRA_PROJECT_KEY = " kan "
+    payload = jira_client._montar_payload("R", "D", "Medium")
+    assert payload["fields"]["project"]["key"] == "KAN"
+
+
 # --- Sem credenciais: falha amigável, sem rede ---
 def test_criar_issue_sem_credenciais_retorna_erro():
     jira_client.JIRA_EMAIL = ""

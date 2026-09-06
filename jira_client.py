@@ -53,13 +53,13 @@ def configurar(email="", token="", project_key="", issue_type=""):
     """Permite que o home.py injete credenciais digitadas no sidebar."""
     global JIRA_EMAIL, JIRA_API_TOKEN, JIRA_PROJECT_KEY, JIRA_ISSUE_TYPE
     if email:
-        JIRA_EMAIL = email
+        JIRA_EMAIL = email.strip()
     if token:
-        JIRA_API_TOKEN = token
+        JIRA_API_TOKEN = token.strip()
     if project_key:
-        JIRA_PROJECT_KEY = project_key
+        JIRA_PROJECT_KEY = project_key.strip().upper()
     if issue_type:
-        JIRA_ISSUE_TYPE = issue_type
+        JIRA_ISSUE_TYPE = issue_type.strip()
 
 
 def configurado():
@@ -89,8 +89,8 @@ def _montar_payload(resumo, descricao, prioridade):
     conteudo = [{"type": "paragraph", "content": [{"type": "text", "text": p}]} for p in paragrafos]
     return {
         "fields": {
-            "project": {"key": JIRA_PROJECT_KEY},
-            "issuetype": {"name": JIRA_ISSUE_TYPE},
+            "project": {"key": JIRA_PROJECT_KEY.strip().upper()},
+            "issuetype": {"name": JIRA_ISSUE_TYPE.strip()},
             "summary": resumo,
             "priority": {"name": prioridade},
             "description": {"type": "doc", "version": 1, "content": conteudo},
