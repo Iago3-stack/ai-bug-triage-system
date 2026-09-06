@@ -151,14 +151,15 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 </div>
 
 <div align="center">
-  <img src="https://img.shields.io/badge/4%20conclu%C3%ADdas-4CAF50?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/5%20conclu%C3%ADdas-4CAF50?style=for-the-badge" />
   <img src="https://img.shields.io/badge/2%20em%20aberto-FF9800?style=for-the-badge" />
 </div>
 
 - ✅ **Fase 1** — Motor NLP offline (léxico PT + negação, sem TextBlob/Google Translate)
 - ✅ **Fase 2** — Exportação do relatório, histórico de sessão e identidade visual
 - ✅ **Fase 3** — Integração com **LLMs** (Gemini) para análise de causa raiz, categoria e passos — com fallback automático
-- ✅ **Testes unitários do motor (`pytest`)** — 12 testes, rodam automaticamente via CI (GitHub Actions)
+- ✅ **Seletor de IA por triagem (checkbox 🔮)** — você decide quando o Gemini entra: desligue para triagem 100% local ou ligue para ganhar causa raiz e passos
+- ✅ **Testes unitários do motor (`pytest`)** — 18 testes, rodam automaticamente via CI (GitHub Actions)
 - ⬜ **Exportação direta via API do Jira**
 - ⬜ **Persistência do histórico (banco de dados)**
 
