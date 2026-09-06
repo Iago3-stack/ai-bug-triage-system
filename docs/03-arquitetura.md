@@ -40,7 +40,11 @@ O sistema trabalha com **dois motores de análise** que se **reconciliam** pela 
 | `home.py` | Interface web (Streamlit): cabeçalho, ferramenta, export, histórico | streamlit |
 | `triagem.py` | Motor NLP **offline determinístico**: léxico PT + negações | **stdlib apenas** |
 | `ia.py` | Análise por IA (Gemini): causa raiz, categoria, passos — **com fallback** | google-genai |
-| `test_triagem.py` | Testes unitários do motor (12 casos) | pytest |
+| `jira_client.py` | Exportação Jira (REST v3): cria issues tipo `Tarefa`, prioridade mapeada | **stdlib apenas** |
+| `persistencia.py` | Histórico persistido em `data/historico.jsonl` (JSONL, fuso Brasil) | **stdlib apenas** |
+| `test_triagem.py` | Testes unitários do motor | pytest |
+| `test_jira_client.py` | Testes do cliente Jira | pytest |
+| `test_persistencia.py` | Testes da persistência (fuso, append, filtro por data, vínculo Jira) | pytest |
 | `.streamlit/config.toml` | Tema e configurações visuais | streamlit |
 
 ## 3. Decisões de design
@@ -58,3 +62,4 @@ O sistema trabalha com **dois motores de análise** que se **reconciliam** pela 
 4. O **reconciliador** combina os resultados (maior vence) e marca divergência quando discordam.
 5. Gera o relatório com severidade, fatores e **Gherkin**.
 6. Usuário pode **exportar** (.md), abrir **Issue** no GitHub ou enviar ao **Jira**; histórico fica na tabela da sessão.
+7. Cada triagem é **persistida** como snapshot fiel em `data/historico.jsonl` (JSONL local, fuso `America/Sao_Paulo`); a issue do Jira criada depois é vinculada ao último registro.

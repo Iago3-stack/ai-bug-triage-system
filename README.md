@@ -115,14 +115,14 @@ A análise por IA usa a chave `GEMINI_API_KEY` (gratuita em [aistudio.google.com
 
 ### 🔗 Exportação para o Jira (API REST)
 
-O botão **📋 Exportar para Jira** cria a issue do tipo **Bug** direto no seu projeto Jira Cloud. Você configura de **dois jeitos**:
+O botão **📋 Exportar para Jira** cria a issue do tipo **Tarefa** direto no seu projeto Jira Cloud. Você configura de **dois jeitos**:
 
 - 🖱️ **Pela interface**: no app, abra `🔑 Jira — configurar exportação` no sidebar e preencha **e-mail Atlassian**, **API Token** e **chave do projeto**. Basta login+token (Basic Auth) — **não** é preciso OAuth nem senha.
 - ⚙️ **Por variáveis de ambiente** (`.env` ou Streamlit Secrets): `JIRA_EMAIL`, `JIRA_API_TOKEN`, `JIRA_PROJECT_KEY` e, opcionalmente, `JIRA_URL` (padrão `https://iagoqa.atlassian.net`).
 
 🔑 **Para gerar o API Token:** acesse `https://id.atlassian.com/manage-profile/security/api-tokens` → **Create API token** → copie o token (ele só aparece uma vez). A **chave do projeto** (ex.: `KAN` para "Rastreamento de bugs") aparece na URL do seu projeto: `https://iagoqa.atlassian.net/browse/KAN-4` → `KAN`.
 
-**Tipo de item (importante):** o app assume `Bug`, mas projetos de template **Kanban** não têm esse tipo — nesse caso configure `JIRA_ISSUE_TYPE=Tarefa` (tipos válidos: Tarefa, História, Epic, Subtask).
+**Tipo de item (importante):** o app assume `Tarefa` por padrão (compatível com projetos **Kanban**, onde `Bug` não existe). Os tipos válidos do template Kanban são: `Tarefa`, `História`, `Epic`, `Subtask`. Para outro projeto, troque via `JIRA_ISSUE_TYPE`.
 
 **Prioridades mapeadas automaticamente:** NORMAL ✅ → `Low` · MÉDIA ⚠️ → `Medium` · ALTA 🚨 → `High` · CRÍTICA 🚨 → `Highest`.
 
@@ -158,7 +158,7 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 |---|---|
 | 🖥️ `home.py` | Interface web (Streamlit): cabeçalho, ferramenta, export e histórico |
 | 🧠 `triagem.py` | Motor NLP: léxico PT, padrões de negação e classificação de severidade (offline) |
-| 🔗 `jira_client.py` | Cliente da API REST v3 do Jira: cria issues (Bug) com prioridade mapeada |
+| 🔗 `jira_client.py` | Cliente da API REST v3 do Jira: cria issues (Tarefa) com prioridade mapeada |
 | 🔮 `ia.py` | Análise por IA via Google Gemini: causa raiz, categoria e passos (com fallback) |
 | 🧪 `test_triagem.py` | 18 testes unitários do motor (rodam no CI) |
 | 🧪 `test_jira_client.py` | 13 testes unitários do cliente Jira (rodam no CI) |

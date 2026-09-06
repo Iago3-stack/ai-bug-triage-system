@@ -32,6 +32,6 @@ O objetivo deste documento é mostrar que o app não foi apenas "escrito e publi
 
 ## 5. Próximos passos (Roadmap de qualidade)
 
-- Integração direta com a **API do Jira** (exportação nativa).
-- **Persistência** do histórico em banco de dados (hoje em sessão).
+- ~~Integração direta com a **API do Jira**~~ ✅ — exportação nativa via `jira_client.py` (REST v3, tipo `Tarefa`).
+- ~~**Persistência** do histórico~~ ✅ — snapshot fiel em `data/historico.jsonl` (JSONL local, gitignored): com IA grava o relatório completo; sem IA, só o léxico. Seletor de data + download em Markdown. *Futuro:* migrar para banco quando houver necessidade de consultas/agregações ou página por visitante.
 - Ampliar a **cobertura de testes** (novos cenários de negação e edge cases).
