@@ -60,7 +60,7 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
 - ⚠️ **100% offline e determinístico**: o motor `triagem.py` usa apenas a biblioteca padrão do Python — sem API de tradução, sem internet, sem custo e com resultado sempre reproduzível.
 - 🔷 **Transparência de QA**: o relatório informa o **motor de análise** usado e os **fatores identificados** em cada triagem.
 - 💚 **Relatório Gherkin** (`Dado/Quando/Então`) baseado na prioridade detectada.
-- 🟠 **Exportação**: baixar relatório (`.md`), abrir **Issue no GitHub** pré-preenchida ou enviar ao **Jira** (configurável).
+- 🟠 **Exportação**: baixar relatório (`.md`), abrir **Issue no GitHub** pré-preenchida ou **criar issue real no Jira** via API (com prioridade mapeada automaticamente).
 - ⚪ **Histórico da sessão** em tabela (`pandas`) com opção de limpar.
 - 🟫 **Sem falsos positivos técnicos**: palavras como *erro*, *bug* e *falha* são vocabulário normal de teste e **não** disparam severidade sozinhas.
 - 🟥 **Interface com identidade visual própria** (tema Streamlit em `config.toml`).
@@ -112,6 +112,25 @@ A análise por IA usa a chave `GEMINI_API_KEY` (gratuita em [aistudio.google.com
 - 🔑 **Local**: crie um arquivo `.env` na raiz com `GEMINI_API_KEY=...` (ele é ignorado pelo `.gitignore`).
 - ☁️ **Streamlit Cloud**: `Settings → Secrets → GEMINI_API_KEY` (nunca coloque a chave em código ou no repositório).
 
+### 🔗 Exportação para o Jira (API REST)
+
+O botão **📋 Exportar para Jira** cria a issue do tipo **Bug** direto no seu projeto Jira Cloud. Você configura de **dois jeitos**:
+
+- 🖱️ **Pela interface**: no app, abra `🔑 Jira — configurar exportação` no sidebar e preencha **e-mail Atlassian**, **API Token** e **chave do projeto**. Basta login+token (Basic Auth) — **não** é preciso OAuth nem senha.
+- ⚙️ **Por variáveis de ambiente** (`.env` ou Streamlit Secrets): `JIRA_EMAIL`, `JIRA_API_TOKEN`, `JIRA_PROJECT_KEY` e, opcionalmente, `JIRA_URL` (padrão `https://iagoqa.atlassian.net`).
+
+🔑 **Para gerar o API Token:** acesse `https://id.atlassian.com/manage-profile/security/api-tokens` → **Create API token** → copie o token (ele só aparece uma vez). A **chave do projeto** (ex.: `KAN` para "Rastreamento de bugs") aparece na URL do seu projeto: `https://iagoqa.atlassian.net/browse/KAN-4` → `KAN`.
+
+**Tipo de item (importante):** o app assume `Bug`, mas projetos de template **Kanban** não têm esse tipo — nesse caso configure `JIRA_ISSUE_TYPE=Tarefa` (tipos válidos: Tarefa, História, Epic, Subtask).
+
+**Prioridades mapeadas automaticamente:** NORMAL ✅ → `Low` · MÉDIA ⚠️ → `Medium` · ALTA 🚨 → `High` · CRÍTICA 🚨 → `Highest`.
+
+🧪 Teste rápido do cliente sem interface (`python jira_client.py`) — exige as credenciais no ambiente:
+
+```bash
+python jira_client.py   # 🧪 cria uma issue de teste via API
+```
+
 🧪 Teste rápido dos motores sem interface:
 
 ```bash
@@ -138,8 +157,10 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 |---|---|
 | 🖥️ `home.py` | Interface web (Streamlit): cabeçalho, ferramenta, export e histórico |
 | 🧠 `triagem.py` | Motor NLP: léxico PT, padrões de negação e classificação de severidade (offline) |
+| 🔗 `jira_client.py` | Cliente da API REST v3 do Jira: cria issues (Bug) com prioridade mapeada |
 | 🔮 `ia.py` | Análise por IA via Google Gemini: causa raiz, categoria e passos (com fallback) |
 | 🧪 `test_triagem.py` | 18 testes unitários do motor (rodam no CI) |
+| 🧪 `test_jira_client.py` | 9 testes unitários do cliente Jira (rodam no CI) |
 | 📦 `requirements.txt` | Dependências pinadas |
 | 🎨 `.streamlit/config.toml` | Tema e configurações da app |
 | 📚 `docs/` | Documentação de engenharia e qualidade |
@@ -151,7 +172,7 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 </div>
 
 <div align="center">
-  <img src="https://img.shields.io/badge/5%20conclu%C3%ADdas-4CAF50?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/6%20conclu%C3%ADdas-4CAF50?style=for-the-badge" />
   <img src="https://img.shields.io/badge/2%20em%20aberto-FF9800?style=for-the-badge" />
 </div>
 
@@ -159,8 +180,8 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 - ✅ **Fase 2** — Exportação do relatório, histórico de sessão e identidade visual
 - ✅ **Fase 3** — Integração com **LLMs** (Gemini) para análise de causa raiz, categoria e passos — com fallback automático
 - ✅ **Seletor de IA por triagem (checkbox 🔮)** — você decide quando o Gemini entra: desligue para triagem 100% local ou ligue para ganhar causa raiz e passos
-- ✅ **Testes unitários do motor (`pytest`)** — 18 testes, rodam automaticamente via CI (GitHub Actions)
-- ⬜ **Exportação direta via API do Jira**
+- ✅ **Testes unitários do motor (`pytest`)** — 27 testes (motor + cliente Jira), rodam automaticamente via CI (GitHub Actions)
+- ✅ **Exportação via API do Jira** — cria issue do tipo Bug no `iagoqa.atlassian.net` (prioridade mapeada automaticamente)
 - ⬜ **Persistência do histórico (banco de dados)**
 
 ---

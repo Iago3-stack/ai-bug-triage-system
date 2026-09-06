@@ -5,10 +5,7 @@ from urllib.parse import quote
 from triagem import triar
 import ia
 import hero_animado
-
-# Configure com o endpoint do seu Jira Cloud (opcional).
-# Enquanto vazio, o botão "Novo Item no Jira" exibe um aviso.
-JIRA_CREATE_URL = ""
+import jira_client
 
 # Configuração e Estilo
 st.set_page_config(page_title="Iago Nunes | IA & QA Portfolio", page_icon="🤖", layout="wide")
@@ -168,8 +165,8 @@ if st.button("Executar Triagem Inteligente"):
             elif erro_llm:
                 st.info("🔮 Análise por IA indisponível no momento (API instável/sem resposta). O motor local determinístico segue no controle.")
 
-            # --- 5. EXPORTAR: baixar relatório + abrir no GitHub (e no Jira, se configurado) ---
-            colunas = st.columns(3) if JIRA_CREATE_URL else st.columns(2)
+            # --- 5. EXPORTAR: baixar relatório + abrir no GitHub + enviar ao Jira ---
+            colunas = st.columns(3)
             colunas[0].download_button(
                 "📥 Baixar relatório (.md)",
                 data=relatorio.encode("utf-8"),
@@ -182,9 +179,28 @@ if st.button("Executar Triagem Inteligente"):
                 "🐙 Nova Issue no GitHub",
                 f"https://github.com/iago3-stack/ai-bug-triage-system/issues/new?title={titulo}&body={corpo}",
             )
-            if JIRA_CREATE_URL:
-                colunas[2].link_button("📋 Novo Item no Jira",
-                                       f"{JIRA_CREATE_URL}?summary={titulo}&description={corpo}")
+            if colunas[2].button("📋 Exportar para Jira", use_container_width=True, key="btn_exportar_jira"):
+                if jira_client.configurado():
+                    with st.spinner("📋 Enviando issue ao Jira..."):
+                        ok_export, resultado_jira, erro_jira = jira_client.criar_issue(
+                            descricao_limpa[:100], relatorio, gravidade
+                        )
+                    if ok_export:
+                        st.session_state["exportacao_jira"] = (True, resultado_jira["key"], resultado_jira["url"])
+                    else:
+                        st.session_state["exportacao_jira"] = (False, None, erro_jira)
+                else:
+                    st.session_state["exportacao_jira"] = (
+                        False, None, "Configure o e-mail, o API token e a chave do projeto no sidebar."
+                    )
+
+            if "exportacao_jira" in st.session_state:
+                ok_export, chave_issue, detalhe = st.session_state["exportacao_jira"]
+                if ok_export:
+                    st.success(f"✅ Issue **{chave_issue}** criada no Jira!")
+                    st.markdown(f"[🔗 Abrir issue no Jira]({detalhe})")
+                else:
+                    st.error(f"❌ Não foi possível exportar para o Jira: {detalhe}")
 
             st.info("📋 O relatório também pode ser copiado direto da caixa acima para o Jira ou GitHub!")
             st.success("Triagem finalizada com sucesso! ✅")
@@ -197,6 +213,21 @@ if st.button("Executar Triagem Inteligente"):
                     st.session_state["historico"] = []
         else:
             st.warning("Digite a descrição do bug para executar a triagem.")
+# --- CONFIGURAÇÃO DO JIRA (sidebar) ---
+if not jira_client.configurado():
+    with st.sidebar.expander("🔑 Jira — configurar exportação", expanded=True):
+        st.caption("Cole suas credenciais para ativar o botão 'Exportar para Jira'.")
+        j_email = st.text_input("E-mail Atlassian", key="jira_email")
+        j_token = st.text_input("API Token", type="password", key="jira_token")
+        j_key = st.text_input("Chave do projeto", placeholder="ex.: KAN", key="jira_key")
+        j_issue_type = st.text_input("Tipo de item (padrão: Bug)", placeholder="ex.: Tarefa", key="jira_issue_type")
+        if st.button("Salvar configuração (sessão)", use_container_width=True):
+            jira_client.configurar(j_email, j_token, j_key, j_issue_type)
+            if jira_client.configurado():
+                st.success("✅ Jira configurado nesta sessão!")
+            else:
+                st.warning("Preencha e-mail, token e chave do projeto.")
+
 # --- CTA: ESTRELA NO GITHUB ---
 st.sidebar.markdown("### ⭐ Apoie o projeto")
 st.sidebar.write("Se esta triagem te ajudou, dá uma estrelinha no repositório — é de graça e ajuda mais QAs a encontrarem o app.")
