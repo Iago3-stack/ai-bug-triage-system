@@ -176,7 +176,7 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 
 <div align="center">
   <img src="https://img.shields.io/badge/7%20conclu%C3%ADdas-4CAF50?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/1%20em%20aberto-FF9800?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/3%20em%20aberto-FF9800?style=for-the-badge" />
 </div>
 
 - ✅ **Fase 1** — Motor NLP offline (léxico PT + negação, sem TextBlob/Google Translate)
@@ -186,6 +186,9 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 - ✅ **Testes unitários do motor (`pytest`)** — 40 testes (motor + Jira + persistência), rodam automaticamente via CI (GitHub Actions)
 - ✅ **Exportação via API do Jira** — cria issue do tipo Tarefa no `iagoqa.atlassian.net` (prioridade mapeada automaticamente)
 - ✅ **Persistência do histórico (JSONL)** — cada triagem vira um snapshot fiel em `data/historico.jsonl` (local, gitignored): com IA salva o relatório completo; sem IA, só o léxico. Seletor de data + download do relatório
+- ⬜ **Dashboard de QA** — agregados do histórico (CRÍTICAs por semana, função que mais falha, ticket médio)
+- ⬜ **Guardrails de entrada/saída** — validar relato (PII/credenciais) e filtrar resposta antes de exibir
+- ⬜ **RAG no histórico** — o Gemini consulta triagens passadas para responder "isso já aconteceu? como resolvemos?"
 
 ---
 
