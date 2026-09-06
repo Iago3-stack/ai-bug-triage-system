@@ -35,7 +35,8 @@ def test_payload_usa_chave_do_projeto():
     assert payload["fields"]["project"]["key"] == "RD"
 
 
-def test_payload_issue_tipo_bug():
+def test_payload_issue_tipo_bug(monkeypatch):
+    monkeypatch.setattr(jira_client, "JIRA_ISSUE_TYPE", "Bug")
     payload = jira_client._montar_payload("Resumo", "Descrição", "Medium")
     assert payload["fields"]["issuetype"]["name"] == "Bug"
 
@@ -44,6 +45,31 @@ def test_payload_transforma_linhas_em_paragrafos_adf():
     payload = jira_client._montar_payload("Resumo", "Linha 1\n\nLinha 2", "Medium")
     textos = [c["content"][0]["text"] for c in payload["fields"]["description"]["content"]]
     assert textos == ["Linha 1", "Linha 2"]
+
+
+# --- Leitura de credenciais (variável de ambiente com fallback no .env) ---
+def test_env_var_cai_no_env_quando_falta_variavel(monkeypatch):
+    monkeypatch.setattr("os.getenv", lambda nome, padrao="": "")
+    monkeypatch.setattr(jira_client, "_ler_env", lambda: {"JIRA_PROJECT_KEY": "KAN"})
+    assert jira_client._env_var("JIRA_PROJECT_KEY") == "KAN"
+
+
+def test_env_var_prioriza_variavel_de_ambiente(monkeypatch):
+    monkeypatch.setattr("os.getenv", lambda nome, padrao="": "XPTO")
+    monkeypatch.setattr(jira_client, "_ler_env", lambda: {"JIRA_PROJECT_KEY": "KAN"})
+    assert jira_client._env_var("JIRA_PROJECT_KEY") == "XPTO"
+
+
+def test_configurado_true_quando_preenche_tudo(monkeypatch):
+    for attr, valor in [("JIRA_EMAIL", "a@b.com"), ("JIRA_API_TOKEN", "tok"), ("JIRA_PROJECT_KEY", "KAN")]:
+        monkeypatch.setattr(jira_client, attr, valor)
+    assert jira_client.configurado() is True
+
+
+def test_configurado_false_com_algum_campo_vazio(monkeypatch):
+    for attr, valor in [("JIRA_EMAIL", "a@b.com"), ("JIRA_API_TOKEN", ""), ("JIRA_PROJECT_KEY", "KAN")]:
+        monkeypatch.setattr(jira_client, attr, valor)
+    assert jira_client.configurado() is False
 
 
 # --- Sem credenciais: falha amigável, sem rede ---

@@ -12,11 +12,33 @@ import os
 import urllib.error
 import urllib.request
 
-JIRA_BASE_URL = os.getenv("JIRA_URL", "https://iagoqa.atlassian.net").rstrip("/")
-JIRA_EMAIL = os.getenv("JIRA_EMAIL", "")
-JIRA_API_TOKEN = os.getenv("JIRA_API_TOKEN", "")
-JIRA_PROJECT_KEY = os.getenv("JIRA_PROJECT_KEY", "")
-JIRA_ISSUE_TYPE = os.getenv("JIRA_ISSUE_TYPE", "Bug")
+
+def _ler_env():
+    """Lê o arquivo .env (apenas leitura, nunca commitado). Semelha ao ia.py."""
+    caminho = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+    if not os.path.exists(caminho):
+        return {}
+    dados = {}
+    with open(caminho, encoding="utf-8") as f:
+        for linha in f:
+            chave, _, valor = linha.partition("=")
+            dados[chave.strip()] = valor.strip()
+    return dados
+
+
+def _env_var(nome, padrao=""):
+    """Variável de ambiente, com fallback para o arquivo .env local."""
+    valor = os.getenv(nome, "")
+    if not valor:
+        valor = _ler_env().get(nome, padrao)
+    return valor
+
+
+JIRA_BASE_URL = _env_var("JIRA_URL", "https://iagoqa.atlassian.net").rstrip("/")
+JIRA_EMAIL = _env_var("JIRA_EMAIL")
+JIRA_API_TOKEN = _env_var("JIRA_API_TOKEN")
+JIRA_PROJECT_KEY = _env_var("JIRA_PROJECT_KEY")
+JIRA_ISSUE_TYPE = _env_var("JIRA_ISSUE_TYPE", "Bug")
 
 # Mapeia a gravidade da triagem para a prioridade padrão do Jira.
 PRIORIDADES_JIRA = {
