@@ -1,6 +1,6 @@
 # 02 — Casos de Teste
 
-Casos de teste documentados em **Gherkin** (padrão BDD) para validar o motor de triagem. Estes casos espelham os testes automatizados de `test_triagem.py` (motor: **18 testes**), que rodam no **CI** (GitHub Actions) a cada push junto com os demais (Jira, persistência, guardrails e dashboard — **59 no total**).
+Casos de teste documentados em **Gherkin** (padrão BDD) para validar o motor de triagem. Estes casos espelham os testes automatizados de `test_triagem.py` (motor: **18 testes**), que rodam no **CI** (GitHub Actions) a cada push junto com os demais (Jira, persistência, guardrails e dashboard — **61 no total**).
 
 ## Matriz de casos de teste
 
@@ -44,7 +44,7 @@ pip install -r requirements-dev.txt
 pytest -v
 ```
 
-Resultado esperado: **59 passed** (18 do motor + 15 do Jira + 8 da persistência + 14 dos guardrails + 4 do dashboard — também validado automaticamente pelo CI).
+Resultado esperado: **61 passed** (18 do motor + 15 do Jira + 8 da persistência + 14 dos guardrails + 6 do dashboard — também validado automaticamente pelo CI).
 
 ## Guardrails (casos de teste da camada de segurança)
 

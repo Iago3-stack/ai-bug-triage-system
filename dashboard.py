@@ -64,6 +64,28 @@ def _contagem_por(registros: list[dict], chave: str, ordenar: list[str] | None =
     return pd.DataFrame(linhas, columns=[chave, "quantidade"])
 
 
+def tabela_recente(registros: list[dict], limite: int = 20) -> pd.DataFrame:
+    """Últimas triagens em DataFrame pronto para exibir (tolera registros sem Jira)."""
+    df = pd.DataFrame(registros)
+    if df.empty:
+        return df
+    df = df.sort_values("data_hora", ascending=False).head(limite)
+    tabela = pd.DataFrame({
+        "hora": df["data_hora"].str[11:19].values,
+        "data": df["data"].values,
+        "Resumo": df["resumo"].values,
+        "Gravidade": df["gravidade"].values,
+        "Score": df["score"].values,
+        "IA": df["usou_ia"].map({True: "sim", False: "não"}).values,
+    })
+    if "jira_key" in df.columns:
+        jira = df["jira_key"].fillna("—").values
+    else:
+        jira = ["—"] * len(df)
+    tabela["Jira"] = jira
+    return tabela
+
+
 def render_dashboard(registros: list[dict]) -> None:
     if not registros:
         st.info("Nenhuma triagem persistida ainda — execute o relato de um bug para alimentar o Dashboard.")
@@ -124,16 +146,9 @@ def render_dashboard(registros: list[dict]) -> None:
         st.bar_chart(dados_ia[0], color="#26A69A")
 
     st.markdown("##### Últimas triagens")
-    df_ultimas = df.sort_values("data_hora", ascending=False).head(20)
-    df_ultimas["hora"] = df_ultimas["data_hora"].str[11:19]
-    tabela = df_ultimas[["hora", "data", "resumo", "gravidade", "score", "usou_ia", "jira_key"]].copy()
-    tabela.rename(columns={
-        "usou_ia": "IA", "jira_key": "Jira", "resumo": "Resumo",
-        "gravidade": "Gravidade", "score": "Score",
-    }, inplace=True)
-    tabela["IA"] = tabela["IA"].map({"sim": "sim", "não": "não", True: "sim", False: "não"})
-    tabela["Jira"] = tabela["Jira"].fillna("—")
-    st.dataframe(tabela, use_container_width=True, hide_index=True)
+    tabela = tabela_recente(registros)
+    if not tabela.empty:
+        st.dataframe(tabela, use_container_width=True, hide_index=True)
 
     st.caption(
         "Fonte: `data/historico.jsonl` (persistência local). Números em tempo real a cada nova triagem. "

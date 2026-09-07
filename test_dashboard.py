@@ -18,6 +18,25 @@ def _registro(descricao, gravidade="MÉDIA ⚠️", usou_ia=False, divergente=No
     return reg
 
 
+def test_tabela_recente_sem_jira_key_nao_quebra():
+    registros = [
+        _registro("bug no login", "CRÍTICA 🚨", usou_ia=False),
+        _registro("bug no pagamento", "MÉDIA ⚠️", usou_ia=True),
+    ]
+    tabela = dashboard.tabela_recente(registros)
+    assert "Jira" in tabela.columns
+    assert list(tabela["Jira"]) == ["—", "—"]
+    assert list(tabela["IA"]) == ["não", "sim"]
+
+
+def test_tabela_recente_com_jira_key():
+    registros = [
+        _registro("bug grave", "CRÍTICA 🚨", jira_key="QA-12", jira_url="https://..."),
+    ]
+    tabela = dashboard.tabela_recente(registros)
+    assert list(tabela["Jira"]) == ["QA-12"]
+
+
 def test_funcoes_afetadas_conta_uma_vez_por_registro():
     registros = [
         _registro("o login não funciona e o chat de suporte também não abre"),
