@@ -9,6 +9,8 @@ import jira_client
 import persistencia
 import guardrails
 
+VERSAO = "v1.2.1"
+
 # Configuração e Estilo
 st.set_page_config(page_title="Iago Nunes | IA & QA Portfolio", page_icon="🤖", layout="wide")
 
@@ -352,5 +354,16 @@ st.sidebar.markdown("""
 <div style="margin-top:14px;padding:10px 12px;border:1px solid rgba(46,124,246,.28);border-radius:10px;background:rgba(46,124,246,.06);font-size:13px;line-height:1.6">
   🐧 <b>Linux Mint Debian</b> · 🧠 Lab <b>Hack28</b><br/>
   ⚡ <i>Automatizando qualidade — um bug de cada vez.</i>
+</div>
+""", unsafe_allow_html=True)
+
+# --- RODAPÉ DE CRÉDITO (autoria blindada, visível mesmo em forks) ---
+st.markdown(f"""
+<div style="margin-top:28px;padding:14px 16px;border-top:1px solid rgba(46,124,246,.2);text-align:center;font-size:13px;color:#6b7280">
+  <b style="color:#2E7CF6">© {VERSAO} Iago Nunes de Araújo</b> ·
+  <a href="https://github.com/Iago3-stack/ai-bug-triage-system" target="_blank">github.com/Iago3-stack/ai-bug-triage-system</a> ·
+  Licença <a href="https://github.com/Iago3-stack/ai-bug-triage-system/blob/main/LICENSE" target="_blank">MIT</a><br/>
+  Projeto original, documentado e publicado por <b>Iago Nunes (Iago3-stack)</b> — qualquer cópia deve manter o crédito (MIT).<br/>
+  <span style="font-size:12px">🚀 QA Automation Engineer · Estudante de IA & ML (UNIASSELVI)</span>
 </div>
 """, unsafe_allow_html=True)
