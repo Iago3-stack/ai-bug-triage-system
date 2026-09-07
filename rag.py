@@ -70,7 +70,12 @@ def analisar_com_rag(relato, registros, k=3):
     """
     similares = recuperar_similares(relato, registros, k)
     contexto = montar_contexto(similares)
-    resultado, erro = ia.analisar_llm_rag(relato, contexto)
+    resultado = None
+    erro = None
+    try:
+        resultado, erro = ia.analisar_llm_rag(relato, contexto)
+    except Exception as exc:  # nunca deixa o RAG derrubar o motor local
+        return None, f"RAG: {type(exc).__name__}: {str(exc)[:120]}"
     if resultado is not None:
         resultado.setdefault("ja_aconteceu", False)
         resultado.setdefault("resolucao_anterior", "")

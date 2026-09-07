@@ -78,10 +78,21 @@ def test_montar_contexto_vazio_avisa():
 def test_analisar_com_rag_sem_chave_retorna_erro(monkeypatch):
     monkeypatch.setattr(ia, "_chave", lambda: None)
     resultado, erro = rag.analisar_com_rag(
-        "temprender um relato de login", [{"id": "x", "descricao": "login"}]
+        "um relato de login", [{"id": "x", "descricao": "login"}]
     )
     assert resultado is None
     assert "não configurada" in erro
+
+
+def test_analisar_com_rag_atributo_ausente_nao_derruba(monkeypatch):
+    # Caso real da Streamlit Cloud: se o ia.py deployado estiver desatualizado e
+    # faltar 'analisar_llm_rag', o RAG não pode derrubar o motor local.
+    monkeypatch.delattr(rag.ia, "analisar_llm_rag", raising=False)
+    resultado, erro = rag.analisar_com_rag(
+        "login falhou de novo", [{"id": "x", "descricao": "login falhou"}]
+    )
+    assert resultado is None
+    assert "AttributeError" in erro or "has no attribute" in erro
 
 
 def test_analisar_com_rag_marca_ids_recuperados(monkeypatch):
