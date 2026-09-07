@@ -120,16 +120,25 @@ if st.button("Executar Triagem Inteligente"):
             prioridade_final = None
             divergente = None
             if usar_llm and ia._chave():
-                with st.spinner("🔮 A IA está analisando sua triagem — pode levar um pouco..."):
-                    # RAG: se há histórico persistido, o Gemini consulta os top-k
-                    # registros similares (retrieval local) para ver se já aconteceu.
-                    registros_para_rag = persistencia.carregar_registros()
-                    if registros_para_rag:
-                        resultado_llm, erro_llm = rag.analisar_com_rag(
-                            descricao_limpa, registros_para_rag
-                        )
-                    else:
-                        resultado_llm, erro_llm = ia.analisar_llm(descricao_limpa)
+                # Blindagem extra: nenhum erro da camada de IA/RAG pode derrubar
+                # o app. Qualquer exceção vira aviso + diagnóstico salvo na sessão.
+                try:
+                    with st.spinner("🔮 A IA está analisando sua triagem — pode levar um pouco..."):
+                        # RAG: se há histórico persistido, o Gemini consulta os top-k
+                        # registros similares (retrieval local) para ver se já aconteceu.
+                        registros_para_rag = persistencia.carregar_registros()
+                        if registros_para_rag:
+                            resultado_llm, erro_llm = rag.analisar_com_rag(
+                                descricao_limpa, registros_para_rag
+                            )
+                        else:
+                            resultado_llm, erro_llm = ia.analisar_llm(descricao_limpa)
+                except Exception as exc:
+                    import traceback
+                    # Salva o erro REAL (sem redação) para o expander de diagnóstico.
+                    st.session_state["erro_ia_bruto"] = traceback.format_exc()
+                    erro_llm = f"IA/RAG: {type(exc).__name__}: {str(exc)[:200]}"
+                    resultado_llm = None
                 if resultado_llm:
                     llm_modelo = ia.MODELO
                     # Regra de reconciliação: o mais grave vence, e divergência vira alerta.
@@ -281,7 +290,15 @@ if r:
         else:
             st.success("✅ Motores concordam na prioridade.")
     elif erro_llm:
-        st.info("🔮 Análise por IA indisponível no momento (API instável/sem resposta). O motor local determinístico segue no controle.")
+        st.info("🔮 Análise por IA indisponível neste momento — o motor local determinístico segue no controle.")
+        with st.expander("🔧 Diagnóstico interno (IA/RAG)"):
+            st.write(f"**Módulo `ia` tem `analisar_llm_rag`:** {'sim' if hasattr(ia, 'analisar_llm_rag') else 'NÃO → deploy desatualizado'}")
+            st.write(f"**Erro redigido pela Cloud:** `{erro_llm}`")
+            trace_ia = st.session_state.get("erro_ia_bruto")
+            if trace_ia:
+                st.code(trace_ia, language="python")
+            else:
+                st.write("Nenhum traceback capturado localmente (padrão de erro veio do estado anterior).")
 
     # --- 5. EXPORTAR: baixar relatório + abrir no GitHub + enviar ao Jira ---
     colunas = st.columns(3)

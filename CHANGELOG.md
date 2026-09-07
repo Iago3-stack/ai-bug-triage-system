@@ -10,6 +10,9 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 - **📚 RAG no histórico (retrieval + geração)** — o Gemini agora consulta as triagens passadas persidadas e responde **"isso já aconteceu? como resolvemos?"**. Novo módulo `rag.py` com **retrieval local por similaridade Jaccard** (100% determinístico e offline — nada de banco vetorial, proporcional ao projeto) + geração via `ia.analisar_llm_rag` com o campo `PROMPT_RAG`. O relatório ganhou a seção "📚 Histórico consultado (RAG)" (já aconteceu? / registros similares / resolução anterior) e os campos `rag_*` entram no snapshot JSONL.
 - **`test_rag.py`** — 10 testes: tokenização (stopwords), similaridade Jaccard, recuperação top-k, montagem do contexto e orquestração sem chave. **71 testes no total** — roadmap do MVP **10/10 concluído** 🎉.
 
+### Corrigido
+- **App não pode cair por erro da camada IA/RAG (Streamlit Cloud)** — a Cloud reportava `AttributeError` redigido na chamada do RAG. Blindagem em 2 camadas: `rag.analisar_com_rag` envolve a chamada à IA em `try/except` (retorna `(None, erro)` se o `ia.py` deployado estiver desatualizado) e `home.py` envolve todo o bloco de IA/RAG em `try/except`, salvando o **traceback real no expander "🔧 Diagnóstico interno (IA/RAG)"** (sem redação) e mantendo o motor local no controle. Inclui health check `hasattr(ia, "analisar_llm_rag")` para detectar deploy desatualizado.
+
 ## [v1.3.0] - 2026-09-07
 
 ### Adicionado
