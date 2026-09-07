@@ -49,7 +49,7 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
   <img src="https://img.shields.io/badge/Hist%C3%B3rico%20de%20sess%C3%A3o-9E9E9E?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Hist%C3%B3rico%20persistido%20%28JSONL%29-25D366?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Guardrails%20de%20PII-E91E63?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/55%20testes%20%2B%20CI-4CAF50?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/59%20testes%20%2B%20CI-4CAF50?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Sem%20falsos%20positivos-607D8B?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Identidade%20visual-FF4B4B?style=for-the-badge" />
 </div>
@@ -66,7 +66,8 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
 - ⚪ **Histórico da sessão** em tabela (`pandas`) com opção de limpar.
 - 📁 **Histórico persistido (JSONL)** — cada triagem vira um **snapshot fiel** em `data/historico.jsonl` (local, gitignored): com IA grava o relatório completo; sem IA, só o léxico. **Seletor de data + download** do relatório em Markdown + vínculo com a issue criada no Jira.
 - 🛡️ **Guardrails de entrada/saída (PII)** — detecta e **mascara** token Atlassian, chaves Gemini/Google/OpenAI, tokens GitHub, e-mails, **senhas numéricas, telefones e CPFs** digitados no relato: nada sensível vai para o Gemini, o Jira, o GitHub ou o histórico.
-- 🧪 **55 testes + CI** — suíte `pytest` (motor, Jira, persistência e guardrails) rodando a cada push via GitHub Actions (badge de qualidade em cima).
+- 🧪 **59 testes + CI** — suíte `pytest` (motor, Jira, persistência, guardrails e dashboard) rodando a cada push via GitHub Actions (badge de qualidade em cima).
+- 📈 **Dashboard de QA** — visão geral 100% local do histórico persistido: KPIs (total, CRÍTICAs, MÉDIAS, normais, score médio), **distribuição de severidade**, **volume por dia**, **funcionalidades mais afetadas** e comparativo **IA vs. motor local** (divergências).
 - 🟫 **Sem falsos positivos técnicos**: palavras como *erro*, *bug* e *falha* são vocabulário normal de teste e **não** disparam severidade sozinhas.
 - 🟥 **Interface com identidade visual própria** (tema Streamlit em `config.toml`).
 
@@ -169,7 +170,9 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 | 📁 `persistencia.py` | Histórico persistido em `data/historico.jsonl` (JSONL local, gitignored) com snapshot fiel da triagem |
 | 🛡️ `guardrails.py` | Bloqueia vazamento de credenciais/PII: mascara tokens, chaves, e-mails, senhas numéricas, telefones e CPFs antes de IA/Jira/GitHub/histórico |
 | 🧪 `test_persistencia.py` | 8 testes unitários da persistência (rodam no CI) |
-| 🧪 `test_guardrails.py` | 9 testes de detecção/máscara de credenciais e PII (rodam no CI) |
+| 🧪 `test_guardrails.py` | 14 testes de detecção/máscara de credenciais e PII (rodam no CI) |
+| 🧪 `test_dashboard.py` | 4 testes das agregações do Dashboard de QA (rodam no CI) |
+| 📈 `dashboard.py` | Dashboard de QA: KPIs + severidade + volume/dia + funcionalidades + IA vs. léxico (leitura do JSONL) |
 | 📦 `requirements.txt` | Dependências pinadas |
 | 🎨 `.streamlit/config.toml` | Tema e configurações da app |
 | 📚 `docs/` | Documentação de engenharia e qualidade |
@@ -181,19 +184,19 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 </div>
 
 <div align="center">
-  <img src="https://img.shields.io/badge/8%20conclu%C3%ADdas-4CAF50?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/2%20em%20aberto-FF9800?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/9%20conclu%C3%ADdas-4CAF50?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/1%20em%20aberto-FF9800?style=for-the-badge" />
 </div>
 
 - ✅ **Fase 1** — Motor NLP offline (léxico PT + negação, sem TextBlob/Google Translate)
 - ✅ **Fase 2** — Exportação do relatório, histórico de sessão e identidade visual
 - ✅ **Fase 3** — Integração com **LLMs** (Gemini) para análise de causa raiz, categoria e passos — com fallback automático
 - ✅ **Seletor de IA por triagem (checkbox 🔮)** — você decide quando o Gemini entra: desligue para triagem 100% local ou ligue para ganhar causa raiz e passos
-- ✅ **Testes unitários do motor (`pytest`)** — 55 testes (motor + Jira + persistência + guardrails), rodam automaticamente via CI (GitHub Actions)
+- ✅ **Testes unitários do motor (`pytest`)** — 59 testes (motor + Jira + persistência + guardrails + dashboard), rodam automaticamente via CI (GitHub Actions)
 - ✅ **Exportação via API do Jira** — cria issue do tipo Tarefa no `iagoqa.atlassian.net` (prioridade mapeada automaticamente)
 - ✅ **Persistência do histórico (JSONL)** — cada triagem vira um snapshot fiel em `data/historico.jsonl` (local, gitignored): com IA salva o relatório completo; sem IA, só o léxico. Seletor de data + download do relatório
 - ✅ **Guardrails de entrada/saída (PII/credenciais)** — detecta e mascara tokens Atlassian, chaves Gemini/Google/OpenAI, tokens GitHub, e-mails, senhas numéricas, telefones e CPFs digitados no relato: nada sensível vai para o Gemini, o Jira, o GitHub ou o histórico
-- ⬜ **Dashboard de QA** — agregados do histórico (CRÍTICAs por semana, função que mais falha, ticket médio)
+- ✅ **Dashboard de QA** — visão geral do histórico persistido: KPIs, distribuição de severidade, volume por dia, funcionalidades mais afetadas e comparativo IA vs. motor local (100% local, sem enviar nada)
 - ⬜ **RAG no histórico** — o Gemini consulta triagens passadas para responder "isso já aconteceu? como resolvemos?"
 
 ---

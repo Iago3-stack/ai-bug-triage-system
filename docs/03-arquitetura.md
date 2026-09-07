@@ -46,7 +46,8 @@ O sistema trabalha com **dois motores de análise** que se **reconciliam** pela 
 | `test_triagem.py` | Testes unitários do motor (18) | pytest |
 | `test_jira_client.py` | Testes do cliente Jira (15) | pytest |
 | `test_persistencia.py` | Testes da persistência (8): fuso, append, filtro por data, vínculo Jira | pytest |
-| `test_guardrails.py` | Testes dos guardrails (9): detecção/máscara de PII e falso-positivo | pytest |
+| `test_guardrails.py` | Testes dos guardrails (14): detecção/máscara de PII e falso-positivo | pytest |
+| `dashboard.py` | Dashboard de QA: KPIs, severidade, volume/dia, funcionalidades e IA vs. léxico (leitura do JSONL) | streamlit |
 | `.streamlit/config.toml` | Tema e configurações visuais | streamlit |
 
 ## 3. Decisões de design

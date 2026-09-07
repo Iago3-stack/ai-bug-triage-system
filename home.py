@@ -8,6 +8,7 @@ import hero_animado
 import jira_client
 import persistencia
 import guardrails
+import dashboard as dashboard_qa
 
 VERSAO = "v1.2.1"
 
@@ -319,6 +320,10 @@ if registros_totais:
             mime="text/markdown",
             key="hp_download",
         )
+# --- 6.6 DASHBOARD DE QA (visão geral do histórico persistido) ---
+if registros_totais:
+    with st.expander("📈 Dashboard de QA — visão geral do histórico"):
+        dashboard_qa.render_dashboard(registros_totais)
 # --- CONFIGURAÇÃO DO JIRA (sidebar) ---
 if not jira_client.configurado():
     with st.sidebar.expander("🔑 Jira — configurar exportação"):
