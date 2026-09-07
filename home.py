@@ -309,7 +309,7 @@ if r:
         mime="text/markdown",
     )
     titulo = quote(descricao_limpa[:80])
-    corpo = quote(relatorio[:1200])
+    corpo = quote(relatorio[:4000])
     colunas[1].link_button(
         "🐙 Nova Issue no GitHub",
         f"https://github.com/iago3-stack/ai-bug-triage-system/issues/new?title={titulo}&body={corpo}",
