@@ -11,7 +11,7 @@ import persistencia
 import guardrails
 import dashboard as dashboard_qa
 
-VERSAO = "v1.3.0"
+VERSAO = "v2.0.0"
 
 # Configuração e Estilo
 st.set_page_config(page_title="Iago Nunes | IA & QA Portfolio", page_icon="🤖", layout="wide")
