@@ -348,10 +348,15 @@ if r:
         if st.button("🗑️ Limpar histórico"):
             st.session_state["historico"] = []
 
-# --- 6.5 HISTÓRICO PERSISTIDO (JSONL) ---
+# --- 6.5 HISTÓRICO PERSISTIDO (JSONL local ou Supabase na nuvem) ---
 registros_totais = persistencia.carregar_registros()
 if registros_totais:
-    with st.expander(f"📁 Histórico persistido (JSONL) — {len(registros_totais)} triagem(ns) salva(s)"):
+    backend = (
+        "☁️ Supabase (nuvem — público)"
+        if persistencia._usar_nuvem()
+        else "💾 JSONL local (efêmero na Cloud — só você vê)"
+    )
+    with st.expander(f"📁 Histórico persistido ({backend}) — {len(registros_totais)} triagem(ns) salva(s)"):
         datas = persistencia.datas_disponiveis()
         data_sel = st.selectbox("📅 Escolha a data", datas, key="hp_data")
         do_dia = persistencia.registros_por_data(data_sel)

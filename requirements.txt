@@ -7,3 +7,8 @@ pandas==3.0.5
 #   - Streamlit Cloud: Settings -> Secrets -> GEMINI_API_KEY
 #   - Local: arquivo .env (ignorado pelo .gitignore)
 google-genai==2.20.0
+# V2.1 — persistência em nuvem (Supabase REST).
+# SUPABASE_URL / SUPABASE_ANON_KEY NUNCA vão para o repositório:
+#   - Streamlit Cloud: Settings -> Secrets
+#   - Local: arquivo .env (ignorado pelo .gitignore)
+requests==2.34.2

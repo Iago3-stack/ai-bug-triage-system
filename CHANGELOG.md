@@ -4,6 +4,12 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [Não lançado]
+
+### Adicionado
+- **☁️ Persistência em nuvem (Supabase)** — o histórico agora pode viver num **Postgres na nuvem** em vez do disco efêmero da Cloud. Novo módulo `nuvem_supabase.py` (REST: insert/select/update + vínculo Jira) e `persistencia.py` virou **facade**: se `SUPABASE_URL` + `SUPABASE_ANON_KEY` estiverem configurados (secrets → `.env` → `os.environ`), grava na nuvem; senão, segue no JSONL local. `PERSISTENCIA_BACKEND=jsonl` força o modo local. O expander do histórico mostra **qual** backend está ativo.
+- **`test_nuvem_supabase.py`** — 10 testes 100% offline (config, conversão linha↔doc, HTTP mockado, dispatch do facade e failover). **82 testes no total** — CI continua verde inclusive sem credenciais.
+
 ## [v2.0.0] - 2026-09-07
 
 > 🎉 **Marco do produto:** com o **RAG no histórico**, o MVP fechou **10/10** no roadmap. O `AI Bug Triage System` sai de ferramenta pessoal e vira um **produto de triagem com "memória"** — a IA aprende com as triagens passadas e responde "isso já aconteceu? como resolvemos?". A visão rumo a um **SaaS/CRM de QA** (persistência em nuvem, login, notificações, webhook) agora é a fase seguinte (ver README).

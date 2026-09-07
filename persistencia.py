@@ -5,9 +5,21 @@ import uuid
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
+import nuvem_supabase
+
 _RAIZ = pathlib.Path(__file__).resolve().parent
 _ARQUIVO_PADRAO = _RAIZ / "data" / "historico.jsonl"
 _FUSO = ZoneInfo(os.environ.get("PERSISTENCIA_FUSO", "America/Sao_Paulo"))
+
+
+def _usar_nuvem() -> bool:
+    """Nuvem ativa quando configurada; JSONL é sempre o fallback padrão."""
+    if os.environ.get("PERSISTENCIA_BACKEND") == "jsonl":
+        return False
+    if os.environ.get("PERSISTENCIA_ARQUIVO"):
+        # Caminho local explícito (testes/uso local) nunca depende da rede.
+        return False
+    return nuvem_supabase.disponivel()
 
 
 def _caminho() -> pathlib.Path:
@@ -28,6 +40,22 @@ def _reescrever(registros: list[dict]) -> None:
     temporario.replace(caminho)
 
 
+def _salvar_jsonl(registro: dict) -> dict:
+    caminho = _caminho()
+    caminho.parent.mkdir(parents=True, exist_ok=True)
+    with caminho.open("a", encoding="utf-8") as f:
+        f.write(_linha(registro) + "\n")
+    return registro
+
+
+def _ler_jsonl() -> list[dict]:
+    caminho = _caminho()
+    if not caminho.exists():
+        return []
+    with caminho.open(encoding="utf-8") as f:
+        return [json.loads(linha) for linha in f if linha.strip()]
+
+
 def registrar_triagem(dados: dict) -> dict:
     agora = datetime.now(_FUSO)
     registro = {
@@ -36,32 +64,50 @@ def registrar_triagem(dados: dict) -> dict:
         "data": agora.date().isoformat(),
     }
     registro.update(dados)
-    caminho = _caminho()
-    caminho.parent.mkdir(parents=True, exist_ok=True)
-    with caminho.open("a", encoding="utf-8") as f:
-        f.write(_linha(registro) + "\n")
-    return registro
+    if _usar_nuvem():
+        try:
+            return nuvem_supabase.registrar_triagem(registro)
+        except Exception:
+            # Failover: nuvem indisponível não pode perder a triagem — grava no local.
+            return _salvar_jsonl(registro)
+    return _salvar_jsonl(registro)
 
 
 def carregar_registros() -> list[dict]:
-    caminho = _caminho()
-    if not caminho.exists():
-        return []
-    with caminho.open(encoding="utf-8") as f:
-        return [json.loads(linha) for linha in f if linha.strip()]
+    if _usar_nuvem():
+        try:
+            return nuvem_supabase.carregar_registros()
+        except Exception:
+            pass
+    return _ler_jsonl()
 
 
 def registros_por_data(data_iso: str) -> list[dict]:
-    return [r for r in carregar_registros() if r.get("data") == data_iso]
+    if _usar_nuvem():
+        try:
+            return nuvem_supabase.registros_por_data(data_iso)
+        except Exception:
+            pass
+    return [r for r in _ler_jsonl() if r.get("data") == data_iso]
 
 
 def datas_disponiveis() -> list[str]:
-    return sorted({r.get("data", "") for r in carregar_registros()}, reverse=True)
+    if _usar_nuvem():
+        try:
+            return nuvem_supabase.datas_disponiveis()
+        except Exception:
+            pass
+    return sorted({r.get("data", "") for r in _ler_jsonl()}, reverse=True)
 
 
 def registrar_exportacao_jira(chave: str, url: str) -> bool:
     """Vincula a issue do Jira ao último registro persistido."""
-    registros = carregar_registros()
+    if _usar_nuvem():
+        try:
+            return nuvem_supabase.registrar_exportacao_jira(chave, url)
+        except Exception:
+            pass
+    registros = _ler_jsonl()
     if not registros:
         return False
     registros[-1]["jira_key"] = chave
@@ -71,11 +117,17 @@ def registrar_exportacao_jira(chave: str, url: str) -> bool:
 
 
 def excluir_antigos(dias: int) -> int:
-    """Remove registros mais velhos que `dias`. Retorna quantos foram removidos."""
+    """Remove registros mais velhos que `dias`. Retorna quantos foram removidos.
+
+    Na nuvem (Supabase REST) a exclusão em massa exige RPC/regras adicionais;
+    hoje retorna 0 e o recorte de maioridades fica com o JSONL local.
+    """
+    if _usar_nuvem():
+        return nuvem_supabase.excluir_antigos(dias)
     if dias <= 0:
         return 0
     hoje = date.today()
-    registros = carregar_registros()
+    registros = _ler_jsonl()
     permanecem = []
     removidos = 0
     for registro in registros:

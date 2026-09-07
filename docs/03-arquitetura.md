@@ -42,7 +42,8 @@ O sistema trabalha com **dois motores de análise** que se **reconciliam** pela 
 | `ia.py` | Análise por IA (Gemini): causa raiz, categoria, passos — **com fallback** | google-genai |
 | `rag.py` | RAG leve no histórico: **retrieval local** (similaridade Jaccard, offline) + geração via `PROMPT_RAG` que responde "já aconteceu? como resolvemos?" | google-genai + `ia.py` |
 | `jira_client.py` | Exportação Jira (REST v3): cria issues tipo `Tarefa`, prioridade mapeada | **stdlib apenas** |
-| `persistencia.py` | Histórico persistido em `data/historico.jsonl` (JSONL, fuso Brasil) | **stdlib apenas** |
+| `persistencia.py` | Histórico persistido em `data/historico.jsonl` (JSONL, fuso Brasil) — **facade**: dispatches para o Supabase quando configurado, senão JSONL | **stdlib** (+ nuvem quando `nuvem_supabase` configura) |
+| `nuvem_supabase.py` | Backend de persistência na nuvem via Supabase REST (Postgres): insert/select/update + vínculo da issue do Jira | requests |
 | `guardrails.py` | Detecta/mascara credenciais e PII no relato (tokens, chaves, e-mails, senhas numéricas, telefones, CPFs) | **stdlib apenas** |
 | `test_triagem.py` | Testes unitários do motor (18) | pytest |
 | `test_jira_client.py` | Testes do cliente Jira (15) | pytest |
@@ -68,4 +69,8 @@ O sistema trabalha com **dois motores de análise** que se **reconciliam** pela 
 5. O **reconciliador** combina os resultados (maior vence) e marca divergência quando discordam.
 6. Gera o relatório com severidade, fatores e **Gherkin**.
 7. Usuário pode **exportar** (.md), abrir **Issue** no GitHub ou enviar ao **Jira**; histórico fica na tabela da sessão.
-8. Cada triagem é **persistida** como snapshot fiel em `data/historico.jsonl` (JSONL local, fuso `America/Sao_Paulo`); a issue do Jira criada depois é vinculada ao último registro.
+8. Cada triagem é **persistida** como snapshot fiel — **facade `persistencia.py`**: com
+   `SUPABASE_URL` + `SUPABASE_ANON_KEY` configurados, grava no **Supabase** (`nuvem_supabase.py`);
+   senão, no `data/historico.jsonl` (JSONL local, fuso `America/Sao_Paulo`). Se a nuvem falhar,
+   **failover** automático para o arquivo local. A issue do Jira criada depois é vinculada ao
+   último registro no backend ativo.
