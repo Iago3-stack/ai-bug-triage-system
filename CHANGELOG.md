@@ -4,12 +4,17 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
-## [Não lançado]
+## [v1.3.0] - 2026-09-07
 
 ### Adicionado
-- **Rodapé de crédito no app** — "© v1.2.1 Iago Nunes de Araújo · repo · licença MIT" fixado no fim da página: a autoria aparece em runtime, mesmo se o app for forkado.
+- **📈 Dashboard de QA** — visão geral do histórico persistido em `data/historico.jsonl`: KPIs (total, CRÍTICAs/Altas, MÉDIAS, normais, score médio), **distribuição de severidade**, **volume por dia**, **funcionalidades mais afetadas** (categorização 100% offline) e **comparativo IA vs. motor local** (divergências). Novo módulo `dashboard.py` + expander "📈 Dashboard de QA" no fim do app. A análise é 100% local — nada é enviado para fora.
+- **`seed_historico.py`** — reproduz os 30 relatos de teste (32 registros, um duplicado) usando o mesmo motor do app (`triagem.triar`) e popula o `data/historico.jsonl` local com timestamps espalhados em 4 dias — permite desenvolver/testar o Dashboard sem depender da Cloud (arquivo gitignored).
+- **Rodapé de crédito no app** — "© v1.3.0 Iago Nunes de Araújo · repo · licença MIT" fixado no fim da página: a autoria aparece em runtime, mesmo se o app for forkado.
 - **`AUTORIA.md`** — manifesto de origem/autoria com as provas públicas (commits, releases, CHANGELOG, CI) e exemplos de como dar crédito; linkado no README.
-- **Guardrails ampliados (senha/telefone/CPF)** — além de tokens, chaves e e-mails, agora detecta e mascara **senha numérica** (`senha 4323454321`), **telefone** e **CPF** digitados no relato. Descoberto em teste real: a senha numérica passava mascarando apenas o e-mail e ia para a IA. (55 testes no total)
+- **Guardrails ampliados (senha/telefone/CPF)** — além de tokens, chaves e e-mails, agora detecta e mascara **senha numérica** (`senha 4323454321`), **telefone** e **CPF** digitados no relato. Descoberto em teste real: a senha numérica passava mascarando apenas o e-mail e ia para a IA. (61 testes no total)
+
+### Corrigido
+- **KeyError `jira_key` no Dashboard (Cloud)** — registros persistidos sem exportação para o Jira não tinham a coluna `jira_key` e a tabela de últimas triagens quebrava. A montagem agora tolera a ausência (mostra `—`) e foi extraída para a função `tabela_recente()` pura, com testes de regressão (com e sem `jira_key`).
 
 ## [v1.2.1] - 2026-09-06
 
