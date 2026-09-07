@@ -40,6 +40,7 @@ O sistema trabalha com **dois motores de análise** que se **reconciliam** pela 
 | `home.py` | Interface web (Streamlit): cabeçalho, ferramenta, export, histórico | streamlit |
 | `triagem.py` | Motor NLP **offline determinístico**: léxico PT + negações | **stdlib apenas** |
 | `ia.py` | Análise por IA (Gemini): causa raiz, categoria, passos — **com fallback** | google-genai |
+| `rag.py` | RAG leve no histórico: **retrieval local** (similaridade Jaccard, offline) + geração via `PROMPT_RAG` que responde "já aconteceu? como resolvemos?" | google-genai + `ia.py` |
 | `jira_client.py` | Exportação Jira (REST v3): cria issues tipo `Tarefa`, prioridade mapeada | **stdlib apenas** |
 | `persistencia.py` | Histórico persistido em `data/historico.jsonl` (JSONL, fuso Brasil) | **stdlib apenas** |
 | `guardrails.py` | Detecta/mascara credenciais e PII no relato (tokens, chaves, e-mails, senhas numéricas, telefones, CPFs) | **stdlib apenas** |
@@ -48,6 +49,7 @@ O sistema trabalha com **dois motores de análise** que se **reconciliam** pela 
 | `test_persistencia.py` | Testes da persistência (8): fuso, append, filtro por data, vínculo Jira | pytest |
 | `test_guardrails.py` | Testes dos guardrails (14): detecção/máscara de PII e falso-positivo | pytest |
 | `dashboard.py` | Dashboard de QA: KPIs, severidade, volume/dia, funcionalidades e IA vs. léxico (leitura do JSONL) | streamlit |
+| `test_rag.py` | Testes do RAG (10): tokenização, Jaccard, recuperação top-k, contexto e orquestração sem chave | pytest |
 | `.streamlit/config.toml` | Tema e configurações visuais | streamlit |
 
 ## 3. Decisões de design
@@ -62,7 +64,7 @@ O sistema trabalha com **dois motores de análise** que se **reconciliam** pela 
 1. Usuário informa a descrição do bug.
 2. `home.py` chama `guardrails.py` → se houver credencial/PII (token, chave, e-mail, senha numérica, telefone, CPF), o relato é **mascarado** e o usuário é avisado — nada sensível segue para os próximos passos.
 3. `home.py` chama `triagem.py` → score local (léxico + negação) e sentimento.
-4. Se houver chave `GEMINI_API_KEY`, `ia.py` enriquece com causa raiz/categoria; se falhar, **fallback** para o local.
+4. Se houver chave `GEMINI_API_KEY`, `ia.py` enriquece com causa raiz/categoria; se falhar, **fallback** para o local. Se houver histórico persistido, **`rag.py`** recupera os top-k registros similares (Jaccard) e `ia.py` responde também se o caso **já aconteceu** e **como foi resolvido**.
 5. O **reconciliador** combina os resultados (maior vence) e marca divergência quando discordam.
 6. Gera o relatório com severidade, fatores e **Gherkin**.
 7. Usuário pode **exportar** (.md), abrir **Issue** no GitHub ou enviar ao **Jira**; histórico fica na tabela da sessão.

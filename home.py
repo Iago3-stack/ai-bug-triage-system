@@ -4,6 +4,7 @@ from urllib.parse import quote
 
 from triagem import triar
 import ia
+import rag
 import hero_animado
 import jira_client
 import persistencia
@@ -120,7 +121,15 @@ if st.button("Executar Triagem Inteligente"):
             divergente = None
             if usar_llm and ia._chave():
                 with st.spinner("🔮 A IA está analisando sua triagem — pode levar um pouco..."):
-                    resultado_llm, erro_llm = ia.analisar_llm(descricao_limpa)
+                    # RAG: se há histórico persistido, o Gemini consulta os top-k
+                    # registros similares (retrieval local) para ver se já aconteceu.
+                    registros_para_rag = persistencia.carregar_registros()
+                    if registros_para_rag:
+                        resultado_llm, erro_llm = rag.analisar_com_rag(
+                            descricao_limpa, registros_para_rag
+                        )
+                    else:
+                        resultado_llm, erro_llm = ia.analisar_llm(descricao_limpa)
                 if resultado_llm:
                     llm_modelo = ia.MODELO
                     # Regra de reconciliação: o mais grave vence, e divergência vira alerta.
@@ -141,6 +150,18 @@ if st.button("Executar Triagem Inteligente"):
 
 - **Prioridade final (máx. entre motores): {prioridade_final}**
 - **Divergência entre motores: {'SIM ⚠️' if divergente else 'não'}**
+"""
+                    if resultado_llm.get("ja_aconteceu") is not None:
+                        ids_rag = resultado_llm.get("registros_similar") or []
+                        estado_rag = "SIM ⚠️" if resultado_llm.get("ja_aconteceu") else "não"
+                        similar_tex = (
+                            "`" + "`, `".join(ids_rag) + "`" if ids_rag else "sem registros similares"
+                        )
+                        relatorio += f"""
+📚 **Histórico consultado (RAG):**
+- **Já aconteceu antes?:** {estado_rag}
+- **Registros similares:** {similar_tex}
+- **Como foi resolvido antes:** {resultado_llm.get('resolucao_anterior') or '—'}
 """
 
             # --- 3. HISTÓRICO DA SESSÃO ---
@@ -175,6 +196,12 @@ if st.button("Executar Triagem Inteligente"):
                     "prioridade_final": prioridade_final,
                     "divergente": divergente,
                 })
+                if resultado_llm.get("ja_aconteceu") is not None:
+                    snapshot.update({
+                        "rag_ja_aconteceu": resultado_llm.get("ja_aconteceu"),
+                        "rag_resolucao": resultado_llm.get("resolucao_anterior"),
+                        "rag_similares": resultado_llm.get("registros_similar") or [],
+                    })
             else:
                 snapshot["erro_ia"] = erro_llm
             snapshot["relatorio_completo"] = relatorio
@@ -229,6 +256,23 @@ if r:
         for i, p in enumerate(resultado_llm["passos_repro"], 1):
             st.write(f"{i}. {p}")
         st.caption("💡 Análise gerada por LLM — use como suporte à triagem determinística do motor local.")
+
+        if resultado_llm.get("ja_aconteceu") is not None:
+            st.markdown("---")
+            st.markdown("### 📚 RAG — histórico consultado")
+            ids_rag = resultado_llm.get("registros_similar") or []
+            if resultado_llm["ja_aconteceu"]:
+                st.warning(
+                    f"⚠️ Este problema **já aconteceu antes**! "
+                    f"Registro(s) similar(es): `{'`, `'.join(ids_rag) if ids_rag else '—'}`"
+                )
+                if resultado_llm.get("resolucao_anterior"):
+                    st.write(f"🔧 **Como foi resolvido da última vez:** {resultado_llm['resolucao_anterior']}")
+                else:
+                    st.caption("Histórico não indicou uma resolução anterior para este caso.")
+            else:
+                st.success("✅ Nenhum registro anterior similar encontrado — possível caso novo.")
+            st.caption("Retrieval local por similaridade de tokens (Jaccard) sobre o histórico persistido — nada é enviado além do relato e dos registros similares.")
 
         st.markdown("---")
         st.markdown(f"## 🎯 Prioridade Final: {prioridade_final}")

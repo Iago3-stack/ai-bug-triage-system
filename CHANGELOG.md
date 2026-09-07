@@ -4,6 +4,12 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [Não lançado]
+
+### Adicionado
+- **📚 RAG no histórico (retrieval + geração)** — o Gemini agora consulta as triagens passadas persidadas e responde **"isso já aconteceu? como resolvemos?"**. Novo módulo `rag.py` com **retrieval local por similaridade Jaccard** (100% determinístico e offline — nada de banco vetorial, proporcional ao projeto) + geração via `ia.analisar_llm_rag` com o campo `PROMPT_RAG`. O relatório ganhou a seção "📚 Histórico consultado (RAG)" (já aconteceu? / registros similares / resolução anterior) e os campos `rag_*` entram no snapshot JSONL.
+- **`test_rag.py`** — 10 testes: tokenização (stopwords), similaridade Jaccard, recuperação top-k, montagem do contexto e orquestração sem chave. **71 testes no total** — roadmap do MVP **10/10 concluído** 🎉.
+
 ## [v1.3.0] - 2026-09-07
 
 ### Adicionado

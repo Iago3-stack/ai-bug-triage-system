@@ -66,8 +66,9 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
 - ⚪ **Histórico da sessão** em tabela (`pandas`) com opção de limpar.
 - 📁 **Histórico persistido (JSONL)** — cada triagem vira um **snapshot fiel** em `data/historico.jsonl` (local, gitignored): com IA grava o relatório completo; sem IA, só o léxico. **Seletor de data + download** do relatório em Markdown + vínculo com a issue criada no Jira.
 - 🛡️ **Guardrails de entrada/saída (PII)** — detecta e **mascara** token Atlassian, chaves Gemini/Google/OpenAI, tokens GitHub, e-mails, **senhas numéricas, telefones e CPFs** digitados no relato: nada sensível vai para o Gemini, o Jira, o GitHub ou o histórico.
-- 🧪 **61 testes + CI** — suíte `pytest` (motor, Jira, persistência, guardrails e dashboard) rodando a cada push via GitHub Actions (badge de qualidade em cima).
+- 🧪 **71 testes + CI** — suíte `pytest` (motor, Jira, persistência, guardrails, dashboard e RAG) rodando a cada push via GitHub Actions (badge de qualidade em cima).
 - 📈 **Dashboard de QA** — visão geral 100% local do histórico persistido: KPIs (total, CRÍTICAs, MÉDIAS, normais, score médio), **distribuição de severidade**, **volume por dia**, **funcionalidades mais afetadas** e comparativo **IA vs. motor local** (divergências).
+- 📚 **RAG no histórico** — o Gemini consulta as triagens passadas (retrieval local por similaridade Jaccard) e responde se o problema **já aconteceu** e **como foi resolvido** antes, apontando os registros similares.
 - 🟫 **Sem falsos positivos técnicos**: palavras como *erro*, *bug* e *falha* são vocabulário normal de teste e **não** disparam severidade sozinhas.
 - 🟥 **Interface com identidade visual própria** (tema Streamlit em `config.toml`).
 
@@ -165,6 +166,7 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 | 🧠 `triagem.py` | Motor NLP: léxico PT, padrões de negação e classificação de severidade (offline) |
 | 🔗 `jira_client.py` | Cliente da API REST v3 do Jira: cria issues (Tarefa) com prioridade mapeada |
 | 🔮 `ia.py` | Análise por IA via Google Gemini: causa raiz, categoria e passos (com fallback) |
+| 📚 `rag.py` | RAG leve no histórico: retrieval por similaridade Jaccard (offline) + geração que responde "já aconteceu? como resolvemos?" |
 | 🧪 `test_triagem.py` | 18 testes unitários do motor (rodam no CI) |
 | 🧪 `test_jira_client.py` | 15 testes unitários do cliente Jira (rodam no CI) |
 | 📁 `persistencia.py` | Histórico persistido em `data/historico.jsonl` (JSONL local, gitignored) com snapshot fiel da triagem |
@@ -172,6 +174,7 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 | 🧪 `test_persistencia.py` | 8 testes unitários da persistência (rodam no CI) |
 | 🧪 `test_guardrails.py` | 14 testes de detecção/máscara de credenciais e PII (rodam no CI) |
 | 🧪 `test_dashboard.py` | 6 testes das agregações do Dashboard de QA (rodam no CI) |
+| 🧪 `test_rag.py` | 10 testes do RAG: tokenização, similaridade, recuperação top-k e orquestração (rodam no CI) |
 | 📈 `dashboard.py` | Dashboard de QA: KPIs + severidade + volume/dia + funcionalidades + IA vs. léxico (leitura do JSONL) |
 | 📦 `requirements.txt` | Dependências pinadas |
 | 🎨 `.streamlit/config.toml` | Tema e configurações da app |
@@ -184,26 +187,27 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 </div>
 
 <div align="center">
-  <img src="https://img.shields.io/badge/9%20conclu%C3%ADdas-4CAF50?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/1%20em%20aberto-FF9800?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/10%20conclu%C3%ADdas-4CAF50?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/0%20em%20aberto-brightgreen?style=for-the-badge" />
 </div>
 
 - ✅ **Fase 1** — Motor NLP offline (léxico PT + negação, sem TextBlob/Google Translate)
 - ✅ **Fase 2** — Exportação do relatório, histórico de sessão e identidade visual
 - ✅ **Fase 3** — Integração com **LLMs** (Gemini) para análise de causa raiz, categoria e passos — com fallback automático
 - ✅ **Seletor de IA por triagem (checkbox 🔮)** — você decide quando o Gemini entra: desligue para triagem 100% local ou ligue para ganhar causa raiz e passos
-- ✅ **Testes unitários do motor (`pytest`)** — 61 testes (motor + Jira + persistência + guardrails + dashboard), rodam automaticamente via CI (GitHub Actions)
+- ✅ **Testes unitários do motor (`pytest`)** — 71 testes (motor + Jira + persistência + guardrails + dashboard + RAG), rodam automaticamente via CI (GitHub Actions)
 - ✅ **Exportação via API do Jira** — cria issue do tipo Tarefa no `iagoqa.atlassian.net` (prioridade mapeada automaticamente)
 - ✅ **Persistência do histórico (JSONL)** — cada triagem vira um snapshot fiel em `data/historico.jsonl` (local, gitignored): com IA salva o relatório completo; sem IA, só o léxico. Seletor de data + download do relatório
 - ✅ **Guardrails de entrada/saída (PII/credenciais)** — detecta e mascara tokens Atlassian, chaves Gemini/Google/OpenAI, tokens GitHub, e-mails, senhas numéricas, telefones e CPFs digitados no relato: nada sensível vai para o Gemini, o Jira, o GitHub ou o histórico
 - ✅ **Dashboard de QA** — visão geral do histórico persistido: KPIs, distribuição de severidade, volume por dia, funcionalidades mais afetadas e comparativo IA vs. motor local (100% local, sem enviar nada)
-- ⬜ **RAG no histórico** — o Gemini consulta triagens passadas para responder "isso já aconteceu? como resolvemos?"
+- ✅ **RAG no histórico** — o Gemini consulta as triagens passadas (top-k similares, retrieval local por Jaccard) e responde **"isso já aconteceu? como resolvemos?"** com a resolução anterior; se não acha, sinaliza caso novo
+- - ✅ **Roadmap 10/10 🎉** — MVP concluído; próximos passos rumo ao SaaS abaixo
 
 **🚀 Rumo a um SaaS de QA** (roadmap futuro):
 > Depois de esgotar o MVP, a visão é evoluir para um **produto tipo SaaS/CRM de triagem**:
 > - ☁️ **Persistência em nuvem** (Supabase/Postgres) — histórico real entre sessões (hoje o disco da nuvem é efêmero)
 > - 🔐 **Autenticação (login)** — cada usuário vê só o seu histórico (multi-tenant)
-> - 🤖 **RAG no histórico** → causa raiz com soluções passadas → *triage agent*
+> - 🧠 **Causa raiz com histórico** (evolução do RAG ✅) → sugerir a correção que resolveu da última vez → *triage agent*
 > - 🔁 **Modelos alternativos** (Groq/Llama-Ollama) no mesmo `ia.py`, sem depender só do Gemini
 > - 🔔 **Notificações** (Slack/Discord/e-mail) em CRÍTICA · 🌐 **webhook/API** · 📧 **relatório agendado** · 📊 **LLMOps/evals**
 > Roadmap completo acompanhado no brainstorming do projeto (`~/Documentos/roadmap-ia.md`).

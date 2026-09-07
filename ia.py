@@ -37,6 +37,35 @@ RELATO DO USUÁRIO:
 {relato}
 """
 
+PROMPT_RAG = """Você é um assistente sênior de QA. Recebeu um RELATO ATUAL sobre um bug e a
+lista de TRIAGENS ANTERIORES (histórico persistido do app). Use as anteriores para dizer
+se o problema é RECORRENTE e como foi resolvido antes.
+
+Responda APENAS com JSON válido (sem markdown, sem texto extra), usando exatamente este schema:
+
+{
+  "severidade": "critica|alta|media|baixa",
+  "categoria": "funcionalidade|performance|seguranca|design|outro",
+  "causa_raiz": "causa provável, em uma frase",
+  "passos_repro": ["1º passo", "2º passo", "3º passo"],
+  "resumo_tecnico": "resumo técnico curto",
+  "ja_aconteceu": true,
+  "resolucao_anterior": "como foi resolvido da última vez (resumo), ou vazio se nunca ocorreu",
+  "registros_similar": ["id1", "id2"]
+}
+
+Regras:
+- Se nenhuma triagem anterior for útil, responda "ja_aconteceu": false e "resolucao_anterior": "".
+- Se a informação for insuficiente, use categoria "outro" e severidade "media".
+- Não invente resolução: se o histórico não mostra como resolveu, deixe vazio.
+
+TRIAGENS ANTERIORES (histórico):
+{contexto}
+
+RELATO ATUAL:
+{relato}
+"""
+
 
 def _carregar_env():
     """Carrega chave do arquivo .env (apenas leitura, nunca commitado)."""
@@ -72,11 +101,8 @@ def _extrair_json(texto):
     return json.loads(texto)
 
 
-def analisar_llm(relato):
-    """Chama o Gemini e retorna (dict | None, mensagem_erro).
-
-    dict com chaves: severidade, categoria, causa_raiz, passos_repro, resumo_tecnico
-    """
+def _chamar_gemini(conteudo, temperatura=0.2, max_output_tokens=1024):
+    """Chama o Gemini com fallback entre modelos. Retorna (dict | None, erro)."""
     chave = _chave()
     if not chave:
         return None, "Chave GEMINI_API_KEY não configurada."
@@ -88,18 +114,16 @@ def analisar_llm(relato):
         cliente = genai.Client(api_key=chave)
         config = types.GenerateContentConfig(
             response_mime_type="application/json",
-            temperature=0.2,
-            max_output_tokens=1024,
+            temperature=temperatura,
+            max_output_tokens=max_output_tokens,
         )
-        conteudo = PROMPT.replace("{relato}", relato[:2000])
         ultimo_erro = None
+        import time
 
         # Fallback: tenta vários modelos porque o Gemini costuma falhar
         # com 503 ("alta demanda") de vez em quando.
-        import time
-
         for modelo in MODELOS:
-            for tentativa in range(2):
+            for _tentativa in range(2):
                 try:
                     resposta = cliente.models.generate_content(
                         model=modelo, contents=conteudo, config=config
@@ -112,6 +136,27 @@ def analisar_llm(relato):
         return None, ultimo_erro or "Falha ao chamar a API."
     except Exception as exc:  # qualquer falha de rede/API/JSON
         return None, f"{type(exc).__name__}: {str(exc)[:120]}"
+
+
+def analisar_llm(relato):
+    """Chama o Gemini e retorna (dict | None, mensagem_erro).
+
+    dict com chaves: severidade, categoria, causa_raiz, passos_repro, resumo_tecnico
+    """
+    return _chamar_gemini(PROMPT.replace("{relato}", relato[:2000]))
+
+
+def analisar_llm_rag(relato, contexto):
+    """Chama o Gemini com o histórico recuperado (RAG).
+
+    dict com o schema padrão + ja_aconteceu, resolucao_anterior, registros_similar.
+    """
+    prompt = (
+        PROMPT_RAG
+        .replace("{relato}", relato[:2000])
+        .replace("{contexto}", (contexto or "")[:6000])
+    )
+    return _chamar_gemini(prompt)
 
 
 if __name__ == "__main__":
