@@ -43,6 +43,9 @@ create table if not exists triagens (
 
 alter table triagens enable row level security;
 
+grant select, insert, update on table triagens to anon;
+grant select, insert, update on table triagens to authenticated;
+
 create policy "triagens anon insert" on triagens
   for insert to anon with check (true);
 
