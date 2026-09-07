@@ -100,6 +100,9 @@ SUPABASE_ANON_KEY = "eyJhbGciOi..."
 - As políticas RLS são abertas ao `anon` até a fase de autenticação.
 - **Failover já implementado**: se o Supabase estiver fora do ar, a triagem **não quebra** —
   o snapshot é gravado no JSONL local automaticamente.
+- **Resolução (aprendizado do RAG)**: o campo `resolucao` vive dentro do `payload` (jsonb) —
+  **sem migração de schema**. O `registrar_resolucao()` faz fetch + PATCH por `id` no payload
+  e o RAG passa a incluir a resolução no contexto montado.
 
 ---
 

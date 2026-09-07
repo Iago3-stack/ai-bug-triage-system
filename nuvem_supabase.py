@@ -183,6 +183,34 @@ def registrar_exportacao_jira(chave: str, url: str) -> bool:
     return True
 
 
+def registrar_resolucao(registro_id: str, texto: str) -> bool:
+    """Registra 'como o caso foi resolvido' num registro (vai no payload → alimenta o RAG)."""
+    config = _config()
+    if not config:
+        raise RuntimeError("Supabase não configurado.")
+    doc = requests.get(
+        f"{_base_url()}/{_TABELA_PADRAO}",
+        headers=_headers(),
+        params={"select": "*", "id": f"eq.{registro_id}", "limit": "1"},
+        timeout=15,
+    )
+    doc.raise_for_status()
+    docs = doc.json() or []
+    if not docs:
+        return False
+    payload = dict(docs[0].get("payload") or {})
+    payload["resolucao"] = texto
+    resposta = requests.patch(
+        f"{_base_url()}/{_TABELA_PADRAO}",
+        headers=_headers(),
+        params={"id": f"eq.{registro_id}"},
+        json={"payload": payload},
+        timeout=15,
+    )
+    resposta.raise_for_status()
+    return True
+
+
 def excluir_antigos(dias: int) -> int:
     """Não aplicável por API REST simples — o app não usa exclusão pela nuvem."""
     return 0

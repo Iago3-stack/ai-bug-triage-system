@@ -59,6 +59,8 @@ def montar_contexto(similares):
             f"(gravidade: {reg.get('gravidade', '—')}, score {reg.get('score', '—')}, "
             f"data {reg.get('data', '—')})"
         )
+        if reg.get("resolucao"):
+            linhas.append(f"   resolução registrada: {reg['resolucao']}")
     return "\n".join(linhas)
 
 

@@ -115,6 +115,43 @@ def test_carregar_registros_retorna_payloads(monkeypatch):
     assert registros[0]["id"] == "a1"
 
 
+def test_registrar_resolucao_faz_fetch_e_patch_por_id(monkeypatch):
+    _sem_config(monkeypatch)
+    monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-test")
+
+    def _fake_get(url, headers=None, params=None, timeout=None):
+        assert params["id"] == "eq.abc123"
+        return _FakeResposta([
+            {"id": "abc123", "payload": {"id": "abc123", "resumo": "bug"}}
+        ])
+
+    patch_info = {}
+
+    def _fake_patch(url, headers=None, params=None, json=None, timeout=None):
+        patch_info["params"] = params
+        patch_info["json"] = json
+        return _FakeResposta([json])
+
+    monkeypatch.setattr(nuvem_supabase.requests, "get", _fake_get)
+    monkeypatch.setattr(nuvem_supabase.requests, "patch", _fake_patch)
+    ok = nuvem_supabase.registrar_resolucao("abc123", "rollback da versão 1.2.0")
+    assert ok is True
+    assert patch_info["params"]["id"] == "eq.abc123"
+    # a resolução entra no payload (o RAG lê do payload convertido)
+    assert patch_info["json"]["payload"]["resolucao"] == "rollback da versão 1.2.0"
+    assert patch_info["json"]["payload"]["resumo"] == "bug"
+
+
+def test_registrar_resolucao_id_inexistente_retorna_falso(monkeypatch):
+    _sem_config(monkeypatch)
+    monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-test")
+    monkeypatch.setattr(nuvem_supabase.requests, "get",
+                        lambda *a, **k: _FakeResposta([]))
+    assert nuvem_supabase.registrar_resolucao("xyz", "nada") is False
+
+
 # --- Facade persistencia.py (dispatch) ----------------------------------
 def test_facade_usa_nuvem_quando_configurada(monkeypatch, tmp_path):
     # Sem caminho local nem backend forçado -> dispatches para a nuvem.
@@ -170,3 +207,20 @@ def test_facade_failover_grava_local_quando_nuvem_indisponivel(monkeypatch, tmp_
     with open(arquivo, encoding="utf-8") as f:
         linhas = f.read().strip().splitlines()
     assert len(linhas) == 1
+
+
+def test_facade_registrar_resolucao_em_jsonl(monkeypatch, tmp_path):
+    # Sem nuvem: a resolução é gravada no registro local pelo id.
+    arquivo = tmp_path / "hist.jsonl"
+    monkeypatch.setenv("PERSISTENCIA_ARQUIVO", str(arquivo))
+    registro = persistencia.registrar_triagem({"resumo": "bug com resolução"})
+    assert persistencia.registrar_resolucao(registro["id"], "trocar o servidor NFS") is True
+    registros = persistencia.carregar_registros()
+    assert registros[0]["resolucao"] == "trocar o servidor NFS"
+
+
+def test_facade_registrar_resolucao_id_inexistente_falha(monkeypatch, tmp_path):
+    arquivo = tmp_path / "hist.jsonl"
+    monkeypatch.setenv("PERSISTENCIA_ARQUIVO", str(arquivo))
+    persistencia.registrar_triagem({"resumo": "um"})
+    assert persistencia.registrar_resolucao("id-que-nao-existe", "x") is False

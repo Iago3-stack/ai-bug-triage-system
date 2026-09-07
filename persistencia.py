@@ -116,6 +116,26 @@ def registrar_exportacao_jira(chave: str, url: str) -> bool:
     return True
 
 
+def registrar_resolucao(registro_id: str, texto: str) -> bool:
+    """Guarda 'como o caso foi resolvido' no registro — alimenta o RAG.
+
+    Retorna True se o registro existir e a resolução for gravada (nuvem ou
+    JSONL local, com failover automático).
+    """
+    if _usar_nuvem():
+        try:
+            return nuvem_supabase.registrar_resolucao(registro_id, texto)
+        except Exception:
+            pass
+    registros = _ler_jsonl()
+    for reg in registros:
+        if reg.get("id") == registro_id:
+            reg["resolucao"] = texto
+            _reescrever(registros)
+            return True
+    return False
+
+
 def excluir_antigos(dias: int) -> int:
     """Remove registros mais velhos que `dias`. Retorna quantos foram removidos.
 

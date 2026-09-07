@@ -70,6 +70,24 @@ def test_montar_contexto_inclui_id_resumo_e_gravidade():
     assert "CRÍTICA" in contexto
 
 
+def test_montar_contexto_inclui_resolucao_quando_registrada():
+    # O Gemini só consegue responder "como foi resolvido" se a resolução
+    # estiver no contexto recuperado — esse é o coração do aprendizado.
+    contexto = rag.montar_contexto([
+        {"id": "abc", "resumo": "crash no login",
+         "resolucao": "rollback da versão 1.2.0 corrigiu o crash"}
+    ])
+    assert "resolução registrada" in contexto
+    assert "rollback da versão 1.2.0" in contexto
+
+
+def test_montar_contexto_omite_resolucao_quando_nao_existe():
+    contexto = rag.montar_contexto([
+        {"id": "abc", "resumo": "crash no login"}
+    ])
+    assert "resolução registrada" not in contexto
+
+
 def test_montar_contexto_vazio_avisa():
     assert "Nenhuma" in rag.montar_contexto([])
 

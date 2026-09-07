@@ -66,9 +66,9 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
 - ⚪ **Histórico da sessão** em tabela (`pandas`) com opção de limpar.
 - 📁 **Histórico persistido (JSONL local + ☁️ Supabase)** — cada triagem vira um **snapshot fiel** em `data/historico.jsonl` (local, gitignored); quando o **Supabase** está configurado (URL + anon key nos secrets), o histórico passa a viver na **nuvem** e sobrevive a redeploys (com **failover** automático pra JSONL se a nuvem cair). **Seletor de data + download** do relatório em Markdown + vínculo com a issue criada no Jira. Backend visível no expander do histórico.
 - 🛡️ **Guardrails de entrada/saída (PII)** — detecta e **mascara** token Atlassian, chaves Gemini/Google/OpenAI, tokens GitHub, e-mails, **senhas numéricas, telefones e CPFs** digitados no relato: nada sensível vai para o Gemini, o Jira, o GitHub ou o histórico.
-- 🧪 **82 testes + CI** — suíte `pytest` (motor, Jira, persistência, guardrails, dashboard, RAG e nuvem) rodando a cada push via GitHub Actions (badge de qualidade em cima).
+- 🧪 **88 testes + CI** — suíte `pytest` (motor, Jira, persistência, guardrails, dashboard, RAG e nuvem) rodando a cada push via GitHub Actions (badge de qualidade em cima).
 - 📈 **Dashboard de QA** — visão geral 100% local do histórico persistido: KPIs (total, CRÍTICAs, MÉDIAS, normais, score médio), **distribuição de severidade**, **volume por dia**, **funcionalidades mais afetadas** e comparativo **IA vs. motor local** (divergências).
-- 📚 **RAG no histórico** — o Gemini consulta as triagens passadas (retrieval local por similaridade Jaccard) e responde se o problema **já aconteceu** e **como foi resolvido** antes, apontando os registros similares.
+- 📚 **RAG no histórico** — o Gemini consulta as triagens passadas (retrieval local por similaridade Jaccard) e responde se o problema **já aconteceu** e **como foi resolvido** antes, apontando os registros similares. Depois de resolver o bug, **registre a solução** no app — vira aprendizado para as próximas triagens similares.
 - 🟫 **Sem falsos positivos técnicos**: palavras como *erro*, *bug* e *falha* são vocabulário normal de teste e **não** disparam severidade sozinhas.
 - 🟥 **Interface com identidade visual própria** (tema Streamlit em `config.toml`).
 
@@ -175,8 +175,8 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 | 🧪 `test_persistencia.py` | 8 testes unitários da persistência (rodam no CI) |
 | 🧪 `test_guardrails.py` | 14 testes de detecção/máscara de credenciais e PII (rodam no CI) |
 | 🧪 `test_dashboard.py` | 6 testes das agregações do Dashboard de QA (rodam no CI) |
-| 🧪 `test_rag.py` | 10 testes do RAG: tokenização, similaridade, recuperação top-k e orquestração (rodam no CI) |
-| 🧪 `test_nuvem_supabase.py` | 10 testes da persistência em nuvem: config, conversão, HTTP (mockado), failover e dispatch do facade (rodam no CI) |
+| 🧪 `test_rag.py` | 13 testes do RAG: tokenização, similaridade, recuperação top-k, contexto (com resolução) e orquestração (rodam no CI) |
+| 🧪 `test_nuvem_supabase.py` | 14 testes da persistência em nuvem: config, conversão, HTTP (mockado), resolução, failover e dispatch do facade (rodam no CI) |
 | 📈 `dashboard.py` | Dashboard de QA: KPIs + severidade + volume/dia + funcionalidades + IA vs. léxico (leitura do JSONL) |
 | 📦 `requirements.txt` | Dependências pinadas |
 | 🎨 `.streamlit/config.toml` | Tema e configurações da app |
@@ -197,7 +197,7 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 - ✅ **Fase 2** — Exportação do relatório, histórico de sessão e identidade visual
 - ✅ **Fase 3** — Integração com **LLMs** (Gemini) para análise de causa raiz, categoria e passos — com fallback automático
 - ✅ **Seletor de IA por triagem (checkbox 🔮)** — você decide quando o Gemini entra: desligue para triagem 100% local ou ligue para ganhar causa raiz e passos
-- ✅ **Testes unitários do motor (`pytest`)** — 82 testes (motor + Jira + persistência + guardrails + dashboard + RAG + nuvem), rodam automaticamente via CI (GitHub Actions)
+- ✅ **Testes unitários do motor (`pytest`)** — 88 testes (motor + Jira + persistência + guardrails + dashboard + RAG + nuvem), rodam automaticamente via CI (GitHub Actions)
 - ✅ **Exportação via API do Jira** — cria issue do tipo Tarefa no `iagoqa.atlassian.net` (prioridade mapeada automaticamente)
 - ✅ **Persistência do histórico (JSONL)** — cada triagem vira um snapshot fiel em `data/historico.jsonl` (local, gitignored): com IA salva o relatório completo; sem IA, só o léxico. Seletor de data + download do relatório
 - ✅ **Guardrails de entrada/saída (PII/credenciais)** — detecta e mascara tokens Atlassian, chaves Gemini/Google/OpenAI, tokens GitHub, e-mails, senhas numéricas, telefones e CPFs digitados no relato: nada sensível vai para o Gemini, o Jira, o GitHub ou o histórico

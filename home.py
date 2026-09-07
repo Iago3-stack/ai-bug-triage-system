@@ -214,7 +214,9 @@ if st.button("Executar Triagem Inteligente"):
             else:
                 snapshot["erro_ia"] = erro_llm
             snapshot["relatorio_completo"] = relatorio
-            persistencia.registrar_triagem(snapshot)
+            # Guarda o id persistido: permite registrar a resolução depois e
+            # alimentar o RAG ("como foi resolvido da última vez").
+            st.session_state["ultimo_registro_id"] = persistencia.registrar_triagem(snapshot).get("id", "")
 
             # --- 4. GUARDA O RESULTADO (sobrevive a reruns dos botões de exportação) ---
             st.session_state["resultado"] = {
@@ -338,6 +340,21 @@ if r:
         else:
             st.error(f"❌ Não foi possível exportar para o Jira: {detalhe}")
 
+    with st.expander("🔧 Registrar como este caso foi resolvido (alimenta o RAG)"):
+        st.caption(
+            "Depois de resolver o bug, volte e descreva a solução aqui. Nas próximas "
+            "triagens similares, o RAG vai responder **'como foi resolvido da última vez'** "
+            "usando esse registro."
+        )
+        resolucao_draft = st.text_area("Descreva a solução aplicada:", key="resolucao_draft")
+        if st.button("💾 Registrar resolução", key="btn_registrar_resolucao"):
+            texto = resolucao_draft.strip()
+            registro_id = st.session_state.get("ultimo_registro_id", "")
+            if texto and registro_id and persistencia.registrar_resolucao(registro_id, texto):
+                st.success("✅ Resolução gravada! Este aprendizado passou a integrar o histórico consultado pelo RAG.")
+            else:
+                st.warning("Nada foi registrado — descreva a solução ou confira se a triagem foi persistida.")
+
     st.info("📋 O relatório também pode ser copiado direto da caixa acima para o Jira ou GitHub!")
     st.success("Triagem finalizada com sucesso! ✅")
 
@@ -368,6 +385,7 @@ if registros_totais:
                 "Score": r["score"],
                 "IA": "sim" if r.get("usou_ia") else "não",
                 "Jira": r.get("jira_key") or "—",
+                "Resolvido": "sim" if r.get("resolucao") else "—",
             } for r in do_dia
         ]), use_container_width=True, hide_index=True)
         rotulos = [
@@ -386,6 +404,18 @@ if registros_totais:
             mime="text/markdown",
             key="hp_download",
         )
+        with st.expander(f"🔧 Resolução — {('já registrada' if reg.get('resolucao') else 'não registrada')}"):
+            st.caption("Guarde aqui como o bug foi resolvido — vira aprendizado consultado pelo RAG nas próximas triagens similares.")
+            nova_res = st.text_area(
+                "Como este caso foi resolvido:",
+                value=reg.get("resolucao") or "",
+                key=f"res_{reg['id']}",
+            )
+            if st.button("💾 Salvar resolução", key=f"btn_res_{reg['id']}"):
+                if nova_res.strip() and persistencia.registrar_resolucao(reg["id"], nova_res.strip()):
+                    st.success("✅ Resolução salva no histórico!")
+                else:
+                    st.warning("Nada foi alterado (campo vazio ou registro não encontrado).")
 # --- 6.6 DASHBOARD DE QA (visão geral do histórico persistido) ---
 if registros_totais:
     with st.expander("📈 Dashboard de QA — visão geral do histórico"):
