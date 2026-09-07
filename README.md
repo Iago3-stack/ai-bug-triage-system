@@ -50,6 +50,8 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
   <img src="https://img.shields.io/badge/Exporta%C3%A7%C3%A3o%20(MD%2FGitHub%2FJira)-FF9800?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Hist%C3%B3rico%20de%20sess%C3%A3o-9E9E9E?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Hist%C3%B3rico%20persistido%20%28JSONL%29-25D366?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Guardrails%20de%20PII-E91E63?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/55%20testes%20%2B%20CI-4CAF50?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Sem%20falsos%20positivos-607D8B?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Identidade%20visual-FF4B4B?style=for-the-badge" />
 </div>
@@ -64,6 +66,9 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
 - 💚 **Relatório Gherkin** (`Dado/Quando/Então`) baseado na prioridade detectada.
 - 🟠 **Exportação**: baixar relatório (`.md`), abrir **Issue no GitHub** pré-preenchida ou **criar issue real no Jira** via API (com prioridade mapeada automaticamente).
 - ⚪ **Histórico da sessão** em tabela (`pandas`) com opção de limpar.
+- 📁 **Histórico persistido (JSONL)** — cada triagem vira um **snapshot fiel** em `data/historico.jsonl` (local, gitignored): com IA grava o relatório completo; sem IA, só o léxico. **Seletor de data + download** do relatório em Markdown + vínculo com a issue criada no Jira.
+- 🛡️ **Guardrails de entrada/saída (PII)** — detecta e **mascara** token Atlassian, chaves Gemini/Google/OpenAI, tokens GitHub, e-mails, **senhas numéricas, telefones e CPFs** digitados no relato: nada sensível vai para o Gemini, o Jira, o GitHub ou o histórico.
+- 🧪 **55 testes + CI** — suíte `pytest` (motor, Jira, persistência e guardrails) rodando a cada push via GitHub Actions (badge de qualidade em cima).
 - 🟫 **Sem falsos positivos técnicos**: palavras como *erro*, *bug* e *falha* são vocabulário normal de teste e **não** disparam severidade sozinhas.
 - 🟥 **Interface com identidade visual própria** (tema Streamlit em `config.toml`).
 
