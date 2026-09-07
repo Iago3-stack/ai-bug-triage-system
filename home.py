@@ -22,6 +22,18 @@ st.markdown("""
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     .stDeployButton {display: none;}
+
+    /* Destaque colorido por expander (id == key do st.expander) */
+    #ex_resolucao, #ex_res_registro { border: 2px solid #e11d48 !important; border-radius: 12px !important; background: rgba(225, 29, 72, 0.05) !important; }
+    #ex_resolucao summary, #ex_res_registro summary { color: #e11d48 !important; font-weight: 700 !important; }
+    #ex_sessao { border: 2px solid #2563eb !important; border-radius: 12px !important; }
+    #ex_sessao summary { color: #2563eb !important; font-weight: 700 !important; }
+    #ex_historico { border: 2px solid #059669 !important; border-radius: 12px !important; }
+    #ex_historico summary { color: #059669 !important; font-weight: 700 !important; }
+    #ex_dashboard { border: 2px solid #7c3aed !important; border-radius: 12px !important; }
+    #ex_dashboard summary { color: #7c3aed !important; font-weight: 700 !important; }
+    #ex_diag { border: 2px solid #d97706 !important; border-radius: 12px !important; }
+    #ex_diag summary { color: #d97706 !important; font-weight: 700 !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -293,7 +305,7 @@ if r:
             st.success("✅ Motores concordam na prioridade.")
     elif erro_llm:
         st.info("🔮 Análise por IA indisponível neste momento — o motor local determinístico segue no controle.")
-        with st.expander("🔧 Diagnóstico interno (IA/RAG)"):
+        with st.expander("🔧 Diagnóstico interno (IA/RAG)", key="ex_diag"):
             st.write(f"**Módulo `ia` tem `analisar_llm_rag`:** {'sim' if hasattr(ia, 'analisar_llm_rag') else 'NÃO → deploy desatualizado'}")
             st.write(f"**Erro redigido pela Cloud:** `{erro_llm}`")
             trace_ia = st.session_state.get("erro_ia_bruto")
@@ -340,7 +352,7 @@ if r:
         else:
             st.error(f"❌ Não foi possível exportar para o Jira: {detalhe}")
 
-    with st.expander("🔧 Registrar como este caso foi resolvido (alimenta o RAG)"):
+    with st.expander("🔧 Registrar como este caso foi resolvido (alimenta o RAG)", key="ex_resolucao"):
         st.caption(
             "Depois de resolver o bug, volte e descreva a solução aqui. Nas próximas "
             "triagens similares, o RAG vai responder **'como foi resolvido da última vez'** "
@@ -359,7 +371,7 @@ if r:
     st.success("Triagem finalizada com sucesso! ✅")
 
     # --- 6. HISTÓRICO (TABELA pandas) ---
-    with st.expander(f"📊 Histórico de triagens desta sessão ({len(st.session_state['historico'])})"):
+    with st.expander(f"📊 Histórico de triagens desta sessão ({len(st.session_state['historico'])})", key="ex_sessao"):
         st.dataframe(pd.DataFrame(st.session_state["historico"]),
                      use_container_width=True, hide_index=True)
         if st.button("🗑️ Limpar histórico"):
@@ -373,7 +385,7 @@ if registros_totais:
         if persistencia._usar_nuvem()
         else "💾 JSONL local (efêmero na Cloud — só você vê)"
     )
-    with st.expander(f"📁 Histórico persistido ({backend}) — {len(registros_totais)} triagem(ns) salva(s)"):
+    with st.expander(f"📁 Histórico persistido ({backend}) — {len(registros_totais)} triagem(ns) salva(s)", key="ex_historico"):
         datas = persistencia.datas_disponiveis()
         data_sel = st.selectbox("📅 Escolha a data", datas, key="hp_data")
         do_dia = persistencia.registros_por_data(data_sel)
@@ -404,7 +416,7 @@ if registros_totais:
             mime="text/markdown",
             key="hp_download",
         )
-        with st.expander(f"🔧 Resolução — {('já registrada' if reg.get('resolucao') else 'não registrada')}"):
+        with st.expander(f"🔧 Resolução — {('já registrada' if reg.get('resolucao') else 'não registrada')}", key="ex_res_registro"):
             st.caption("Guarde aqui como o bug foi resolvido — vira aprendizado consultado pelo RAG nas próximas triagens similares.")
             nova_res = st.text_area(
                 "Como este caso foi resolvido:",
@@ -418,7 +430,7 @@ if registros_totais:
                     st.warning("Nada foi alterado (campo vazio ou registro não encontrado).")
 # --- 6.6 DASHBOARD DE QA (visão geral do histórico persistido) ---
 if registros_totais:
-    with st.expander("📈 Dashboard de QA — visão geral do histórico"):
+    with st.expander("📈 Dashboard de QA — visão geral do histórico", key="ex_dashboard"):
         dashboard_qa.render_dashboard(registros_totais)
 # --- CONFIGURAÇÃO DO JIRA (sidebar) ---
 if not jira_client.configurado():
