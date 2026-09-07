@@ -38,6 +38,7 @@ jobs:
 
       - name: Gerar badge JSON com a contagem real de testes
         run: |
+          mkdir -p badge
           python3 - <<'PY'
           import json
           import xml.etree.ElementTree as ET
@@ -52,7 +53,7 @@ jobs:
               "message": f"{aprovados} passed",
               "color": "4CAF50" if falhas == 0 else "E91E63",
           }
-          with open("pytest-badge.json", "w", encoding="utf-8") as f:
+          with open("badge/pytest-badge.json", "w", encoding="utf-8") as f:
               json.dump(payload, f)
           print(f"Badge gerado: {aprovados} passed (total={total}, falhas={falhas})")
           PY
@@ -60,7 +61,7 @@ jobs:
       - name: Publicar badge como artefato de Pages
         uses: actions/upload-pages-artifact@v3
         with:
-          path: pytest-badge.json
+          path: badge
 
   badge:
     runs-on: ubuntu-latest

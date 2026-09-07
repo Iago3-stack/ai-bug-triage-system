@@ -49,7 +49,7 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
   <img src="https://img.shields.io/badge/Hist%C3%B3rico%20de%20sess%C3%A3o-9E9E9E?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Hist%C3%B3rico%20persistido%20%28JSONL%29-25D366?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Guardrails%20de%20PII-E91E63?style=for-the-badge" />
-  <a href="https://github.com/Iago3-stack/ai-bug-triage-system/actions"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fiago3-stack.github.io%2Fai-bug-triage-system%2Fpytest-badge.json&style=for-the-badge&logo=githubactions&logoColor=white&cacheSeconds=300" /></a>
+  <a href="https://github.com/Iago3-stack/ai-bug-triage-system/actions"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fiago3-stack.github.io%2Fai-bug-triage-system%2Fbadge%2Fpytest-badge.json&style=for-the-badge&logo=githubactions&logoColor=white&cacheSeconds=300" /></a>
   <img src="https://img.shields.io/badge/Sem%20falsos%20positivos-607D8B?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Identidade%20visual-FF4B4B?style=for-the-badge" />
 </div>
