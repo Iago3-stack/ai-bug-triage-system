@@ -73,8 +73,6 @@ jobs:
     steps:
       - name: Configurar GitHub Pages
         uses: actions/configure-pages@v5
-        with:
-          enablement: true
       - name: Deploy do badge para Pages
         uses: actions/deploy-pages@v4
 
