@@ -199,6 +199,15 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 - ✅ **Dashboard de QA** — visão geral do histórico persistido: KPIs, distribuição de severidade, volume por dia, funcionalidades mais afetadas e comparativo IA vs. motor local (100% local, sem enviar nada)
 - ⬜ **RAG no histórico** — o Gemini consulta triagens passadas para responder "isso já aconteceu? como resolvemos?"
 
+**🚀 Rumo a um SaaS de QA** (roadmap futuro):
+> Depois de esgotar o MVP, a visão é evoluir para um **produto tipo SaaS/CRM de triagem**:
+> - ☁️ **Persistência em nuvem** (Supabase/Postgres) — histórico real entre sessões (hoje o disco da nuvem é efêmero)
+> - 🔐 **Autenticação (login)** — cada usuário vê só o seu histórico (multi-tenant)
+> - 🤖 **RAG no histórico** → causa raiz com soluções passadas → *triage agent*
+> - 🔁 **Modelos alternativos** (Groq/Llama-Ollama) no mesmo `ia.py`, sem depender só do Gemini
+> - 🔔 **Notificações** (Slack/Discord/e-mail) em CRÍTICA · 🌐 **webhook/API** · 📧 **relatório agendado** · 📊 **LLMOps/evals**
+> Roadmap completo acompanhado no brainstorming do projeto (`~/Documentos/roadmap-ia.md`).
+
 ---
 
 <div align="center">
