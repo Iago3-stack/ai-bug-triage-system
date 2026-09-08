@@ -66,21 +66,23 @@ hero_animado.render()
 
 esq, centro = st.columns([1, 8])
 with centro:
-     st.subheader("🎯 Sobre Mim 🧔🏾‍♂️️")    
-    
-     st.markdown("""
-Sou um entusiasta de tecnologia e estudante de **IA & Machine Learning**, focado em transformar a garantia de qualidade (QA) através da automação inteligente. Minha missão no laboratório **Hack28** é construir ferramentas que não apenas encontrem falhas, mas que tragam **insights valiosos para o negócio** usando **NLP** e **Engenharia de Prompt**.
-
-🚀 **Hoje:** Já coloco IA em produção lucidamente — motor NLP determinístico + Gemini com fallback automático, aplicação pública, open-source e **container publicada no GHCR**.
-
-🌟 **Visão:** evoluir esse mesmo motor para a próxima geração — **agentes de IA, RAG e MLOps** — transformando QA de "caça-bugs" em **inteligência de produto**. Com a graduação em IA & ML (UNIASSELVI · Dez/2027), esse caminho está documentado passo a passo no meu GitHub aberto.
-
-**O que eu busco agora:** Oportunidades **Home Office / Remote** para aplicar automação híbrida, acelerar ciclos de entrega e elevar o padrão de qualidade — fazendo parte de um time que constrói o futuro do software.
-""")
+    st.markdown("""
+<div style="margin-top:14px;width:100%;background:linear-gradient(135deg,#0f172a 0%,#16233c 55%,#25D366 170%);border-radius:16px;color:#e2e8f0;font-size:15px;line-height:1.6;padding:22px 24px">
+  <div style="font-size:19px;font-weight:800;color:#ffffff;margin-bottom:12px">🎯 Sobre Mim 🧔🏾‍♂️️</div>
+  <p style="margin:0 0 12px">Sou um entusiasta de tecnologia e estudante de <b style="color:#25D366">IA &amp; Machine Learning</b>, focado em transformar a garantia de qualidade (QA) através da automação inteligente. Minha missão no laboratório <b style="color:#94a3b8">Hack28</b> é construir ferramentas que não apenas encontrem falhas, mas que tragam <b style="color:#94a3b8">insights valiosos para o negócio</b> usando <b style="color:#94a3b8">NLP</b> e <b style="color:#94a3b8">Engenharia de Prompt</b>.</p>
+  <p style="margin:0 0 12px">🚀 <b style="color:#94a3b8">Hoje:</b> Já coloco IA em produção lucidamente — motor NLP determinístico + Gemini com fallback automático, aplicação pública, open-source e <b style="color:#94a3b8">container publicada no GHCR</b>.</p>
+  <p style="margin:0 0 12px">🌟 <b style="color:#94a3b8">Visão:</b> evoluir esse mesmo motor para a próxima geração — <b style="color:#94a3b8">agentes de IA, RAG e MLOps</b> — transformando QA de "caça-bugs" em <b style="color:#94a3b8">inteligência de produto</b>. Com a graduação em IA &amp; ML (UNIASSELVI · Dez/2027), esse caminho está documentado passo a passo no meu GitHub aberto.</p>
+  <p style="margin:0"><b style="color:#94a3b8">O que eu busco agora:</b> Oportunidades <b style="color:#94a3b8">Home Office / Remote</b> para aplicar automação híbrida, acelerar ciclos de entrega e elevar o padrão de qualidade — fazendo parte de um time que constrói o futuro do software.</p>
+</div>
+""", unsafe_allow_html=True)
 
 # --- SOBRE O PROJETO ---
 st.divider()
-st.write("Atualmente, dedico meus estudos na UNIASSELVI para aprofundar conhecimentos em Redes Neurais e Modelos de Linguagem (LLMs). No meu dia a dia, utilizo o Linux Mint como base para desenvolver scripts em Python que integram APIs de inteligência artificial à automação de testes, buscando sempre reduzir o tempo de triagem de bugs e melhorar a precisão dos relatórios técnicos.")
+st.markdown("""
+<div style="width:100%;background:linear-gradient(135deg,#1e293b 0%,#24344f 55%,#2E7CF6 175%);border-radius:16px;color:#e2e8f0;font-size:15px;line-height:1.6;padding:20px 24px">
+  <p style="margin:0">Atualmente, dedico meus estudos na <b style="color:#7aa5ff">UNIASSELVI</b> para aprofundar conhecimentos em <b style="color:#7aa5ff">Redes Neurais</b> e <b style="color:#7aa5ff">Modelos de Linguagem (LLMs)</b>. No meu dia a dia, utilizo o <b style="color:#7aa5ff">Linux Mint</b> como base para desenvolver scripts em <b style="color:#7aa5ff">Python</b> que integram APIs de inteligência artificial à automação de testes, buscando sempre reduzir o tempo de triagem de bugs e melhorar a precisão dos relatórios técnicos.</p>
+</div>
+""", unsafe_allow_html=True)
 st.subheader("🤖 Agente de Triagem e Documentação de Bugs 2026")
 st.info("Esta ferramenta demonstra o uso de NLP para automatizar a triagem técnica e emocional de falhas de software.")
 
