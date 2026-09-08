@@ -79,7 +79,9 @@ with col_foto:
 </div>
 """, unsafe_allow_html=True)
     
-    st.divider()
+    st.markdown("""
+<div style="height:3px;width:100%;background:linear-gradient(90deg,transparent,#25D366,#2E7CF6,#7c3aed,transparent);border-radius:999px;margin:8px 0"></div>
+""", unsafe_allow_html=True)
 
 # HERO animado centralizado: abaixo do Bem-vindo/digitação e acima do Sobre Mim
 hero_animado.render()
@@ -97,7 +99,9 @@ with centro:
 """, unsafe_allow_html=True)
 
 # --- SOBRE O PROJETO ---
-st.divider()
+st.markdown("""
+<div style="height:3px;width:100%;background:linear-gradient(90deg,transparent,#25D366,#2E7CF6,#7c3aed,transparent);border-radius:999px;margin:8px 0"></div>
+""", unsafe_allow_html=True)
 st.markdown("""
 <div style="width:100%;background:linear-gradient(135deg,#1e293b 0%,#24344f 55%,#2E7CF6 175%);border-radius:16px;color:#e2e8f0;font-size:15px;line-height:1.6;padding:20px 24px">
   <p style="margin:0">Atualmente, dedico meus estudos na <b style="color:#7aa5ff">UNIASSELVI</b> para aprofundar conhecimentos em <b style="color:#7aa5ff">Redes Neurais</b> e <b style="color:#7aa5ff">Modelos de Linguagem (LLMs)</b>. No meu dia a dia, utilizo o <b style="color:#7aa5ff">Linux Mint</b> como base para desenvolver scripts em <b style="color:#7aa5ff">Python</b> que integram APIs de inteligência artificial à automação de testes, buscando sempre reduzir o tempo de triagem de bugs e melhorar a precisão dos relatórios técnicos.</p>
