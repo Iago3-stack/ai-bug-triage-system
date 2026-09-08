@@ -4,8 +4,8 @@
 
 | Versão | Suportada |
 |---|---|
-| 2.x (atual) | ✅ |
-| 2.1.x (atual) | ✅ |
+| 2.3.x (atual) | ✅ |
+| 2.1.x (legado) | ❌ |
 | 1.x (legado) | ❌ |
 | 0.x (legado) | ❌ |
 

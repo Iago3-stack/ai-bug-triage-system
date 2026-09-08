@@ -4,7 +4,7 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
-## [Não lançado]
+## [v2.3.0] - 2026-09-08
 
 ### Adicionado
 - **Seletor de provedor de IA** (Automático → Gemini + fallback Groq · só Gemini · só Groq) com checkbox "🔮 Usar IA para esta triagem". O relatório mostra **qual provedor/modelo respondeu** (ex.: `Gemini · gemini-3.5-flash` ou `Groq · openai/gpt-oss-120b`), e a escolha é propagada também no fluxo RAG.
