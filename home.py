@@ -628,7 +628,7 @@ elif pix.configurado():
     <div style="font-size:15px;font-weight:800;color:#ffffff">☕ Apoie este projeto</div>
     <div style="color:#94a3b8;font-size:13px;margin:6px auto 12px;max-width:340px">Este é um projeto independente, feito por uma pessoa. Se ele te ajudou, considere uma contribuição voluntária via Pix.</div>
     <img src="{_qr_pix}" width="140" style="border-radius:10px;background:#ffffff;padding:6px" alt="QR Code Pix"/>
-    <div style="color:#64748b;font-size:12px;margin-top:8px">Escaneie o QR Code com a câmera do seu banco — Pix comum, sem taxas para o recebedor.</div>
+    <div style="color:#64748b;font-size:12px;margin-top:8px">Escaneie o QR Code com a câmera do seu banco — e ajude a manter este projeto open source.</div>
   </div>"""
     except Exception:
         pix_bloco = ""
