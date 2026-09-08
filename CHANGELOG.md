@@ -7,6 +7,8 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 ## [Não lançado]
 
 ### Adicionado
+- **Seletor de provedor de IA** (Automático → Gemini + fallback Groq · só Gemini · só Groq) com checkbox "🔮 Usar IA para esta triagem". O relatório mostra **qual provedor/modelo respondeu** (ex.: `Gemini · gemini-3.5-flash` ou `Groq · openai/gpt-oss-120b`), e a escolha é propagada também no fluxo RAG.
+- **Fallback Groq com `openai/gpt-oss-120b`** — sucessor recomendado do Llama 3.3 70B no Groq (Llama de chat foi aposentado do tier grátis em 08/2026). Chave `GROQ_API_KEY` no `.env`/Secrets; modelo sobrescrevível via `GROQ_MODELO`.
 - **💡 RAG aprende com a resolução** — agora dá para **registrar como o bug foi resolvido** logo após a triagem (widget "Registrar resolução") ou editando qualquer registro no histórico persistido. A resolução entra no contexto recuperado pelo RAG (`rag.montar_contexto`), então, em triagens futuras similares, o Gemini responde **"como foi resolvido da última vez"** com a solução real de cada caso (também visível no expander de histórico).
 - **`registrar_resolucao()`** no facade `persistencia.py` e no `nuvem_supabase.py` (fetch + PATCH por id no payload) — com failover automático pra JSONL local.
 

@@ -117,7 +117,7 @@ def test_analisar_com_rag_marca_ids_recuperados(monkeypatch):
     monkeypatch.setattr(ia, "_chave", lambda: "chave-falsa")
     monkeypatch.setattr(
         ia, "analisar_llm_rag",
-        lambda relato, contexto: (
+        lambda relato, contexto, provedor=None: (
             {"severidade": "alta", "categoria": "funcionalidade",
              "causa_raiz": "x", "passos_repro": ["1"], "resumo_tecnico": "y"}, None
         ),

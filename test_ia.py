@@ -109,3 +109,30 @@ def test_dispatcher_ambos_falham_retorna_erro_composto(monkeypatch):
     dados, erro = ia._chamar_llm("relato")
     assert dados is None
     assert "Gemini 503" in erro and "Groq 429" in erro
+
+
+def test_dispatcher_provedor_groq_forcado_nao_tenta_gemini(monkeypatch):
+    chamou = []
+    monkeypatch.setattr(ia, "_chamar_gemini", lambda *a, **k: chamou.append("gemini") or (None, "503"))
+    groq_ok = ({"severidade": "baixa", "ok": "groq"}, None)
+    monkeypatch.setattr(ia, "_chamar_groq", lambda *a, **k: groq_ok)
+    dados, erro = ia._chamar_llm("relato", provedor="groq")
+    assert dados["ok"] == "groq"
+    assert not chamou, "Gemini não deveria ser chamado com provedor forçado"
+
+
+def test_dispatcher_provedor_gemini_forcado_nao_tenta_groq(monkeypatch):
+    chamou = []
+    gemini_ok = ({"severidade": "media", "ok": "gemini"}, None)
+    monkeypatch.setattr(ia, "_chamar_gemini", lambda *a, **k: chamou.append("gemini") or gemini_ok)
+    monkeypatch.setattr(ia, "_chamar_groq", lambda *a, **k: chamou.append("groq") or (None, "429"))
+    dados, erro = ia._chamar_llm("relato", provedor="gemini")
+    assert dados["ok"] == "gemini"
+    assert chamou == ["gemini"], "Groq não deveria ser chamado com provedor forçado"
+
+
+def test_provedor_normalizado_aceita_rotulos_curtos(monkeypatch):
+    assert ia._provedor_normalizado(None) is None
+    assert ia._provedor_normalizado("auto") is None
+    assert ia._provedor_normalizado("gemini") == "gemini"
+    assert ia._provedor_normalizado("groq") == "groq"

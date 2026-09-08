@@ -64,7 +64,7 @@ def montar_contexto(similares):
     return "\n".join(linhas)
 
 
-def analisar_com_rag(relato, registros, k=3):
+def analisar_com_rag(relato, registros, k=3, provedor=None):
     """Retrieval + geração. Retorna (dict | None, erro).
 
     Em caso de sucesso, dict contém o schema padrão da IA + campos do RAG:
@@ -75,7 +75,7 @@ def analisar_com_rag(relato, registros, k=3):
     resultado = None
     erro = None
     try:
-        resultado, erro = ia.analisar_llm_rag(relato, contexto)
+        resultado, erro = ia.analisar_llm_rag(relato, contexto, provedor=provedor)
     except Exception as exc:  # nunca deixa o RAG derrubar o motor local
         return None, f"RAG: {type(exc).__name__}: {str(exc)[:120]}"
     if resultado is not None:

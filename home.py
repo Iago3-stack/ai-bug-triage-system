@@ -128,9 +128,18 @@ descricao_bug = st.text_area("Entrada do Usuário (Relato do Bug):", height=150,
                              label_visibility="collapsed")
 
 usar_llm = st.checkbox(
-    "🔮 Usar IA (Gemini) para esta triagem",
+    "🔮 Usar IA para esta triagem",
     value=True,
     help="Ativa a análise por LLM. Se desmarcado, só o motor local determinístico roda."
+)
+
+provedor_ia = st.radio(
+    "Provedor de IA:",
+    ["🔄 Automático (Gemini → Groq)", "🟦 Gemini", "⚙️ Groq"],
+    index=0,
+    horizontal=True,
+    help="Automático: tenta o Gemini e, se cair (503/chave), usa o Groq automaticamente. "
+         "Escolha um específico para forçar aquele provedor."
 )
 
 st.markdown('<div class="marca-executar" style="display:none"></div>', unsafe_allow_html=True)
@@ -189,12 +198,17 @@ if st.button("Executar Triagem Inteligente"):
                         # RAG: se há histórico persistido, o Gemini consulta os top-k
                         # registros similares (retrieval local) para ver se já aconteceu.
                         registros_para_rag = persistencia.carregar_registros()
+                        provedor = {
+                            "🔄 Automático (Gemini → Groq)": None,
+                            "🟦 Gemini": "gemini",
+                            "⚙️ Groq": "groq",
+                        }.get(provedor_ia)
                         if registros_para_rag:
                             resultado_llm, erro_llm = rag.analisar_com_rag(
-                                descricao_limpa, registros_para_rag
+                                descricao_limpa, registros_para_rag, provedor=provedor
                             )
                         else:
-                            resultado_llm, erro_llm = ia.analisar_llm(descricao_limpa)
+                            resultado_llm, erro_llm = ia.analisar_llm(descricao_limpa, provedor=provedor)
                 except Exception as exc:
                     import traceback
                     # Salva o erro REAL (sem redação) para o expander de diagnóstico.
@@ -202,7 +216,8 @@ if st.button("Executar Triagem Inteligente"):
                     erro_llm = f"IA/RAG: {type(exc).__name__}: {str(exc)[:200]}"
                     resultado_llm = None
                 if resultado_llm:
-                    llm_modelo = ia.MODELO
+                    llm_modelo = (ia.ULTIMO_MODELO or ia.MODELO)
+                    llm_provedor = ia.ULTIMO_PROVEDOR or "IA"
                     # Regra de reconciliação: o mais grave vence, e divergência vira alerta.
                     sev_local = {"NORMAL ✅": 1, "MÉDIA ⚠️": 2, "CRÍTICA 🚨": 4}[gravidade]
                     sev_ia = {"baixa": 1, "media": 2, "alta": 3, "critica": 4}.get(resultado_llm["severidade"], 2)
@@ -211,7 +226,7 @@ if st.button("Executar Triagem Inteligente"):
                     divergente = sev_local != sev_ia
                     relatorio += f"""
 ---
-🔮 **Análise por IA ({llm_modelo}):**
+🔮 **Análise por IA ({llm_provedor} · {llm_modelo}):**
 - Severidade sugerida: {resultado_llm['severidade']}
 - Categoria: {resultado_llm['categoria']}
 - Causa raiz provável: {resultado_llm['causa_raiz']}

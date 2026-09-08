@@ -111,9 +111,26 @@ def _extrair_json(texto):
     return json.loads(texto)
 
 
+# Último provedor/modelo que respondeu com sucesso (para mostrar na UI).
+ULTIMO_PROVEDOR = None
+ULTIMO_MODELO = None
+
+
 def disponivel() -> bool:
     """True se há pelo menos uma chave de LLM configurada (Gemini ou Groq)."""
     return bool(_chave("GEMINI_API_KEY") or _chave("GROQ_API_KEY"))
+
+
+def _provedor_normalizado(provedor: str | None) -> str | None:
+    """Normaliza a escolha de provedor para 'gemini', 'groq' ou None (auto)."""
+    if not provedor:
+        return None
+    p = str(provedor).strip().lower()
+    if p.startswith("gem"):
+        return "gemini"
+    if p.startswith("groq") or p.startswith("llama"):
+        return "groq"
+    return None
 
 
 def _chamar_gemini(conteudo, temperatura=0.2, max_output_tokens=1024):
@@ -121,7 +138,6 @@ def _chamar_gemini(conteudo, temperatura=0.2, max_output_tokens=1024):
     chave = _chave("GEMINI_API_KEY")
     if not chave:
         return None, "Chave GEMINI_API_KEY não configurada."
-
     try:
         from google import genai
         from google.genai import types
@@ -143,6 +159,9 @@ def _chamar_gemini(conteudo, temperatura=0.2, max_output_tokens=1024):
                     resposta = cliente.models.generate_content(
                         model=modelo, contents=conteudo, config=config
                     )
+                    global ULTIMO_PROVEDOR, ULTIMO_MODELO
+                    ULTIMO_PROVEDOR = "Gemini"
+                    ULTIMO_MODELO = modelo
                     return _extrair_json(resposta.text or "{}"), None
                 except Exception as exc:
                     ultimo_erro = f"{modelo}: {type(exc).__name__}: {str(exc)[:90]}"
@@ -151,6 +170,52 @@ def _chamar_gemini(conteudo, temperatura=0.2, max_output_tokens=1024):
         return None, ultimo_erro or "Falha ao chamar a API."
     except Exception as exc:  # qualquer falha de rede/API/JSON
         return None, f"{type(exc).__name__}: {str(exc)[:120]}"
+
+
+def _chamar_llm(conteudo, temperatura=0.2, max_output_tokens=1024, provedor=None):
+    """Dispatcher: Gemini, Groq ou ambos (auto/fallback).
+
+    provedor:
+      None/"auto" -> tenta Gemini; se falhar, tenta Groq.
+      "gemini"    -> só Gemini (sem fallback).
+      "groq"      -> só Groq.
+    Retorna (dict | None, erro). Se apenas um provedor foi requisitado e não há
+    chave dele, retorna erro imediatamente.
+    """
+    escolha = _provedor_normalizado(provedor)
+    if escolha == "groq":
+        return _chamar_groq(conteudo, temperatura, max_output_tokens)
+    if escolha == "gemini":
+        return _chamar_gemini(conteudo, temperatura, max_output_tokens)
+    # auto: Gemini primeiro, Groq como fallback.
+    dados, erro = _chamar_gemini(conteudo, temperatura, max_output_tokens)
+    if dados is not None:
+        return dados, None
+    dados2, erro2 = _chamar_groq(conteudo, temperatura, max_output_tokens)
+    if dados2 is not None:
+        return dados2, None
+    return None, f"{erro} | {erro2}"
+
+
+def analisar_llm(relato, provedor=None):
+    """Chama o LLM (Gemini → Groq ou escolha explícita) e retorna (dict | None, erro).
+
+    dict com chaves: severidade, categoria, causa_raiz, passos_repro, resumo_tecnico
+    """
+    return _chamar_llm(PROMPT.replace("{relato}", relato[:2000]), provedor=provedor)
+
+
+def analisar_llm_rag(relato, contexto, provedor=None):
+    """Chama o LLM com o histórico recuperado (RAG).
+
+    dict com o schema padrão + ja_aconteceu, resolucao_anterior, registros_similar.
+    """
+    prompt = (
+        PROMPT_RAG
+        .replace("{relato}", relato[:2000])
+        .replace("{contexto}", (contexto or "")[:6000])
+    )
+    return _chamar_llm(prompt, provedor=provedor)
 
 
 def _chamar_groq(conteudo, temperatura=0.2, max_output_tokens=1024):
@@ -181,41 +246,12 @@ def _chamar_groq(conteudo, temperatura=0.2, max_output_tokens=1024):
             return None, f"Groq HTTP {resposta.status_code}: {str(resposta.text)[:90]}"
         payload = resposta.json()
         texto = payload["choices"][0]["message"]["content"]
+        global ULTIMO_PROVEDOR, ULTIMO_MODELO
+        ULTIMO_PROVEDOR = "Groq"
+        ULTIMO_MODELO = modelo
         return _extrair_json(texto), None
     except Exception as exc:
         return None, f"Groq: {type(exc).__name__}: {str(exc)[:120]}"
-
-
-def _chamar_llm(conteudo, temperatura=0.2, max_output_tokens=1024):
-    """Dispatcher: Gemini primeiro; se falhar, tenta Groq (open-weight); senão, erro."""
-    dados, erro = _chamar_gemini(conteudo, temperatura, max_output_tokens)
-    if dados is not None:
-        return dados, None
-    dados2, erro2 = _chamar_groq(conteudo, temperatura, max_output_tokens)
-    if dados2 is not None:
-        return dados2, None
-    return None, f"{erro} | {erro2}"
-
-
-def analisar_llm(relato):
-    """Chama o LLM (Gemini → Groq) e retorna (dict | None, mensagem_erro).
-
-    dict com chaves: severidade, categoria, causa_raiz, passos_repro, resumo_tecnico
-    """
-    return _chamar_llm(PROMPT.replace("{relato}", relato[:2000]))
-
-
-def analisar_llm_rag(relato, contexto):
-    """Chama o LLM (Gemini → Groq) com o histórico recuperado (RAG).
-
-    dict com o schema padrão + ja_aconteceu, resolucao_anterior, registros_similar.
-    """
-    prompt = (
-        PROMPT_RAG
-        .replace("{relato}", relato[:2000])
-        .replace("{contexto}", (contexto or "")[:6000])
-    )
-    return _chamar_llm(prompt)
 
 
 if __name__ == "__main__":
