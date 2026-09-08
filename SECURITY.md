@@ -26,7 +26,7 @@ Responderemos o mais rápido possível. **Nunca** divulgue publicamente antes de
 ## Considerações de segurança do projeto
 
 - O motor determinístico (`triagem.py`) roda **100% offline** sem expor dados a serviços externos.
-- Quando a análise por IA (Gemini) está ativa, o texto do bug é enviado à API — **não use a triagem com dados sensíveis/confidenciais** sem anotar esse comportamento.
-- A chave `GEMINI_API_KEY` **nunca** deve ser commitada: use `.env` (local) ou Secrets (Streamlit Cloud).
+- Quando a análise por IA (Gemini) está ativa, o texto do bug é enviado à API — **não use a triagem com dados sensíveis/confidenciais** sem anotar esse comportamento. O mesmo vale para o fallback Llama/Groq (`GROQ_API_KEY`).
+- A chave `GEMINI_API_KEY` (e `GROQ_API_KEY`) **nunca** deve ser commitada: use `.env` (local) ou Secrets (Streamlit Cloud).
 
 Agradecemos por ajudar a manter o projeto seguro! 🐞

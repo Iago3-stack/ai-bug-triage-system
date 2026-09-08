@@ -94,7 +94,7 @@ def test_montar_contexto_vazio_avisa():
 
 # --- Orquestração (retrieval + geração) --------------------------------
 def test_analisar_com_rag_sem_chave_retorna_erro(monkeypatch):
-    monkeypatch.setattr(ia, "_chave", lambda: None)
+    monkeypatch.setattr(ia, "_chave", lambda nome: None)
     resultado, erro = rag.analisar_com_rag(
         "um relato de login", [{"id": "x", "descricao": "login"}]
     )

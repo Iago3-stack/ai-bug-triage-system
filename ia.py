@@ -1,13 +1,17 @@
 # Análise por IA (LLM) — Fase 3 do projeto
-# Integração com Google Gemini via google-genai.
+# Integração com Google Gemini via google-genai, com fallback para
+# Llama 4 (Groq) caso o Gemini expire tokens / caia (503/429/chave inválida).
 # Desenho:
 #  1. Chave: st.secrets (Streamlit Cloud) OU arquivo local .env (gitignored).
 #  2. Prompt pede apenas JSON (schema fixo) com temperature baixa.
 #  3. Qualquer erro -> retorna (None, mensagem): o motor local segue de pé.
+#  4. Ordem: Gemini (todos os modelos) -> Llama/Groq -> erro.
 
 import json
 import os
 import re
+
+import requests
 
 MODELO = "gemini-3.5-flash"
 
@@ -18,6 +22,11 @@ MODELOS = [
     "gemini-3.5-flash-lite",
     "gemini-3.1-flash-lite",
 ]
+
+GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
+# Llama "bem alimentado" atual no Groq (Meta, MoE 17Bx128, ~22T tokens,
+# multilíngue incluindo PT-BR, JSON mode). Sobrescrevível via GROQ_MODELO.
+GROQ_MODELO_PADRAO = "meta-llama/llama-4-maverick-17b-128e-instruct"
 
 PROMPT = """Você é um assistente sênior de QA. Analise o RELATO DO USUÁRIO sobre um
 bug de software e responda APENAS com JSON válido (sem markdown, sem texto extra),
@@ -67,29 +76,29 @@ RELATO ATUAL:
 """
 
 
-def _carregar_env():
-    """Carrega chave do arquivo .env (apenas leitura, nunca commitado)."""
+def _ler_do_env(nome):
+    """Carrega uma chave do arquivo .env (apenas leitura, nunca commitado)."""
     caminho = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
     if not os.path.exists(caminho):
         return None
     with open(caminho, encoding="utf-8") as f:
         for linha in f:
             chave, _, valor = linha.partition("=")
-            if chave.strip() == "GEMINI_API_KEY":
+            if chave.strip() == nome:
                 return valor.strip()
     return None
 
 
-def _chave():
-    # 1) Streamlit Cloud: Settings -> Secrets -> GEMINI_API_KEY
+def _chave(nome):
+    # 1) Streamlit Cloud: Settings -> Secrets -> <NOME>
     try:
         import streamlit as st
 
-        return st.secrets.get("GEMINI_API_KEY")
+        return st.secrets.get(nome)
     except Exception:
         pass
     # 2) Local: arquivo .env (gitignored)
-    return _carregar_env()
+    return _ler_do_env(nome)
 
 
 def _extrair_json(texto):
@@ -101,9 +110,14 @@ def _extrair_json(texto):
     return json.loads(texto)
 
 
+def disponivel() -> bool:
+    """True se há pelo menos uma chave de LLM configurada (Gemini ou Groq)."""
+    return bool(_chave("GEMINI_API_KEY") or _chave("GROQ_API_KEY"))
+
+
 def _chamar_gemini(conteudo, temperatura=0.2, max_output_tokens=1024):
     """Chama o Gemini com fallback entre modelos. Retorna (dict | None, erro)."""
-    chave = _chave()
+    chave = _chave("GEMINI_API_KEY")
     if not chave:
         return None, "Chave GEMINI_API_KEY não configurada."
 
@@ -138,16 +152,60 @@ def _chamar_gemini(conteudo, temperatura=0.2, max_output_tokens=1024):
         return None, f"{type(exc).__name__}: {str(exc)[:120]}"
 
 
+def _chamar_groq(conteudo, temperatura=0.2, max_output_tokens=1024):
+    """Chama o Llama (Groq) com resposta em JSON. Retorna (dict | None, erro)."""
+    chave = _chave("GROQ_API_KEY")
+    if not chave:
+        return None, "Chave GROQ_API_KEY não configurada."
+    modelo = os.environ.get("GROQ_MODELO", "").strip() or GROQ_MODELO_PADRAO
+    try:
+        resposta = requests.post(
+            GROQ_URL,
+            headers={"Authorization": f"Bearer {chave}",
+                     "Content-Type": "application/json"},
+            json={
+                "model": modelo,
+                "messages": [
+                    {"role": "system",
+                     "content": "Você responde apenas com JSON válido, sem markdown."},
+                    {"role": "user", "content": conteudo},
+                ],
+                "temperature": temperatura,
+                "max_tokens": max_output_tokens,
+                "response_format": {"type": "json_object"},
+            },
+            timeout=60,
+        )
+        if resposta.status_code != 200:
+            return None, f"Groq HTTP {resposta.status_code}: {str(resposta.text)[:90]}"
+        payload = resposta.json()
+        texto = payload["choices"][0]["message"]["content"]
+        return _extrair_json(texto), None
+    except Exception as exc:
+        return None, f"Groq: {type(exc).__name__}: {str(exc)[:120]}"
+
+
+def _chamar_llm(conteudo, temperatura=0.2, max_output_tokens=1024):
+    """Dispatcher: Gemini primeiro; se falhar, tenta Llama/Groq; senão, erro."""
+    dados, erro = _chamar_gemini(conteudo, temperatura, max_output_tokens)
+    if dados is not None:
+        return dados, None
+    dados2, erro2 = _chamar_groq(conteudo, temperatura, max_output_tokens)
+    if dados2 is not None:
+        return dados2, None
+    return None, f"{erro} | {erro2}"
+
+
 def analisar_llm(relato):
-    """Chama o Gemini e retorna (dict | None, mensagem_erro).
+    """Chama o LLM (Gemini → Llama/Groq) e retorna (dict | None, mensagem_erro).
 
     dict com chaves: severidade, categoria, causa_raiz, passos_repro, resumo_tecnico
     """
-    return _chamar_gemini(PROMPT.replace("{relato}", relato[:2000]))
+    return _chamar_llm(PROMPT.replace("{relato}", relato[:2000]))
 
 
 def analisar_llm_rag(relato, contexto):
-    """Chama o Gemini com o histórico recuperado (RAG).
+    """Chama o LLM (Gemini → Llama/Groq) com o histórico recuperado (RAG).
 
     dict com o schema padrão + ja_aconteceu, resolucao_anterior, registros_similar.
     """
@@ -156,7 +214,7 @@ def analisar_llm_rag(relato, contexto):
         .replace("{relato}", relato[:2000])
         .replace("{contexto}", (contexto or "")[:6000])
     )
-    return _chamar_gemini(prompt)
+    return _chamar_llm(prompt)
 
 
 if __name__ == "__main__":
@@ -165,7 +223,7 @@ if __name__ == "__main__":
         "Estou tentando pagar e o botão não responde, estou muito frustrado!",
         "A cor de fundo podia ser mais escura.",
     ]
-    print("=== TESTE DE ANÁLISE POR IA (Gemini) ===\n")
+    print("=== TESTE DE ANÁLISE POR IA (Gemini → Llama/Groq) ===\n")
     for caso in casos:
         print(f"Relato: {caso}")
         dados, erro = analisar_llm(caso)

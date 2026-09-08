@@ -181,7 +181,7 @@ if st.button("Executar Triagem Inteligente"):
             erro_llm = None
             prioridade_final = None
             divergente = None
-            if usar_llm and ia._chave():
+            if usar_llm and ia.disponivel():
                 # Blindagem extra: nenhum erro da camada de IA/RAG pode derrubar
                 # o app. Qualquer exceção vira aviso + diagnóstico salvo na sessão.
                 try:
