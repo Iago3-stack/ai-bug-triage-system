@@ -1,10 +1,12 @@
 """Geração de QR Code Pix (BR Code) — 100% local, sem serviços externos.
 
 Configuração (via variáveis de ambiente / Streamlit secrets — nunca no repo):
-    PIX_KEY    chave Pix (CPF, e-mail, celular ou chave aleatória)
-    PIX_NOME   nome do recebedor (máx. 25 caracteres)
-    PIX_CIDADE cidade do recebedor (máx. 15 caracteres)
-    PIX_TXID   identificador opcional da transação (padrão: ***)
+    PIX_COPIA   copia-e-cola Pix oficial (EMV completo, ex.: emitido pelo banco)
+    PIX_KEY     chave Pix (CPF, e-mail, celular ou chave aleatória) — usado
+                somente quando PIX_COPIA não está presente
+    PIX_NOME    nome do recebedor (máx. 25 caracteres — p/ payload montado por chave)
+    PIX_CIDADE  cidade do recebedor (máx. 15 caracteres — p/ payload montado por chave)
+    PIX_TXID    identificador opcional da transação (padrão: ***)
 """
 
 import base64
@@ -68,11 +70,22 @@ def montar_payload(chave: str, nome: str, cidade: str, txid: str = "***") -> str
 
 
 def configurado() -> bool:
-    return bool(os.environ.get("PIX_KEY", "").strip())
+    return bool(_copia() or os.environ.get("PIX_KEY", "").strip())
+
+
+def _copia() -> str:
+    return os.environ.get("PIX_COPIA", "").strip()
 
 
 def payload_configurado() -> str:
-    """Retorna o copia-e-cola Pix se configurado; string vazia caso contrário."""
+    """Retorna o copia-e-cola Pix se configurado; string vazia caso contrário.
+
+    Prioriza PIX_COPIA (payload oficial emitido pelo banco); se ausente, monta
+    o BR Code a partir de PIX_KEY.
+    """
+    copia = _copia()
+    if copia:
+        return copia
     chave = os.environ.get("PIX_KEY", "").strip()
     if not chave:
         return ""

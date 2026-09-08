@@ -30,6 +30,13 @@ def test_configurado_com_chave(monkeypatch):
     assert payload[-4:] == pix.crc16_ccitt(payload[:-4])
 
 
+def test_copia_e_cola_tem_prioridade(monkeypatch):
+    monkeypatch.setenv("PIX_COPIA", "000201269A10014br.gov.bcb.pix0104+551123456789")
+    monkeypatch.setenv("PIX_KEY", "outra-chave")
+    assert pix.configurado()
+    assert pix.payload_configurado().startswith("00020126")
+
+
 def test_qrcode_png_base64_gera_data_uri(monkeypatch):
     monkeypatch.setenv("PIX_KEY", "11999999999")
     payload = pix.payload_configurado()
