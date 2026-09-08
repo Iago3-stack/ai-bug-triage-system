@@ -471,8 +471,12 @@ else:
     st.sidebar.success("✅ Jira configurado nesta sessão")
     st.sidebar.caption("Botão 'Exportar para Jira' ativo.")
     if st.sidebar.button("🔄 Reconectar / trocar credenciais", use_container_width=True):
-        jira_client.limpar_config()
-        st.rerun()
+        limpar = getattr(jira_client, "limpar_config", None)
+        if limpar is not None:
+            limpar()
+            st.rerun()
+        else:
+            st.error("Cache antigo detectado — clique em 'Manage app' > 'Rebuild' (limpa o cache) e rode a triagem de novo.")
 
 # --- CTA: ESTRELA NO GITHUB ---
 st.sidebar.markdown("### ⭐ Apoie o projeto")
