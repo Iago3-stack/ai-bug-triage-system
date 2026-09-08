@@ -31,6 +31,9 @@ st.markdown("""
     [data-testid="stExpander"]:has(.marca-sessao) summary { color: #2563eb !important; font-weight: 700 !important; }
     [data-testid="stExpander"]:has(.marca-historico) { border: 2px solid #059669 !important; border-radius: 12px !important; }
     [data-testid="stExpander"]:has(.marca-historico) summary { color: #059669 !important; font-weight: 700 !important; }
+    [data-testid="stExpander"]:has(.marca-historico) [data-testid="stDownloadButton"], [data-testid="stExpander"]:has(.marca-historico) [data-testid="stButton"] { width: 100%; }
+    [data-testid="stExpander"]:has(.marca-historico) [data-testid="stDownloadButton"] button { background: #065f46 !important; color: #ffffff !important; }
+    [data-testid="stExpander"]:has(.marca-historico) [data-testid="stButton"] button { background: #059669 !important; color: #ffffff !important; }
     [data-testid="stExpander"]:has(.marca-dashboard) { border: 2px solid #7c3aed !important; border-radius: 12px !important; }
     [data-testid="stExpander"]:has(.marca-dashboard) summary { color: #7c3aed !important; font-weight: 700 !important; }
     [data-testid="stExpander"]:has(.marca-diag) { border: 2px solid #d97706 !important; border-radius: 12px !important; }
@@ -447,7 +450,14 @@ if registros_totais:
             key="hp_download",
         )
         st.divider()
-        st.markdown(f"**🔧 Resolução deste caso:** {'✅ já registrada' if reg.get('resolucao') else 'não registrada'}")
+        if reg.get("resolucao"):
+            st.markdown("""
+<div style="font-weight:800;font-size:1.05em;background:linear-gradient(90deg,#059669 0%,#0d9488 100%);-webkit-background-clip:text;background-clip:text;color:transparent;display:inline-block">🔧 Resolução deste caso: <span style="background:transparent;color:#059669">✅ já registrada</span></div>
+""", unsafe_allow_html=True)
+        else:
+            st.markdown("""
+<div style="font-weight:800;font-size:1.05em;background:linear-gradient(90deg,#059669 0%,#0d9488 100%);-webkit-background-clip:text;background-clip:text;color:transparent;display:inline-block">🔧 Resolução deste caso: <span style="background:transparent;color:#d97706">não registrada</span></div>
+""", unsafe_allow_html=True)
         st.caption("Guarde aqui como o bug foi resolvido — vira aprendizado consultado pelo RAG nas próximas triagens similares.")
         nova_res = st.text_area(
             "Como este caso foi resolvido:",
