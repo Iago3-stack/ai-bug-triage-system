@@ -10,6 +10,13 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 - **💡 RAG aprende com a resolução** — agora dá para **registrar como o bug foi resolvido** logo após a triagem (widget "Registrar resolução") ou editando qualquer registro no histórico persistido. A resolução entra no contexto recuperado pelo RAG (`rag.montar_contexto`), então, em triagens futuras similares, o Gemini responde **"como foi resolvido da última vez"** com a solução real de cada caso (também visível no expander de histórico).
 - **`registrar_resolucao()`** no facade `persistencia.py` e no `nuvem_supabase.py` (fetch + PATCH por id no payload) — com failover automático pra JSONL local.
 
+## [v2.2.0] - 2026-09-08
+
+### Adicionado
+- **☕ Seção de doação no rodapé** — card "Apoie este projeto" lado a lado com o CTA de estrela do GitHub, com **QR Code Pix (BR Code) gerado 100% local** (`pix.py`: payload EMV + CRC16-CCITT + PNG base64), configurável via `PIX_KEY`/`PIX_NOME`/`PIX_CIDADE`/`PIX_COPIA`/`PIX_LINK` (prioridade `st.secrets` → `os.environ` → `.env`) — sem intermediários, sem taxas. Se `PIX_LINK` estiver definido, exibe botão de pagamento com valor fixo no lugar do QR.
+- **`test_pix.py`** — 6 testes 100% offline (estrutura EMV, CRC-CCITT com vetor conhecido `29B1`, prioridade PIX_COPIA, link de pagamento, precedência env/file e data-URI do QR). **96 testes no total** — CI continua verde.
+- **Micro-polimento de UI** — rodapé em 2 colunas (estrela centralizado + Pix à direita), textos de apoio reescritos para evitar trocas indevidas por tradução automática e legenda do QR como apelo open source.
+
 ## [v2.1.0] - 2026-09-07
 
 ### Adicionado

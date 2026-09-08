@@ -4,7 +4,9 @@
 
 | Versão | Suportada |
 |---|---|
-| 1.x (atual) | ✅ |
+| 2.x (atual) | ✅ |
+| 2.1.x (atual) | ✅ |
+| 1.x (legado) | ❌ |
 | 0.x (legado) | ❌ |
 
 ## Reportando uma vulnerabilidade

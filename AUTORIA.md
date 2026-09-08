@@ -28,10 +28,10 @@ O GitHub preserva publicamente toda a evidência de quem construiu e quando:
 | Prova | Onde ver |
 |---|---|
 | **Commits** — todos com autor `Iago Nunes de Araújo`, com data e hash | aba *Commits* |
-| **Releases/tags** — v1.0.0, v1.1.0, v1.2.0, v1.2.1, v1.3.0, **v2.0.0**, **v2.1.0** (com data de publicação) | aba *Releases* |
+| **Releases/tags** — v1.0.0, v1.1.0, v1.2.0, v1.2.1, v1.3.0, **v2.0.0**, **v2.1.0**, **v2.2.0** (com data de publicação) | aba *Releases* |
 | **Documentação de engenharia** — requisitos, casos de teste, arquitetura, QA | pasta `docs/` |
 | **CHANGELOG** — histórico de versões | `CHANGELOG.md` |
-| **CI verde** — 88 testes rodando a cada push | aba *Actions* |
+| **CI verde** — 96 testes rodando a cada push | aba *Actions* |
 
 Qualquer fork aponta automaticamente "forked from" para o repositório original,
 tornando pública a relação de derivação.

@@ -12,7 +12,7 @@ O objetivo deste documento é mostrar que o app não foi apenas "escrito e publi
 |---|---|
 | **Determinismo** | Motor local 100% offline, mesma entrada → mesma saída (RNF-01) |
 | **Controle de falso-positivo** | Palavras de vocabulário de teste (`erro`, `bug`...) não disparam severidade (RF-05) |
-| **Cobertura de testes** | 88 testes `pytest` — motor (18), Jira (15), persistência (8), guardrails (14), dashboard (6), RAG (13) e nuvem/Supabase (14) — cobrindo severidade, negação, sentimento, determinismo, exportação, fuso, PII, agregações de QA, recuperação do histórico, persistência em nuvem e registro de resolução (aprendizado do RAG) |
+| **Cobertura de testes** | 96 testes `pytest` — motor (18), Jira (15), persistência (8), guardrails (14), dashboard (6), RAG (13), nuvem/Supabase (14) e Pix (8) — cobrindo severidade, negação, sentimento, determinismo, exportação, fuso, PII, agregações de QA, recuperação do histórico, persistência em nuvem, registro de resolução (aprendizado do RAG) e geração de QR Pix (EMV/CRC) |
 | **Automação (CI)** | GitHub Actions roda os testes a cada push → badge de qualidade |
 | **Transparência** | Relatório informa o motor usado (auditoria) |
 | **Robustez** | Fallback automático para o motor local quando a IA falha |

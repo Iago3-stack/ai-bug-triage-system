@@ -12,5 +12,5 @@ google-genai==2.20.0
 #   - Streamlit Cloud: Settings -> Secrets
 #   - Local: arquivo .env (ignorado pelo .gitignore)
 requests==2.34.2
-# V2.1.1 — QR Code Pix (BR Code) gerado localmente no rodapé (doações).
+# V2.2.0 — QR Code Pix (BR Code) gerado localmente no rodapé (doações), config via secrets/.env.
 qrcode==8.2
