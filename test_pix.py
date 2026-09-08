@@ -37,6 +37,13 @@ def test_copia_e_cola_tem_prioridade(monkeypatch):
     assert pix.payload_configurado().startswith("00020126")
 
 
+def test_link_pagamento(monkeypatch):
+    monkeypatch.delenv("PIX_LINK", raising=False)
+    assert pix.link_pagamento() == ""
+    monkeypatch.setenv("PIX_LINK", "https://pag.ae/abc123")
+    assert pix.link_pagamento().startswith("https://")
+
+
 def test_qrcode_png_base64_gera_data_uri(monkeypatch):
     monkeypatch.setenv("PIX_KEY", "11999999999")
     payload = pix.payload_configurado()

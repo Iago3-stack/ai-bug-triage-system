@@ -605,7 +605,21 @@ st.sidebar.markdown("""
 
 # --- RODAPÉ DE CRÉDITO (autoria blindada, visível mesmo em forks) ---
 pix_bloco = ""
-if pix.configurado():
+_link_pix = pix.link_pagamento()
+if _link_pix:
+    pix_bloco = f"""
+  <div style="flex:1 1 320px;text-align:center">
+    <div style="font-size:15px;font-weight:800;color:#ffffff">☕ Apoie este projeto</div>
+    <div style="color:#94a3b8;font-size:13px;margin:6px auto 12px;max-width:340px">Este projeto é mantido de forma independente. Se ele te ajudou, considere uma contribuição voluntária via Pix.</div>
+    <a href="{_link_pix}" target="_blank" style="text-decoration:none">
+      <button style="display:inline-flex;align-items:center;gap:8px;background:#25D366;color:#0b1e14;font-weight:800;font-size:14px;border:none;padding:12px 24px;border-radius:10px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.25)">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="#0b1e14" role="img"><path d="M8 1.5C4.41 1.5 1.5 4.13 1.5 7.37c0 1.83.85 3.42 2.15 4.44.16 2.29 1.54 2.69 2.35 2.69.74 0 1.4-.37 1.92-.87.43.13.97.27 1.58.27 3.09 0 6-2.62 6-5.87S11.09 1.5 8 1.5zM6 8.13c0 .69-.5 1.24-1.13 1.24S3.75 8.82 3.75 8.13s.5-1.24 1.13-1.24S6 7.44 6 8.13zm2.82 2.93a1.05 1.05 0 01-1.49 0 .56.56 0 01.79-.79.56.56 0 00.79.79h-.09zm.09-1c-.28.28-.73.28-1.01 0a.71.71 0 010-1.01.71.71 0 011.01 0 .71.71 0 010 1.01zm2.4-1.46c-.51 0-.9-.56-.9-1.25s.39-1.26.9-1.26.9.56.9 1.26c0 .69-.39 1.25-.9 1.25z"/></svg>
+        Pagar com Pix via link
+      </button>
+    </a>
+    <div style="color:#64748b;font-size:12px;margin-top:8px">Link de pagamento com valor fixo — sem desconto aplicado.</div>
+  </div>"""
+elif pix.configurado():
     try:
         _payload_pix = pix.payload_configurado()
         _qr_pix = pix.qrcode_png_base64(_payload_pix)

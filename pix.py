@@ -1,6 +1,10 @@
 """Geração de QR Code Pix (BR Code) — 100% local, sem serviços externos.
 
 Configuração (via variáveis de ambiente / Streamlit secrets — nunca no repo):
+    PIX_LINK    link de pagamento Pix com valor fixo (ex.: gerado no painel do
+                provedor). Quando presente, o rodapé exibe um botão de
+                pagamento no lugar do QR Code (QR estático não tem "finalidade
+                de venda" e pode sofrer descontos).
     PIX_COPIA   copia-e-cola Pix oficial (EMV completo, ex.: emitido pelo banco)
     PIX_KEY     chave Pix (CPF, e-mail, celular ou chave aleatória) — usado
                 somente quando PIX_COPIA não está presente
@@ -71,6 +75,11 @@ def montar_payload(chave: str, nome: str, cidade: str, txid: str = "***") -> str
 
 def configurado() -> bool:
     return bool(_copia() or os.environ.get("PIX_KEY", "").strip())
+
+
+def link_pagamento() -> str:
+    """Retorna o link de pagamento Pix com valor fixo, se configurado."""
+    return os.environ.get("PIX_LINK", "").strip()
 
 
 def _copia() -> str:
