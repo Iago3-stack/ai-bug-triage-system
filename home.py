@@ -56,8 +56,12 @@ with col_info:
     hero_animado.typing_frases()
 with col_foto:    
     st.image("assets/o novo.png", width=250,caption="Iago Nunes")
-    st.markdown("#### 🚀 Construo automação de QA com IA (NLP + Gemini) | Auxiliar Administrativo | Graduando IA & ML Uniasselvi (Dez/2027)")
-    st.write("📍 São Luís, MA (Disponível para Remote Global)")
+    st.markdown("""
+<div style="margin-top:10px;width:100%;background:linear-gradient(135deg,#047857 0%,#0d9488 50%,#7c3aed 185%);border-radius:14px;color:#ffffff;font-size:14px;line-height:1.5;padding:14px 16px">
+  <div style="font-weight:700">🚀 Construo automação de QA com IA (NLP + Gemini) | Auxiliar Administrativo | Graduando IA &amp; ML Uniasselvi (Dez/2027)</div>
+  <div style="margin-top:6px;color:#dcfce7">📍 São Luís, MA (Disponível para Remote Global)</div>
+</div>
+""", unsafe_allow_html=True)
     
     st.divider()
 
