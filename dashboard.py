@@ -110,7 +110,7 @@ def render_dashboard(registros: list[dict]) -> None:
     <div style="font-size:30px;font-weight:800;line-height:1.1">{n_crit}</div>
   </div>
   <div style="flex:1;min-width:180px;background:linear-gradient(135deg,#15803d,#22c55e);border-radius:14px;padding:14px 18px;color:#ffffff">
-    <div style="font-size:12px;opacity:.85;font-weight:600">🔮 Com IA (Gemini)</div>
+    <div style="font-size:12px;opacity:.85;font-weight:600">🔮 Com IA (LLM)</div>
     <div style="font-size:30px;font-weight:800;line-height:1.1">{n_ia}</div>
   </div>
 </div>

@@ -334,11 +334,11 @@ if r:
     st.code(relatorio, language="markdown")
 
     if resultado_llm:
-        st.markdown("### 🔮 Análise por IA (Gemini)")
+        st.markdown(f"### 🔮 Análise por IA ({ia.ULTIMO_PROVEDOR or 'LLM'})")
         ca, cb, cc = st.columns(3)
         ca.metric("Severidade (IA)", resultado_llm["severidade"].upper())
         cb.metric("Categoria", resultado_llm["categoria"].capitalize())
-        cc.metric("Modelo", ia.MODELO.replace("gemini-", "Gemini "))
+        cc.metric("Modelo", ia.ULTIMO_MODELO or ia.MODELO)
         st.write(f"**Causa raiz provável:** {resultado_llm['causa_raiz']}")
         st.write("**Passos para reproduzir:**")
         for i, p in enumerate(resultado_llm["passos_repro"], 1):
