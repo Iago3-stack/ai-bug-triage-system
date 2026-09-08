@@ -23,6 +23,18 @@ st.markdown("""
     footer {visibility: hidden;}
     .stDeployButton {display: none;}
 
+    /* Fundo do app: gradiente sutil no topo (verde-claro desvanecendo p/ branco) */
+    [data-testid="stAppViewContainer"] { background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 300px) !important; }
+    .stSidebar { background: #ffffff !important; }
+
+    /* Card do formulário: textarea da triagem com moldura colorida (marcador irmão) */
+    [data-testid="stElementContainer"]:has(.marca-form) + [data-testid="stElementContainer"] [data-testid="stTextArea"] textarea { background: #fbfefc !important; border: 1.5px solid #25D366 !important; border-radius: 12px !important; box-shadow: 0 2px 12px rgba(37, 211, 102, 0.14) !important; }
+
+    /* Badge de prioridade animado (pulando) */
+    @keyframes iago-pulse { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+    .badge-prioridade { display: inline-block; padding: 3px 12px; border-radius: 999px; font-weight: 800; font-size: 14px; color: #fff; animation: iago-pulse 1.4s ease-in-out infinite; box-shadow: 0 2px 8px rgba(0,0,0,.18); }
+    [data-testid="stElementContainer"]:has(.marca-pri) + [data-testid="stElementContainer"] .badge-prioridade { animation-delay: .1s; }
+
     /* Destaque colorido por expander: marcador oculto dentro do corpo +
        seleção via :has() (funciona msm sem id estável no DOM) */
     [data-testid="stExpander"]:has(.marca-resolucao) { border: 2px solid #e11d48 !important; border-radius: 12px !important; background: rgba(225, 29, 72, 0.05) !important; }
@@ -95,10 +107,16 @@ st.markdown("""
 """, unsafe_allow_html=True)
 st.info("Esta ferramenta demonstra o uso de NLP para automatizar a triagem técnica e emocional de falhas de software.")
 
-# --- FERRAMENTA (Sua ideia evoluída) ---
+# Barra de gradiente no topo da página (identidade visual)
+st.markdown("""
+<div style="height:6px;width:100%;background:linear-gradient(90deg,#25D366 0%,#2E7CF6 50%,#7c3aed 100%);border-radius:0 0 8px 8px;position:sticky;top:0;z-index:9999"></div>
+""", unsafe_allow_html=True)
+
+# Coluna de ação principal + formulário de triagem em card
 st.markdown("""
 <div style="font-size:1em;font-weight:700;background:linear-gradient(90deg,#06b6d4 0%,#3b82f6 45%,#8b5cf6 100%);-webkit-background-clip:text;background-clip:text;color:transparent;display:inline-block;margin:6px 0 2px">Entrada do Usuário (Relato do Bug):</div>
 """, unsafe_allow_html=True)
+st.markdown('<div class="marca-form" style="display:none"></div>', unsafe_allow_html=True)
 descricao_bug = st.text_area("Entrada do Usuário (Relato do Bug):", height=150,
                              placeholder="Ex: Estou tentando pagar e o botão não responde, estou muito frustrado!",
                              label_visibility="collapsed")
@@ -324,7 +342,22 @@ if r:
             st.caption("Retrieval local por similaridade de tokens (Jaccard) sobre o histórico persistido — nada é enviado além do relato e dos registros similares.")
 
         st.markdown("---")
-        st.markdown(f"## 🎯 Prioridade Final: {prioridade_final}")
+        if "CRÍTICA" in prioridade_final:
+            cor_badge = "#dc2626"
+        elif "ALTA" in prioridade_final:
+            cor_badge = "#ea580c"
+        elif "MÉDIA" in prioridade_final:
+            cor_badge = "#d97706"
+        elif "BAIXA" in prioridade_final or "NORMAL" in prioridade_final:
+            cor_badge = "#059669"
+        else:
+            cor_badge = "#2563eb"
+        st.markdown(f"""
+<div style="display:flex;align-items:center;gap:12px;margin-top:6px">
+  <span class="badge-prioridade" style="background:{cor_badge}">🎯 {prioridade_final}</span>
+  <span style="font-weight:800;font-size:1.3em;color:#111827">Prioridade Final</span>
+</div>
+""", unsafe_allow_html=True)
         if divergente:
             st.warning(f"⚠️ Divergência detectada: motor local **{gravidade}** x IA **{resultado_llm['severidade'].upper()}**. Sinais conflitantes — revisão humana recomendada.")
         else:
@@ -433,9 +466,34 @@ if registros_totais:
                 "Resolvido": "sim" if r.get("resolucao") else "—",
             } for r in do_dia
         ]), use_container_width=True, hide_index=True)
+        def _cor_gravidade(g):
+            g = g.upper()
+            if "CRÍTICA" in g:
+                return "#dc2626"
+            if "ALTA" in g:
+                return "#ea580c"
+            if "MÉDIA" in g:
+                return "#d97706"
+            if "BAIXA" in g or "NORMAL" in g:
+                return "#059669"
+            return "#2563eb"
+
+        if do_dia:
+            cards = []
+            for r in do_dia:
+                c_g = _cor_gravidade(r["gravidade"])
+                cards.append(f"""
+<div style="background:#f0fdf4;border:1px solid #a7f3d0;border-radius:10px;padding:8px 12px;min-width:170px">
+  <div style="font-weight:700;font-size:13px;color:#064e3b">🕐 {r['data_hora'][11:19]}</div>
+  <div style="font-size:13px;font-weight:700;color:{c_g};margin-top:2px">{r['gravidade']} · score {r['score']:.2f}</div>
+  <div style="font-size:12px;color:#475569;margin-top:2px">IA {'✅' if r.get('usou_ia') else '—'} · Jira {r.get('jira_key') or '—'} · 🔧 {'sim' if r.get('resolucao') else '—'}</div>
+</div>""")
+            st.markdown(
+                f'<div style="display:flex;gap:10px;flex-wrap:wrap;margin:2px 0 10px">{"".join(cards)}</div>',
+                unsafe_allow_html=True,
+            )
         rotulos = [
-            f"{r['data_hora'][11:19]} · {r['gravidade']} · score {r['score']:.2f} · "
-            f"IA {'sim' if r.get('usou_ia') else 'não'} · Jira {r.get('jira_key') or '—'}"
+            f"{r['data_hora'][11:19]} · {r['gravidade']}"
             for r in do_dia
         ]
         indice = st.selectbox("📄 Selecione o relatório", range(len(do_dia)),

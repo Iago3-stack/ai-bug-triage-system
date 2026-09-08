@@ -96,7 +96,25 @@ def render_dashboard(registros: list[dict]) -> None:
     n_media = int((df["gravidade"] == "MÉDIA ⚠️").sum())
     n_normal = int((df["gravidade"] == "NORMAL ✅").sum())
     score_medio = float(df["score"].mean())
+    n_ia = int(df["usou_ia"].sum()) if "usou_ia" in df else 0
     fp = false_positivos_evitados(registros)
+
+    st.markdown(f"""
+<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px">
+  <div style="flex:1;min-width:180px;background:linear-gradient(135deg,#2563eb,#3b82f6);border-radius:14px;padding:14px 18px;color:#ffffff">
+    <div style="font-size:12px;opacity:.85;font-weight:600">🧺 Total de triagens</div>
+    <div style="font-size:30px;font-weight:800;line-height:1.1">{len(registros)}</div>
+  </div>
+  <div style="flex:1;min-width:180px;background:linear-gradient(135deg,#dc2626,#ef4444);border-radius:14px;padding:14px 18px;color:#ffffff">
+    <div style="font-size:12px;opacity:.85;font-weight:600">🚨 Críticas / Altas</div>
+    <div style="font-size:30px;font-weight:800;line-height:1.1">{n_crit}</div>
+  </div>
+  <div style="flex:1;min-width:180px;background:linear-gradient(135deg,#15803d,#22c55e);border-radius:14px;padding:14px 18px;color:#ffffff">
+    <div style="font-size:12px;opacity:.85;font-weight:600">🔮 Com IA (Gemini)</div>
+    <div style="font-size:30px;font-weight:800;line-height:1.1">{n_ia}</div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
 
     c1, c2, c3, c4, c5 = st.columns(5)
     c1.metric("🧺 Triagens", len(registros))
