@@ -11,6 +11,7 @@ import jira_client
 import persistencia
 import guardrails
 import dashboard as dashboard_qa
+import pix
 
 VERSAO = "v2.1.0"
 
@@ -603,6 +604,20 @@ st.sidebar.markdown("""
 """, unsafe_allow_html=True)
 
 # --- RODAPÉ DE CRÉDITO (autoria blindada, visível mesmo em forks) ---
+pix_bloco = ""
+if pix.configurado():
+    try:
+        _payload_pix = pix.payload_configurado()
+        _qr_pix = pix.qrcode_png_base64(_payload_pix)
+        pix_bloco = f"""
+  <div style="text-align:center;padding:4px 16px 18px;border-top:1px solid rgba(255,255,255,.1)">
+    <div style="font-size:15px;font-weight:800;color:#ffffff;margin-top:14px">☕ Apoie este projeto</div>
+    <div style="color:#94a3b8;font-size:13px;margin:6px auto 12px;max-width:520px">Este projeto é mantido de forma independente. Se ele te ajudou, considere uma contribuição voluntária via Pix — ela ajuda a mantê-lo open-source e ativo.</div>
+    <img src="{_qr_pix}" width="150" style="border-radius:10px;background:#ffffff;padding:6px" alt="QR Code Pix"/>
+    <div style="color:#64748b;font-size:12px;margin-top:8px">Escaneie o QR Code ou use o "Pix copia e cola" do seu banco.</div>
+  </div>"""
+    except Exception:
+        pix_bloco = ""
 st.markdown(f"""
 <div style="margin-top:32px;width:100%;background:linear-gradient(135deg,#0f172a 0%,#16233c 55%,#25D366 170%);border-radius:18px 18px 0 0;color:#e2e8f0;font-size:14px;line-height:1.55">
   <div style="padding:26px 26px 18px;text-align:center">
@@ -615,6 +630,7 @@ st.markdown(f"""
       </button>
     </a>
   </div>
+  {pix_bloco}
   <div style="display:flex;justify-content:center;gap:26px;flex-wrap:wrap;padding:14px 16px;font-size:13px;color:#cbd5e1;border-top:1px solid rgba(255,255,255,.12)">
     <a href="{repo_url}" target="_blank" style="color:#cbd5e1;text-decoration:none;display:inline-flex;align-items:center;gap:6px">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.5 7.5 0 014 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
