@@ -210,7 +210,7 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 > - ☁️ **Persistência em nuvem** (Supabase/Postgres) — histórico real entre sessões (hoje o disco da nuvem é efêmero)
 > - 🔐 **Autenticação (login)** — cada usuário vê só o seu histórico (multi-tenant)
 > - 🧠 **Causa raiz com histórico** (evolução do RAG ✅) → sugerir a correção que resolveu da última vez → *triage agent*
-> - 🔁 **Modelos alternativos** (Groq/Llama-Ollama) no mesmo `ia.py`, sem depender só do Gemini
+> - 🔁 **Modelos alternativos** (Groq open-weight) no mesmo `ia.py`, sem depender só do Gemini
 > - 🔔 **Notificações** (Slack/Discord/e-mail) em CRÍTICA · 🌐 **webhook/API** · 📧 **relatório agendado** · 📊 **LLMOps/evals**
 > Roadmap completo acompanhado no brainstorming do projeto (`~/Documentos/roadmap-ia.md`).
 

@@ -1,11 +1,11 @@
 # Análise por IA (LLM) — Fase 3 do projeto
 # Integração com Google Gemini via google-genai, com fallback para
-# Llama 4 (Groq) caso o Gemini expire tokens / caia (503/429/chave inválida).
+# modelo open-weight via Groq caso o Gemini expire tokens / caia (503/429/chave inválida).
 # Desenho:
 #  1. Chave: st.secrets (Streamlit Cloud) OU arquivo local .env (gitignored).
 #  2. Prompt pede apenas JSON (schema fixo) com temperature baixa.
 #  3. Qualquer erro -> retorna (None, mensagem): o motor local segue de pé.
-#  4. Ordem: Gemini (todos os modelos) -> Llama/Groq -> erro.
+#  4. Ordem: Gemini (todos os modelos) -> Groq (open-weight) -> erro.
 
 import json
 import os
@@ -24,9 +24,10 @@ MODELOS = [
 ]
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-# Llama "bem alimentado" atual no Groq (Meta, MoE 17Bx128, ~22T tokens,
-# multilíngue incluindo PT-BR, JSON mode). Sobrescrevível via GROQ_MODELO.
-GROQ_MODELO_PADRAO = "meta-llama/llama-4-maverick-17b-128e-instruct"
+# Modelo open-weight padrão no Groq: sucessor recomendado do Llama 3.3 70B
+# (Llama de chat foi aposentado do tier grátis do Groq em 2026). Tem JSON mode,
+# multilíngue (inclui PT-BR) e roda grátis. Sobrescrevível via GROQ_MODELO.
+GROQ_MODELO_PADRAO = "openai/gpt-oss-120b"
 
 PROMPT = """Você é um assistente sênior de QA. Analise o RELATO DO USUÁRIO sobre um
 bug de software e responda APENAS com JSON válido (sem markdown, sem texto extra),
@@ -153,7 +154,7 @@ def _chamar_gemini(conteudo, temperatura=0.2, max_output_tokens=1024):
 
 
 def _chamar_groq(conteudo, temperatura=0.2, max_output_tokens=1024):
-    """Chama o Llama (Groq) com resposta em JSON. Retorna (dict | None, erro)."""
+    """Chama o modelo open-weight (Groq) com resposta em JSON. Retorna (dict | None, erro)."""
     chave = _chave("GROQ_API_KEY")
     if not chave:
         return None, "Chave GROQ_API_KEY não configurada."
@@ -186,7 +187,7 @@ def _chamar_groq(conteudo, temperatura=0.2, max_output_tokens=1024):
 
 
 def _chamar_llm(conteudo, temperatura=0.2, max_output_tokens=1024):
-    """Dispatcher: Gemini primeiro; se falhar, tenta Llama/Groq; senão, erro."""
+    """Dispatcher: Gemini primeiro; se falhar, tenta Groq (open-weight); senão, erro."""
     dados, erro = _chamar_gemini(conteudo, temperatura, max_output_tokens)
     if dados is not None:
         return dados, None
@@ -197,7 +198,7 @@ def _chamar_llm(conteudo, temperatura=0.2, max_output_tokens=1024):
 
 
 def analisar_llm(relato):
-    """Chama o LLM (Gemini → Llama/Groq) e retorna (dict | None, mensagem_erro).
+    """Chama o LLM (Gemini → Groq) e retorna (dict | None, mensagem_erro).
 
     dict com chaves: severidade, categoria, causa_raiz, passos_repro, resumo_tecnico
     """
@@ -205,7 +206,7 @@ def analisar_llm(relato):
 
 
 def analisar_llm_rag(relato, contexto):
-    """Chama o LLM (Gemini → Llama/Groq) com o histórico recuperado (RAG).
+    """Chama o LLM (Gemini → Groq) com o histórico recuperado (RAG).
 
     dict com o schema padrão + ja_aconteceu, resolucao_anterior, registros_similar.
     """
@@ -223,7 +224,7 @@ if __name__ == "__main__":
         "Estou tentando pagar e o botão não responde, estou muito frustrado!",
         "A cor de fundo podia ser mais escura.",
     ]
-    print("=== TESTE DE ANÁLISE POR IA (Gemini → Llama/Groq) ===\n")
+    print("=== TESTE DE ANÁLISE POR IA (Gemini → Groq) ===\n")
     for caso in casos:
         print(f"Relato: {caso}")
         dados, erro = analisar_llm(caso)

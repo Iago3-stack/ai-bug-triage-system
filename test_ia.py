@@ -1,4 +1,4 @@
-# Testes unitários da camada de IA (ia.py) — Gemini com fallback Groq/Llama.
+# Testes unitários da camada de IA (ia.py) — Gemini com fallback Groq.
 # Roda com: pytest -v
 # 100% offline: chaves, HTTP e dispatcher são mockados — nunca sai da máquina.
 
