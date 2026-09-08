@@ -503,11 +503,38 @@ st.sidebar.markdown("""
 
 # --- RODAPÉ DE CRÉDITO (autoria blindada, visível mesmo em forks) ---
 st.markdown(f"""
-<div style="margin-top:28px;padding:14px 16px;border-top:1px solid rgba(46,124,246,.2);text-align:center;font-size:13px;color:#6b7280">
-  <b style="color:#2E7CF6">© {VERSAO} Iago Nunes de Araújo</b> ·
-  <a href="https://github.com/Iago3-stack/ai-bug-triage-system" target="_blank">github.com/Iago3-stack/ai-bug-triage-system</a> ·
-  Licença <a href="https://github.com/Iago3-stack/ai-bug-triage-system/blob/main/LICENSE" target="_blank">MIT</a><br/>
-  Projeto original, documentado e publicado por <b>Iago Nunes (Iago3-stack)</b> — qualquer cópia deve manter o crédito (MIT).<br/>
-  <span style="font-size:12px">🚀 QA Automation Engineer · Estudante de IA & ML (UNIASSELVI)</span>
+<div style="margin-top:32px;width:100%;background:linear-gradient(135deg,#0f172a 0%,#16233c 55%,#25D366 170%);border-radius:18px 18px 0 0;color:#e2e8f0;font-size:14px;line-height:1.55">
+  <div style="padding:26px 26px 18px;text-align:center">
+    <div style="font-size:17px;font-weight:700;color:#ffffff">Gostou do <span style="color:#25D366">AI Bug Triage System</span>?</div>
+    <div style="color:#94a3b8;font-size:13px;margin:6px 0 14px">Uma estrelinha no repositório ajuda mais QAs a encontrarem o app.</div>
+    <a href="{repo_url}" target="_blank" style="text-decoration:none">
+      <button style="display:inline-flex;align-items:center;gap:8px;background:#2E7CF6;color:#ffffff;font-weight:700;font-size:14px;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.25)">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="#ffd76e" role="img"><path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"/></svg>
+        Dar estrela no GitHub
+      </button>
+    </a>
+  </div>
+  <div style="display:flex;justify-content:center;gap:26px;flex-wrap:wrap;padding:14px 16px;font-size:13px;color:#cbd5e1;border-top:1px solid rgba(255,255,255,.12)">
+    <a href="{repo_url}" target="_blank" style="color:#cbd5e1;text-decoration:none;display:inline-flex;align-items:center;gap:6px">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.5 7.5 0 014 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      Repositório
+    </a>
+    <a href="{repo_url}blob/main/README.md" target="_blank" style="color:#cbd5e1;text-decoration:none;display:inline-flex;align-items:center;gap:6px">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M0 1.75A.75.75 0 01.75 1h4.253c1.227 0 2.317.59 3 1.501A3.744 3.744 0 0111.006 1h4.245a.75.75 0 01.75.75v10.5a.75.75 0 01-.75.75h-4.507a2.25 2.25 0 00-1.591.659l-.622.621a.75.75 0 01-1.06 0l-.622-.621A2.25 2.25 0 005.258 13H.75a.75.75 0 01-.75-.75V1.75zm8.755 3a2.25 2.25 0 012.25-2.25H14.5v9h-3.757c-.71 0-1.4.201-1.988.557V4.75zM7.25 12.307c.588-.356 1.278-.557 1.988-.557H7.25v.557zM1.5 2.5h3.735a2.25 2.25 0 012.015 1.25v7.307a3.74 3.74 0 00-1.988-.557H1.5V2.5z"/></svg>
+      Documentação
+    </a>
+    <a href="https://github.com/Iago3-stack" target="_blank" style="color:#cbd5e1;text-decoration:none;display:inline-flex;align-items:center;gap:6px">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.5 7.5 0 014 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      Perfil
+    </a>
+    <span style="display:inline-flex;align-items:center;gap:6px;color:#cbd5e1">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M1 7.775V2.75C1 1.784 1.784 1 2.75 1h10.5c.966 0 1.75.784 1.75 1.75v10.5A1.75 1.75 0 0113.25 15H2.75A1.75 1.75 0 011 13.25V7.775zm1.5 0v5.475c0 .138.112.25.25.25h10.5a.25.25 0 00.25-.25V7.775L8.006 9.53a.75.75 0 01-.744 0L2.5 7.775zM13.25 2.5H2.75a.25.25 0 00-.25.25v3.19L8 7.684l5.5-3.744v-3.19a.25.25 0 00-.25-.25z"/></svg>
+      Licença MIT
+    </span>
+  </div>
+  <div style="padding:12px 16px;text-align:center;font-size:12px;color:#64748b;border-top:1px solid rgba(255,255,255,.08)">
+    © {VERSAO} <b style="color:#94a3b8">Iago Nunes de Araújo</b> · 🚀 QA Automation Engineer · Estudante de IA &amp; ML (UNIASSELVI)<br/>
+    Projeto original, documentado e publicado por <b style="color:#94a3b8">Iago Nunes (Iago3-stack)</b> — qualquer cópia deve manter o crédito (MIT).
+  </div>
 </div>
 """, unsafe_allow_html=True)
