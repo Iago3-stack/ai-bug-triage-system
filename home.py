@@ -83,12 +83,18 @@ st.markdown("""
   <p style="margin:0">Atualmente, dedico meus estudos na <b style="color:#7aa5ff">UNIASSELVI</b> para aprofundar conhecimentos em <b style="color:#7aa5ff">Redes Neurais</b> e <b style="color:#7aa5ff">Modelos de Linguagem (LLMs)</b>. No meu dia a dia, utilizo o <b style="color:#7aa5ff">Linux Mint</b> como base para desenvolver scripts em <b style="color:#7aa5ff">Python</b> que integram APIs de inteligência artificial à automação de testes, buscando sempre reduzir o tempo de triagem de bugs e melhorar a precisão dos relatórios técnicos.</p>
 </div>
 """, unsafe_allow_html=True)
-st.subheader("🤖 Agente de Triagem e Documentação de Bugs 2026")
+st.markdown("""
+<div style="font-size:1.5em;font-weight:800;line-height:1.25;background:linear-gradient(90deg,#f59e0b 0%,#ef4444 45%,#ec4899 100%);-webkit-background-clip:text;background-clip:text;color:transparent;display:inline-block;margin-top:8px">🤖 Agente de Triagem e Documentação de Bugs 2026</div>
+""", unsafe_allow_html=True)
 st.info("Esta ferramenta demonstra o uso de NLP para automatizar a triagem técnica e emocional de falhas de software.")
 
 # --- FERRAMENTA (Sua ideia evoluída) ---
-descricao_bug = st.text_area("Entrada do Usuário (Relato do Bug):", height=150, 
-                             placeholder="Ex: Estou tentando pagar e o botão não responde, estou muito frustrado!")
+st.markdown("""
+<div style="font-size:1em;font-weight:700;background:linear-gradient(90deg,#06b6d4 0%,#3b82f6 45%,#8b5cf6 100%);-webkit-background-clip:text;background-clip:text;color:transparent;display:inline-block;margin:6px 0 2px">Entrada do Usuário (Relato do Bug):</div>
+""", unsafe_allow_html=True)
+descricao_bug = st.text_area("Entrada do Usuário (Relato do Bug):", height=150,
+                             placeholder="Ex: Estou tentando pagar e o botão não responde, estou muito frustrado!",
+                             label_visibility="collapsed")
 
 usar_llm = st.checkbox(
     "🔮 Usar IA (Gemini) para esta triagem",
