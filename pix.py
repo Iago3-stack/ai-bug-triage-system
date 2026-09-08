@@ -1,6 +1,6 @@
 """Geração de QR Code Pix (BR Code) — 100% local, sem serviços externos.
 
-Configuração (via variáveis de ambiente / Streamlit secrets — nunca no repo):
+Configuração (nunca commitada — Streamlit secrets, `.env` gitignored ou env):
     PIX_LINK    link de pagamento Pix com valor fixo (ex.: gerado no painel do
                 provedor). Quando presente, o rodapé exibe um botão de
                 pagamento no lugar do QR Code (QR estático não tem "finalidade
@@ -11,6 +11,8 @@ Configuração (via variáveis de ambiente / Streamlit secrets — nunca no repo
     PIX_NOME    nome do recebedor (máx. 25 caracteres — p/ payload montado por chave)
     PIX_CIDADE  cidade do recebedor (máx. 15 caracteres — p/ payload montado por chave)
     PIX_TXID    identificador opcional da transação (padrão: ***)
+
+Prioridade de leitura (igual ao resto do app): st.secrets → os.environ → .env.
 """
 
 import base64
@@ -73,17 +75,50 @@ def montar_payload(chave: str, nome: str, cidade: str, txid: str = "***") -> str
     return payload + crc16_ccitt(payload)
 
 
+def _ler(nome: str) -> str:
+    """Lê configuração com prioridade: st.secrets → os.environ → .env."""
+    try:
+        import streamlit as st
+
+        v = st.secrets.get(nome)
+        if v:
+            return str(v).strip()
+    except Exception:
+        pass
+    v = os.environ.get(nome, "").strip()
+    if v:
+        return v
+    return _ler_env(nome)
+
+
+def _ler_env(nome: str) -> str:
+    """Lê uma chave do arquivo .env (apenas leitura, nunca commitado)."""
+    caminho = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+    try:
+        with open(caminho, encoding="utf-8") as f:
+            for linha in f:
+                lin = linha.strip()
+                if not lin or lin.startswith("#") or "=" not in lin:
+                    continue
+                k, _, v = lin.partition("=")
+                if k.strip() == nome:
+                    return v.strip()
+    except OSError:
+        pass
+    return ""
+
+
 def configurado() -> bool:
-    return bool(_copia() or os.environ.get("PIX_KEY", "").strip())
+    return bool(_copia() or _ler("PIX_KEY"))
 
 
 def link_pagamento() -> str:
     """Retorna o link de pagamento Pix com valor fixo, se configurado."""
-    return os.environ.get("PIX_LINK", "").strip()
+    return _ler("PIX_LINK")
 
 
 def _copia() -> str:
-    return os.environ.get("PIX_COPIA", "").strip()
+    return _ler("PIX_COPIA")
 
 
 def payload_configurado() -> str:
@@ -95,11 +130,11 @@ def payload_configurado() -> str:
     copia = _copia()
     if copia:
         return copia
-    chave = os.environ.get("PIX_KEY", "").strip()
+    chave = _ler("PIX_KEY")
     if not chave:
         return ""
-    nome = os.environ.get("PIX_NOME", "Doacao")
-    cidade = os.environ.get("PIX_CIDADE", "Sao Luis")
+    nome = _ler("PIX_NOME") or "Doacao"
+    cidade = _ler("PIX_CIDADE") or "Sao Luis"
     return montar_payload(chave, nome, cidade)
 
 

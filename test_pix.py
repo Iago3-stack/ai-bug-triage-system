@@ -15,12 +15,18 @@ def test_crc16_ccitt_valor_conhecido():
     assert pix.crc16_ccitt("123456789") == "29B1"
 
 
-def test_configurado_e_payload_configurado():
+def test_configurado_e_payload_configurado(monkeypatch):
+    monkeypatch.setattr(pix, "_ler_env", lambda nome: "")  # isola o .env local
+    monkeypatch.delenv("PIX_COPIA", raising=False)
+    monkeypatch.delenv("PIX_KEY", raising=False)
+    monkeypatch.delenv("PIX_NOME", raising=False)
+    monkeypatch.delenv("PIX_CIDADE", raising=False)
     assert not pix.configurado()
     assert pix.payload_configurado() == ""
 
 
 def test_configurado_com_chave(monkeypatch):
+    monkeypatch.setattr(pix, "_ler_env", lambda nome: "")
     monkeypatch.setenv("PIX_KEY", "11999999999")
     monkeypatch.setenv("PIX_NOME", "Iago Nunes de Araujo")
     monkeypatch.setenv("PIX_CIDADE", "Sao Luis")
@@ -28,6 +34,12 @@ def test_configurado_com_chave(monkeypatch):
     payload = pix.payload_configurado()
     assert payload.startswith("00020126")
     assert payload[-4:] == pix.crc16_ccitt(payload[:-4])
+
+
+def test_ler_preferencia_env_sobre_env_file(monkeypatch):
+    monkeypatch.setattr(pix, "_ler_env", lambda nome: "do-arquivo")
+    monkeypatch.setenv("PIX_KEY", "os-environ-manda")
+    assert pix._ler("PIX_KEY") == "os-environ-manda"
 
 
 def test_copia_e_cola_tem_prioridade(monkeypatch):
