@@ -467,6 +467,12 @@ if not jira_client.configurado():
                 st.success("✅ Jira configurado nesta sessão!")
             else:
                 st.warning("Preencha e-mail, token e chave do projeto.")
+else:
+    st.sidebar.success("✅ Jira configurado nesta sessão")
+    st.sidebar.caption("Botão 'Exportar para Jira' ativo.")
+    if st.sidebar.button("🔄 Reconectar / trocar credenciais", use_container_width=True):
+        jira_client.limpar_config()
+        st.rerun()
 
 # --- CTA: ESTRELA NO GITHUB ---
 st.sidebar.markdown("### ⭐ Apoie o projeto")

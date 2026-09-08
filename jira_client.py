@@ -66,6 +66,15 @@ def configurado():
     return bool(JIRA_EMAIL and JIRA_API_TOKEN and JIRA_PROJECT_KEY)
 
 
+def limpar_config():
+    """Zera as credenciais para permitir reconectar/trocar de conta."""
+    global JIRA_EMAIL, JIRA_API_TOKEN, JIRA_PROJECT_KEY, JIRA_ISSUE_TYPE
+    JIRA_EMAIL = ""
+    JIRA_API_TOKEN = ""
+    JIRA_PROJECT_KEY = ""
+    JIRA_ISSUE_TYPE = ""
+
+
 def _headers():
     credencial = base64.b64encode(f"{JIRA_EMAIL}:{JIRA_API_TOKEN}".encode()).decode()
     return {
