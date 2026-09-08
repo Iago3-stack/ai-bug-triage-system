@@ -1,4 +1,5 @@
 import streamlit as st
+import json
 import pandas as pd
 from urllib.parse import quote
 
@@ -452,6 +453,22 @@ if registros_totais:
     )
     with st.expander(f"📁 Histórico persistido ({backend}) — {len(registros_totais)} triagem(ns) salva(s)", key="ex_historico"):
         st.markdown('<div class="marca-historico" style="display:none"></div>', unsafe_allow_html=True)
+        st.markdown("##### 📤 Exportar histórico completo (backup)")
+        col_js, col_csv, _ = st.columns([1, 1, 2])
+        col_js.download_button(
+            "⬇️ Exportar JSON",
+            data=json.dumps(registros_totais, ensure_ascii=False, indent=2).encode("utf-8"),
+            file_name="historico_triagens.json",
+            mime="application/json",
+            key="hp_exp_json",
+        )
+        col_csv.download_button(
+            "⬇️ Exportar CSV",
+            data=pd.DataFrame(registros_totais).to_csv(index=False).encode("utf-8"),
+            file_name="historico_triagens.csv",
+            mime="text/csv",
+            key="hp_exp_csv",
+        )
         datas = persistencia.datas_disponiveis()
         data_sel = st.selectbox("📅 Escolha a data", datas, key="hp_data")
         do_dia = persistencia.registros_por_data(data_sel)
