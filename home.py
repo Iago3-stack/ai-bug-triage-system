@@ -35,6 +35,15 @@ st.markdown("""
     [data-testid="stExpander"]:has(.marca-dashboard) summary { color: #7c3aed !important; font-weight: 700 !important; }
     [data-testid="stExpander"]:has(.marca-diag) { border: 2px solid #d97706 !important; border-radius: 12px !important; }
     [data-testid="stExpander"]:has(.marca-diag) summary { color: #d97706 !important; font-weight: 700 !important; }
+
+    /* Cores dos botões de ação — mesma tática :has() + marcador oculto */
+    [data-testid="stElementContainer"]:has(.marca-executar) + [data-testid="stElementContainer"] [data-testid="stButton"] button { background: #059669 !important; color: #ffffff !important; }
+    [data-testid="stElementContainer"]:has(.marca-executar) + [data-testid="stElementContainer"] [data-testid="stButton"] button:hover { background: #047857 !important; }
+    [data-testid="stColumn"]:has(.marca-download) [data-testid="stDownloadButton"] button { background: #0d9488 !important; color: #ffffff !important; }
+    [data-testid="stColumn"]:has(.marca-issue) [data-testid="stLinkButton"] a { background: #18181b !important; color: #ffffff !important; }
+    [data-testid="stColumn"]:has(.marca-jira) [data-testid="stButton"] button { background: #0052cc !important; color: #ffffff !important; }
+    [data-testid="stExpander"]:has(.marca-jira) { border: 2px solid #0052cc !important; border-radius: 12px !important; background: rgba(0, 82, 204, 0.05) !important; }
+    [data-testid="stExpander"]:has(.marca-jira) summary { color: #0052cc !important; font-weight: 700 !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -85,6 +94,7 @@ usar_llm = st.checkbox(
     help="Ativa a análise por LLM. Se desmarcado, só o motor local determinístico roda."
 )
 
+st.markdown('<div class="marca-executar" style="display:none"></div>', unsafe_allow_html=True)
 if st.button("Executar Triagem Inteligente"):
         if descricao_bug:
             # --- 1. TRIAGEM NLP (MOTOR LOCAL, DETERMINÍSTICO E OFFLINE) ---
@@ -318,6 +328,7 @@ if r:
 
     # --- 5. EXPORTAR: baixar relatório + abrir no GitHub + enviar ao Jira ---
     colunas = st.columns(3)
+    colunas[0].markdown('<div class="marca-download" style="display:none"></div>', unsafe_allow_html=True)
     colunas[0].download_button(
         "📥 Baixar relatório (.md)",
         data=relatorio.encode("utf-8"),
@@ -326,10 +337,12 @@ if r:
     )
     titulo = quote(descricao_limpa[:80])
     corpo = quote(relatorio[:4000])
+    colunas[1].markdown('<div class="marca-issue" style="display:none"></div>', unsafe_allow_html=True)
     colunas[1].link_button(
         "🐙 Nova Issue no GitHub",
         f"https://github.com/iago3-stack/ai-bug-triage-system/issues/new?title={titulo}&body={corpo}",
     )
+    colunas[2].markdown('<div class="marca-jira" style="display:none"></div>', unsafe_allow_html=True)
     if colunas[2].button("📋 Exportar para Jira", use_container_width=True, key="btn_exportar_jira"):
         if jira_client.configurado():
             with st.spinner("📋 Enviando issue ao Jira..."):
@@ -442,6 +455,7 @@ if registros_totais:
 # --- CONFIGURAÇÃO DO JIRA (sidebar) ---
 if not jira_client.configurado():
     with st.sidebar.expander("🔑 Jira — configurar exportação"):
+        st.markdown('<div class="marca-jira" style="display:none"></div>', unsafe_allow_html=True)
         st.caption("Cole suas credenciais para ativar o botão 'Exportar para Jira'.")
         j_email = st.text_input("E-mail Atlassian", key="jira_email")
         j_token = st.text_input("API Token", type="password", key="jira_token")
