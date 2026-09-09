@@ -1,5 +1,10 @@
-# Sem bloco [theme]: um tema custom único trava/oculta o seletor Claro/Escuro/Sistema
-# no menu "⋮" do Streamlit (a opção só aparece quando há 2+ temas disponíveis).
+# O tema claro/escuro do APP é controlado pelo seletor PRÓPRIO no sidebar (paleta CSS).
+# Aqui fixamos o tema NATIVO do Streamlit no light para ele nunca "vazar" escuro por cima
+# do nosso app (a preferência dark fica salva no navegador e, como o menu "⋮" está oculto,
+# o usuário não consegue desfazer). Isso não mostra radios no menu — o menu está oculto.
+
+[theme]
+base = "light"
 
 [browser]
 gatherUsageStats = false

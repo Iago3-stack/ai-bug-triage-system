@@ -14,7 +14,7 @@ import guardrails
 import dashboard as dashboard_qa
 import pix
 
-VERSAO = "v2.4.1"
+VERSAO = "v2.4.2"
 
 # Símbolo oficial do Pix (Banco Central) — PD-textlogo via Wikimedia Commons.
 # Só os 3 paths verdes da marca (o "losango"), sem a tipografia do logo.
@@ -67,6 +67,18 @@ st.markdown("""
     /* Fundo do app: gradiente sutil no topo (verde-claro desvanecendo p/ branco) */
     [data-testid="stAppViewContainer"] { background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 300px) !important; }
     .stSidebar { background: #ffffff !important; }
+
+    /* Blindagem do tema claro: se o tema NATIVO do Streamlit vazar escuro (preferência
+       salva no navegador + menu "⋮" oculto), o texto default viraria branco sobre fundo
+       claro. Fixamos os tons claros aqui — o tema escuro do app (body:has) sobrescreve depois. */
+    [data-testid="stMarkdownContainer"] { color: #1f2937 !important; }
+    [data-testid="stMarkdownContainer"] h1, [data-testid="stMarkdownContainer"] h2,
+    [data-testid="stMarkdownContainer"] h3, [data-testid="stMarkdownContainer"] h4,
+    [data-testid="stMarkdownContainer"] h5, [data-testid="stMarkdownContainer"] h6 { color: #0f172a !important; }
+    [data-testid="stCaptionContainer"], [data-testid="stSidebar"] caption { color: #64748b !important; }
+    [data-testid="stMetricLabel"] { color: #64748b !important; }
+    [data-testid="stMetricValue"] { color: #0f172a !important; }
+    [data-testid="stHeader"] { background: #ffffff !important; }
 
     /* Card do formulário: textarea da triagem com moldura colorida (marcador irmão) */
     [data-testid="stElementContainer"]:has(.marca-form) + [data-testid="stElementContainer"] [data-testid="stTextArea"] textarea { background: #fbfefc !important; border: 1.5px solid #25D366 !important; border-radius: 12px !important; box-shadow: 0 2px 12px rgba(37, 211, 102, 0.14) !important; }
