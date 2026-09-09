@@ -11,10 +11,11 @@ from hero_animado import _svg_gemini, _svg_groq
 import jira_client
 import persistencia
 import guardrails
+import notificacoes
 import dashboard as dashboard_qa
 import pix
 
-VERSAO = "v2.4.2"
+VERSAO = "v2.5.0"
 
 # Símbolo oficial do Pix (Banco Central) — PD-textlogo via Wikimedia Commons.
 # Só os 3 paths verdes da marca (o "losango"), sem a tipografia do logo.
@@ -447,7 +448,8 @@ if st.button("Executar Triagem Inteligente"):
                 descricao_limpa = guardrails.mascarar(descricao_limpa)
                 flag_seguranca = (
                     "🔒 **Credencial/PII detectada no relato** (" + ", ".join(sensiveis)
-                    + "). A informação sensível foi **mascarada** e não será enviada "
+                    + "): " + guardrails.explicar(sensiveis)
+                    + ". A informação sensível foi **mascarada** e não será enviada "
                     "à IA, ao Jira, ao GitHub ou ao histórico."
                 )
             st.session_state["flag_seguranca"] = flag_seguranca
@@ -556,6 +558,7 @@ if st.button("Executar Triagem Inteligente"):
                 "sentimento": sentimento,
                 "fatores": fatores,
                 "usou_ia": bool(usar_llm),
+                "sensiveis_mascarados": list(sensiveis) if sensiveis else [],
             }
             if resultado_llm:
                 snapshot.update({
@@ -581,6 +584,15 @@ if st.button("Executar Triagem Inteligente"):
             # Guarda o id persistido: permite registrar a resolução depois e
             # alimentar o RAG ("como foi resolvido da última vez").
             st.session_state["ultimo_registro_id"] = persistencia.registrar_triagem(snapshot).get("id", "")
+
+            # --- 3.6 ALERTA (Discord) para prioridades CRÍTICA/ALTA ---
+            # Roda em background silencioso: sem webhook configurado ou em falha
+            # de rede, a triagem segue normalmente (nunca levanta exceção).
+            notificacoes.notificar_discord(
+                prioridade_final or gravidade,
+                descricao_limpa,
+                provedor=ia.ULTIMO_PROVEDOR if usar_llm else None,
+            )
 
             # --- 4. GUARDA O RESULTADO (sobrevive a reruns dos botões de exportação) ---
             st.session_state["resultado"] = {

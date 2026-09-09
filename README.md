@@ -120,6 +120,13 @@ A análise por IA usa a chave `GEMINI_API_KEY` (gratuita em [aistudio.google.com
 - 🔑 **Local**: crie um arquivo `.env` na raiz com `GEMINI_API_KEY=...` (ele é ignorado pelo `.gitignore`).
 - ☁️ **Streamlit Cloud**: `Settings → Secrets → GEMINI_API_KEY` (nunca coloque a chave em código ou no repositório).
 
+### 🔔 Alerta no Discord (triagens CRÍTICAS/ALTAS)
+
+Quando uma triagem resulta em **CRÍTICA 🚨 ou ALTA 🚨**, o app envia um embed automático pro canal (prioridade, resumo e motor) — vira "monitor de QA". Para ativar:
+
+- 🖱️ **Discord**: servidor/canal → Configurações → **Integrações → Webhooks → Novo webhook** → copie a URL (formato `https://discord.com/api/webhooks/...`).
+- ⚙️ Configure o segredo **`DISCORD_WEBHOOK`** (Streamlit Cloud Secrets ou `.env` local). Sem o webhook (ou em falha de rede), a notificação é silenciosa — nunca interrompe a triagem.
+
 ### 🔗 Exportação para o Jira (API REST)
 
 O botão **📋 Exportar para Jira** cria a issue do tipo **Tarefa** direto no seu projeto Jira Cloud. Você configura de **dois jeitos**:

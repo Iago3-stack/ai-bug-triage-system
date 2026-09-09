@@ -95,6 +95,39 @@ def test_taxa_divergencia():
     assert dashboard.taxa_divergencia([_registro("x", usou_ia=False)]) is None
 
 
+# --- Auditoria dos guardrails (credenciais/PII mascaradas) ---
+def test_guardrails_auditoria_conta_por_tipo():
+    registros = [
+        _registro("a", sensiveis_mascarados=["e-mail", "CPF"]),
+        _registro("b", sensiveis_mascarados=["e-mail"]),
+        _registro("c", sensiveis_mascarados=[]),
+        _registro("d"),
+    ]
+    contagem = dashboard.guardrails_auditoria(registros)
+    assert contagem["e-mail"] == 2
+    assert contagem["CPF"] == 1
+    assert sum(contagem.values()) == 3
+
+
+def test_guardrails_auditoria_registro_legado_string_avulsa():
+    contagem = dashboard.guardrails_auditoria([_registro("a", sensiveis_mascarados="CPF")])
+    assert contagem["CPF"] == 1
+
+
+def test_guardrails_auditoria_vazia():
+    assert sum(dashboard.guardrails_auditoria([]).values()) == 0
+
+
+def test_tabela_recente_marca_linha_mascarada():
+    registros = [
+        _registro("a", sensiveis_mascarados=["e-mail"]),
+        _registro("b", sensiveis_mascarados=[]),
+        _registro("c"),
+    ]
+    tabela = dashboard.tabela_recente(registros)
+    assert list(tabela["🔒"]) == ["sim", "—", "—"]
+
+
 def test_top_causas_agrupa_e_limita_a_cinco():
     registros = [
         _registro("a", causa_raiz_ia="Servidor sobrecarregado"),

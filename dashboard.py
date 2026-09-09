@@ -11,6 +11,8 @@ from collections import Counter
 import pandas as pd
 import streamlit as st
 
+import guardrails
+
 # Ordem de gravidade (da pior para a mais branda) para ordenar barras.
 _ORDEM_SEVERIDADE = ["CRÍTICA 🚨", "ALTA 🚨", "MÉDIA ⚠️", "NORMAL ✅"]
 
@@ -112,6 +114,20 @@ def false_positivos_evitados(registros: list[dict]) -> int:
     )
 
 
+def _sensiveis(reg: dict) -> list[str]:
+    valor = reg.get("sensiveis_mascarados")
+    if isinstance(valor, list):
+        return [str(v) for v in valor if v]
+    if isinstance(valor, float) and valor != valor:  # NaN (coluna ausente no DataFrame)
+        return []
+    return [str(valor)] if valor else []
+
+
+def guardrails_auditoria(registros: list[dict]) -> Counter:
+    """Conta por tipo de credencial/PII mascarada (auditoria do guardrail)."""
+    return Counter(tipo for reg in registros for tipo in _sensiveis(reg))
+
+
 def _contagem_por(registros: list[dict], chave: str, ordenar: list[str] | None = None) -> pd.DataFrame:
     contagem = Counter(reg.get(chave, "—") for reg in registros)
     linhas = [(valor, n) for valor, n in contagem.items() if valor != "—"]
@@ -142,6 +158,8 @@ def tabela_recente(registros: list[dict], limite: int = 20) -> pd.DataFrame:
     else:
         jira = ["—"] * len(df)
     tabela["Jira"] = jira
+    if "sensiveis_mascarados" in df.columns or any(_sensiveis(r) for r in registros):
+        tabela["🔒"] = ["sim" if _sensiveis(r) else "—" for _, r in df.iterrows()]
     return tabela
 
 
@@ -193,13 +211,28 @@ def render_dashboard(registros: list[dict]) -> None:
     c4.metric("✅ Normais", n_normal)
     c5.metric("📉 Score médio", f"{score_medio:.2f}")
 
-    fp_col, ia_col = st.columns(2)
+    fp_col, mask_col, ia_col = st.columns(3)
     fp_col.metric("🟫 Falso-positivo evitado (vocab. de teste)", fp)
-    ia_expandir = fp_col.expander("O que é esse número?", expanded=False)
-    ia_expandir.caption(
+    fp_expandir = fp_col.expander("O que é esse número?", expanded=False)
+    fp_expandir.caption(
         "Relatos que usam 'erro', 'bug' ou 'falha' como vocabulário normal de teste e "
         "foram classificados como NORMAL — prova de que o motor não dispara por palavra isolada."
     )
+    n_sens = sum(1 for r in registros if _sensiveis(r))
+    mask_col.metric("🔒 Credenciais/PII mascaradas", n_sens)
+    mask_exp = mask_col.expander("Por que mascaramos?", expanded=False)
+    tipos = guardrails_auditoria(registros)
+    if tipos:
+        linhas = [
+            f"- **{tipo}** ({n}×): {guardrails.MOTIVOS.get(tipo, 'dado sensível')}"
+            for tipo, n in tipos.most_common()
+        ]
+        mask_exp.markdown(
+            "Nenhum token/chave/e-mail/CPF vai para a IA, Jira, GitHub ou histórico:\n\n"
+            + "\n".join(linhas)
+        )
+    else:
+        mask_exp.caption("Nenhuma ocorrência ainda — os guardrails vêm bloqueando o vazamento desde o início.")
 
     # --- Filtro global por funcionalidade ---
     funcoes_globais = funcoes_afetadas(registros)

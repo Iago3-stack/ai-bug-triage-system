@@ -77,3 +77,28 @@ def test_nao_mascara_versao_com_numero():
 def test_detectar_telefone_e_cpf():
     assert guardrails.detectar("ligo do (11) 98765-4321") == ["telefone"]
     assert guardrails.detectar("cpf 123.456.789-00 cadastrado") == ["CPF"]
+
+
+# --- Auditoria: explicar 'por que mascaramos' (dashboard/aviso) ---
+def test_explicar_inclui_o_motivo():
+    texto = guardrails.explicar(guardrails.detectar("a@b.com"))
+    assert "e-mail" in texto
+    assert "dado pessoal (LGPD)" in texto
+
+
+def test_explicar_cobre_cpf_e_token():
+    texto = guardrails.explicar(["CPF", "token GitHub (clássico)"])
+    assert "documento pessoal" in texto
+    assert "repositórios" in texto
+
+
+def test_explicar_lista_vazia_tem_fallback():
+    assert guardrails.explicar([]) == "credencial/PII detectada"
+
+
+def test_mascarar_nao_afeta_explicacao():
+    sensiveis = guardrails.detectar("use o token ATATT3xFfGabc123 abc e o email a@b.com")
+    m = guardrails.mascarar("use o token ATATT3xFfGabc123 abc e o email a@b.com")
+    assert len(sensiveis) == 2
+    assert "token Atlassian" in guardrails.explicar(sensiveis)
+    assert "a@b.com" not in m

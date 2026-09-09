@@ -2,9 +2,14 @@
 # Aqui fixamos o tema NATIVO do Streamlit no light para ele nunca "vazar" escuro por cima
 # do nosso app (a preferência dark fica salva no navegador e, como o menu "⋮" está oculto,
 # o usuário não consegue desfazer). Isso não mostra radios no menu — o menu está oculto.
+# De volta à paleta VIVA (v2.3.0): verde WhatsApp (#25D366) + fundo/cinza-texto próprios.
 
 [theme]
 base = "light"
+primaryColor = "#25D366"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F4F6F8"
+textColor = "#1D1D1F"
 
 [browser]
 gatherUsageStats = false

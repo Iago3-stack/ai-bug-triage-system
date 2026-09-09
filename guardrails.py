@@ -21,6 +21,26 @@ _PADROES: dict[str, re.Pattern] = {
 
 MANCER_ADOR = "***"
 
+# Por que cada categoria de credencial/PII é mascarada (auditoria/dashboard).
+MOTIVOS: dict[str, str] = {
+    "token Atlassian": "senha de integração com o Jira",
+    "chave Gemini/Google (Shift)": "chave de API que daria acesso à sua conta Google",
+    "chave API Google": "chave de API — quem a tiver cobra na sua conta",
+    "token OpenAI": "chave de API — custo real por uso",
+    "token GitHub (clássico)": "acesso de escrita aos seus repositórios",
+    "token GitHub (fine-grained)": "acesso de escrita aos seus repositórios",
+    "e-mail": "dado pessoal (LGPD) — evita envio a LLMs/Jira/GitHub",
+    "senha (com números)": "credencial de acesso — nunca deve sair do app",
+    "telefone": "dado pessoal (LGPD) — identificação ou marketing indesejado",
+    "CPF": "documento pessoal — risco de fraude de identidade",
+}
+
+
+def explicar(sensiveis: list[str]) -> str:
+    """Texto curto de 'por que mascaramos' para cada tipo detectado."""
+    marcados = [m for m in sensiveis if m in MOTIVOS]
+    return ", ".join(f"{m} ({MOTIVOS[m]})" for m in marcados) or "credencial/PII detectada"
+
 
 def detectar(texto: str) -> list[str]:
     """Retorna a lista ordenada de credenciais/PII encontradas (sem duplicatas)."""
