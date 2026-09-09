@@ -90,6 +90,8 @@ st.markdown("""
     [data-testid="stExpander"]:has(.marca-diag) summary { color: #d97706 !important; font-weight: 700 !important; }
     [data-testid="stExpander"]:has(.marca-modelo) { border: 2px solid #f97316 !important; border-radius: 12px !important; background: rgba(249, 115, 22, 0.05) !important; }
     [data-testid="stExpander"]:has(.marca-modelo) summary { color: #f97316 !important; font-weight: 700 !important; }
+    [data-testid="stElementContainer"]:has(.marca-modelo-btn) + [data-testid="stElementContainer"] [data-testid="stButton"] button { background: #f97316 !important; color: #ffffff !important; }
+    [data-testid="stElementContainer"]:has(.marca-modelo-btn) + [data-testid="stElementContainer"] [data-testid="stButton"] button:hover { background: #ea580c !important; }
 
     /* Cores dos botões de ação — mesma tática :has() + marcador oculto */
     [data-testid="stElementContainer"]:has(.marca-executar) + [data-testid="stElementContainer"] [data-testid="stButton"] button { background: #059669 !important; color: #ffffff !important; }
@@ -212,6 +214,7 @@ with st.expander("➕ Adicionar modelo próprio (use sua API de qualquer provedo
         chave_custom = st.text_input(
             "API Key", type="password", key="cm_chave_openai",
             placeholder="sk-... (fica só na sessão, não é salva)")
+    st.markdown('<div class="marca-modelo-btn" style="display:none"></div>', unsafe_allow_html=True)
     if st.button("💾 Adicionar modelo", key="cm_add"):
         nome, modelo = nome_custom.strip(), modelo_custom.strip()
         base = base_url_custom.strip().rstrip("/")
