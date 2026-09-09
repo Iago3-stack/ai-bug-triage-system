@@ -42,9 +42,11 @@ _TEXTO_APOIE = "Apoie este projeto"
 
 
 def _svg_pix(tamanho: int = 16, cor: str = "#32bcad") -> str:
-    altura = max(10, round(tamanho * 82 / 98))
+    # viewBox real do símbolo (paths nas coordenadas originais do logo oficial):
+    # bbox medido = x 535.0..613.0, y 27.0..104.0 (78x77) -> margem de 4 unidades
+    altura = max(10, round(tamanho * 85 / 86))
     return (
-        f'<svg width="{tamanho}" height="{altura}" viewBox="545 25 98 82" '
+        f'<svg width="{tamanho}" height="{altura}" viewBox="531 23 86 85" '
         f'fill="{cor}" role="img" aria-label="Pix" style="display:inline-block">'
         f"{_PIX_SIMBOLO_PATHS}</svg>"
     )
