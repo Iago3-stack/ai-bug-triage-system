@@ -642,14 +642,16 @@ elif pix.configurado():
         _chave_pix = pix.chave()
         _bloco_copia = (
             f"""
-    <button id="btn-copiar-pix" onclick="copiarChave()"
-            style="display:inline-flex;align-items:center;gap:8px;background:#25D366;color:#0b1e14;font-weight:700;font-size:14px;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.25);margin-top:12px">
-      📋 copiar chave pix
-    </button>
+    <div style="text-align:center;margin-top:12px">
+      <button id="btn-copiar-pix" onclick="copiarChave()"
+              style="display:inline-flex;align-items:center;gap:8px;background:#25D366;color:#0b1e14;font-weight:700;font-size:14px;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.25)">
+        📋 copiar chave pix
+      </button>
+    </div>
     <div style="color:#94a3b8;font-size:12px;margin-top:8px">Escaneie o QR Code com a câmera do seu banco — ou use o botão para copiar a chave acima.</div>
     <script>
     function copiarChave() {{
-      navigator.clipboard.writeText("{_chave_pix}").then(function() {{
+      navigator.clipboard.writeText("{pix.chave_copia()}").then(function() {{
         var b = document.getElementById('btn-copiar-pix');
         b.textContent = '✓ chave copiada!';
         setTimeout(function() {{ b.textContent = '📋 copiar chave pix'; }}, 2200);

@@ -64,6 +64,12 @@ def test_chave_exposta_para_copiar(monkeypatch):
     assert pix.chave() == "98985914235"
 
 
+def test_chave_copia_sem_prefixo_55(monkeypatch):
+    monkeypatch.setattr(pix, "_ler_env", lambda nome: "")
+    monkeypatch.setenv("PIX_KEY", "+5598985914235")
+    assert pix.chave_copia() == "98985914235"
+
+
 def test_qrcode_png_base64_gera_data_uri(monkeypatch):
     monkeypatch.setenv("PIX_KEY", "11999999999")
     payload = pix.payload_configurado()

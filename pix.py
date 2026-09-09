@@ -126,6 +126,11 @@ def chave() -> str:
     return _ler("PIX_KEY")
 
 
+def chave_copia() -> str:
+    """Chave para COPIAR no app do banco: sem o prefixo +55 (o banco adiciona sozinho)."""
+    return chave().removeprefix("+55")
+
+
 def payload_configurado() -> str:
     """Retorna o copia-e-cola Pix se configurado; string vazia caso contrário.
 
