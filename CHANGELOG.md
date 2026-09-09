@@ -16,6 +16,10 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
   - **Comparativo IA vs. motor turbinado** — taxa de divergência (%) + data table com as últimas 10 divergências (Gravidade local vs. IA vs. prioridade final).
   - **Coluna IA com o provedor real** — a tabela de últimas triagens mostra `Gemini`/`Groq`/`sim` (o snapshot agora persiste `provedor_ia` além de `modelo_ia`).
 - **📋 Botão "copiar chave pix" dentro do card de doação** — abaixo do QR Code, em linha própria, com tramitação via iframe (`components.html`) para o JavaScript funcionar. O **QR code mantém a chave com `+55`** (payload EMV/CRC válido) e o **botão copia sem o `+55`** (`pix.chave_copia()`), porque os apps de banco reconhecem o número e completam o DDI sozinhos — padrão de mercado.
+- **Símbolo oficial do Pix no botão de copiar** — o 📋 deu lugar ao losango teal do Banco Central (SVG inline, `_svg_pix()`), que agora aparece nas duas ações: "Pagar com Pix via link" e "copiar chave pix" (a troca do rótulo pós-cópia usa um `span`, preservando o ícone). O título do card também ganhou **🤝 na outra ponta** — "`[símbolo Pix]` Apoie este projeto `🤝`".
+
+### Corrigido
+- **viewBox do símbolo Pix** — bbox real medido nos paths (x 535..613, y 27..104, 78×77 com margem de 4): o losango saía cortado à esquerda e pequeno; agora preenche a área do ícone com margem uniforme.
 
 ## [v2.3.0] - 2026-09-08
 
