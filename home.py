@@ -55,10 +55,10 @@ def _svg_pix(tamanho: int = 16, cor: str = "#32bcad") -> str:
 # Configuração e Estilo
 st.set_page_config(page_title="Iago Nunes | IA & QA Portfolio", page_icon="🤖", layout="wide")
 
-# Esconde rodapé "Made with Streamlit" e o menu principal (visual mais limpo)
+# Esconde rodapé "Made with Streamlit" e o botão Deploy. O menu principal "⋮" fica
+# visível pois ele hospeda a troca de tema (Claro/Escuro/Sistema) disponibilizada nativamente.
 st.markdown("""
 <style>
-    #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     .stDeployButton {display: none;}
 

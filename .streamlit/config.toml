@@ -1,9 +1,5 @@
-[theme]
-# Identidade visual: verde WhatsApp (#25D366) para combinar com o CTA da sidebar
-base = "light"
-primaryColor = "#25D366"
-secondaryBackgroundColor = "#F4F6F8"
-textColor = "#1D1D1F"
+# Sem bloco [theme]: um tema custom único trava/oculta o seletor Claro/Escuro/Sistema
+# no menu "⋮" do Streamlit (a opção só aparece quando há 2+ temas disponíveis).
 
 [browser]
 gatherUsageStats = false

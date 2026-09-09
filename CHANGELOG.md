@@ -6,6 +6,9 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 
 ## [Não lançado]
 
+### Corrigido
+- **🌓 Tema Claro/Escuro/Sistema do Streamlit restaurado** — o menu principal "⋮" voltou a ficar visível (`#MainMenu` deixou de ser ocultado no CSS) e o bloco `[theme]` custom do `.streamlit/config.toml` foi removido. No Streamlit 1.62, um tema custom único **remove por completo** os radios de tema do menu (a seção só é renderizada com 2+ temas disponíveis); sem o `[theme]`, o seletor **Use system setting / Light / Dark** reaparece no "⋮" e funciona (validado: troca de claro para escuro em tempo real). Nota: sem `[theme]`, os widgets nativos voltam à paleta padrão do Streamlit (o restante do app segue com cores próprias via CSS customizado).
+
 ### Adicionado
 - **⚖️ Link "Licença MIT" no rodapé** — o item deixou de ser texto estático e passou a abrir o arquivo `LICENSE` do repositório (`/blob/main/LICENSE`), mantendo o mesmo estilo dos demais links do rodapé (Repositório, Documentação, Perfil).
 - **✨ Símbolos das marcas de IA** — o seletor de provedor virou **cards simples** com um `st.button` nativo por opção e emoji dentro do card: **✨ Gemini**, **✴️ Groq**, 🔄 Automático e ⭐ modelos próprios. O **título "Análise por IA"** do resultado segue mostrando o **símbolo oficial** do Google Gemini (sparkle da gstatic) e o logotipo "groq" (Wikimedia Commons, PD-textlogo) de quem respondeu, e o **hero** do site mantém a pill com o ícone original. Helper `_svg_gemini()`/`_svg_groq()` reutilizáveis.
