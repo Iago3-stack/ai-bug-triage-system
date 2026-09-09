@@ -39,8 +39,8 @@ O sistema trabalha com **dois motores de análise** que se **reconciliam** pela 
 |---|---|---|
 | `home.py` | Interface web (Streamlit): cabeçalho, ferramenta, export, histórico | streamlit |
 | `triagem.py` | Motor NLP **offline determinístico**: léxico PT + negações | **stdlib apenas** |
-| `ia.py` | Análise por IA (Gemini): causa raiz, categoria, passos — **com fallback** | google-genai |
-| `rag.py` | RAG leve no histórico: **retrieval local** (similaridade Jaccard, offline) + geração via `PROMPT_RAG` que responde "já aconteceu? como resolvemos?" | google-genai + `ia.py` |
+| `ia.py` | Análise por IA: causa raiz, categoria, passos — **seletor de provedor** (Automático → Gemini com fallback Groq `gpt-oss-120b`, ou forçado), expondo quem respondeu (`ULTIMO_PROVEDOR/MODELO`) | google-genai + groq |
+| `rag.py` | RAG leve no histórico: **retrieval local** (similaridade Jaccard, offline) + geração via `PROMPT_RAG` que responde "já aconteceu? como resolvemos?" — aprende com a resolução registrada | google-genai + `ia.py` |
 | `jira_client.py` | Exportação Jira (REST v3): cria issues tipo `Tarefa`, prioridade mapeada | **stdlib apenas** |
 | `persistencia.py` | Histórico persistido em `data/historico.jsonl` (JSONL, fuso Brasil) — **facade**: dispatches para o Supabase quando configurado, senão JSONL | **stdlib** (+ nuvem quando `nuvem_supabase` configura) |
 | `nuvem_supabase.py` | Backend de persistência na nuvem via Supabase REST (Postgres): insert/select/update + vínculo da issue do Jira | requests |
@@ -49,8 +49,12 @@ O sistema trabalha com **dois motores de análise** que se **reconciliam** pela 
 | `test_jira_client.py` | Testes do cliente Jira (15) | pytest |
 | `test_persistencia.py` | Testes da persistência (8): fuso, append, filtro por data, vínculo Jira | pytest |
 | `test_guardrails.py` | Testes dos guardrails (14): detecção/máscara de PII e falso-positivo | pytest |
-| `dashboard.py` | Dashboard de QA: KPIs, severidade, volume/dia, funcionalidades e IA vs. léxico (leitura do JSONL) | streamlit |
-| `test_rag.py` | Testes do RAG (10): tokenização, Jaccard, recuperação top-k, contexto e orquestração sem chave | pytest |
+| `dashboard.py` | Dashboard de QA completo: KPIs + saúde da suíte (0–10), gauge de críticas, filtro por funcionalidade, top causas raiz (IA), score médio/dia, taxa + lista de divergências IA vs. léxico, provedor real na tabela (leitura do JSONL/cloud) | streamlit |
+| `test_rag.py` | Testes do RAG (13): tokenização, Jaccard, recuperação top-k, contexto e orquestração sem chave | pytest |
+| `test_dashboard.py` | Testes do dashboard (11): tabela recente (com/sem Jira), funcionalidades, falso-positivo, ordenação, provedor na coluna IA, taxa de divergência, top causas e saúde da suíte | pytest |
+| `test_nuvem_supabase.py` | Testes do backend em nuvem (14): config, conversão linha↔doc, HTTP mockado, dispatch do facade e failover | pytest |
+| `test_pix.py` | Testes do Pix (10): payload EMV, CRC-CCITT (`29B1`), precedência PIX_COPIA/link, chave e `chave_copia()` sem `+55` | pytest |
+| `test_ia.py` | Testes da IA (10): dispatch de provedor (auto/Gemini/Groq), JSON esperado, fallback e orquestração RAG | pytest |
 | `.streamlit/config.toml` | Tema e configurações visuais | streamlit |
 
 ## 3. Decisões de design

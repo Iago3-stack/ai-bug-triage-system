@@ -4,6 +4,19 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [Não lançado]
+
+### Adicionado
+- **📈 Dashboard de QA completo** — versão super completa (113 testes no total):
+  - **🛡️ Card "Saúde da suíte" (0–10)** no topo — combina taxa de normais, score médio, penaliza divergência IA vs. motor e bonifica uso de IA e resoluções registradas (`saude_suite()`).
+  - **Gauge de % de CRÍTICAS/ALTAS** — barra de progresso logo abaixo dos cards.
+  - **Filtro global por funcionalidade** — selectbox filtra severidade, volume, score médio e últimas triagens por uma funcionalidade (login, pagamento, etc.).
+  - **Evolução do score médio por dia** — nova série temporal ao lado do volume.
+  - **Top causas raiz via IA** — agrupadas por similaridade de texto, com barra horizontal.
+  - **Comparativo IA vs. motor turbinado** — taxa de divergência (%) + data table com as últimas 10 divergências (Gravidade local vs. IA vs. prioridade final).
+  - **Coluna IA com o provedor real** — a tabela de últimas triagens mostra `Gemini`/`Groq`/`sim` (o snapshot agora persiste `provedor_ia` além de `modelo_ia`).
+- **📋 Botão "copiar chave pix" dentro do card de doação** — abaixo do QR Code, em linha própria, com tramitação via iframe (`components.html`) para o JavaScript funcionar. O **QR code mantém a chave com `+55`** (payload EMV/CRC válido) e o **botão copia sem o `+55`** (`pix.chave_copia()`), porque os apps de banco reconhecem o número e completam o DDI sozinhos — padrão de mercado.
+
 ## [v2.3.0] - 2026-09-08
 
 ### Adicionado
