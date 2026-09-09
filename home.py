@@ -686,3 +686,8 @@ st.markdown(f"""
   </div>
 </div>
 """, unsafe_allow_html=True)
+
+# Copiar a chave Pix com um toque (botão nativo de copiar do Streamlit) — útil no celular.
+if not _link_pix and pix.chave():
+    st.caption("💾 Prefere copiar a chave? Toque no número e use o botão de copiar:")
+    st.code(pix.chave(), language="text")

@@ -121,6 +121,11 @@ def _copia() -> str:
     return _ler("PIX_COPIA")
 
 
+def chave() -> str:
+    """Retorna a chave Pix configurada (PIX_KEY, ex.: número do celular)."""
+    return _ler("PIX_KEY")
+
+
 def payload_configurado() -> str:
     """Retorna o copia-e-cola Pix se configurado; string vazia caso contrário.
 
