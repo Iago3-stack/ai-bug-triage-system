@@ -6,6 +6,9 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 
 ## [Não lançado]
 
+### Adicionado
+- **🌙 Tema próprio Claro/Escuro (v2.4.0)** — seletor **☀️ Claro / 🌙 Escuro** no topo do sidebar, com paleta **nossa** repintando todo o app por `body:has([data-st-tema="escuro"])`: cabeçalho, sidebar, cards, campos, expanders, métricas, blocos de código, badges e hcards do histórico oscurecem de verdade (sem depender do tema nativo, que só cobre a interface do Streamlit e destorcía textos do sidebar). O menu "⋮" nativo volta a ficar oculto para não misturar temas. Textos/cards com cor fixa inline ganharam classes (`.campo-tit`, `.prio-final`, `.hero-sub`, `.hcard`, `h1.nome-site`) para serem sobrescritos no escuro. `st.session_state["tema"]` (padrão: claro).
+
 ### Corrigido
 - **🌓 Tema Claro/Escuro/Sistema do Streamlit restaurado** — o menu principal "⋮" voltou a ficar visível (`#MainMenu` deixou de ser ocultado no CSS) e o bloco `[theme]` custom do `.streamlit/config.toml` foi removido. No Streamlit 1.62, um tema custom único **remove por completo** os radios de tema do menu (a seção só é renderizada com 2+ temas disponíveis); sem o `[theme]`, o seletor **Use system setting / Light / Dark** reaparece no "⋮" e funciona (validado: troca de claro para escuro em tempo real). Nota: sem `[theme]`, os widgets nativos voltam à paleta padrão do Streamlit (o restante do app segue com cores próprias via CSS customizado).
 

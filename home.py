@@ -14,7 +14,7 @@ import guardrails
 import dashboard as dashboard_qa
 import pix
 
-VERSAO = "v2.3.0"
+VERSAO = "v2.4.0"
 
 # Símbolo oficial do Pix (Banco Central) — PD-textlogo via Wikimedia Commons.
 # Só os 3 paths verdes da marca (o "losango"), sem a tipografia do logo.
@@ -55,10 +55,12 @@ def _svg_pix(tamanho: int = 16, cor: str = "#32bcad") -> str:
 # Configuração e Estilo
 st.set_page_config(page_title="Iago Nunes | IA & QA Portfolio", page_icon="🤖", layout="wide")
 
-# Esconde rodapé "Made with Streamlit" e o botão Deploy. O menu principal "⋮" fica
-# visível pois ele hospeda a troca de tema (Claro/Escuro/Sistema) disponibilizada nativamente.
+# Esconde rodapé "Made with Streamlit", menu principal "⋮" e botão Deploy. O tema
+# claro/escuro é controlado por um seletor PRÓPRIO no sidebar (paleta via CSS própria);
+# ocultamos o menu nativo p/ não misturar o tema do Streamlit com o tema do app.
 st.markdown("""
 <style>
+    #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     .stDeployButton {display: none;}
 
@@ -105,6 +107,103 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# --- TEMA PRÓPRIO (claro/escuro) ----------------------------------------------
+# O tema nativo do Streamlit só cobre a interface dele; o resto do app usa cores
+# fixas no CSS. O seletor abaixo troca uma paleta NOSSA via marcador no DOM +
+# regras scoped em `body:has([data-st-tema="escuro"])` (a paleta clara fica intacta).
+tema = st.session_state.get("tema", "claro")
+if tema not in ("claro", "escuro"):
+    tema, st.session_state["tema"] = "claro", "claro"
+
+_TEMA_CSS = """
+<style>
+/* Botões do seletor de tema (topo do sidebar) */
+[data-testid="stSidebar"] [data-testid="stColumn"]:has(.marca-tema) [data-testid="stButton"] button {
+  height:40px; min-height:40px; border-radius:9px; font-weight:600; width:100%;
+  background:#eef2f7 !important; color:#334155 !important; border:1.5px solid #cbd5e1 !important;
+}
+[data-testid="stSidebar"] [data-testid="stColumn"]:has(.marca-tema) [data-testid="stButton"] button:hover { background:#e2e8f0 !important; }
+[data-testid="stSidebar"] [data-testid="stColumn"]:has(.tema-ativo) [data-testid="stButton"] button {
+  outline:2.5px solid #0f172a !important; outline-offset:2px !important;
+}
+
+/* -------- MODO ESCURO: paleta própria do app -------- */
+body:has([data-st-tema="escuro"]) { color-scheme: dark; }
+body:has([data-st-tema="escuro"]) [data-testid="stAppViewContainer"] { background: linear-gradient(180deg, #0d1410 0%, #0f1115 420px) !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stHeader"] { background:#0a0c0f !important; border-bottom:1px solid rgba(255,255,255,.07) !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stMainMenuButton"] { color:#e5e7eb !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stMainMenuPopover"] { background:#161b22 !important; }
+
+/* Sidebar */
+body:has([data-st-tema="escuro"]) [data-testid="stSidebar"],
+body:has([data-st-tema="escuro"]) .stSidebar { background:#0f1217 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stSidebarContent"],
+body:has([data-st-tema="escuro"]) [data-testid="stSidebarUserContent"] { background:transparent !important; color:#d7dbe0 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] { color:#d7dbe0 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] h1, body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] h2,
+body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] h3, body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] h4,
+body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] h5, body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] h6 { color:#f1f5f9 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] [data-testid="stCaptionContainer"],
+body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] caption { color:#9aa3af !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] [data-testid="stExpander"] { border-color:#2b3443 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] [data-testid="stExpander"] summary { color:#d7dbe0 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] input { background:#151a21 !important; color:#e5e7eb !important; border:1px solid #2c3542 !important; }
+
+/* Texto principal */
+body:has([data-st-tema="escuro"]) [data-testid="stMain"] [data-testid="stMarkdownContainer"] { color:#d7dbe0 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stMain"] h1, body:has([data-st-tema="escuro"]) [data-testid="stMain"] h2,
+body:has([data-st-tema="escuro"]) [data-testid="stMain"] h3, body:has([data-st-tema="escuro"]) [data-testid="stMain"] h4,
+body:has([data-st-tema="escuro"]) [data-testid="stMain"] h5, body:has([data-st-tema="escuro"]) [data-testid="stMain"] h6 { color:#f3f4f6 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stCaptionContainer"] { color:#9aa3af !important; }
+
+/* Campos e controles */
+body:has([data-st-tema="escuro"]) [data-testid="stTextArea"] textarea,
+body:has([data-st-tema="escuro"]) [data-testid="stTextInput"] input,
+body:has([data-st-tema="escuro"]) [data-testid="stNumberInput"] input { background:#151a21 !important; color:#e5e7eb !important; border:1px solid #2c3542 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stTextArea"] textarea::placeholder,
+body:has([data-st-tema="escuro"]) [data-testid="stTextInput"] input::placeholder { color:#64748b !important; }
+/* textarea do formulário (empata a especificidade da regra clara do .marca-form) */
+body:has([data-st-tema="escuro"]) [data-testid="stElementContainer"]:has(.marca-form) + [data-testid="stElementContainer"] [data-testid="stTextArea"] textarea { background:#151a21 !important; color:#e5e7eb !important; border:1.5px solid #25D366 !important; box-shadow:none !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stCheckbox"] label,
+body:has([data-st-tema="escuro"]) [data-testid="stCheckbox"] label p,
+body:has([data-st-tema="escuro"]) [data-testid="stCheckbox"] label span,
+body:has([data-st-tema="escuro"]) [data-testid="stRadio"] label,
+body:has([data-st-tema="escuro"]) [data-testid="stRadio"] label p,
+body:has([data-st-tema="escuro"]) [data-testid="stRadioOption"] label p { color:#d7dbe0 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stSelectbox"] [role="combobox"] { background:#151a21 !important; color:#e5e7eb !important; }
+
+/* Expanda o rest (unmarked) */
+body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:not(:has(.marca-resolucao,.marca-sessao,.marca-historico,.marca-dashboard,.marca-diag,.marca-modelo,.marca-jira)) { background:transparent !important; border:1px solid #2b3443 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:not(:has(.marca-resolucao,.marca-sessao,.marca-historico,.marca-dashboard,.marca-diag,.marca-modelo,.marca-jira)) summary { color:#d7dbe0 !important; }
+
+/* Métricas e código */
+body:has([data-st-tema="escuro"]) [data-testid="stMetricValue"] { color:#f3f4f6 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stMetricLabel"] { color:#9aa3af !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stCodeBlock"] { background:#0d1117 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stCodeBlock"] pre,
+body:has([data-st-tema="escuro"]) [data-testid="stCodeBlock"] code { background:transparent !important; color:#c9d1d9 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stDataFrame"],
+body:has([data-st-tema="escuro"]) [data-testid="stTable"] { color-scheme: dark; }
+
+/* Textos/cards com cor fixa inline que ficariam escuros demais no fundo escuro */
+body:has([data-st-tema="escuro"]) h1.nome-site { color:#ffffff !important; }
+body:has([data-st-tema="escuro"]) .campo-tit { color:#e2e8f0 !important; }
+body:has([data-st-tema="escuro"]) .prio-final { color:#f3f4f6 !important; }
+body:has([data-st-tema="escuro"]) .hero-sub { color:#cbd5e1 !important; }
+body:has([data-st-tema="escuro"]) .hcard { background:#0f1720 !important; border:1px solid #14532d !important; }
+body:has([data-st-tema="escuro"]) .hcard-t { color:#6ee7b7 !important; }
+body:has([data-st-tema="escuro"]) .hcard-s { color:#94a3b8 !important; }
+
+/* Card custom do provedor (fundo laranja claro) e outlines do que está ativo */
+body:has([data-st-tema="escuro"]) [data-testid="stColumn"]:has(.marca-prov-custom) [data-testid="stButton"] button { background:#2b1608 !important; color:#fdba74 !important; border:2px solid #7c2d12 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stColumn"]:has(.prov-provid-sel) [data-testid="stButton"] button { outline-color:#f8fafc !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] [data-testid="stColumn"]:has(.tema-ativo) [data-testid="stButton"] button { outline:2.5px solid #7dd3fc !important; }
+</style>
+"""
+st.markdown(_TEMA_CSS, unsafe_allow_html=True)
+if tema == "escuro":
+    st.markdown('<div data-st-tema="escuro" style="display:none"></div>', unsafe_allow_html=True)
+
 # Seletor de provedor em cards simples: um st.button nativo por opção (emoji + rótulo dentro do card).
 _PROVID_CSS = """
 <style>
@@ -125,7 +224,7 @@ st.markdown(_PROVID_CSS, unsafe_allow_html=True)
 # --- CABEÇALHO ---
 col_foto, col_info = st.columns([1, 2])
 with col_info:
-    st.markdown('<h1 style="font-weight:700; line-height:1.2; letter-spacing:-0.02em; padding:0; margin:0; color:black">Iago Nunes<span style="font-size:0.5em; vertical-align:super; font-weight:400; color:#6b7280; margin-left:2px">©</span></h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="nome-site" style="font-weight:700; line-height:1.2; letter-spacing:-0.02em; padding:0; margin:0; color:black">Iago Nunes<span style="font-size:0.5em; vertical-align:super; font-weight:400; color:#6b7280; margin-left:2px">©</span></h1>', unsafe_allow_html=True)
     hero_animado.linha()
     st.markdown('<img src="https://capsule-render.vercel.app/api?type=soft&color=gradient&customColorList=20,24,25&height=56&section=header&text=Bem-vindo%20ao%20meu%20site&fontSize=22&fontColor=fff&fontAlignY=62" width="100%" />', unsafe_allow_html=True)
     hero_animado.typing_frases()
@@ -203,7 +302,7 @@ provedor_ia = st.session_state.get("provedor_svg", _opcoes_provedor[0])
 if provedor_ia not in _opcoes_provedor:
     provedor_ia = _opcoes_provedor[0]
 
-st.markdown('<div style="font-weight:600;color:#0f172a;margin-bottom:4px">🤖️ Provedor de IA:</div>', unsafe_allow_html=True)
+st.markdown('<div class="campo-tit" style="font-weight:600;color:#0f172a;margin-bottom:4px">🤖️ Provedor de IA:</div>', unsafe_allow_html=True)
 _cols = st.columns(len(_opcoes_provedor))
 for _i, (_col, _op) in enumerate(zip(_cols, _opcoes_provedor)):
     _classe = _provid_classe.get(_op, "custom")
@@ -531,7 +630,7 @@ if r:
         st.markdown(f"""
 <div style="display:flex;align-items:center;gap:12px;margin-top:6px">
   <span class="badge-prioridade" style="background:{cor_badge}">🎯 {prioridade_final}</span>
-  <span style="font-weight:800;font-size:1.3em;color:#111827">Prioridade Final</span>
+  <span class="prio-final" style="font-weight:800;font-size:1.3em;color:#111827">Prioridade Final</span>
 </div>
 """, unsafe_allow_html=True)
         if divergente:
@@ -675,10 +774,10 @@ if registros_totais:
             for r in do_dia:
                 c_g = _cor_gravidade(r["gravidade"])
                 cards.append(f"""
-<div style="background:#f0fdf4;border:1px solid #a7f3d0;border-radius:10px;padding:8px 12px;min-width:170px">
-  <div style="font-weight:700;font-size:13px;color:#064e3b">🕐 {r['data_hora'][11:19]}</div>
+<div class="hcard" style="background:#f0fdf4;border:1px solid #a7f3d0;border-radius:10px;padding:8px 12px;min-width:170px">
+  <div class="hcard-t" style="font-weight:700;font-size:13px;color:#064e3b">🕐 {r['data_hora'][11:19]}</div>
   <div style="font-size:13px;font-weight:700;color:{c_g};margin-top:2px">{r['gravidade']} · score {r['score']:.2f}</div>
-  <div style="font-size:12px;color:#475569;margin-top:2px">IA {'✅' if r.get('usou_ia') else '—'} · Jira {r.get('jira_key') or '—'} · 🔧 {'sim' if r.get('resolucao') else '—'}</div>
+  <div class="hcard-s" style="font-size:12px;color:#475569;margin-top:2px">IA {'✅' if r.get('usou_ia') else '—'} · Jira {r.get('jira_key') or '—'} · 🔧 {'sim' if r.get('resolucao') else '—'}</div>
 </div>""")
             st.markdown(
                 f'<div style="display:flex;gap:10px;flex-wrap:wrap;margin:2px 0 10px">{"".join(cards)}</div>',
@@ -724,6 +823,20 @@ if registros_totais:
     with st.expander("📈 Dashboard de QA — visão geral do histórico", key="ex_dashboard"):
         st.markdown('<div class="marca-dashboard" style="display:none"></div>', unsafe_allow_html=True)
         dashboard_qa.render_dashboard(registros_totais)
+# --- SELETOR DE TEMA (topo do sidebar) ---
+st.sidebar.markdown('<div class="campo-tit" style="font-weight:600;color:#0f172a;margin-bottom:2px">🎨 Tema</div>', unsafe_allow_html=True)
+_tcols = st.sidebar.columns(2)
+for _tc, (_tv, _tl) in zip(_tcols, (("claro", "☀️ Claro"), ("escuro", "🌙 Escuro"))):
+    _ativo = tema == _tv
+    with _tc:
+        st.sidebar.markdown(
+            f'<div class="marca-tema marca-tema-{_tv}{" tema-ativo" if _ativo else ""}" style="display:none"></div>',
+            unsafe_allow_html=True,
+        )
+        if st.sidebar.button(_tl, key=f"tema_{_tv}", width="stretch"):
+            st.session_state["tema"] = _tv
+            st.rerun()
+
 # --- CONFIGURAÇÃO DO JIRA (sidebar) ---
 if not jira_client.configurado():
     with st.sidebar.expander("🔑 Jira — configurar exportação"):

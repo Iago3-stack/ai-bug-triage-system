@@ -104,7 +104,7 @@ def render():
   <div style="font-size:34px">🤖⚡</div>
   <div class="hero-grad" style="font-size:23px">QA Automation + IA</div>
   <div style="margin-top:13px"><span class="hero-dot"></span>&nbsp;<b>Disponível para vagas</b></div>
-  <div style="font-size:14px;color:#444;margin-top:4px">Remote Global · São Luís, MA</div>
+  <div class="hero-sub" style="font-size:14px;color:#444;margin-top:4px">Remote Global · São Luís, MA</div>
   <div style="margin-top:14px">
     <span class="hero-pill" style="background:rgba(37,211,102,.16);color:#1e8f4b">💡 NLP PT</span>
     {pill_gemini}
