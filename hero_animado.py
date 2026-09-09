@@ -203,12 +203,8 @@ TYPING_CSS = """
   100% { max-width: 0; }
 }
 @media (max-width: 480px) {
-  /* no celular o nowrap + max-width corta "meus projetos"; mostra tudo abaixo */
-  .type-line {
-    white-space: normal;
-    max-width: none;
-    animation: none;
-  }
+  /* frases curtas agora cabem no celular: mantém a digitação animada */
+  .type-line { white-space: nowrap; max-width: none; }
   .type-stack { min-height: 0; }
 }
 </style>
