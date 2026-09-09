@@ -14,7 +14,7 @@ import guardrails
 import dashboard as dashboard_qa
 import pix
 
-VERSAO = "v2.4.0"
+VERSAO = "v2.4.1"
 
 # Símbolo oficial do Pix (Banco Central) — PD-textlogo via Wikimedia Commons.
 # Só os 3 paths verdes da marca (o "losango"), sem a tipografia do logo.
@@ -111,8 +111,13 @@ st.markdown("""
 # O tema nativo do Streamlit só cobre a interface dele; o resto do app usa cores
 # fixas no CSS. O seletor abaixo troca uma paleta NOSSA via marcador no DOM +
 # regras scoped em `body:has([data-st-tema="escuro"])` (a paleta clara fica intacta).
+# A escolha vai para a URL (?tema=escuro) para sobreviver a reload/reconexão
+# (o Streamlit Cloud perde o session_state quando o WebSocket cai).
+_tema_url = st.query_params.get("tema")
 tema = st.session_state.get("tema", "claro")
-if tema not in ("claro", "escuro"):
+if _tema_url in ("claro", "escuro"):
+    tema, st.session_state["tema"] = _tema_url, _tema_url
+elif tema not in ("claro", "escuro"):
     tema, st.session_state["tema"] = "claro", "claro"
 
 _TEMA_CSS = """
@@ -203,6 +208,29 @@ body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] [data-testid="stColu
 st.markdown(_TEMA_CSS, unsafe_allow_html=True)
 if tema == "escuro":
     st.markdown('<div data-st-tema="escuro" style="display:none"></div>', unsafe_allow_html=True)
+# Bootstrap no CLIENTE: no Streamlit o `st.query_params` do primeiro run às vezes
+# chega vazio (race), então o Python não vê o `?tema=...` da URL. Este iframe roda
+# JS na página (mesmo truque do botão pix) e sincroniza o marcador direto da URL —
+# determinístico; cobre reload/reconexão/sessão nova sem perder o tema escolhido.
+st.components.v1.html(
+    """<script>
+    (() => {
+      const T = '[data-st-tema="escuro"]';
+      const sync = () => {
+        const p = parent || window, d = p.document;
+        const tema = new URL(p.location.href).searchParams.get('tema');
+        if (tema === 'escuro' && !d.querySelector(T)) {
+          const m = d.createElement('div'); m.setAttribute('data-st-tema', 'escuro'); d.body.appendChild(m);
+        } else if (tema !== 'escuro') {
+          d.querySelectorAll(T).forEach((n) => n.remove());
+        }
+        setTimeout(sync, 600);
+      };
+      sync();
+    })();
+    </script>""",
+    height=0,
+)
 
 # Seletor de provedor em cards simples: um st.button nativo por opção (emoji + rótulo dentro do card).
 _PROVID_CSS = """
@@ -835,6 +863,7 @@ for _tc, (_tv, _tl) in zip(_tcols, (("claro", "☀️ Claro"), ("escuro", "🌙 
         )
         if st.sidebar.button(_tl, key=f"tema_{_tv}", width="stretch"):
             st.session_state["tema"] = _tv
+            st.query_params["tema"] = _tv
             st.rerun()
 
 # --- CONFIGURAÇÃO DO JIRA (sidebar) ---
