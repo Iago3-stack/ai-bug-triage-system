@@ -105,24 +105,23 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Seletor de provedor: cards com os SÍMBOLOS OFICIAIS das marcas (SVG inline, como o Pix)
-# + botão real transparente por cima (mantém o clique e a acessibilidade).
+# Seletor de provedor: card = sub-coluna com SÍMBOLO OFICIAL (SVG inline, como o Pix) À ESQUERDA
+# + `st.button` NATIVO ao lado (fluxo normal, sem sobreposição → clique e estado 100% garantidos).
+# O "✓" do selecionado é prefixo do próprio rótulo do botão.
 _PROVID_CSS = """
 <style>
-    [data-testid="stColumn"]:has(.prov-card) { position: relative; }
-    .prov-card { display:flex; align-items:center; gap:8px; height:54px; padding:0 12px; border-radius:12px; font-weight:700; font-size:15px; overflow:hidden; width:100%; box-sizing:border-box; }
-    .prov-card .prov-rotulo { line-height:1.15; }
-    .prov-card .prov-check { margin-left:auto; color:#059669; font-weight:800; opacity:0; transition:opacity .15s ease; }
-    .prov-card.prov-sel .prov-check { opacity:1; }
-    .prov-card.prov-auto { background:#334155 !important; color:#ffffff !important; border:1px solid #1e293b; }
-    .prov-card.prov-gemini { background:#ffffff !important; color:#111827 !important; border:2px solid #c7d2fe; }
-    .prov-card.prov-groq { background:#ffffff !important; color:#111827 !important; border:2px solid #fecaca; }
-    .prov-card.prov-custom { background:#fff7ed !important; color:#9a3412 !important; border:2px solid #fdba74; }
-    .prov-card svg { flex:0 0 auto; vertical-align:middle; }
-    .prov-card .prov-icone-txt { font-size:15px; line-height:1; }
-    [data-testid="stColumn"]:has(.prov-card) [data-testid="stButton"] { position:absolute; top:0; left:0; right:0; height:54px; z-index:5; }
-    [data-testid="stColumn"]:has(.prov-card) [data-testid="stButton"] button { width:100% !important; height:54px !important; opacity:0; border:none !important; background:transparent !important; cursor:pointer; }
-    [data-testid="stColumn"]:has([data-testid="stButton"]:hover) .prov-card { box-shadow: 0 4px 12px rgba(15,23,42,.15); }
+    .prov-icon-inner { display:flex; align-items:center; height:54px; box-sizing:border-box; padding:0 0 0 18px; }
+    .prov-icon-inner svg { display:block; flex:0 0 auto; }
+
+    [data-testid="stColumn"]:has(.prov-icone-auto) [data-testid="stButton"] button { background:#334155 !important; color:#ffffff !important; border:1px solid #1e293b !important; font-weight:600 !important; height:54px !important; min-height:54px !important; border-radius:12px !important; }
+    [data-testid="stColumn"]:has(.prov-icone-auto) [data-testid="stButton"] button:hover { background:#24303f !important; }
+    [data-testid="stColumn"]:has(.prov-icone-gemini) [data-testid="stButton"] button { background:#ffffff !important; color:#111827 !important; border:2px solid #c7d2fe !important; font-weight:700 !important; height:54px !important; min-height:54px !important; border-radius:12px !important; }
+    [data-testid="stColumn"]:has(.prov-icone-gemini) [data-testid="stButton"] button:hover { border-color:#4f46e5 !important; box-shadow:0 0 0 3px rgba(79,70,229,.15) !important; }
+    [data-testid="stColumn"]:has(.prov-icone-groq) [data-testid="stButton"] button { background:#ffffff !important; color:#111827 !important; border:2px solid #fecaca !important; font-weight:700 !important; height:54px !important; min-height:54px !important; border-radius:12px !important; }
+    [data-testid="stColumn"]:has(.prov-icone-groq) [data-testid="stButton"] button:hover { border-color:#f87171 !important; box-shadow:0 0 0 3px rgba(248,113,113,.15) !important; }
+    [data-testid="stColumn"]:has(.prov-icone-custom) [data-testid="stButton"] button { background:#fff7ed !important; color:#9a3412 !important; border:2px solid #fdba74 !important; font-weight:600 !important; height:54px !important; min-height:54px !important; border-radius:12px !important; }
+    [data-testid="stColumn"]:has(.prov-icone-custom) [data-testid="stButton"] button:hover { border-color:#f97316 !important; }
+    [data-testid="stColumn"]:has(.prov-sel) [data-testid="stButton"] button { outline:2.5px solid #0f172a !important; outline-offset:2px !important; box-shadow:0 6px 16px rgba(15,23,42,.22) !important; }
 </style>
 """
 st.markdown(_PROVID_CSS, unsafe_allow_html=True)
@@ -212,25 +211,27 @@ st.markdown('<div style="font-weight:600;color:#0f172a;margin-bottom:4px">⚡ Pr
 _cols = st.columns(len(_opcoes_provedor))
 for _i, (_col, _op) in enumerate(zip(_cols, _opcoes_provedor)):
     _classe = _provid_classe.get(_op, "custom")
-    _selmark = " prov-sel" if _op == provedor_ia else ""
+    _sel = _op == provedor_ia
+    _rotulo = f"✓ {_op}" if _sel else _op
     if _op == "Gemini":
         _icone = _svg_gemini(18)
     elif _op == "Groq":
-        _icone = _svg_groq(16)
+        _icone = _svg_groq(18)
     elif _classe == "auto":
-        _icone = '<span class="prov-icone-txt">🔄</span>'
+        _icone = '<span style="font-size:15px;line-height:1">🔄</span>'
     else:
-        _icone = '<span class="prov-icone-txt">⭐</span>'
+        _icone = '<span style="font-size:15px;line-height:1">⭐</span>'
     with _col:
-        st.markdown(
-            f'<div class="prov-card prov-{_classe}{_selmark}">{_icone}'
-            f'<span class="prov-rotulo">{_op}</span>'
-            f'<span class="prov-check">✓</span></div>',
-            unsafe_allow_html=True,
-        )
-        if st.button(_op, key=f"prov_{_i}", width="stretch"):
-            st.session_state["provedor_svg"] = _op
-            st.rerun()
+        _ic, _bt = st.columns([0.3, 0.7], gap="small")
+        with _ic:
+            st.markdown(
+                f'<div class="prov-icon-inner prov-icone-{_classe}{" prov-sel" if _sel else ""}">{_icone}</div>',
+                unsafe_allow_html=True,
+            )
+        with _bt:
+            if st.button(_rotulo, key=f"prov_{_i}", width="stretch"):
+                st.session_state["provedor_svg"] = _op
+                st.rerun()
 st.caption("Escolha quem analisa o relato. Automático usa o Gemini e, se cair, troca para o Groq — "
            "ou adicione um modelo próprio no expander abaixo.")
 
