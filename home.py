@@ -639,15 +639,34 @@ elif pix.configurado():
     try:
         _payload_pix = pix.payload_configurado()
         _qr_pix = pix.qrcode_png_base64(_payload_pix)
+        _chave_pix = pix.chave()
+        _bloco_copia = (
+            f"""
+    <button id="btn-copiar-pix" onclick="copiarChave()"
+            style="display:inline-flex;align-items:center;gap:8px;background:#25D366;color:#0b1e14;font-weight:700;font-size:14px;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.25);margin-top:12px">
+      📋 copiar chave pix
+    </button>
+    <div style="color:#94a3b8;font-size:12px;margin-top:8px">Escaneie o QR Code com a câmera do seu banco — ou use o botão para copiar a chave acima.</div>
+    <script>
+    function copiarChave() {{
+      navigator.clipboard.writeText("{_chave_pix}").then(function() {{
+        var b = document.getElementById('btn-copiar-pix');
+        b.textContent = '✓ chave copiada!';
+        setTimeout(function() {{ b.textContent = '📋 copiar chave pix'; }}, 2200);
+      }});
+    }}
+    </script>""" if _chave_pix else "\n    <div style=\"color:#64748b;font-size:12px;margin-top:8px\">Escaneie o QR Code com a câmera do seu banco — e ajude a manter este projeto open source.</div>"
+        )
         pix_bloco = f"""
   <div style="flex:1 1 320px;text-align:center">
     <div style="font-size:15px;font-weight:800;color:#ffffff">🤝️ Apoie este projeto</div>
     <div style="color:#94a3b8;font-size:13px;margin:6px auto 12px;max-width:340px">Este é um projeto independente, feito por uma pessoa. Se ele te ajudou, considere uma contribuição voluntária via Pix.</div>
     <img src="{_qr_pix}" width="140" style="border-radius:10px;background:#ffffff;padding:6px" alt="QR Code Pix"/>
+    {_bloco_copia}
   </div>"""
     except Exception:
         pix_bloco = ""
-st.markdown(f"""
+_footer_html = f"""
 <div style="margin-top:32px;width:100%;background:linear-gradient(135deg,#0f172a 0%,#16233c 55%,#25D366 170%);border-radius:18px 18px 0 0;color:#e2e8f0;font-size:14px;line-height:1.55">
   <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:24px;padding:26px 26px 20px">
     <div style="flex:1 1 320px;text-align:center">
@@ -685,25 +704,7 @@ st.markdown(f"""
     Projeto original, documentado e publicado por <b style="color:#94a3b8">Iago Nunes (Iago3-stack)</b> — qualquer cópia deve manter o crédito (MIT).
   </div>
 </div>
-""", unsafe_allow_html=True)
+"""
+components.html(_footer_html, height=520)
 
-# Botão "copiar chave pix" + legenda do QR — abaixo do card, na ordem: QR → botão → legenda.
-if not _link_pix and pix.chave():
-    components.html(f"""
-<div style="text-align:center;margin-top:10px">
-  <button id="btn-copiar-pix" onclick="copiarChave()"
-          style="display:inline-flex;align-items:center;gap:8px;background:#25D366;color:#0b1e14;font-weight:700;font-size:14px;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.25)">
-    📋 copiar chave pix
-  </button>
-</div>
-<script>
-function copiarChave() {{
-  navigator.clipboard.writeText("{pix.chave()}").then(function() {{
-    var b = document.getElementById('btn-copiar-pix');
-    b.textContent = '✓ chave copiada!';
-    setTimeout(function() {{ b.textContent = '📋 copiar chave pix'; }}, 2200);
-  }});
-}}
-</script>
-""", height=70)
-    st.caption("Escaneie o QR Code com a câmera do seu banco — ou copie a chave ao lado — e ajude a manter este projeto open source.")
+# Botão "copiar chave pix" + legenda do QR — removidos: agora vivem dentro do card (iframe).
