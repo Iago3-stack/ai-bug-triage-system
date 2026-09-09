@@ -7,7 +7,7 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 ## [Não lançado]
 
 ### Adicionado
-- **✨ Símbolos oficiais das marcas de IA (SVG inline)** — o **símbolo do Google Gemini** (sparkle oficial da gstatic, com o gradiente violeta→azul) e o **logotipo "groq"** (wordmark oficial, Wikimedia Commons, PD-textlogo) agora aparecem como **SVG vetorial embutido** (como fazemos com o símbolo do Pix): o **seletor de provedor** virou **cards-botão clicáveis** com a marca real de cada modelo (Gemini e Groq com os logos oficiais; os modelos próprios com o selo ⭐), o **título "Análise por IA"** do resultado mostra o símbolo de quem respondeu e o **hero** do site ganhou a pill com o ícone original. Helper `_svg_gemini()`/`_svg_groq()` reutilizáveis.
+- **✨ Símbolos das marcas de IA** — o seletor de provedor virou **cards simples** com um `st.button` nativo por opção e emoji dentro do card: **✨ Gemini**, **✴️ Groq**, 🔄 Automático e ⭐ modelos próprios. O **título "Análise por IA"** do resultado segue mostrando o **símbolo oficial** do Google Gemini (sparkle da gstatic) e o logotipo "groq" (Wikimedia Commons, PD-textlogo) de quem respondeu, e o **hero** do site mantém a pill com o ícone original. Helper `_svg_gemini()`/`_svg_groq()` reutilizáveis.
 - **➕ Modelo próprio (traga sua API)** — botão no sidebar para **adicionar um modelo de qualquer provedor** dentro do app: OpenAI-compatível (OpenAI/DeepSeek/endpoint local — `base_url` + chave + modelo, com retry automático sem JSON mode para servidores que não suportam) ou **modelo Gemini custom** (ex.: tier pago) com chave própria ou a `GEMINI_API_KEY` existente. O modelo vira mais uma opção ⭐ no seletor de provedor e o relatório mostra quem respondeu. **A chave fica só na sessão** (`st.session_state`) — nunca é gravada em disco/histórico, e some no próximo reload.
 - **📈 Dashboard de QA completo** — versão super completa (119 testes no total):
   - **🛡️ Card "Saúde da suíte" (0–10)** no topo — combina taxa de normais, score médio, penaliza divergência IA vs. motor e bonifica uso de IA e resoluções registradas (`saude_suite()`).
@@ -22,7 +22,7 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 
 ### Corrigido
 - **Logotipo "groq" nunca renderizava no app** — o path do wordmark estava com números inválidos (separadores ausentes nas fronteiras de literais Python em `_GROQ_WORDMARK_PATHS`), o que fazia o navegador descartar o SVG em silêncio (hero, título e cards). Corrigido o path; o wordmark agora aparece em todo o app.
-- **Cards-botão do seletor** — o logo agora fica numa **metade-ícone** junto ao `st.button` nativo (cards de duas metades com borda contínua), eliminando o corte do símbolo e a "trava" da seleção causada pelo botão invisível de sobreposição. Símbolos sempre dentro do card.
+- **Cards-botão do seletor** — simplificados para **um `st.button` nativo por opção** (sem sobreposição nem metades coladas): o emoji fica dentro do próprio card (**✨ Gemini**, **✴️ Groq**) e a seleção usa outline no card ativo, eliminando corte e "trava" de clique.
 - **viewBox do símbolo Pix** — bbox real medido nos paths (x 535..613, y 27..104, 78×77 com margem de 4): o losango saía cortado à esquerda e pequeno; agora preenche a área do ícone com margem uniforme.
 
 ## [v2.3.0] - 2026-09-08

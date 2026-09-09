@@ -105,28 +105,18 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Seletor de provedor: card = DOIS MEIOS enxertados (ícone SVG inline ESQUERDO + st.button NATIVO
-# à direita) com a MESMA borda/cor → parecem um card único, com o símbolo DENTRO do card.
+# Seletor de provedor em cards simples: um st.button nativo por opção (emoji + rótulo dentro do card).
 _PROVID_CSS = """
 <style>
-    .prov-lado-icone { display:flex; align-items:center; justify-content:center; height:54px; box-sizing:border-box; margin:0; padding:0 8px; }
-    .prov-lado-icone svg { display:block; flex:0 0 auto; }
-
-    [data-testid="stColumn"]:has(.marca-prov-auto) .prov-lado-icone { background:#334155 !important; border:1.5px solid #1e293b !important; border-right:none !important; border-radius:12px 0 0 12px !important; }
-    [data-testid="stColumn"]:has(.marca-prov-auto) [data-testid="stButton"] button { background:#334155 !important; color:#ffffff !important; border:1.5px solid #1e293b !important; border-left:none !important; border-radius:0 12px 12px 0 !important; font-weight:600 !important; height:54px !important; min-height:54px !important; }
+    [data-testid="stColumn"]:has(.marca-provid) [data-testid="stButton"] button { height:50px; min-height:50px; border-radius:10px; font-weight:600; width:100%; }
+    [data-testid="stColumn"]:has(.marca-prov-auto) [data-testid="stButton"] button { background:#334155 !important; color:#ffffff !important; border:1.5px solid #1e293b !important; }
     [data-testid="stColumn"]:has(.marca-prov-auto) [data-testid="stButton"] button:hover { background:#24303f !important; }
-    [data-testid="stColumn"]:has(.marca-prov-gemini) .prov-lado-icone { background:#ffffff !important; border:2px solid #c7d2fe !important; border-right:none !important; border-radius:12px 0 0 12px !important; }
-    [data-testid="stColumn"]:has(.marca-prov-gemini) [data-testid="stButton"] button { background:#ffffff !important; color:#111827 !important; border:2px solid #c7d2fe !important; border-left:none !important; border-radius:0 12px 12px 0 !important; font-weight:700 !important; height:54px !important; min-height:54px !important; }
+    [data-testid="stColumn"]:has(.marca-prov-gemini) [data-testid="stButton"] button { background:#ffffff !important; color:#111827 !important; border:2px solid #c7d2fe !important; }
     [data-testid="stColumn"]:has(.marca-prov-gemini) [data-testid="stButton"] button:hover { border-color:#4f46e5 !important; }
-    [data-testid="stColumn"]:has(.marca-prov-groq) .prov-lado-icone { background:#ffffff !important; border:2px solid #fecaca !important; border-right:none !important; border-radius:12px 0 0 12px !important; }
-    [data-testid="stColumn"]:has(.marca-prov-groq) [data-testid="stButton"] button { background:#ffffff !important; color:#111827 !important; border:2px solid #fecaca !important; border-left:none !important; border-radius:0 12px 12px 0 !important; font-weight:700 !important; height:54px !important; min-height:54px !important; }
+    [data-testid="stColumn"]:has(.marca-prov-groq) [data-testid="stButton"] button { background:#ffffff !important; color:#111827 !important; border:2px solid #fecaca !important; }
     [data-testid="stColumn"]:has(.marca-prov-groq) [data-testid="stButton"] button:hover { border-color:#f87171 !important; }
-    [data-testid="stColumn"]:has(.marca-prov-custom) .prov-lado-icone { background:#fff7ed !important; border:2px solid #fdba74 !important; border-right:none !important; border-radius:12px 0 0 12px !important; }
-    [data-testid="stColumn"]:has(.marca-prov-custom) [data-testid="stButton"] button { background:#fff7ed !important; color:#9a3412 !important; border:2px solid #fdba74 !important; border-left:none !important; border-radius:0 12px 12px 0 !important; font-weight:600 !important; height:54px !important; min-height:54px !important; }
+    [data-testid="stColumn"]:has(.marca-prov-custom) [data-testid="stButton"] button { background:#fff7ed !important; color:#9a3412 !important; border:2px solid #fdba74 !important; }
     [data-testid="stColumn"]:has(.marca-prov-custom) [data-testid="stButton"] button:hover { border-color:#f97316 !important; }
-
-    [data-testid="stColumn"]:has(.marca-provid) [data-testid="stButton"] { margin-left:-8px; }
-    [data-testid="stColumn"]:has(.prov-provid-sel) .prov-lado-icone { outline:2.5px solid #0f172a !important; outline-offset:2px !important; border-radius:14px 0 0 14px !important; }
     [data-testid="stColumn"]:has(.prov-provid-sel) [data-testid="stButton"] button { outline:2.5px solid #0f172a !important; outline-offset:2px !important; box-shadow:0 6px 16px rgba(15,23,42,.22) !important; }
 </style>
 """
@@ -219,28 +209,21 @@ for _i, (_col, _op) in enumerate(zip(_cols, _opcoes_provedor)):
     _classe = _provid_classe.get(_op, "custom")
     _sel = _op == provedor_ia
     if _op == "Gemini":
-        _icone = _svg_gemini(18)
+        _icone = "✨"
     elif _op == "Groq":
-        _icone = _svg_groq(19)
+        _icone = "✴️"
     elif _classe == "auto":
-        _icone = '<span style="font-size:15px;line-height:1">🔄</span>'
+        _icone = "🔄"
     else:
-        _icone = '<span style="font-size:15px;line-height:1">⭐</span>'
+        _icone = "⭐"
     with _col:
         st.markdown(
             f'<div class="marca-provid marca-prov-{_classe}{" prov-provid-sel" if _sel else ""}" style="display:none"></div>',
             unsafe_allow_html=True,
         )
-        _ic, _bt = st.columns([0.3, 0.7], gap="small")
-        with _ic:
-            st.markdown(
-                f'<div class="prov-lado-icone prov-icone-{_classe}">{_icone}</div>',
-                unsafe_allow_html=True,
-            )
-        with _bt:
-            if st.button(_op, key=f"prov_{_i}", width="stretch"):
-                st.session_state["provedor_svg"] = _op
-                st.rerun()
+        if st.button(f"{_icone} {_op}", key=f"prov_{_i}", width="stretch"):
+            st.session_state["provedor_svg"] = _op
+            st.rerun()
 st.caption("Escolha quem analisa o relato. Automático usa o Gemini e, se cair, troca para o Groq — "
            "ou adicione um modelo próprio no expander abaixo.")
 
