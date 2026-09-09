@@ -21,6 +21,8 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 - **Símbolo oficial do Pix no botão de copiar** — o 📋 deu lugar ao losango teal do Banco Central (SVG inline, `_svg_pix()`), que agora aparece nas duas ações: "Pagar com Pix via link" e "copiar chave pix" (a troca do rótulo pós-cópia usa um `span`, preservando o ícone). O título do card também ganhou **🤝 na outra ponta** — "`[símbolo Pix]` Apoie este projeto `🤝`".
 
 ### Corrigido
+- **Logotipo "groq" nunca renderizava no app** — o path do wordmark estava com números inválidos (separadores ausentes nas fronteiras de literais Python em `_GROQ_WORDMARK_PATHS`), o que fazia o navegador descartar o SVG em silêncio (hero, título e cards). Corrigido o path; o wordmark agora aparece em todo o app.
+- **Cards-botão do seletor** — o logo agora fica numa **metade-ícone** junto ao `st.button` nativo (cards de duas metades com borda contínua), eliminando o corte do símbolo e a "trava" da seleção causada pelo botão invisível de sobreposição. Símbolos sempre dentro do card.
 - **viewBox do símbolo Pix** — bbox real medido nos paths (x 535..613, y 27..104, 78×77 com margem de 4): o losango saía cortado à esquerda e pequeno; agora preenche a área do ícone com margem uniforme.
 
 ## [v2.3.0] - 2026-09-08
