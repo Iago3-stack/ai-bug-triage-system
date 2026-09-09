@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import json
 import pandas as pd
 from urllib.parse import quote
@@ -687,7 +688,22 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# Copiar a chave Pix com um toque (botão nativo de copiar do Streamlit) — útil no celular.
+# Botão "copiar chave pix" logo após o card (celular: exatamente abaixo do QR).
 if not _link_pix and pix.chave():
-    st.caption("💾 Prefere copiar a chave? Toque no número e use o botão de copiar:")
-    st.code(pix.chave(), language="text")
+    components.html(f"""
+<div style="text-align:center;margin-top:10px">
+  <button id="btn-copiar-pix" onclick="copiarChave()"
+          style="display:inline-flex;align-items:center;gap:8px;background:#25D366;color:#0b1e14;font-weight:700;font-size:14px;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.25)">
+    📋 copiar chave pix
+  </button>
+</div>
+<script>
+function copiarChave() {{
+  navigator.clipboard.writeText("{pix.chave()}").then(function() {{
+    var b = document.getElementById('btn-copiar-pix');
+    b.textContent = '✓ chave copiada!';
+    setTimeout(function() {{ b.textContent = '📋 copiar chave pix'; }}, 2200);
+  }});
+}}
+</script>
+""", height=70)
