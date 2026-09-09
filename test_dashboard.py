@@ -72,3 +72,66 @@ def test_contagem_por_ordena_por_gravidade():
     df = dashboard._contagem_por(registros, "gravidade", dashboard._ORDEM_SEVERIDADE)
     assert list(df["gravidade"]) == ["CRÍTICA 🚨", "MÉDIA ⚠️", "NORMAL ✅"]
     assert list(df["quantidade"]) == [1, 1, 1]
+
+
+def test_tabela_recente_mostra_provedor_ia():
+    registros = [
+        _registro("bug no login", usou_ia=True, provedor_ia="Groq", modelo_ia="openai/gpt-oss-120b"),
+        _registro("bug no pagamento", usou_ia=True),
+        _registro("bug no cadastro", usou_ia=False),
+    ]
+    tabela = dashboard.tabela_recente(registros)
+    assert list(tabela["IA"]) == ["Groq", "sim", "não"]
+
+
+def test_taxa_divergencia():
+    registros = [
+        _registro("a", usou_ia=True, divergente=True),
+        _registro("b", usou_ia=True, divergente=False),
+        _registro("c", usou_ia=True, divergente=True),
+        _registro("d", usou_ia=False),
+    ]
+    assert dashboard.taxa_divergencia(registros) == 66.7
+    assert dashboard.taxa_divergencia([_registro("x", usou_ia=False)]) is None
+
+
+def test_top_causas_agrupa_e_limita_a_cinco():
+    registros = [
+        _registro("a", causa_raiz_ia="Servidor sobrecarregado"),
+        _registro("b", causa_raiz_ia="servidor sobrecarregado"),
+        _registro("c", causa_raiz_ia="Servidor   sobrecarregado"),
+        _registro("d", causa_raiz_ia="Configuração errada"),
+        _registro("e", causa_raiz_ia="Configuração errada"),
+        _registro("f", causa_raiz_ia="Falha no banco"),
+        _registro("g", causa_raiz_ia="Falha no banco"),
+        _registro("h", causa_raiz_ia="Bug de rede"),
+        _registro("i", causa_raiz_ia="Bug de rede"),
+        _registro("j", causa_raiz_ia="Memória insuficiente"),
+        _registro("k", causa_raiz_ia="Memória insuficiente"),
+        _registro("l", causa_raiz_ia="Disco cheio"),
+        _registro("m", causa_raiz_ia="Disco cheio"),
+    ]
+    df = dashboard.top_causas(registros)
+    assert len(df) == 5
+    assert df["quantidade"].max() == 3
+    assert df.index[0] == "servidor sobrecarregado"
+    assert dashboard.top_causas([_registro("z")]).empty
+
+
+def test_tem_funcionalidade():
+    assert dashboard._tem_funcionalidade({"descricao": "o login falhou"}, "Login/Conta")
+    assert not dashboard._tem_funcionalidade({"descricao": "o modo escuro falhou"}, "Login/Conta")
+
+
+def test_saude_suite_base_e_punicao_por_divergencia():
+    regs = [_registro("x", gravidade="NORMAL ✅", usou_ia=False)]
+    alto = dashboard.saude_suite(regs)
+    regs_divergente = [
+        _registro("a", gravidade="MÉDIA ⚠️", usou_ia=True, divergente=True, score=-4.0),
+        _registro("b", gravidade="MÉDIA ⚠️", usou_ia=True, divergente=True, score=-4.0),
+    ]
+    baixo = dashboard.saude_suite(regs_divergente)
+    assert 0.0 <= alto <= 10.0
+    assert 0.0 <= baixo <= 10.0
+    assert baixo < alto
+    assert dashboard.saude_suite([]) == 0.0

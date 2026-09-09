@@ -38,6 +38,55 @@ FUNCOES = [
 TERMOS_TESTE = re.compile(r"\b(erro|bug|falha|defeito)\b")
 
 
+def _texto(reg: dict, chave: str) -> str:
+    valor = reg.get(chave)
+    return " ".join(str(valor).lower().split()) if valor else ""
+
+
+def taxa_divergencia(registros: list[dict]) -> float | None:
+    """Percentual de triagens com IA em que a IA divergiu do motor local (0-100)."""
+    com_ia = [r for r in registros if r.get("usou_ia")]
+    if not com_ia:
+        return None
+    n_div = sum(1 for r in com_ia if r.get("divergente"))
+    return round(n_div / len(com_ia) * 100, 1)
+
+
+def top_causas(registros: list[dict], n: int = 5) -> pd.DataFrame:
+    """Causas raiz apontadas pela IA, agrupadas por similaridade de texto (case/dupla espaço)."""
+    contagem: Counter = Counter()
+    for reg in registros:
+        causa = _texto(reg, "causa_raiz_ia")
+        if causa:
+            contagem[causa] += 1
+    if not contagem:
+        return pd.DataFrame(columns=["causa raiz", "quantidade"])
+    top = pd.DataFrame(contagem.most_common(n)[:n], columns=["causa raiz", "quantidade"])
+    return top.set_index("causa raiz")
+
+
+def saude_suite(registros: list[dict]) -> float:
+    """Score de saúde da suíte 0-10: normalidade, divergência IA vs. local, score, uso de IA/RAG."""
+    if not registros:
+        return 0.0
+    total = len(registros)
+    taxa = sum(1 for r in registros if r.get("usou_ia"))
+    score = saude = 5.0
+    normal = sum(1 for r in registros if r.get("gravidade") == "NORMAL ✅")
+    saude += (normal / total) * 2.0
+    media_score = sum(float(r.get("score", 0.0)) for r in registros) / total
+    normalizado = max(0.0, min(1.0, (media_score + 5.0) / 8.0))
+    saude += normalizado * 1.0
+    divergencia = taxa_divergencia(registros)
+    if divergencia is not None:
+        saude -= divergencia / 100 * 1.5
+    if taxa:
+        saude += 0.75
+    if any(r.get("rag_resolucao") for r in registros):
+        saude += 0.75
+    return round(max(0.0, min(10.0, saude)), 1)
+
+
 def funcoes_afetadas(registros: list[dict]) -> Counter:
     """Conta menções de cada funcionalidade (uma vez por registro)."""
     contagem: Counter = Counter()
@@ -47,6 +96,12 @@ def funcoes_afetadas(registros: list[dict]) -> Counter:
             if padrao.search(texto):
                 contagem[rotulo] += 1
     return contagem
+
+
+def _tem_funcionalidade(reg: dict, rotulo: str) -> bool:
+    """True se o registro menciona a funcionalidade `rotulo`."""
+    texto = (reg.get("descricao") or "").lower()
+    return any(padrao.search(texto) for padrao, r in FUNCOES if r == rotulo)
 
 
 def false_positivos_evitados(registros: list[dict]) -> int:
@@ -76,7 +131,11 @@ def tabela_recente(registros: list[dict], limite: int = 20) -> pd.DataFrame:
         "Resumo": df["resumo"].values,
         "Gravidade": df["gravidade"].values,
         "Score": df["score"].values,
-        "IA": df["usou_ia"].map({True: "sim", False: "não"}).values,
+        "IA": [
+            ("não" if not bool(r.get("usou_ia"))
+             else (r.get("provedor_ia") if isinstance(r.get("provedor_ia"), str) and r.get("provedor_ia") else "sim"))
+            for _, r in df.iterrows()
+        ],
     })
     if "jira_key" in df.columns:
         jira = df["jira_key"].fillna("—").values
@@ -113,8 +172,19 @@ def render_dashboard(registros: list[dict]) -> None:
     <div style="font-size:12px;opacity:.85;font-weight:600">🔮 Com IA (LLM)</div>
     <div style="font-size:30px;font-weight:800;line-height:1.1">{n_ia}</div>
   </div>
+  <div style="flex:1;min-width:180px;background:linear-gradient(135deg,#7c3aed,#8b5cf6);border-radius:14px;padding:14px 18px;color:#ffffff">
+    <div style="font-size:12px;opacity:.85;font-weight:600">🛡️ Saúde da suíte</div>
+    <div style="font-size:30px;font-weight:800;line-height:1.1">{saude_suite(registros):.1f}<span style="font-size:14px;font-weight:600;opacity:.8">/10</span></div>
+  </div>
 </div>
 """, unsafe_allow_html=True)
+
+    pct_crit = round(n_crit / len(registros) * 100, 1)
+    st.markdown(
+        f"<span style='font-size:13px'>🚨 <b>{pct_crit:.0f}%</b> das triagens são CRÍTICAS/ALTAS</span>",
+        unsafe_allow_html=True,
+    )
+    st.progress(min(1.0, pct_crit / 100))
 
     c1, c2, c3, c4, c5 = st.columns(5)
     c1.metric("🧺 Triagens", len(registros))
@@ -131,40 +201,81 @@ def render_dashboard(registros: list[dict]) -> None:
         "foram classificados como NORMAL — prova de que o motor não dispara por palavra isolada."
     )
 
-    esquerda, direita = st.columns(2)
-    with esquerda:
-        st.markdown("##### Distribuição de severidade")
-        dados_sev = _contagem_por(registros, "gravidade", _ORDEM_SEVERIDADE).set_index("gravidade")
-        st.bar_chart(dados_sev, color="#2E7CF6")
-    with direita:
-        st.markdown("##### Volume por dia")
-        dados_dia = df.groupby("data").size().sort_index()
-        st.line_chart(pd.DataFrame({"triagens": dados_dia}), color="#FF7043")
-
-    st.markdown("##### Funcionalidades mais afetadas")
-    funcoes = funcoes_afetadas(registros)
-    if funcoes:
-        top = pd.DataFrame(funcoes.most_common(), columns=["funcionalidade", "menções"]).set_index("funcionalidade")
-        st.bar_chart(top, color="#9C27B0")
+    # --- Filtro global por funcionalidade ---
+    funcoes_globais = funcoes_afetadas(registros)
+    opcoes = ["🧺 Todas as funcionalidades"] + [rot for rot in funcoes_globais]
+    escolha = st.selectbox("Filtrar relatório por funcionalidade", opcoes)
+    if escolha == opcoes[0]:
+        regs = list(registros)
     else:
-        st.caption("Nenhuma funcionalidade reconhecível nos relatos persistidos.")
+        regs = [r for r in registros if _tem_funcionalidade(r, escolha)]
+    df_f = pd.DataFrame(regs)
+    if regs:
+        esquerda, direita = st.columns(2)
+        with esquerda:
+            st.markdown("##### Distribuição de severidade")
+            dados_sev = _contagem_por(regs, "gravidade", _ORDEM_SEVERIDADE).set_index("gravidade")
+            st.bar_chart(dados_sev, color="#2E7CF6")
+        with direita:
+            st.markdown("##### Volume por dia")
+            dados_dia = df_f.groupby("data").size().sort_index()
+            st.line_chart(pd.DataFrame({"triagens": dados_dia}), color="#FF7043")
+
+        dias_score = df_f.groupby("data")["score"].mean().dropna()
+        if not dias_score.empty:
+            st.markdown("##### Evolução do score médio por dia")
+            st.line_chart(pd.DataFrame({"score médio": dias_score}), color="#7C4DFF")
+
+        if escolha == opcoes[0]:
+            st.markdown("##### Funcionalidades mais afetadas")
+            if funcoes_globais:
+                top = pd.DataFrame(
+                    funcoes_globais.most_common(), columns=["funcionalidade", "menções"]
+                ).set_index("funcionalidade")
+                st.bar_chart(top, color="#9C27B0")
+            else:
+                st.caption("Nenhuma funcionalidade reconhecível nos relatos persistidos.")
+        else:
+            st.markdown(f"##### Relatos em {escolha}")
+            st.caption(f"{len(regs)} triagens nesta funcionalidade — severidade, volume e score médio acima já refletem o filtro.")
+    else:
+        st.warning(f"Nenhum relato reconhecível na funcionalidade '{escolha}'.")
+
+    st.markdown("##### Causas raiz mais comuns (via IA)")
+    causas = top_causas(regs)
+    if not causas.empty:
+        st.bar_chart(causas, color="#26A69A")
+    else:
+        st.caption("Nenhuma causa raiz registrada pela IA nos relatos persistidos.")
 
     st.markdown("##### Comparativo IA vs. motor local")
-    com_ia = df[df.get("usou_ia", False)]
-    if com_ia.empty:
+    if "usou_ia" in df_f and not df_f[df_f["usou_ia"]].empty:
+        com_ia = df_f[df_f["usou_ia"]]
+        n_div = int(com_ia["divergente"].sum()) if "divergente" in com_ia else 0
+        taxa = taxa_divergencia(regs)
+        m1, m2 = st.columns(2)
+        m1.metric("Divergências IA vs. léxico", f"{n_div} de {len(com_ia)}")
+        m2.metric("Taxa de divergência", "—" if taxa is None else f"{taxa:.1f}%")
+        if n_div:
+            cols = {
+                "data_hora": "quando",
+                "resumo": "Resumo",
+                "gravidade": "Local",
+                "severidade_ia": "IA",
+                "prioridade_final": "Final",
+            }
+            div_df = com_ia[com_ia["divergente"]].sort_values("data_hora", ascending=False).head(10)
+            st.dataframe(div_df[list(cols)].rename(columns=cols), use_container_width=True, hide_index=True)
+        else:
+            st.caption("Nenhuma divergência registrada até agora — IA e motor local em sintonia ✓")
+    else:
         st.caption(
             "Nenhuma triagem com IA no histórico ainda. Rode algumas triagens com a checkbox "
-            "🔮 marcada para ver divergência entre motores aqui (linha do Jira e previsão IA)."
+            "🔮 marcada para ver a divergência entre os motores aqui."
         )
-    else:
-        n_div = int(com_ia["divergente"].sum()) if "divergente" in com_ia else 0
-        st.metric("Divergências entre IA e léxico", f"{n_div} de {len(com_ia)}")
-    dados_ia = [_contagem_por(registros, "prioridade_final", _ORDEM_SEVERIDADE).set_index("prioridade_final")] if "prioridade_final" in df else []
-    if dados_ia and not dados_ia[0].empty:
-        st.bar_chart(dados_ia[0], color="#26A69A")
 
     st.markdown("##### Últimas triagens")
-    tabela = tabela_recente(registros)
+    tabela = tabela_recente(regs)
     if not tabela.empty:
         st.dataframe(tabela, use_container_width=True, hide_index=True)
 

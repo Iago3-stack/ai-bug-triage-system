@@ -274,6 +274,7 @@ if st.button("Executar Triagem Inteligente"):
             }
             if resultado_llm:
                 snapshot.update({
+                    "provedor_ia": llm_provedor,
                     "modelo_ia": llm_modelo,
                     "severidade_ia": resultado_llm["severidade"],
                     "categoria_ia": resultado_llm["categoria"],
