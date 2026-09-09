@@ -173,6 +173,7 @@ TYPING_CSS = """
 .tl1 { animation: type1 12s steps(28, end) 0s infinite; }
 .tl2 { animation: type2 12s steps(28, end) 0s infinite; }
 .tl3 { animation: type3 12s steps(28, end) 0s infinite; }
+.tl4 { animation: type4 16s steps(28, end) 0s infinite; }
 @keyframes type1 {
   0% { max-width: 0; }
   6% { max-width: 0; }
@@ -194,6 +195,13 @@ TYPING_CSS = """
   96% { max-width: 30em; }
   100% { max-width: 0; }
 }
+@keyframes type4 {
+  0% { max-width: 0; }
+  60% { max-width: 0; }
+  72% { max-width: 30em; }
+  96% { max-width: 30em; }
+  100% { max-width: 0; }
+}
 @media (max-width: 480px) {
   /* no celular o nowrap + max-width corta "meus projetos"; mostra tudo abaixo */
   .type-line {
@@ -211,8 +219,9 @@ def typing_frases():
     st.markdown("""
 <div class="type-stack">
   <div class="type-line tl1">Bem-vindo ao meu site!</div>
-  <div class="type-line tl2">Informações sobre mim e meus projetos</div>
-  <div class="type-line tl3">QA + IA construído no Lab Hack28</div>
+  <div class="type-line tl2">Informações sobre mim</div>
+  <div class="type-line tl3">e meus projetos</div>
+  <div class="type-line tl4">QA + IA construído no Lab Hack28</div>
 </div>
 """, unsafe_allow_html=True)
 
