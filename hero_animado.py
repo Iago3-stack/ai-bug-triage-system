@@ -114,7 +114,7 @@ def render():
   <div style="margin-top:12px;font-weight:700">⚡ Vamos construir?</div>
 </div>
 </div>
-""".format(MARQUEE_TEXT, pill_gemini=pill_gemini), unsafe_allow_html=True)
+""".format(MARQUEE_TEXT=MARQUEE_TEXT, pill_gemini=pill_gemini), unsafe_allow_html=True)
 
 # --- BOTÕES DE CONTATO (ícones oficiais embutidos) ---
 # auto-gerado
