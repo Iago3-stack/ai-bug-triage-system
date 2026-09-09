@@ -1,3 +1,5 @@
+import itertools
+
 import streamlit as st
 
 CSS = """
@@ -92,6 +94,10 @@ def linha():
 
 def render():
     _css()
+    pill_gemini = (
+        '<span class="hero-pill" style="background:rgba(246,130,29,.16);color:#d97706">'
+        f'{_svg_gemini(13)} Gemini</span>'
+    )
     st.markdown("""
 <div class="hero-wrap">
 <div class="hero-card">
@@ -101,14 +107,14 @@ def render():
   <div style="font-size:14px;color:#444;margin-top:4px">Remote Global · São Luís, MA</div>
   <div style="margin-top:14px">
     <span class="hero-pill" style="background:rgba(37,211,102,.16);color:#1e8f4b">💡 NLP PT</span>
-    <span class="hero-pill" style="background:rgba(246,130,29,.16);color:#d97706">🧠 Gemini</span>
+    {pill_gemini}
     <span class="hero-pill" style="background:rgba(46,124,246,.16);color:#1d63d8">🚀 Streamlit</span>
   </div>
-  <div class="hero-marquee"><span>{}</span></div>
+  <div class="hero-marquee"><span>{MARQUEE_TEXT}</span></div>
   <div style="margin-top:12px;font-weight:700">⚡ Vamos construir?</div>
 </div>
 </div>
-""".format(MARQUEE_TEXT), unsafe_allow_html=True)
+""".format(MARQUEE_TEXT, pill_gemini=pill_gemini), unsafe_allow_html=True)
 
 # --- BOTÕES DE CONTATO (ícones oficiais embutidos) ---
 # auto-gerado
@@ -117,6 +123,77 @@ _B64 = {
     "linkedin": "PHN2ZyByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBmaWxsPSIjZmZmZmZmIiBkPSJNMjAuNDQ3IDIwLjQ1MmgtMy41NTR2LTUuNTY5YzAtMS4zMjgtLjAyNy0zLjAzNy0xLjg1Mi0zLjAzNy0xLjg1MyAwLTIuMTM2IDEuNDQ1LTIuMTM2IDIuOTM5djUuNjY3SDkuMzUxVjloMy40MTR2MS41NjFoLjA0NmMuNDc3LS45IDEuNjM3LTEuODUgMy4zNy0xLjg1IDMuNjAxIDAgNC4yNjcgMi4zNyA0LjI2NyA1LjQ1NXY2LjI4NnpNNS4zMzcgNy40MzNjLTEuMTQ0IDAtMi4wNjMtLjkyNi0yLjA2My0yLjA2NSAwLTEuMTM4LjkyLTIuMDYzIDIuMDYzLTIuMDYzIDEuMTQgMCAyLjA2NC45MjUgMi4wNjQgMi4wNjMgMCAxLjEzOS0uOTI1IDIuMDY1LTIuMDY0IDIuMDY1em0xLjc4MiAxMy4wMTlIMy41NTVWOWgzLjU2NHYxMS40NTJ6TTIyLjIyNSAwSDEuNzcxQy43OTIgMCAwIC43NzQgMCAxLjcyOXYyMC41NDJDMCAyMy4yMjcuNzkyIDI0IDEuNzcxIDI0aDIwLjQ1MUMyMy4yIDI0IDI0IDIzLjIyNyAyNCAyMi4yNzFWMS43MjlDMjQgLjc3NCAyMy4yIDAgMjIuMjIyIDBoLjAwM3oiLz48L3N2Zz4=",
     "gmail": "PHN2ZyByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBmaWxsPSIjZmZmZmZmIiBkPSJNMjQgNS40NTd2MTMuOTA5YzAgLjkwNC0uNzMyIDEuNjM2LTEuNjM2IDEuNjM2aC0zLjgxOVYxMS43M0wxMiAxNi42NGwtNi41NDUtNC45MXY5LjI3M0gxLjYzNkExLjYzNiAxLjYzNiAwIDAgMSAwIDE5LjM2NlY1LjQ1N2MwLTIuMDIzIDIuMzA5LTMuMTc4IDMuOTI3LTEuOTY0TDUuNDU1IDQuNjQgMTIgOS41NDhsNi41NDUtNC45MSAxLjUyOC0xLjE0NUMyMS42OSAyLjI4IDI0IDMuNDM0IDI0IDUuNDU3eiIvPjwvc3ZnPg==",
 }
+
+# --- SÍMBOLOS OFICIAIS DAS MARCAS DE IA (PD-textlogo via Wikimedia Commons) ---
+# Ícone oficial do Google Gemini ("sparkle") — paths e gradiente originais da gstatic
+# (arquivo "Gemini sparkle v002.svg": #9168C0 -> #5684D1 -> #1BA1E3).
+_GEMINI_SPARKLE_PATH = (
+    "M14 28C14 26.0633 13.6267 24.2433 12.88 22.54C12.1567 20.8367 11.165 19.355 9.905 18.095"
+    "C8.645 16.835 7.16333 15.8433 5.46 15.12C3.75667 14.3733 1.93667 14 0 14C1.93667 14 3.75667 "
+    "13.6383 5.46 12.915C7.16333 12.1683 8.645 11.165 9.905 9.905C11.165 8.645 12.1567 7.16333 12.88 5.46"
+    "C13.6267 3.75667 14 1.93667 14 0C14 1.93667 14.3617 3.75667 15.085 5.46C15.8317 7.16333 16.835 8.645"
+    "18.095 9.905C19.355 11.165 20.8367 12.1683 22.54 12.915C24.2433 13.6383 26.0633 14 28 14C26.0633 14 "
+    "24.2433 14.3733 22.54 15.12C20.8367 15.8433 19.355 16.835 18.095 18.095C16.835 19.355 15.8317 20.8367 "
+    "15.085 22.54C14.3617 24.2433 14 26.0633 14 28Z"
+)
+
+_GEMINI_GRAD_ID = itertools.count()
+
+
+def _svg_gemini(tamanho: int = 16) -> str:
+    # id único por instância (evita conflito quando o símbolo aparece mais de uma vez na página).
+    gid = f"gemini-grad-{next(_GEMINI_GRAD_ID)}"
+    return (
+        f'<svg width="{tamanho}" height="{tamanho}" viewBox="0 0 28 28" role="img" aria-label="Gemini" '
+        f'style="display:inline-block;vertical-align:-0.18em">'
+        f'<defs><radialGradient id="{gid}" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" '
+        f'gradientTransform="translate(2.77876 11.3795) rotate(18.6832) scale(29.8025 238.737)">'
+        f'<stop offset="0.0671246" stop-color="#9168C0"/>'
+        f'<stop offset="0.342551" stop-color="#5684D1"/>'
+        f'<stop offset="0.672076" stop-color="#1BA1E3"/>'
+        f'</radialGradient></defs>'
+        f'<path d="{_GEMINI_SPARKLE_PATH}" fill="url(#{gid})"/></svg>'
+    )
+
+
+# Logotipo "groq" (wordmark oficial) — viewBox real 152x55.5.
+_GROQ_WORDMARK_PATHS = (
+    '<path d="M84.848,34.137c-9.798,0-17.769,7.971-17.769,17.77s7.971,17.769,17.769,17.769'
+    's17.77-7.971,17.77-17.769S94.645,34.137,84.848,34.137z M84.848,63.013c-6.124,0-11.106-4.983'
+    '-11.106-11.106s4.982-11.106,11.106-11.106c6.124,0,11.106,4.982,11.106,11.106'
+    'S90.973,63.013,84.848,63.013z"/>',
+    '<path d="M60.315,34.206c-0.607-0.068-1.217-0.104-1.827-0.108c-0.304,0-0.595,0.009-0.893,0.014'
+    's-0.594,0.033-0.891,0.051c-1.197,0.094-2.382,0.299-3.541,0.611c-2.329,0.629-4.574,1.723-6.515,3.277'
+    'c-1.97,1.57-3.548,3.575-4.611,5.859c-0.53,1.138-0.921,2.336-1.165,3.567c-0.121,0.608-0.21,1.222'
+    '-0.266,1.84c-0.02,0.307-0.055,0.615-0.059,0.921l-0.011,0.459l-0.005,0.23v0.19l0.015,5.951l0.015,5.951'
+    'l0.041,5.95h6.664l0.042-5.95l0.015-5.952l0.015-5.951v-0.182l0.005-0.142l0.008-0.285c0-0.191,0.028-0.375'
+    '0.039-0.564c0.036-0.37,0.091-0.738,0.165-1.102c0.146-0.716,0.374-1.413,0.678-2.077c0.613-1.332'
+    '1.528-2.502,2.673-3.419c1.156-0.932,2.541-1.628,4.038-2.042c0.757-0.207,1.532-0.344,2.314-0.408'
+    'c0.198-0.011,0.395-0.03,0.594-0.037c0.199-0.007,0.402-0.013,0.595-0.012c0.383,0,0.76,0.025,1.142,0.06'
+    'c1.518,0.153,2.989,0.619,4.318,1.368l3.326-5.776C65.108,35.263,62.753,34.484,60.315,34.206z"/>',
+    '<path d="M17.77,34.048C7.971,34.048,0,42.019,0,51.817s7.971,17.77,17.77,17.77h5.844v-6.664H17.77'
+    'c-6.124,0-11.106-4.982-11.106-11.106s4.982-11.106,11.106-11.106s11.132,4.982,11.132,11.106l0,0v16.365l0,0'
+    'c0,6.084-4.954,11.039-11.023,11.103c-2.904-0.024-5.681-1.191-7.729-3.25l-4.712,4.712c3.266,3.283,7.691,5.151'
+    '12.321,5.201v0.003c0.04,0,0.08,0,0.119,0h0.125v-0.003c9.659-0.131,17.48-8.005,17.525-17.686l0.006-16.881'
+    'C35.302,41.785,27.422,34.048,17.77,34.048z"/>',
+    '<path d="M124.083,34.137c-9.798,0-17.769,7.971-17.769,17.77s7.971,17.769,17.769,17.769h6.08v-6.663h-6.08'
+    'c-6.124,0-11.106-4.983-11.106-11.106s4.982-11.106,11.106-11.106c5.799,0,10.572,4.468,11.062,10.143h-0.01'
+    'v34.12h6.664V51.907l0,0C141.797,42.108,133.881,34.137,124.083,34.137z"/>',
+    '<polygon points="151.983,35.04 151.033,35.04 149.737,37.053 148.399,35.04 147.44,35.04 147.44,38.624 '
+    '148.511,38.624 148.511,36.88 149.461,38.288 149.979,38.288 150.912,36.836 150.929,38.624 152,38.624"/>',
+    '<polygon points="143.519,35.896 144.685,35.896 144.685,38.624 145.86,38.624 145.86,35.896 147.034,35.896 '
+    '147.034,35.04 143.519,35.04"/>',
+)
+
+
+def _svg_groq(tamanho: int = 18, cor: str = "#0f172a") -> str:
+    largura = max(20, round(tamanho * 152 / 55.5))
+    return (
+        f'<svg width="{largura}" height="{tamanho}" viewBox="0 32.25 152 55.5" '
+        f'role="img" aria-label="Groq" style="display:inline-block;vertical-align:-0.18em">'
+        f'<g fill="{cor}">{"".join(_GROQ_WORDMARK_PATHS)}</g></svg>'
+    )
+
 
 CONTATO_URLS = {
     "whatsapp": "https://wa.me/5598985914235?text=Ol%C3%A1%20Iago%2C%20vi%20seu%20portf%C3%B3lio%20de%20IA%20e%20QA%20e%20gostaria%20de%20conversar%20sobre%20uma%20oportunidade!",

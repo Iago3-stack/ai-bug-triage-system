@@ -7,6 +7,7 @@ from triagem import triar
 import ia
 import rag
 import hero_animado
+from hero_animado import _svg_gemini, _svg_groq
 import jira_client
 import persistencia
 import guardrails
@@ -442,7 +443,14 @@ if r:
     st.code(relatorio, language="markdown")
 
     if resultado_llm:
-        st.markdown(f"### 🔮 Análise por IA ({ia.ULTIMO_PROVEDOR or 'LLM'})")
+        provedor_rotulo = ia.ULTIMO_PROVEDOR or "LLM"
+        if provedor_rotulo.startswith("Gemini"):
+            icone_ai = _svg_gemini(16)
+        elif provedor_rotulo.startswith("Groq"):
+            icone_ai = _svg_groq(18)
+        else:
+            icone_ai = "🔮"
+        st.markdown(f"### {icone_ai} Análise por IA ({provedor_rotulo})", unsafe_allow_html=True)
         ca, cb, cc = st.columns(3)
         ca.metric("Severidade (IA)", resultado_llm["severidade"].upper())
         cb.metric("Categoria", resultado_llm["categoria"].capitalize())
