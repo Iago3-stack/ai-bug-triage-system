@@ -8,6 +8,17 @@ import ia
 import rag
 import hero_animado
 from hero_animado import _svg_gemini, _svg_groq
+
+import base64 as _base64
+
+
+def _b64_marca(svg: str) -> str:
+    # Data-URI para usar o símbolo oficial como background/imagem nos elementos da UI.
+    return "data:image/svg+xml;base64," + _base64.b64encode(svg.encode("utf-8")).decode("ascii")
+
+
+_GEMINI_MARCA_URI = _b64_marca(_svg_gemini(16))
+_GROQ_MARCA_URI = _b64_marca(_svg_groq(15, "#0f172a"))
 import jira_client
 import persistencia
 import guardrails
@@ -105,6 +116,22 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# Seletor de provedor: cards-botão com os SÍMBOLOS OFICIAIS das marcas (SVG embutidos).
+_PROVID_CSS = """
+<style>
+    [data-testid="stColumn"]:has(.marca-provid-auto) [data-testid="stButton"] button { background: #334155 !important; color: #ffffff !important; border: 1px solid #1e293b !important; font-weight: 600 !important; }
+    [data-testid="stColumn"]:has(.marca-provid-auto) [data-testid="stButton"] button:hover { background: #24303f !important; border-color: #0f172a !important; }
+    [data-testid="stColumn"]:has(.marca-provid-gemini) [data-testid="stButton"] button { background: #ffffff !important; color: #111827 !important; border: 2px solid #c7d2fe !important; font-weight: 700 !important; background-image: url("$GEMINI") !important; background-size: 18px 18px !important; background-position: 10px center !important; background-repeat: no-repeat !important; padding-left: 36px !important; }
+    [data-testid="stColumn"]:has(.marca-provid-gemini) [data-testid="stButton"] button:hover { border-color: #4f46e5 !important; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15) !important; }
+    [data-testid="stColumn"]:has(.marca-provid-groq) [data-testid="stButton"] button { background: #ffffff !important; color: #111827 !important; border: 2px solid #fecaca !important; font-weight: 700 !important; background-image: url("$GROQ") !important; background-size: 42px 15px !important; background-position: 8px center !important; background-repeat: no-repeat !important; padding-left: 58px !important; }
+    [data-testid="stColumn"]:has(.marca-provid-groq) [data-testid="stButton"] button:hover { border-color: #f87171 !important; box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.15) !important; }
+    [data-testid="stColumn"]:has(.marca-provid-custom) [data-testid="stButton"] button { background: #fff7ed !important; color: #9a3412 !important; border: 2px solid #fdba74 !important; font-weight: 600 !important; }
+    [data-testid="stColumn"]:has(.marca-provid-custom) [data-testid="stButton"] button:hover { border-color: #f97316 !important; }
+    [data-testid="stColumn"]:has(.marca-provid-sel) [data-testid="stButton"] button { outline: 2.5px solid #0f172a !important; outline-offset: 2px !important; box-shadow: 0 6px 16px rgba(15, 23, 42, 0.22) !important; }
+</style>
+""".replace("$GEMINI", _GEMINI_MARCA_URI).replace("$GROQ", _GROQ_MARCA_URI)
+st.markdown(_PROVID_CSS, unsafe_allow_html=True)
+
 # --- CABEÇALHO ---
 col_foto, col_info = st.columns([1, 2])
 with col_info:
@@ -177,16 +204,29 @@ usar_llm = st.checkbox(
 modelos_custom = st.session_state.setdefault("modelos_custom", [])
 for m in modelos_custom:
     m["rotulo"] = m["nome"]
-_opcoes_provedor = ["🔄 Automático (Gemini → Groq)", "🔷️ Gemini", "🔶️ Groq"]
+_provid_classe = {"Automático (Gemini → Groq)": "auto", "Gemini": "gemini", "Groq": "groq"}
+_opcoes_provedor = list(_provid_classe)
 _opcoes_provedor += [f"⭐ {m['nome']}" for m in modelos_custom]
-provedor_ia = st.radio(
-    "Provedor de IA:",
-    _opcoes_provedor,
-    index=0,
-    horizontal=True,
-    help="Automático: tenta o Gemini e, se cair (503/chave), usa o Groq automaticamente. "
-         "Escolha um específico para forçar aquele provedor — ou adicione um modelo próprio abaixo."
-)
+
+# Seletor de provedor em cards-botão (o st.radio não aceita HTML/SVG no rótulo).
+provedor_ia = st.session_state.get("provedor_svg", _opcoes_provedor[0])
+if provedor_ia not in _opcoes_provedor:
+    provedor_ia = _opcoes_provedor[0]
+
+st.markdown('<div style="font-weight:600;color:#0f172a;margin-bottom:4px">⚡ Provedor de IA:</div>', unsafe_allow_html=True)
+_cols = st.columns(len(_opcoes_provedor))
+for _i, (_col, _op) in enumerate(zip(_cols, _opcoes_provedor)):
+    _sel = " marca-provid-sel" if _op == provedor_ia else ""
+    with _col:
+        st.markdown(
+            f'<div class="marca-provid-{_provid_classe.get(_op, "custom")}{_sel}" style="display:none"></div>',
+            unsafe_allow_html=True,
+        )
+        if st.button(_op, key=f"prov_{_i}", width="stretch"):
+            st.session_state["provedor_svg"] = _op
+            st.rerun()
+st.caption("Escolha quem analisa o relato. Automático usa o Gemini e, se cair, troca para o Groq — "
+           "ou adicione um modelo próprio no expander abaixo.")
 
 with st.expander("➕ Adicionar modelo próprio (use sua API de qualquer provedor)"):
     st.markdown('<div class="marca-modelo" style="display:none"></div>', unsafe_allow_html=True)
@@ -301,9 +341,9 @@ if st.button("Executar Triagem Inteligente"):
                         # registros similares (retrieval local) para ver se já aconteceu.
                         registros_para_rag = persistencia.carregar_registros()
                         provedor = {
-                            "🔄 Automático (Gemini → Groq)": None,
-                            "🔷️ Gemini": "gemini",
-                            "🔶️ Groq": "groq",
+                            "Automático (Gemini → Groq)": None,
+                            "Gemini": "gemini",
+                            "Groq": "groq",
                         }.get(provedor_ia)
                         if provedor is None and provedor_ia.startswith("⭐ "):
                             _cfg = next(
