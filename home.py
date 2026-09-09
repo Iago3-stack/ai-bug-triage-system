@@ -111,10 +111,10 @@ _PROVID_CSS = """
     [data-testid="stColumn"]:has(.marca-provid) [data-testid="stButton"] button { height:50px; min-height:50px; border-radius:10px; font-weight:600; width:100%; }
     [data-testid="stColumn"]:has(.marca-prov-auto) [data-testid="stButton"] button { background:#334155 !important; color:#ffffff !important; border:1.5px solid #1e293b !important; }
     [data-testid="stColumn"]:has(.marca-prov-auto) [data-testid="stButton"] button:hover { background:#24303f !important; }
-    [data-testid="stColumn"]:has(.marca-prov-gemini) [data-testid="stButton"] button { background:#ffffff !important; color:#111827 !important; border:2px solid #c7d2fe !important; }
-    [data-testid="stColumn"]:has(.marca-prov-gemini) [data-testid="stButton"] button:hover { border-color:#4f46e5 !important; }
-    [data-testid="stColumn"]:has(.marca-prov-groq) [data-testid="stButton"] button { background:#ffffff !important; color:#111827 !important; border:2px solid #fecaca !important; }
-    [data-testid="stColumn"]:has(.marca-prov-groq) [data-testid="stButton"] button:hover { border-color:#f87171 !important; }
+    [data-testid="stColumn"]:has(.marca-prov-gemini) [data-testid="stButton"] button { background:linear-gradient(135deg,#2E7CF6 0%,#7c3aed 100%) !important; color:#ffffff !important; border:2px solid #4f46e5 !important; text-shadow:0 1px 2px rgba(15,23,42,.35) !important; }
+    [data-testid="stColumn"]:has(.marca-prov-gemini) [data-testid="stButton"] button:hover { filter:brightness(1.08) !important; }
+    [data-testid="stColumn"]:has(.marca-prov-groq) [data-testid="stButton"] button { background:#f55036 !important; color:#ffffff !important; border:2px solid #f55036 !important; text-shadow:0 1px 2px rgba(15,23,42,.35) !important; }
+    [data-testid="stColumn"]:has(.marca-prov-groq) [data-testid="stButton"] button:hover { background:#d84523 !important; }
     [data-testid="stColumn"]:has(.marca-prov-custom) [data-testid="stButton"] button { background:#fff7ed !important; color:#9a3412 !important; border:2px solid #fdba74 !important; }
     [data-testid="stColumn"]:has(.marca-prov-custom) [data-testid="stButton"] button:hover { border-color:#f97316 !important; }
     [data-testid="stColumn"]:has(.prov-provid-sel) [data-testid="stButton"] button { outline:2.5px solid #0f172a !important; outline-offset:2px !important; box-shadow:0 6px 16px rgba(15,23,42,.22) !important; }
@@ -203,7 +203,7 @@ provedor_ia = st.session_state.get("provedor_svg", _opcoes_provedor[0])
 if provedor_ia not in _opcoes_provedor:
     provedor_ia = _opcoes_provedor[0]
 
-st.markdown('<div style="font-weight:600;color:#0f172a;margin-bottom:4px">⚡ Provedor de IA:</div>', unsafe_allow_html=True)
+st.markdown('<div style="font-weight:600;color:#0f172a;margin-bottom:4px">🤖️ Provedor de IA:</div>', unsafe_allow_html=True)
 _cols = st.columns(len(_opcoes_provedor))
 for _i, (_col, _op) in enumerate(zip(_cols, _opcoes_provedor)):
     _classe = _provid_classe.get(_op, "custom")
@@ -211,7 +211,7 @@ for _i, (_col, _op) in enumerate(zip(_cols, _opcoes_provedor)):
     if _op == "Gemini":
         _icone = "✨"
     elif _op == "Groq":
-        _icone = "✴️"
+        _icone = "⚡"
     elif _classe == "auto":
         _icone = "🔄"
     else:
