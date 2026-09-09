@@ -116,9 +116,12 @@ ULTIMO_PROVEDOR = None
 ULTIMO_MODELO = None
 
 
-def disponivel() -> bool:
-    """True se há pelo menos uma chave de LLM configurada (Gemini ou Groq)."""
-    return bool(_chave("GEMINI_API_KEY") or _chave("GROQ_API_KEY"))
+def disponivel(modelos_custom=None) -> bool:
+    """True se há pelo menos uma chave de LLM configurada (Gemini/Groq) ou um
+    modelo próprio adicionado na sessão (traga sua API)."""
+    if _chave("GEMINI_API_KEY") or _chave("GROQ_API_KEY"):
+        return True
+    return bool(modelos_custom)
 
 
 def _provedor_normalizado(provedor: str | None) -> str | None:
@@ -133,9 +136,14 @@ def _provedor_normalizado(provedor: str | None) -> str | None:
     return None
 
 
-def _chamar_gemini(conteudo, temperatura=0.2, max_output_tokens=1024):
-    """Chama o Gemini com fallback entre modelos. Retorna (dict | None, erro)."""
-    chave = _chave("GEMINI_API_KEY")
+def _chamar_gemini(conteudo, temperatura=0.2, max_output_tokens=1024, modelos=None, chave=None):
+    """Chama o Gemini com fallback entre modelos. Retorna (dict | None, erro).
+
+    modelos: lista de nomes a tentar (padrão: MODELOS). chave: API key;
+    se vazia, usa a chave configurada (secrets/.env) — permite testar qualquer
+    modelo Gemini que a chave do usuário acesse (ex.: tier pago).
+    """
+    chave = chave or _chave("GEMINI_API_KEY")
     if not chave:
         return None, "Chave GEMINI_API_KEY não configurada."
     try:
@@ -153,7 +161,7 @@ def _chamar_gemini(conteudo, temperatura=0.2, max_output_tokens=1024):
 
         # Fallback: tenta vários modelos porque o Gemini costuma falhar
         # com 503 ("alta demanda") de vez em quando.
-        for modelo in MODELOS:
+        for modelo in modelos or MODELOS:
             for _tentativa in range(2):
                 try:
                     resposta = cliente.models.generate_content(
@@ -172,16 +180,79 @@ def _chamar_gemini(conteudo, temperatura=0.2, max_output_tokens=1024):
         return None, f"{type(exc).__name__}: {str(exc)[:120]}"
 
 
+def _chamar_openai_compat(conteudo, config, temperatura=0.2, max_output_tokens=1024):
+    """Chama qualquer endpoint OpenAI-compatível (/v1/chat/completions).
+
+    config: {"base_url", "chave", "modelo", "rotulo", "tipo": "openai"}.
+    Cobre OpenAI, DeepSeek, Ollama/LM Studio local e espelhos do OpenAI.
+    Tenta primeiro com JSON mode; se o endpoint não suportar, refaz sem o campo.
+    Retorna (dict | None, erro).
+    """
+    base = (config.get("base_url") or "").strip().rstrip("/")
+    chave = (config.get("chave") or "").strip()
+    modelo = (config.get("modelo") or "").strip()
+    if not base or not chave or not modelo:
+        return None, "Configuração do modelo personalizado incompleta (base_url/chave/modelo)."
+    url = base if base.endswith("/chat/completions") else f"{base}/chat/completions"
+    cabecalho = {"Authorization": f"Bearer {chave}", "Content-Type": "application/json"}
+    ultimo_erro = "sem resposta"
+    for com_json in (True, False):
+        corpo = {
+            "model": modelo,
+            "messages": [
+                {"role": "system",
+                 "content": "Você responde apenas com JSON válido, sem markdown."},
+                {"role": "user", "content": conteudo},
+            ],
+            "temperature": temperatura,
+            "max_tokens": max_output_tokens,
+        }
+        if com_json:
+            corpo["response_format"] = {"type": "json_object"}
+        try:
+            resposta = requests.post(url, headers=cabecalho, json=corpo, timeout=60)
+            if resposta.status_code != 200:
+                ultimo_erro = f"HTTP {resposta.status_code}: {str(resposta.text)[:90]}"
+                continue
+            payload = resposta.json()
+            texto = payload["choices"][0]["message"]["content"]
+            global ULTIMO_PROVEDOR, ULTIMO_MODELO
+            ULTIMO_PROVEDOR = config.get("rotulo") or "Custom"
+            ULTIMO_MODELO = modelo
+            return _extrair_json(texto), None
+        except Exception as exc:
+            ultimo_erro = f"{type(exc).__name__}: {str(exc)[:120]}"
+            continue
+    return None, f"Custom ({modelo}): {ultimo_erro}"
+
+
 def _chamar_llm(conteudo, temperatura=0.2, max_output_tokens=1024, provedor=None):
-    """Dispatcher: Gemini, Groq ou ambos (auto/fallback).
+    """Dispatcher: Gemini, Groq, modelo próprio (dict) ou ambos (auto/fallback).
 
     provedor:
       None/"auto" -> tenta Gemini; se falhar, tenta Groq.
       "gemini"    -> só Gemini (sem fallback).
       "groq"      -> só Groq.
+      dict        -> modelo próprio adicionado na UI (tipo gemini|openai).
     Retorna (dict | None, erro). Se apenas um provedor foi requisitado e não há
     chave dele, retorna erro imediatamente.
     """
+    if isinstance(provedor, dict):
+        cfg = provedor
+        if cfg.get("tipo") == "gemini":
+            chave = cfg.get("chave") or _chave("GEMINI_API_KEY")
+            dados, erro = _chamar_gemini(
+                conteudo, temperatura, max_output_tokens,
+                modelos=[(cfg.get("modelo") or "").strip() or MODELO],
+                chave=chave,
+            )
+            if dados is not None:
+                global ULTIMO_PROVEDOR
+                ULTIMO_PROVEDOR = cfg.get("rotulo") or "Gemini"
+            return dados, erro
+        if cfg.get("tipo") == "openai":
+            return _chamar_openai_compat(conteudo, cfg, temperatura, max_output_tokens)
+        return None, "Configuração de modelo próprio desconhecida."
     escolha = _provedor_normalizado(provedor)
     if escolha == "groq":
         return _chamar_groq(conteudo, temperatura, max_output_tokens)

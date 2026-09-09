@@ -7,7 +7,8 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 ## [Não lançado]
 
 ### Adicionado
-- **📈 Dashboard de QA completo** — versão super completa (113 testes no total):
+- **➕ Modelo próprio (traga sua API)** — botão no sidebar para **adicionar um modelo de qualquer provedor** dentro do app: OpenAI-compatível (OpenAI/DeepSeek/endpoint local — `base_url` + chave + modelo, com retry automático sem JSON mode para servidores que não suportam) ou **modelo Gemini custom** (ex.: tier pago) com chave própria ou a `GEMINI_API_KEY` existente. O modelo vira mais uma opção ⭐ no seletor de provedor e o relatório mostra quem respondeu. **A chave fica só na sessão** (`st.session_state`) — nunca é gravada em disco/histórico, e some no próximo reload.
+- **📈 Dashboard de QA completo** — versão super completa (119 testes no total):
   - **🛡️ Card "Saúde da suíte" (0–10)** no topo — combina taxa de normais, score médio, penaliza divergência IA vs. motor e bonifica uso de IA e resoluções registradas (`saude_suite()`).
   - **Gauge de % de CRÍTICAS/ALTAS** — barra de progresso logo abaixo dos cards.
   - **Filtro global por funcionalidade** — selectbox filtra severidade, volume, score médio e últimas triagens por uma funcionalidade (login, pagamento, etc.).

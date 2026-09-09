@@ -169,14 +169,73 @@ usar_llm = st.checkbox(
     help="Ativa a análise por LLM. Se desmarcado, só o motor local determinístico roda."
 )
 
+modelos_custom = st.session_state.setdefault("modelos_custom", [])
+for m in modelos_custom:
+    m["rotulo"] = m["nome"]
+_opcoes_provedor = ["🔄 Automático (Gemini → Groq)", "🔷️ Gemini", "🔶️ Groq"]
+_opcoes_provedor += [f"⭐ {m['nome']}" for m in modelos_custom]
 provedor_ia = st.radio(
     "Provedor de IA:",
-    ["🔄 Automático (Gemini → Groq)", "🔷️ Gemini", "🔶️ Groq"],
+    _opcoes_provedor,
     index=0,
     horizontal=True,
     help="Automático: tenta o Gemini e, se cair (503/chave), usa o Groq automaticamente. "
-         "Escolha um específico para forçar aquele provedor."
+         "Escolha um específico para forçar aquele provedor — ou adicione um modelo próprio abaixo."
 )
+
+with st.expander("➕ Adicionar modelo próprio (use sua API de qualquer provedor)"):
+    nome_custom = st.text_input(
+        "🏷️ Nome (aparece no seletor)", key="cm_nome",
+        placeholder="Ex: Meu GPT-4o · Gemini Pro pago · DeepSeek")
+    tipo_custom = st.radio(
+        "Tipo:", ["Gemini (google-genai)", "OpenAI-compatível (OpenAI/DeepSeek/local)"],
+        key="cm_tipo", horizontal=True)
+    base_url_custom = ""
+    if tipo_custom.startswith("Gemini"):
+        modelo_custom = st.text_input(
+            "Modelo", key="cm_modelo_gemini",
+            placeholder="Ex: gemini-3-pro — qualquer modelo que sua chave acesse")
+        chave_custom = st.text_input(
+            "API Key (opcional — se vazia, usa a sua GEMINI_API_KEY)",
+            type="password", key="cm_chave_gemini")
+    else:
+        base_url_custom = st.text_input(
+            "Base URL (OpenAI-compatível)", key="cm_base",
+            value="https://api.openai.com/v1",
+            placeholder="Ex: api.openai.com/v1 · api.deepseek.com/v1 · localhost:11434/v1")
+        modelo_custom = st.text_input(
+            "Modelo", key="cm_modelo_openai",
+            placeholder="Ex: gpt-4o · gpt-4o-mini · deepseek-chat")
+        chave_custom = st.text_input(
+            "API Key", type="password", key="cm_chave_openai",
+            placeholder="sk-... (fica só na sessão, não é salva)")
+    if st.button("💾 Adicionar modelo", key="cm_add"):
+        nome, modelo = nome_custom.strip(), modelo_custom.strip()
+        base = base_url_custom.strip().rstrip("/")
+        tipo = "gemini" if tipo_custom.startswith("Gemini") else "openai"
+        if not nome or not modelo:
+            st.error("Informe o nome exibido e o modelo.")
+        elif tipo == "openai" and (not base or not chave_custom.strip()):
+            st.error("Para APIs OpenAI-compatíveis, informe a Base URL e a API Key.")
+        elif any(m["nome"] == nome for m in modelos_custom):
+            st.error(f"Já existe um modelo com o nome '{nome}'.")
+        else:
+            modelos_custom.append({
+                "nome": nome, "tipo": tipo, "modelo": modelo,
+                "base_url": base, "chave": chave_custom.strip(), "rotulo": nome,
+            })
+            st.success(f"Modelo '{nome}' adicionado! Selecione ⭐ {nome} no seletor acima.")
+            for k in ("cm_nome", "cm_modelo_gemini", "cm_chave_gemini",
+                      "cm_modelo_openai", "cm_chave_openai"):
+                st.session_state.pop(k, None)
+    if modelos_custom:
+        st.markdown("##### Modelos adicionados:")
+        for i, m in enumerate(modelos_custom):
+            c1, c2 = st.columns([5, 1])
+            c1.caption(f"⭐ {m['nome']} · {m['tipo']} · {m['modelo']}")
+            if c2.button("🗑", key=f"cm_del_{i}", help="Remover este modelo"):
+                modelos_custom.pop(i)
+                st.rerun()
 
 st.markdown('<div class="marca-executar" style="display:none"></div>', unsafe_allow_html=True)
 if st.button("Executar Triagem Inteligente"):
@@ -226,7 +285,7 @@ if st.button("Executar Triagem Inteligente"):
             erro_llm = None
             prioridade_final = None
             divergente = None
-            if usar_llm and ia.disponivel():
+            if usar_llm and ia.disponivel(modelos_custom):
                 # Blindagem extra: nenhum erro da camada de IA/RAG pode derrubar
                 # o app. Qualquer exceção vira aviso + diagnóstico salvo na sessão.
                 try:
@@ -239,6 +298,12 @@ if st.button("Executar Triagem Inteligente"):
                             "🔷️ Gemini": "gemini",
                             "🔶️ Groq": "groq",
                         }.get(provedor_ia)
+                        if provedor is None and provedor_ia.startswith("⭐ "):
+                            _cfg = next(
+                                (m for m in modelos_custom if m["nome"] == provedor_ia[2:]), None
+                            )
+                            if _cfg:
+                                provedor = _cfg
                         if registros_para_rag:
                             resultado_llm, erro_llm = rag.analisar_com_rag(
                                 descricao_limpa, registros_para_rag, provedor=provedor

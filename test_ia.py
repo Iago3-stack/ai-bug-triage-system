@@ -136,3 +136,115 @@ def test_provedor_normalizado_aceita_rotulos_curtos(monkeypatch):
     assert ia._provedor_normalizado("auto") is None
     assert ia._provedor_normalizado("gemini") == "gemini"
     assert ia._provedor_normalizado("groq") == "groq"
+
+
+def test_disponivel_true_com_modelo_proprio(monkeypatch):
+    _sem_chaves(monkeypatch)
+    assert ia.disponivel() is False
+    assert ia.disponivel([{"nome": "Meu GPT-4o"}]) is True
+
+
+def test_openai_compat_sucesso_parseia_json(monkeypatch):
+    _sem_chaves(monkeypatch)
+    chamadas = {}
+
+    def _fake_post(url, headers=None, json=None, timeout=None):
+        chamadas["url"] = url
+        chamadas["json"] = json
+        chamadas["headers"] = headers
+        conteudo = '{"severidade": "alta", "categoria": "funcionalidade", ' \
+                   '"causa_raiz": "timeout no login", "passos_repro": ["1"], ' \
+                   '"resumo_tecnico": "login lento"}'
+        return _FakeResposta(
+            {"choices": [{"message": {"content": conteudo}}]}, status_code=200
+        )
+
+    monkeypatch.setattr(ia.requests, "post", _fake_post)
+    config = {"tipo": "openai", "base_url": "https://api.openai.com/v1",
+              "chave": "sk-test", "modelo": "gpt-4o", "rotulo": "Meu GPT-4o"}
+    dados, erro = ia._chamar_openai_compat("app demora no login", config)
+    assert erro is None
+    assert dados["severidade"] == "alta"
+    assert chamadas["url"] == "https://api.openai.com/v1/chat/completions"
+    assert chamadas["json"]["model"] == "gpt-4o"
+    assert chamadas["json"]["response_format"] == {"type": "json_object"}
+    assert chamadas["headers"]["Authorization"] == "Bearer sk-test"
+    assert ia.ULTIMO_PROVEDOR == "Meu GPT-4o"
+    assert ia.ULTIMO_MODELO == "gpt-4o"
+
+
+def test_openai_compat_sem_json_mode_quando_servidor_rejeita(monkeypatch):
+    _sem_chaves(monkeypatch)
+    chamadas = []
+    conteudo = '{"severidade": "media", "categoria": "outro", "causa_raiz": "x", ' \
+               '"passos_repro": [], "resumo_tecnico": "y"}'
+
+    def _fake_post(url, headers=None, json=None, timeout=None):
+        chamadas.append(json)
+        if len(chamadas) == 1:
+            return _FakeResposta({}, status_code=400, texto="response_format not supported")
+        return _FakeResposta(
+            {"choices": [{"message": {"content": conteudo}}]}, status_code=200
+        )
+
+    monkeypatch.setattr(ia.requests, "post", _fake_post)
+    config = {"tipo": "openai", "base_url": "https://api.deepseek.com/v1",
+              "chave": "dk", "modelo": "deepseek-chat", "rotulo": "DeepSeek"}
+    dados, erro = ia._chamar_openai_compat("relato", config)
+    assert erro is None
+    assert dados["severidade"] == "media"
+    assert len(chamadas) == 2
+    assert "response_format" in chamadas[0]
+    assert "response_format" not in chamadas[1]
+
+
+def test_openai_compat_config_incompleta(monkeypatch):
+    _sem_chaves(monkeypatch)
+    dados, erro = ia._chamar_openai_compat(
+        "relato", {"tipo": "openai", "base_url": "", "chave": "", "modelo": ""}
+    )
+    assert dados is None
+    assert "incompleta" in erro
+
+
+def test_dispatcher_dict_gemini_chama_modelo_especifico(monkeypatch):
+    _sem_chaves(monkeypatch)
+    chamado = {}
+
+    def _fake_gemini(conteudo, temperatura=0.2, max_output_tokens=1024,
+                     modelos=None, chave=None):
+        chamado["modelos"] = modelos
+        chamado["chave"] = chave
+        return {"severidade": "critica", "ok": "gemini-custom"}, None
+
+    monkeypatch.setattr(ia, "_chamar_gemini", _fake_gemini)
+    config = {"tipo": "gemini", "nome": "Gemini Pro pago",
+              "modelo": "gemini-3-pro", "chave": "chave-pro", "rotulo": "Gemini Pro pago"}
+    dados, erro = ia._chamar_llm("relato", provedor=config)
+    assert erro is None
+    assert chamado["modelos"] == ["gemini-3-pro"]
+    assert chamado["chave"] == "chave-pro"
+    assert dados["ok"] == "gemini-custom"
+    assert ia.ULTIMO_PROVEDOR == "Gemini Pro pago"
+
+
+def test_dispatcher_dict_openai_nao_tenta_gemini_groq(monkeypatch):
+    _sem_chaves(monkeypatch)
+
+    def _fake_post(url, headers=None, json=None, timeout=None):
+        conteudo = '{"severidade": "baixa", "categoria": "design", "causa_raiz": "c", ' \
+                   '"passos_repro": [], "resumo_tecnico": "r"}'
+        return _FakeResposta(
+            {"choices": [{"message": {"content": conteudo}}]}, status_code=200
+        )
+
+    monkeypatch.setattr(ia.requests, "post", _fake_post)
+    monkeypatch.setattr(ia, "_chamar_gemini",
+                        lambda *a, **k: (_ for _ in ()).throw(AssertionError("não deveria")))
+    monkeypatch.setattr(ia, "_chamar_groq",
+                        lambda *a, **k: (_ for _ in ()).throw(AssertionError("não deveria")))
+    config = {"tipo": "openai", "base_url": "https://x/v1", "chave": "k",
+              "modelo": "m", "rotulo": "X"}
+    dados, erro = ia._chamar_llm("relato", provedor=config)
+    assert erro is None
+    assert dados["severidade"] == "baixa"

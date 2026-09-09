@@ -57,7 +57,7 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
 - 🔵 **Triagem em duas camadas**
   1. **Camada técnica**: termos críticos (crash, pagamento, login, segurança, 500...) escalam a severidade.
   2. **Camada NLP**: análise de sentimento por **léxico em português** + **detecção de negação** ("não funciona", "não consigo", "parou de responder"...) + **padrões por raiz (regex)** — *lentidão* dispensa enumerar toda flexão (`lento`, `lenta`, `lentíssimo`, `lentamente`...) e o lookahead `(?!es?\b)` exclui o falso positivo *lente/lentes*.
-- 🟣 **Análise por IA (Fase 3)**: se houver chave `GEMINI_API_KEY` **e o checkbox 🔮 estiver marcado**, o app chama o **Google Gemini** e complementa a triagem com severidade sugerida, categoria, **causa raiz provável**, passos para reproduzir e resumo técnico — tudo em JSON estruturado, com **fallback automático** para o **Groq (open-weight, `gpt-oss-120b`)** se o Gemini cair (503/429/chave expirada) — ou se o usuário desligar a IA para aquela triagem. Há também um **seletor de provedor** (Automático / Gemini / Groq) para forçar um dos dois.
+- 🟣 **Análise por IA (Fase 3)**: se houver chave `GEMINI_API_KEY` **e o checkbox 🔮 estiver marcado**, o app chama o **Google Gemini** e complementa a triagem com severidade sugerida, categoria, **causa raiz provável**, passos para reproduzir e resumo técnico — tudo em JSON estruturado, com **fallback automático** para o **Groq (open-weight, `gpt-oss-120b`)** se o Gemini cair (503/429/chave expirada) — ou se o usuário desligar a IA para aquela triagem. Há um **seletor de provedor** (Automático / Gemini / Groq) para forçar um dos dois — e o botão **➕ Adicionar modelo próprio**: **traga sua API** de qualquer provedor (OpenAI-compatível como `gpt-4o`, DeepSeek ou um endpoint local — ou um modelo Gemini pago) para testar dentro do app. A chave fica **só na sessão** (nunca é gravada em disco/histórico).
 - 🟢 **Prioridade final reconciliada**: os dois motores são combinados pela regra do **maior vence** (nenhum alerta grave é ignorado) e o app **sinaliza divergência** quando discordam, recomendando revisão humana.
 - ⚠️ **100% offline e determinístico**: o motor `triagem.py` usa apenas a biblioteca padrão do Python — sem API de tradução, sem internet, sem custo e com resultado sempre reproduzível.
 - 🔷 **Transparência de QA**: o relatório informa o **motor de análise** usado e os **fatores identificados** em cada triagem.
@@ -66,7 +66,7 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
 - ⚪ **Histórico da sessão** em tabela (`pandas`) com opção de limpar.
 - 📁 **Histórico persistido (JSONL local + ☁️ Supabase)** — cada triagem vira um **snapshot fiel** em `data/historico.jsonl` (local, gitignored); quando o **Supabase** está configurado (URL + anon key nos secrets), o histórico passa a viver na **nuvem** e sobrevive a redeploys (com **failover** automático pra JSONL se a nuvem cair). **Seletor de data + download** do relatório em Markdown + vínculo com a issue criada no Jira. Backend visível no expander do histórico.
 - 🛡️ **Guardrails de entrada/saída (PII)** — detecta e **mascara** token Atlassian, chaves Gemini/Google/OpenAI, tokens GitHub, e-mails, **senhas numéricas, telefones e CPFs** digitados no relato: nada sensível vai para o Gemini, o Jira, o GitHub ou o histórico.
-- 🧪 **113 testes + CI** — suíte `pytest` (motor, Jira, persistência, guardrails, dashboard, RAG, nuvem, Pix e IA) rodando a cada push via GitHub Actions (badge de qualidade em cima).
+- 🧪 **119 testes + CI** — suíte `pytest` (motor, Jira, persistência, guardrails, dashboard, RAG, nuvem, Pix e IA) rodando a cada push via GitHub Actions (badge de qualidade em cima).
 - 📈 **Dashboard de QA completo** — visão geral 100% local do histórico (JSONL/cloud), sem enviar nada: KPIs + **saúde da suíte (0–10)**, **gauge de % de críticas/altas**, **filtro por funcionalidade**, **evolução do score médio por dia**, **top causas raiz da IA**, **taxa + lista das divergências IA vs. léxico** e coluna IA com o **provedor real** que respondeu.
 - 📚 **RAG no histórico** — o Gemini consulta as triagens passadas (retrieval local por similaridade Jaccard) e responde se o problema **já aconteceu** e **como foi resolvido** antes, apontando os registros similares. Depois de resolver o bug, **registre a solução** no app — vira aprendizado para as próximas triagens similares.
 - 🟦 **Rodapé de doação Pix** — card no rodapé do app com o **símbolo oficial do Banco Central** (SVG inline, teal — sem depender de serviço externo), botão **"Pagar com Pix via link"** e **QR Code** com a chave com `+55` (payload EMV/CRC válido) + botão que **copia a chave sem o DDI** (os apps de banco completam sozinhos). Tudo dentro de um **iframe local** do Streamlit (`st.iframe`).
@@ -167,7 +167,7 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 | 🖥️ `home.py` | Interface web (Streamlit): cabeçalho, ferramenta, export, histórico e **rodapé de doação Pix via `st.iframe`** |
 | 🧠 `triagem.py` | Motor NLP: léxico PT, padrões de negação e classificação de severidade (offline) |
 | 🔗 `jira_client.py` | Cliente da API REST v3 do Jira: cria issues (Tarefa) com prioridade mapeada |
-| 🔮 `ia.py` | Análise por IA via Google Gemini: causa raiz, categoria e passos (com fallback) |
+| 🔮 `ia.py` | Análise por IA via Google Gemini: causa raiz, categoria e passos (com fallback Groq e **modelo próprio** OpenAI-compatível/Gemini) |
 | 📚 `rag.py` | RAG leve no histórico: retrieval por similaridade Jaccard (offline) + geração que responde "já aconteceu? como resolvemos?" |
 | 🧪 `test_triagem.py` | 18 testes unitários do motor (rodam no CI) |
 | 🧪 `test_jira_client.py` | 15 testes unitários do cliente Jira (rodam no CI) |
@@ -180,6 +180,7 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 | 🧪 `test_rag.py` | 13 testes do RAG: tokenização, similaridade, recuperação top-k, contexto (com resolução) e orquestração (rodam no CI) |
 | 🧪 `test_nuvem_supabase.py` | 14 testes da persistência em nuvem: config, conversão, HTTP (mockado), resolução, failover e dispatch do facade (rodam no CI) |
 | 🧪 `test_pix.py` | 10 testes do Pix: payload EMV, CRC-CCITT, precedência link/QR e `chave_copia()` sem `+55` (rodam no CI) |
+| 🧪 `test_ia.py` | 16 testes da IA: dispatch de provedor (auto/Gemini/Groq/modelo próprio OpenAI-compatível e Gemini custom), JSON, fallback e orquestração RAG (rodam no CI) |
 | 📈 `dashboard.py` | Dashboard de QA: KPIs + saúde da suíte (0–10) + gauge de críticas + filtro por funcionalidade + top causas (IA) + score/dia + divergências IA vs. léxico + provedor real (leitura do JSONL/Cloud) |
 | 🟦 `pix.py` | Gerador de pagamento Pix: payload EMV/QR (CRC-CCITT), QR Code PNG (base64), **link de pagamento** com valor fixo e chaves com/sem `+55` (`chave`/`chave_copia`) |
 | 📦 `requirements.txt` | Dependências pinadas |
@@ -200,8 +201,8 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 - ✅ **Fase 1** — Motor NLP offline (léxico PT + negação, sem TextBlob/Google Translate)
 - ✅ **Fase 2** — Exportação do relatório, histórico de sessão e identidade visual
 - ✅ **Fase 3** — Integração com **LLMs** (Gemini) para análise de causa raiz, categoria e passos — com fallback automático
-- ✅ **Seletor de IA por triagem (checkbox 🔮 + provedor)** — você decide quando a IA entra: desligue para triagem 100% local, ou escolha **Automático (Gemini → Groq)**, **só Gemini** ou **só Groq**; o relatório mostra qual provedor/modelo respondeu
-- ✅ **Testes unitários do motor (`pytest`)** — 113 testes (motor + Jira + persistência + guardrails + dashboard + RAG + nuvem + Pix + IA), rodam automaticamente via CI (GitHub Actions)
+- ✅ **Seletor de IA por triagem (checkbox 🔮 + provedor)** — você decide quando a IA entra: desligue para triagem 100% local, ou escolha **Automático (Gemini → Groq)**, **só Gemini** ou **só Groq** — ou **➕ adicione um modelo próprio** com a sua API (OpenAI-compatível ou Gemini pago). O relatório mostra qual provedor/modelo respondeu
+- ✅ **Testes unitários do motor (`pytest`)** — 119 testes (motor + Jira + persistência + guardrails + dashboard + RAG + nuvem + Pix + IA), rodam automaticamente via CI (GitHub Actions)
 - ✅ **Exportação via API do Jira** — cria issue do tipo Tarefa no `iagoqa.atlassian.net` (prioridade mapeada automaticamente)
 - ✅ **Persistência do histórico (JSONL)** — cada triagem vira um snapshot fiel em `data/historico.jsonl` (local, gitignored): com IA salva o relatório completo; sem IA, só o léxico. Seletor de data + download do relatório
 - ✅ **Guardrails de entrada/saída (PII/credenciais)** — detecta e mascara tokens Atlassian, chaves Gemini/Google/OpenAI, tokens GitHub, e-mails, senhas numéricas, telefones e CPFs digitados no relato: nada sensível vai para o Gemini, o Jira, o GitHub ou o histórico

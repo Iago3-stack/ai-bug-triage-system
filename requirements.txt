@@ -13,5 +13,5 @@ google-genai==2.20.0
 #   - Local: arquivo .env (ignorado pelo .gitignore)
 requests==2.34.2
 # V2.2.0 — QR Code Pix (BR Code) gerado localmente no rodapé (doações), config via secrets/.env.
-# V2.3.0 — Fallback de IA via Groq (open-weight) + seletor de provedor (Automático/Gemini/Groq).
+# V2.3.0 — Fallback de IA via Groq (open-weight) + seletor de provedor (Automático/Gemini/Groq) + modelo próprio (OpenAI-compatível/Gemini custom, chave só na sessão).
 qrcode==8.2
