@@ -194,6 +194,15 @@ TYPING_CSS = """
   96% { max-width: 30em; }
   100% { max-width: 0; }
 }
+@media (max-width: 480px) {
+  /* no celular o nowrap + max-width corta "meus projetos"; mostra tudo abaixo */
+  .type-line {
+    white-space: normal;
+    max-width: none;
+    animation: none;
+  }
+  .type-stack { min-height: 0; }
+}
 </style>
 """
 

@@ -135,7 +135,7 @@ usar_llm = st.checkbox(
 
 provedor_ia = st.radio(
     "Provedor de IA:",
-    ["🔄 Automático (Gemini → Groq)", "🟦 Gemini", "⚙️ Groq"],
+    ["🔄 Automático (Gemini → Groq)", "🔷️ Gemini", "🔶️ Groq"],
     index=0,
     horizontal=True,
     help="Automático: tenta o Gemini e, se cair (503/chave), usa o Groq automaticamente. "
@@ -200,8 +200,8 @@ if st.button("Executar Triagem Inteligente"):
                         registros_para_rag = persistencia.carregar_registros()
                         provedor = {
                             "🔄 Automático (Gemini → Groq)": None,
-                            "🟦 Gemini": "gemini",
-                            "⚙️ Groq": "groq",
+                            "🔷️ Gemini": "gemini",
+                            "🔶️ Groq": "groq",
                         }.get(provedor_ia)
                         if registros_para_rag:
                             resultado_llm, erro_llm = rag.analisar_com_rag(
@@ -624,7 +624,7 @@ _link_pix = pix.link_pagamento()
 if _link_pix:
     pix_bloco = f"""
   <div style="flex:1 1 320px;text-align:center">
-    <div style="font-size:15px;font-weight:800;color:#ffffff">☕ Apoie este projeto</div>
+    <div style="font-size:15px;font-weight:800;color:#ffffff">🤝️ Apoie este projeto</div>
     <div style="color:#94a3b8;font-size:13px;margin:6px auto 12px;max-width:340px">Este é um projeto independente, feito por uma pessoa. Se ele te ajudou, considere uma contribuição voluntária via Pix.</div>
     <a href="{_link_pix}" target="_blank" style="text-decoration:none">
       <button style="display:inline-flex;align-items:center;gap:8px;background:#25D366;color:#0b1e14;font-weight:800;font-size:14px;border:none;padding:12px 24px;border-radius:10px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.25)">
@@ -640,7 +640,7 @@ elif pix.configurado():
         _qr_pix = pix.qrcode_png_base64(_payload_pix)
         pix_bloco = f"""
   <div style="flex:1 1 320px;text-align:center">
-    <div style="font-size:15px;font-weight:800;color:#ffffff">☕ Apoie este projeto</div>
+    <div style="font-size:15px;font-weight:800;color:#ffffff">🤝️ Apoie este projeto</div>
     <div style="color:#94a3b8;font-size:13px;margin:6px auto 12px;max-width:340px">Este é um projeto independente, feito por uma pessoa. Se ele te ajudou, considere uma contribuição voluntária via Pix.</div>
     <img src="{_qr_pix}" width="140" style="border-radius:10px;background:#ffffff;padding:6px" alt="QR Code Pix"/>
     <div style="color:#64748b;font-size:12px;margin-top:8px">Escaneie o QR Code com a câmera do seu banco — e ajude a manter este projeto open source.</div>
