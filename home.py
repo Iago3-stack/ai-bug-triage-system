@@ -88,6 +88,8 @@ st.markdown("""
     [data-testid="stExpander"]:has(.marca-dashboard) summary { color: #7c3aed !important; font-weight: 700 !important; }
     [data-testid="stExpander"]:has(.marca-diag) { border: 2px solid #d97706 !important; border-radius: 12px !important; }
     [data-testid="stExpander"]:has(.marca-diag) summary { color: #d97706 !important; font-weight: 700 !important; }
+    [data-testid="stExpander"]:has(.marca-modelo) { border: 2px solid #f97316 !important; border-radius: 12px !important; background: rgba(249, 115, 22, 0.05) !important; }
+    [data-testid="stExpander"]:has(.marca-modelo) summary { color: #f97316 !important; font-weight: 700 !important; }
 
     /* Cores dos botões de ação — mesma tática :has() + marcador oculto */
     [data-testid="stElementContainer"]:has(.marca-executar) + [data-testid="stElementContainer"] [data-testid="stButton"] button { background: #059669 !important; color: #ffffff !important; }
@@ -184,6 +186,7 @@ provedor_ia = st.radio(
 )
 
 with st.expander("➕ Adicionar modelo próprio (use sua API de qualquer provedor)"):
+    st.markdown('<div class="marca-modelo" style="display:none"></div>', unsafe_allow_html=True)
     nome_custom = st.text_input(
         "🏷️ Nome (aparece no seletor)", key="cm_nome",
         placeholder="Ex: Meu GPT-4o · Gemini Pro pago · DeepSeek")
