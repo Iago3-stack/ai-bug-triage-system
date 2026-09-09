@@ -7,6 +7,7 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 ## [Não lançado]
 
 ### Adicionado
+- **⚖️ Link "Licença MIT" no rodapé** — o item deixou de ser texto estático e passou a abrir o arquivo `LICENSE` do repositório (`/blob/main/LICENSE`), mantendo o mesmo estilo dos demais links do rodapé (Repositório, Documentação, Perfil).
 - **✨ Símbolos das marcas de IA** — o seletor de provedor virou **cards simples** com um `st.button` nativo por opção e emoji dentro do card: **✨ Gemini**, **✴️ Groq**, 🔄 Automático e ⭐ modelos próprios. O **título "Análise por IA"** do resultado segue mostrando o **símbolo oficial** do Google Gemini (sparkle da gstatic) e o logotipo "groq" (Wikimedia Commons, PD-textlogo) de quem respondeu, e o **hero** do site mantém a pill com o ícone original. Helper `_svg_gemini()`/`_svg_groq()` reutilizáveis.
 - **➕ Modelo próprio (traga sua API)** — botão no sidebar para **adicionar um modelo de qualquer provedor** dentro do app: OpenAI-compatível (OpenAI/DeepSeek/endpoint local — `base_url` + chave + modelo, com retry automático sem JSON mode para servidores que não suportam) ou **modelo Gemini custom** (ex.: tier pago) com chave própria ou a `GEMINI_API_KEY` existente. O modelo vira mais uma opção ⭐ no seletor de provedor e o relatório mostra quem respondeu. **A chave fica só na sessão** (`st.session_state`) — nunca é gravada em disco/histórico, e some no próximo reload.
 - **📈 Dashboard de QA completo** — versão super completa (119 testes no total):

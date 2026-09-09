@@ -851,10 +851,10 @@ _footer_html = f"""
       <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.5 7.5 0 014 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
       Perfil
     </a>
-    <span style="display:inline-flex;align-items:center;gap:6px;color:#cbd5e1">
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M1 7.775V2.75C1 1.784 1.784 1 2.75 1h10.5c.966 0 1.75.784 1.75 1.75v10.5A1.75 1.75 0 0113.25 15H2.75A1.75 1.75 0 011 13.25V7.775zm1.5 0v5.475c0 .138.112.25.25.25h10.5a.25.25 0 00.25-.25V7.775L8.006 9.53a.75.75 0 01-.744 0L2.5 7.775zM13.25 2.5H2.75a.25.25 0 00-.25.25v3.19L8 7.684l5.5-3.744v-3.19a.25.25 0 00-.25-.25z"/></svg>
+    <a href="{repo_url}blob/main/LICENSE" target="_blank" style="color:#cbd5e1;text-decoration:none;display:inline-flex;align-items:center;gap:6px">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1.5 1.5 3.5v3.5c0 3.9 2.8 6.7 6.5 7.5 3.7-.8 6.5-3.6 6.5-7.5V3.5L8 1.5Zm-.75 9V10a3.9 3.9 0 0 0-1.66-.83c-.55 0-.86.42-.48.95.37.51.89.9 2.14 1.88Zm.74-.02c.84-.62 1.77-1.38 2.16-1.89L10 9.17a3.9 3.9 0 0 0-1.75.81l-.28.25ZM8 5.9a.8.8 0 1 0 0 1.6.8.8 0 0 0 0-1.6Z"/></svg>
       Licença MIT
-    </span>
+    </a>
   </div>
   <div style="padding:12px 16px;text-align:center;font-size:12px;color:#64748b;border-top:1px solid rgba(255,255,255,.08)">
     © {VERSAO} <b style="color:#94a3b8">Iago Nunes de Araújo</b> · 🚀 QA Automation Engineer · Estudante de IA &amp; ML (UNIASSELVI)<br/>
