@@ -644,7 +644,6 @@ elif pix.configurado():
     <div style="font-size:15px;font-weight:800;color:#ffffff">🤝️ Apoie este projeto</div>
     <div style="color:#94a3b8;font-size:13px;margin:6px auto 12px;max-width:340px">Este é um projeto independente, feito por uma pessoa. Se ele te ajudou, considere uma contribuição voluntária via Pix.</div>
     <img src="{_qr_pix}" width="140" style="border-radius:10px;background:#ffffff;padding:6px" alt="QR Code Pix"/>
-    <div style="color:#64748b;font-size:12px;margin-top:8px">Escaneie o QR Code com a câmera do seu banco — e ajude a manter este projeto open source.</div>
   </div>"""
     except Exception:
         pix_bloco = ""
@@ -688,7 +687,7 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# Botão "copiar chave pix" logo após o card (celular: exatamente abaixo do QR).
+# Botão "copiar chave pix" + legenda do QR — abaixo do card, na ordem: QR → botão → legenda.
 if not _link_pix and pix.chave():
     components.html(f"""
 <div style="text-align:center;margin-top:10px">
@@ -707,3 +706,4 @@ function copiarChave() {{
 }}
 </script>
 """, height=70)
+    st.caption("Escaneie o QR Code com a câmera do seu banco — ou copie a chave ao lado — e ajude a manter este projeto open source.")
