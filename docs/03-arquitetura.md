@@ -37,7 +37,8 @@ O sistema trabalha com **dois motores de análise** que se **reconciliam** pela 
 
 | Módulo | Papel | Dependência |
 |---|---|---|
-| `home.py` | Interface web (Streamlit): cabeçalho, ferramenta, export, histórico | streamlit |
+| `home.py` | Interface web (Streamlit): cabeçalho, ferramenta, export, histórico e **rodapé de doação Pix via `st.iframe`** (components.html removido após 2026-06) | streamlit |
+| `pix.py` | Gerador de pagamento Pix: payload EMV **COPIA-e-Coloca** com CRC-CCITT, QR Code PNG (base64), **link de pagamento** com valor fixo e chave com/sem `+55` (`chave`/`chave_copia`) | **stdlib apenas** + `qrcode` |
 | `triagem.py` | Motor NLP **offline determinístico**: léxico PT + negações | **stdlib apenas** |
 | `ia.py` | Análise por IA: causa raiz, categoria, passos — **seletor de provedor** (Automático → Gemini com fallback Groq `gpt-oss-120b`, ou forçado), expondo quem respondeu (`ULTIMO_PROVEDOR/MODELO`) | google-genai + groq |
 | `rag.py` | RAG leve no histórico: **retrieval local** (similaridade Jaccard, offline) + geração via `PROMPT_RAG` que responde "já aconteceu? como resolvemos?" — aprende com a resolução registrada | google-genai + `ia.py` |

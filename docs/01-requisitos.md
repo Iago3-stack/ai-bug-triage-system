@@ -20,6 +20,10 @@ O app recebe o **relato de um bug** em linguagem natural e o **classifica automa
 | RF-08 | **Exportar** o relatório em Markdown, abrir Issue no GitHub ou enviar ao Jira | Média |
 | RF-09 | Manter **histórico da sessão** em tabela com opção de limpar | Baixa |
 | RF-10 | Rodar **100% offline** no motor local (sem API externa) | Alta |
+| RF-11 | **Análise por IA** opcional (Gemini com fallback Groq) — severidade sugerida, causa raiz, categoria e passos; **seletor de provedor** (Automático / só Gemini / só Groq) com o modelo real no relatório | Média |
+| RF-12 | **RAG** no histórico persistido: responder se o bug **já aconteceu** e **como foi resolvido** (retrieval local por Jaccard + geração), aprendendo com a **resolução registrada** pelo usuário | Média |
+| RF-13 | **Dashboard de QA completo**: saúde da suíte (0–10), gauge de % de críticas/altas, filtro por funcionalidade, evolução do score médio/dia, top causas raiz (IA) e taxa + lista de divergências IA vs. motor | Média |
+| RF-14 | **Rodapé de doação Pix**: símbolo oficial do Banco Central, botão "Pagar com Pix via link" e QR Code com a chave com `+55`, com botão que **copia a chave sem o DDI** | Baixa |
 
 ## 3. Requisitos Não-Funcionais (RNF)
 
@@ -30,7 +34,7 @@ O app recebe o **relato de um bug** em linguagem natural e o **classifica automa
 | RNF-03 | **Baixa latência**: triagem instantânea na interface | Performance |
 | RNF-04 | **Fallback automático** para o motor local quando a API de IA falhar | Confiabilidade |
 | RNF-05 | Interface **intuitiva e com identidade visual** própria | Usabilidade |
-| RNF-06 | Código **testado** por `pytest` (12 casos) e validado por **CI** | Qualidade |
+| RNF-06 | Código **testado** por `pytest` (113 casos) e validado por **CI** | Qualidade |
 | RNF-07 | **Transparência**: informar qual motor foi usado em cada triagem | Auditoria |
 
 ## 4. Limites e decisões de contorno

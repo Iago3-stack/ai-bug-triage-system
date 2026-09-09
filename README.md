@@ -67,8 +67,9 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
 - 📁 **Histórico persistido (JSONL local + ☁️ Supabase)** — cada triagem vira um **snapshot fiel** em `data/historico.jsonl` (local, gitignored); quando o **Supabase** está configurado (URL + anon key nos secrets), o histórico passa a viver na **nuvem** e sobrevive a redeploys (com **failover** automático pra JSONL se a nuvem cair). **Seletor de data + download** do relatório em Markdown + vínculo com a issue criada no Jira. Backend visível no expander do histórico.
 - 🛡️ **Guardrails de entrada/saída (PII)** — detecta e **mascara** token Atlassian, chaves Gemini/Google/OpenAI, tokens GitHub, e-mails, **senhas numéricas, telefones e CPFs** digitados no relato: nada sensível vai para o Gemini, o Jira, o GitHub ou o histórico.
 - 🧪 **113 testes + CI** — suíte `pytest` (motor, Jira, persistência, guardrails, dashboard, RAG, nuvem, Pix e IA) rodando a cada push via GitHub Actions (badge de qualidade em cima).
-- 📈 **Dashboard de QA** — visão geral 100% local do histórico persistido: KPIs (total, CRÍTICAs, MÉDIAS, normais, score médio), **distribuição de severidade**, **volume por dia**, **funcionalidades mais afetadas** e comparativo **IA vs. motor local** (divergências).
+- 📈 **Dashboard de QA completo** — visão geral 100% local do histórico (JSONL/cloud), sem enviar nada: KPIs + **saúde da suíte (0–10)**, **gauge de % de críticas/altas**, **filtro por funcionalidade**, **evolução do score médio por dia**, **top causas raiz da IA**, **taxa + lista das divergências IA vs. léxico** e coluna IA com o **provedor real** que respondeu.
 - 📚 **RAG no histórico** — o Gemini consulta as triagens passadas (retrieval local por similaridade Jaccard) e responde se o problema **já aconteceu** e **como foi resolvido** antes, apontando os registros similares. Depois de resolver o bug, **registre a solução** no app — vira aprendizado para as próximas triagens similares.
+- 🟦 **Rodapé de doação Pix** — card no rodapé do app com o **símbolo oficial do Banco Central** (SVG inline, teal — sem depender de serviço externo), botão **"Pagar com Pix via link"** e **QR Code** com a chave com `+55` (payload EMV/CRC válido) + botão que **copia a chave sem o DDI** (os apps de banco completam sozinhos). Tudo dentro de um **iframe local** do Streamlit (`st.iframe`).
 - 🟫 **Sem falsos positivos técnicos**: palavras como *erro*, *bug* e *falha* são vocabulário normal de teste e **não** disparam severidade sozinhas.
 - 🟥 **Interface com identidade visual própria** (tema Streamlit em `config.toml`).
 
@@ -158,11 +159,12 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
   <a href="docs/02-casos-de-teste.md"><img src="https://img.shields.io/badge/Casos%20de%20Teste-4CAF50?style=for-the-badge&logo=checkmarx&logoColor=white" /></a>
   <a href="docs/03-arquitetura.md"><img src="https://img.shields.io/badge/Arquitetura-9C27B0?style=for-the-badge&logo=diagramdotnet&logoColor=white" /></a>
   <a href="docs/04-estrategia-de-qualidade.md"><img src="https://img.shields.io/badge/Estrat%C3%A9gia%20de%20QA-FF9800?style=for-the-badge&logo=quality&logoColor=white" /></a>
+  <a href="docs/05-persistencia-nuvem.md"><img src="https://img.shields.io/badge/Persist%C3%AAncia%20em%20Nuvem-38BDF8?style=for-the-badge&logo=libpostal&logoColor=white" /></a>
 </div>
 
 | Arquivo | Papel |
 |---|---|
-| 🖥️ `home.py` | Interface web (Streamlit): cabeçalho, ferramenta, export e histórico |
+| 🖥️ `home.py` | Interface web (Streamlit): cabeçalho, ferramenta, export, histórico e **rodapé de doação Pix via `st.iframe`** |
 | 🧠 `triagem.py` | Motor NLP: léxico PT, padrões de negação e classificação de severidade (offline) |
 | 🔗 `jira_client.py` | Cliente da API REST v3 do Jira: cria issues (Tarefa) com prioridade mapeada |
 | 🔮 `ia.py` | Análise por IA via Google Gemini: causa raiz, categoria e passos (com fallback) |
@@ -174,10 +176,12 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 | 🛡️ `guardrails.py` | Bloqueia vazamento de credenciais/PII: mascara tokens, chaves, e-mails, senhas numéricas, telefones e CPFs antes de IA/Jira/GitHub/histórico |
 | 🧪 `test_persistencia.py` | 8 testes unitários da persistência (rodam no CI) |
 | 🧪 `test_guardrails.py` | 14 testes de detecção/máscara de credenciais e PII (rodam no CI) |
-| 🧪 `test_dashboard.py` | 6 testes das agregações do Dashboard de QA (rodam no CI) |
+| 🧪 `test_dashboard.py` | 11 testes do Dashboard de QA: saúde da suíte, gauge, filtro por funcionalidade, top causas, divergências e provedor real (rodam no CI) |
 | 🧪 `test_rag.py` | 13 testes do RAG: tokenização, similaridade, recuperação top-k, contexto (com resolução) e orquestração (rodam no CI) |
 | 🧪 `test_nuvem_supabase.py` | 14 testes da persistência em nuvem: config, conversão, HTTP (mockado), resolução, failover e dispatch do facade (rodam no CI) |
-| 📈 `dashboard.py` | Dashboard de QA: KPIs + severidade + volume/dia + funcionalidades + IA vs. léxico (leitura do JSONL) |
+| 🧪 `test_pix.py` | 10 testes do Pix: payload EMV, CRC-CCITT, precedência link/QR e `chave_copia()` sem `+55` (rodam no CI) |
+| 📈 `dashboard.py` | Dashboard de QA: KPIs + saúde da suíte (0–10) + gauge de críticas + filtro por funcionalidade + top causas (IA) + score/dia + divergências IA vs. léxico + provedor real (leitura do JSONL/Cloud) |
+| 🟦 `pix.py` | Gerador de pagamento Pix: payload EMV/QR (CRC-CCITT), QR Code PNG (base64), **link de pagamento** com valor fixo e chaves com/sem `+55` (`chave`/`chave_copia`) |
 | 📦 `requirements.txt` | Dependências pinadas |
 | 🎨 `.streamlit/config.toml` | Tema e configurações da app |
 | 📚 `docs/` | Documentação de engenharia e qualidade |
@@ -201,7 +205,7 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 - ✅ **Exportação via API do Jira** — cria issue do tipo Tarefa no `iagoqa.atlassian.net` (prioridade mapeada automaticamente)
 - ✅ **Persistência do histórico (JSONL)** — cada triagem vira um snapshot fiel em `data/historico.jsonl` (local, gitignored): com IA salva o relatório completo; sem IA, só o léxico. Seletor de data + download do relatório
 - ✅ **Guardrails de entrada/saída (PII/credenciais)** — detecta e mascara tokens Atlassian, chaves Gemini/Google/OpenAI, tokens GitHub, e-mails, senhas numéricas, telefones e CPFs digitados no relato: nada sensível vai para o Gemini, o Jira, o GitHub ou o histórico
-- ✅ **Dashboard de QA** — visão geral do histórico persistido: KPIs, distribuição de severidade, volume por dia, funcionalidades mais afetadas e comparativo IA vs. motor local (100% local, sem enviar nada)
+- ✅ **Dashboard de QA completo** — saúde da suíte (0–10), gauge de % de críticas/altas, filtro por funcionalidade, evolução do score médio/dia, top causas raiz (IA), taxa + lista das divergências IA vs. motor local e provedor real na coluna IA (100% local, sem enviar nada)
 - ✅ **RAG no histórico** — o Gemini consulta as triagens passadas (top-k similares, retrieval local por Jaccard) e responde **"isso já aconteceu? como resolvemos?"** com a resolução anterior; se não acha, sinaliza caso novo
 - - ✅ **Roadmap 10/10 🎉** — MVP concluído; próximos passos rumo ao SaaS abaixo
 
