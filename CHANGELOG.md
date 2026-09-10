@@ -7,6 +7,9 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 ## [Não lançado]
 
 ### Adicionado
+- **🧩 Card "Sobre Mim" ampliado (v2.6.4)** — o conteúdo do antigo card da UNIASSELVI foi **integrado ao card "Sobre Mim"** numa seção "🎓 Formação &amp; Stack", com **menção explícita ao SaaS** (planos Basic/Premium por variável de ambiente, RAG, comparativo IA×local, multi-canal). O card único agora é um bloco de perfil completo. A linha divisória ficou **entre o card e o título "🤖 Agente de Triagem e Documentação de Bugs 2026"**.
+
+### Adicionado
 - **🧹 Cabeçalho reorganizado + animação removida (v2.6.3)** — a animação de digitação ("Bem-vindo ao meu site! / Informações sobre mim e meus projetos / QA+IA no Lab Hack28") e a imagem-cápsula foram **removidas**. O card "🚀 Construo automação de QA com IA... / 📍 São Luís" subiu para o **lado direito, logo abaixo do nome**, formando um cabeçalho de perfil compacto; a foto permanece à esquerda.
 
 ### Adicionado

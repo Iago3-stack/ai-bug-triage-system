@@ -16,7 +16,7 @@ import plano
 import dashboard as dashboard_qa
 import pix
 
-VERSAO = "v2.6.3"
+VERSAO = "v2.6.4"
 
 # Símbolo oficial do Pix (Banco Central) — PD-textlogo via Wikimedia Commons.
 # Só os 3 paths verdes da marca (o "losango"), sem a tipografia do logo.
@@ -484,17 +484,16 @@ with centro:
   <p style="margin:0 0 12px">🚀 <b style="color:#94a3b8">Hoje:</b> Já coloco IA em produção lucidamente — motor NLP determinístico + Gemini com fallback automático, aplicação pública, open-source e <b style="color:#94a3b8">container publicada no GHCR</b>.</p>
   <p style="margin:0 0 12px">🌟 <b style="color:#94a3b8">Visão:</b> evoluir esse mesmo motor para a próxima geração — <b style="color:#94a3b8">agentes de IA, RAG e MLOps</b> — transformando QA de "caça-bugs" em <b style="color:#94a3b8">inteligência de produto</b>. Com a graduação em IA &amp; ML (UNIASSELVI · Dez/2027), esse caminho está documentado passo a passo no meu GitHub aberto.</p>
   <p style="margin:0"><b style="color:#94a3b8">O que eu busco agora:</b> Oportunidades <b style="color:#94a3b8">Home Office / Remote</b> para aplicar automação híbrida, acelerar ciclos de entrega e elevar o padrão de qualidade — fazendo parte de um time que constrói o futuro do software.</p>
+  <div style="margin:16px 0 0;height:2px;background:linear-gradient(90deg,transparent,#25D366,#7c3aed,transparent);border-radius:999px"></div>
+  <div style="font-size:16px;font-weight:800;color:#7aa5ff;margin:14px 0 8px">🎓 Formação &amp; Stack</div>
+  <p style="margin:0 0 12px">Atualmente, dedico meus estudos na <b style="color:#7aa5ff">UNIASSELVI</b> para aprofundar conhecimentos em <b style="color:#7aa5ff">Redes Neurais</b> e <b style="color:#7aa5ff">Modelos de Linguagem (LLMs)</b>. No meu dia a dia, utilizo o <b style="color:#7aa5ff">Linux Mint</b> como base para desenvolver scripts em <b style="color:#7aa5ff">Python</b> que integram APIs de inteligência artificial à automação de testes, buscando sempre reduzir o tempo de triagem de bugs e melhorar a precisão dos relatórios técnicos.</p>
+  <p style="margin:0">💼 <b style="color:#94a3b8">SaaS em construção:</b> esse mesmo motor está sendo transformado em um <b style="color:#25D366">produto SaaS de QA</b> — planos <b style="color:#94a3b8">Basic</b> e <b style="color:#fde68a">Premium</b> controlados por variável de ambiente, RAG com "como foi resolvido", comparação IA × motor local e alertas multi-canal. É a prova prática de como transformar engenharia em produto.</p>
 </div>
 """, unsafe_allow_html=True)
 
-# --- SOBRE O PROJETO ---
+# Divisória que separa o card "Sobre Mim" do título da ferramenta
 st.markdown("""
 <div style="height:3px;width:100%;background:linear-gradient(90deg,transparent,#25D366,#2E7CF6,#7c3aed,transparent);border-radius:999px;margin:8px 0"></div>
-""", unsafe_allow_html=True)
-st.markdown("""
-<div style="width:100%;background:linear-gradient(135deg,#1e293b 0%,#24344f 55%,#2E7CF6 175%);border-radius:16px;color:#e2e8f0;font-size:15px;line-height:1.6;padding:20px 24px">
-  <p style="margin:0">Atualmente, dedico meus estudos na <b style="color:#7aa5ff">UNIASSELVI</b> para aprofundar conhecimentos em <b style="color:#7aa5ff">Redes Neurais</b> e <b style="color:#7aa5ff">Modelos de Linguagem (LLMs)</b>. No meu dia a dia, utilizo o <b style="color:#7aa5ff">Linux Mint</b> como base para desenvolver scripts em <b style="color:#7aa5ff">Python</b> que integram APIs de inteligência artificial à automação de testes, buscando sempre reduzir o tempo de triagem de bugs e melhorar a precisão dos relatórios técnicos.</p>
-</div>
 """, unsafe_allow_html=True)
 st.markdown("""
 <div style="font-size:1.5em;font-weight:800;line-height:1.25;background:linear-gradient(90deg,#f59e0b 0%,#ef4444 45%,#ec4899 100%);-webkit-background-clip:text;background-clip:text;color:transparent;display:inline-block;margin-top:8px">🤖 Agente de Triagem e Documentação de Bugs 2026</div>
