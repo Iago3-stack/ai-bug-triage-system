@@ -16,7 +16,7 @@ import plano
 import dashboard as dashboard_qa
 import pix
 
-VERSAO = "v2.6.5"
+VERSAO = "v2.6.6"
 
 # Símbolo oficial do Pix (Banco Central) — PD-textlogo via Wikimedia Commons.
 # Só os 3 paths verdes da marca (o "losango"), sem a tipografia do logo.

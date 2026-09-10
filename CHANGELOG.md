@@ -7,6 +7,9 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 ## [Não lançado]
 
 ### Adicionado
+- **➡️ Hero full-width (v2.6.6)** — o card do hero deixou de ter `max-width: 640px` e agora **ocupa 100% da largura da coluna/da tela**: no desktop acompanha as bordas (rentre à linha de cima do cabeçalho) e no celular se ajusta à largura da tela sem vazamento horizontal (validado em 390 px).
+
+### Adicionado
 - **🦸 Card do perfil → Hero no cabeçalho (v2.6.5)** — o card "🚀 Construo automação de QA... / 📍 São Luís" foi **removido** (conteúdo já citado no Sobre Mim e no hero) e o **hero animado "QA Automation + IA"** passou a ocupar o lugar dele, ao lado direito, logo abaixo dos nome. O cabeçalho ficou: foto (esquerda) + nome + hero.
 
 ### Adicionado

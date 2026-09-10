@@ -24,7 +24,7 @@ CSS = """
   justify-content: center;
 }
 .hero-card {
-  max-width: 640px;
+  max-width: 100%;
   width: 100%;
   border: 1px solid rgba(46,124,246,.4);
   border-radius: 18px;
