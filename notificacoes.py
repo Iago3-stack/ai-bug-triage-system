@@ -13,37 +13,49 @@ import urllib.request
 
 _SOPADRA = "***"
 
-# Override por sessão (cada usuário/empresa configura o seu): campos aqui têm
-# prioridade sobre secrets/env/.env. Nada é gravado em disco — some no reload.
+# Override por sessão: cada usuário/visitante configura o SEU (webhook, e-mail,
+# remetente/senha SMTP). Fica em st.session_state (por navegador/aba) no Streamlit;
+# sem runtime do Streamlit (testes) cai num dict global. Nada é gravado em disco.
+_CHAVE_OVERRIDE = "cfg_override_notif"
 _SESSAO: dict[str, str] = {}
 
 
+def _dados_override() -> dict:
+    """Dicionário de override da sessão corrente (ou fallback p/ testes)."""
+    try:
+        import streamlit as st
+        return st.session_state.setdefault(_CHAVE_OVERRIDE, {})
+    except Exception:
+        return _SESSAO
+
+
 def set_config(**campos: str) -> None:
-    """Sobrescreve (só nesta sessão) campos de configuração.
+    """Sobrescreve (só nesta sessão do visitante) campos de configuração.
 
     Valores vazios removem o override do campo (volta a valer o config do dono).
     """
+    dados = _dados_override()
     for k, v in campos.items():
         v = (v or "").strip()
         if v:
-            _SESSAO[k] = v
+            dados[k] = v
         else:
-            _SESSAO.pop(k, None)
+            dados.pop(k, None)
 
 
 def config_sessao() -> dict:
     """Snapshot dos overrides da sessão atual."""
-    return dict(_SESSAO)
+    return dict(_dados_override())
 
 
 def limpar_config_sessao() -> None:
     """Remove todos os overrides (volta ao config do dono: secrets/env/.env)."""
-    _SESSAO.clear()
+    _dados_override().clear()
 
 
 def _ler(nome: str) -> str:
     """Lê configuração com prioridade: sessão → st.secrets → os.environ → .env."""
-    v = _SESSAO.get(nome)
+    v = _dados_override().get(nome)
     if v is not None:
         return str(v).strip()
     try:

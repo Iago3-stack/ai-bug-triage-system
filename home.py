@@ -1067,7 +1067,8 @@ def abrir_configuracoes():
     with st.expander("🔔 Notificações (CRÍTICA/ALTA)"):
         st.markdown('<div class="marca-notif" style="display:none"></div>', unsafe_allow_html=True)
         st.caption("Alerta automático quando uma triagem resultar em **CRÍTICA** ou **ALTA**. "
-                   "O que você salvar aqui vale **só nesta sessão** — o config do dono (secrets/.env) continua como padrão.")
+                   "O que você salvar aqui vale **só para a sua sessão** (seu navegador) — cada visitante tem o seu; "
+                   "o config do dono (secrets/.env) continua como padrão e nada é gravado em disco.")
         _nc1, _nc2 = st.columns(2)
         _ovr = notificacoes.config_sessao()
         n_discord = _nc1.text_input(
