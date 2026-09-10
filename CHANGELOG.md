@@ -7,6 +7,9 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 ## [Não lançado]
 
 ### Adicionado
+- **✏️ Copy do subtítulo da ferramenta (v2.6.8)** — novo texto de valor: "Triagem automática de bugs com NLP + IA: técnico, emocional e com plano de ação em segundos." (antes: "Esta ferramenta demonstra o uso de NLP para automatizar..."). Mais direto e orientado a benefício.
+
+### Adicionado
 - **📐 "Sobre Mim" full-width (v2.6.7)** — removidas as colunas `esq, centro` que deixavam um vão à esquerda; o card agora ocupa **100% da largura** e fica **rentre ao divisor e ao título "🤖 Agente de Triagem e Documentação de Bugs 2026"** (gap 27 px, sem espaços laterais, sem overflow no mobile).
 
 ### Adicionado

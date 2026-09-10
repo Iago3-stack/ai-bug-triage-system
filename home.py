@@ -16,7 +16,7 @@ import plano
 import dashboard as dashboard_qa
 import pix
 
-VERSAO = "v2.6.7"
+VERSAO = "v2.6.8"
 
 # Símbolo oficial do Pix (Banco Central) — PD-textlogo via Wikimedia Commons.
 # Só os 3 paths verdes da marca (o "losango"), sem a tipografia do logo.
@@ -488,7 +488,7 @@ st.markdown("""
 st.markdown("""
 <div style="font-size:1.5em;font-weight:800;line-height:1.25;background:linear-gradient(90deg,#f59e0b 0%,#ef4444 45%,#ec4899 100%);-webkit-background-clip:text;background-clip:text;color:transparent;display:inline-block;margin-top:8px">🤖 Agente de Triagem e Documentação de Bugs 2026</div>
 """, unsafe_allow_html=True)
-st.info("Esta ferramenta demonstra o uso de NLP para automatizar a triagem técnica e emocional de falhas de software.")
+st.info("Triagem automática de bugs com NLP + IA: técnico, emocional e com plano de ação em segundos.")
 
 # Barra de gradiente no topo da página (identidade visual)
 st.markdown("""
