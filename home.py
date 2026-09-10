@@ -215,6 +215,15 @@ body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:has(.marca-modelo) 
 body:has([data-st-tema="escuro"]) [data-testid="stExpander"] [data-testid="stBaseButton-secondary"] { background:transparent !important; color:#8b94a3 !important; border:none !important; box-shadow:none !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stExpander"] [data-testid="stBaseButton-secondary"]:hover { background:rgba(255,255,255,.1) !important; color:#ffffff !important; }
 
+/* Botões de ação coloridos dentro de expanders voltam à cor sólida original no escuro
+   (a regra do chevron acima apagava o fundo deles); leve = sem mudança com hover */
+body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:has(.marca-historico) [data-testid="stDownloadButton"] button,
+body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:has(.marca-historico) [data-testid="stDownloadButton"] button:hover { background:#065f46 !important; color:#ffffff !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:has(.marca-historico) [data-testid="stButton"] button,
+body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:has(.marca-historico) [data-testid="stButton"] button:hover { background:#059669 !important; color:#ffffff !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stElementContainer"]:has(.marca-modelo-btn) + [data-testid="stElementContainer"] [data-testid="stButton"] button { background:#f97316 !important; color:#ffffff !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stElementContainer"]:has(.marca-modelo-btn) + [data-testid="stElementContainer"] [data-testid="stButton"] button:hover { background:#ea580c !important; color:#ffffff !important; }
+
 /* Botões de tema (☀️/🌙) no escuro — saem do visual claro default do Streamlit */
 body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] [data-testid="stColumn"]:has(.marca-tema) [data-testid="stButton"] button { background:#1a2029 !important; color:#e5e7eb !important; border:1.5px solid #2c3542 !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] [data-testid="stColumn"]:has(.marca-tema) [data-testid="stButton"] button:hover { background:#243040 !important; color:#ffffff !important; }
