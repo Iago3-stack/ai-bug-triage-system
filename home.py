@@ -974,7 +974,7 @@ if registros_totais:
         st.markdown('<div class="marca-dashboard" style="display:none"></div>', unsafe_allow_html=True)
         dashboard_qa.render_dashboard(registros_totais)
 # --- CONFIGURAÇÕES no modal (@st.dialog): tema + Jira + notificações ---
-@st.dialog("⚙️ Configurações")
+@st.dialog("⚙️ Configurações", width="large")
 def abrir_configuracoes():
     st.markdown('<div class="marca-config" style="display:none"></div>', unsafe_allow_html=True)
 
@@ -1001,10 +1001,11 @@ def abrir_configuracoes():
         st.markdown('<div class="marca-jira" style="display:none"></div>', unsafe_allow_html=True)
         if not jira_client.configurado():
             st.caption("Cole suas credenciais para ativar o botão 'Exportar para Jira'.")
-            j_email = st.text_input("E-mail Atlassian", key="jira_email")
-            j_token = st.text_input("API Token", type="password", key="jira_token")
-            j_key = st.text_input("Chave do projeto", placeholder="ex.: KAN", key="jira_key")
-            j_issue_type = st.text_input("Tipo de item (padrão: Tarefa)", placeholder="ex.: Tarefa", key="jira_issue_type")
+            _jc1, _jc2 = st.columns(2)
+            j_email = _jc1.text_input("E-mail Atlassian", key="jira_email")
+            j_token = _jc2.text_input("API Token", type="password", key="jira_token")
+            j_key = _jc1.text_input("Chave do projeto", placeholder="ex.: KAN", key="jira_key")
+            j_issue_type = _jc2.text_input("Tipo de item (padrão: Tarefa)", placeholder="ex.: Tarefa", key="jira_issue_type")
             if st.button("Salvar configuração (sessão)", use_container_width=True):
                 jira_client.configurar(j_email, j_token, j_key, j_issue_type)
                 if jira_client.configurado():
@@ -1031,27 +1032,27 @@ def abrir_configuracoes():
         st.markdown('<div class="marca-notif" style="display:none"></div>', unsafe_allow_html=True)
         st.caption("Alerta automático quando uma triagem resultar em **CRÍTICA** ou **ALTA**. "
                    "O que você salvar aqui vale **só nesta sessão** — o config do dono (secrets/.env) continua como padrão.")
-        n_discord = st.text_input(
+        _nc1, _nc2 = st.columns(2)
+        n_discord = _nc1.text_input(
             "Webhook do Discord", key="cfg_discord",
             placeholder="https://discord.com/api/webhooks/...",
             value=notificacoes._ler("DISCORD_WEBHOOK"))
-        n_para = st.text_input(
+        n_para = _nc2.text_input(
             "E-mail de destino", key="cfg_para",
             placeholder="ex.: qa@empresa.com",
             value=notificacoes._ler("ALERTA_EMAIL_TO"))
-        n_user = st.text_input(
+        n_user = _nc1.text_input(
             "Usuário SMTP (remetente)", key="cfg_user",
             placeholder="ex.: app@gmail.com",
             value=notificacoes._ler("SMTP_USER"))
-        n_senha = st.text_input(
+        n_senha = _nc2.text_input(
             "Senha / App Password (SMTP)", type="password", key="cfg_senha",
             placeholder="Gmail: use um App Password",
             value=notificacoes._ler("SMTP_PASS"))
-        _nh, _np = st.columns(2)
-        n_host = _nh.text_input(
+        n_host = _nc1.text_input(
             "Host SMTP", key="cfg_host", placeholder="smtp.gmail.com",
             value=notificacoes._ler("SMTP_HOST") or "smtp.gmail.com")
-        n_porta = _np.text_input(
+        n_porta = _nc2.text_input(
             "Porta", key="cfg_porta", placeholder="587",
             value=notificacoes._ler("SMTP_PORT") or "587")
         if st.button("💾 Salvar notificações (sessão)", key="cfg_salvar", use_container_width=True):
