@@ -165,7 +165,8 @@ body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] h5, body:has([data-s
 body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] [data-testid="stCaptionContainer"],
 body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] caption { color:#9aa3af !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] [data-testid="stExpander"] { border-color:#2b3443 !important; }
-body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] [data-testid="stExpander"] summary { color:#d7dbe0 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] [data-testid="stExpander"] summary { color:#e4e9f0 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] [data-testid="stExpander"] summary:hover { color:#ffffff !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] input { background:#151a21 !important; color:#e5e7eb !important; border:1px solid #2c3542 !important; }
 
 /* Texto principal */
@@ -193,7 +194,18 @@ body:has([data-st-tema="escuro"]) [data-testid="stSelectbox"] [role="combobox"] 
 
 /* Expanda o rest (unmarked) */
 body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:not(:has(.marca-resolucao,.marca-sessao,.marca-historico,.marca-dashboard,.marca-diag,.marca-modelo,.marca-jira)) { background:transparent !important; border:1px solid #2b3443 !important; }
-body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:not(:has(.marca-resolucao,.marca-sessao,.marca-historico,.marca-dashboard,.marca-diag,.marca-modelo,.marca-jira)) summary { color:#d7dbe0 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:not(:has(.marca-resolucao,.marca-sessao,.marca-historico,.marca-dashboard,.marca-diag,.marca-modelo,.marca-jira)) summary { color:#e6ecf2 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stExpander"] summary:hover { color:#ffffff !important; }
+
+/* Botões de tema (☀️/🌙) no escuro — saem do visual claro default do Streamlit */
+body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] [data-testid="stColumn"]:has(.marca-tema) [data-testid="stButton"] button { background:#1a2029 !important; color:#e5e7eb !important; border:1.5px solid #2c3542 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] [data-testid="stColumn"]:has(.marca-tema) [data-testid="stButton"] button:hover { background:#243040 !important; color:#ffffff !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] [data-testid="stColumn"]:has(.tema-ativo) [data-testid="stButton"] button { background:#1e3a5f !important; border:1.5px solid #3b82f6 !important; color:#ffffff !important; outline:2.5px solid #3b82f6 !important; outline-offset:2px !important; }
+
+/* Cards de provedor de IA no escuro — fundo escuro + texto claro (legível sem hover) */
+body:has([data-st-tema="escuro"]) [data-testid="stColumn"]:has(.marca-prov-auto,.marca-prov-gemini,.marca-prov-groq) [data-testid="stButton"] button { background:#151a21 !important; color:#e5e7eb !important; border:1px solid #2c3542 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stColumn"]:has(.marca-prov-auto,.marca-prov-gemini,.marca-prov-groq) [data-testid="stButton"] button:hover { background:#202a37 !important; color:#ffffff !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stColumn"]:has(.prov-provid-sel) [data-testid="stButton"] button { background:#1e3a5f !important; border:1.5px solid #3b82f6 !important; color:#ffffff !important; }
 
 /* Métricas e código */
 body:has([data-st-tema="escuro"]) [data-testid="stMetricValue"] { color:#f3f4f6 !important; }
