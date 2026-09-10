@@ -6,6 +6,7 @@ from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
 import nuvem_supabase
+import plano
 
 _RAIZ = pathlib.Path(__file__).resolve().parent
 _ARQUIVO_PADRAO = _RAIZ / "data" / "historico.jsonl"
@@ -64,6 +65,7 @@ def registrar_triagem(dados: dict) -> dict:
         "data": agora.date().isoformat(),
     }
     registro.update(dados)
+    plano.integrar_tenant(registro)
     if _usar_nuvem():
         try:
             return nuvem_supabase.registrar_triagem(registro)
@@ -73,31 +75,39 @@ def registrar_triagem(dados: dict) -> dict:
     return _salvar_jsonl(registro)
 
 
+def _filtrar_tenant(registros: list[dict]) -> list[dict]:
+    """Mantém só o que é do tenant atual (registros antigos sem tenant = global)."""
+    return [r for r in registros if plano.dados_do_tenant(r)]
+
+
 def carregar_registros() -> list[dict]:
     if _usar_nuvem():
         try:
-            return nuvem_supabase.carregar_registros()
+            return _filtrar_tenant(nuvem_supabase.carregar_registros())
         except Exception:
             pass
-    return _ler_jsonl()
+    return _filtrar_tenant(_ler_jsonl())
 
 
 def registros_por_data(data_iso: str) -> list[dict]:
     if _usar_nuvem():
         try:
-            return nuvem_supabase.registros_por_data(data_iso)
+            return _filtrar_tenant(nuvem_supabase.registros_por_data(data_iso))
         except Exception:
             pass
-    return [r for r in _ler_jsonl() if r.get("data") == data_iso]
+    return [r for r in _filtrar_tenant(_ler_jsonl()) if r.get("data") == data_iso]
 
 
 def datas_disponiveis() -> list[str]:
     if _usar_nuvem():
         try:
-            return nuvem_supabase.datas_disponiveis()
+            return sorted(
+                {r.get("data", "") for r in _filtrar_tenant(nuvem_supabase.carregar_registros())},
+                reverse=True,
+            )
         except Exception:
             pass
-    return sorted({r.get("data", "") for r in _ler_jsonl()}, reverse=True)
+    return sorted({r.get("data", "") for r in _filtrar_tenant(_ler_jsonl())}, reverse=True)
 
 
 def registrar_exportacao_jira(chave: str, url: str) -> bool:

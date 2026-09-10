@@ -12,6 +12,7 @@ import pandas as pd
 import streamlit as st
 
 import guardrails
+import plano
 
 # Ordem de gravidade (da pior para a mais branda) para ordenar barras.
 _ORDEM_SEVERIDADE = ["CRÍTICA 🚨", "ALTA 🚨", "MÉDIA ⚠️", "NORMAL ✅"]
@@ -274,37 +275,43 @@ def render_dashboard(registros: list[dict]) -> None:
     else:
         st.warning(f"Nenhum relato reconhecível na funcionalidade '{escolha}'.")
 
-    st.markdown("##### Causas raiz mais comuns (via IA)")
-    causas = top_causas(regs)
-    if not causas.empty:
-        st.bar_chart(causas, color="#26A69A")
-    else:
-        st.caption("Nenhuma causa raiz registrada pela IA nos relatos persistidos.")
-
-    st.markdown("##### Comparativo IA vs. motor local")
-    if "usou_ia" in df_f and not df_f[df_f["usou_ia"]].empty:
-        com_ia = df_f[df_f["usou_ia"]]
-        n_div = int(com_ia["divergente"].sum()) if "divergente" in com_ia else 0
-        taxa = taxa_divergencia(regs)
-        m1, m2 = st.columns(2)
-        m1.metric("Divergências IA vs. léxico", f"{n_div} de {len(com_ia)}")
-        m2.metric("Taxa de divergência", "—" if taxa is None else f"{taxa:.1f}%")
-        if n_div:
-            cols = {
-                "data_hora": "quando",
-                "resumo": "Resumo",
-                "gravidade": "Local",
-                "severidade_ia": "IA",
-                "prioridade_final": "Final",
-            }
-            div_df = com_ia[com_ia["divergente"]].sort_values("data_hora", ascending=False).head(10)
-            st.dataframe(div_df[list(cols)].rename(columns=cols), use_container_width=True, hide_index=True)
+    if plano.pago():
+        st.markdown("##### Causas raiz mais comuns (via IA)")
+        causas = top_causas(regs)
+        if not causas.empty:
+            st.bar_chart(causas, color="#26A69A")
         else:
-            st.caption("Nenhuma divergência registrada até agora — IA e motor local em sintonia ✓")
+            st.caption("Nenhuma causa raiz registrada pela IA nos relatos persistidos.")
+
+        st.markdown("##### Comparativo IA vs. motor local")
+        if "usou_ia" in df_f and not df_f[df_f["usou_ia"]].empty:
+            com_ia = df_f[df_f["usou_ia"]]
+            n_div = int(com_ia["divergente"].sum()) if "divergente" in com_ia else 0
+            taxa = taxa_divergencia(regs)
+            m1, m2 = st.columns(2)
+            m1.metric("Divergências IA vs. léxico", f"{n_div} de {len(com_ia)}")
+            m2.metric("Taxa de divergência", "—" if taxa is None else f"{taxa:.1f}%")
+            if n_div:
+                cols = {
+                    "data_hora": "quando",
+                    "resumo": "Resumo",
+                    "gravidade": "Local",
+                    "severidade_ia": "IA",
+                    "prioridade_final": "Final",
+                }
+                div_df = com_ia[com_ia["divergente"]].sort_values("data_hora", ascending=False).head(10)
+                st.dataframe(div_df[list(cols)].rename(columns=cols), use_container_width=True, hide_index=True)
+            else:
+                st.caption("Nenhuma divergência registrada até agora — IA e motor local em sintonia ✓")
+        else:
+            st.caption(
+                "Nenhuma triagem com IA no histórico ainda. Rode algumas triagens com a checkbox "
+                "🔮 marcada para ver a divergência entre os motores aqui."
+            )
     else:
         st.caption(
-            "Nenhuma triagem com IA no histórico ainda. Rode algumas triagens com a checkbox "
-            "🔮 marcada para ver a divergência entre os motores aqui."
+            "🔓 Plano **grátis**: as análises avançadas (causas raiz via IA e comparativo "
+            "IA vs. motor local) fazem parte do plano pago."
         )
 
     st.markdown("##### Últimas triagens")

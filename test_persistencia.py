@@ -77,3 +77,34 @@ def test_excluir_antigos(tmp_path, monkeypatch):
     restantes = persistencia.carregar_registros()
     assert len(restantes) == 1
     assert restantes[0]["resumo"] == "nova"
+
+
+def test_tenant_isola_dados(tmp_path, monkeypatch):
+    _caminho_tmp(tmp_path, monkeypatch)
+    monkeypatch.setenv("TENANT_ID", "acme")
+    persistencia.registrar_triagem({"resumo": "bug acme"})
+    monkeypatch.setenv("TENANT_ID", "global")
+    persistencia.registrar_triagem({"resumo": "bug global"})
+    monkeypatch.setenv("TENANT_ID", "acme")
+    regs = persistencia.carregar_registros()
+    assert len(regs) == 1
+    assert regs[0]["resumo"] == "bug acme"
+    data = regs[0]["data"]
+    assert len(persistencia.registros_por_data(data)) == 1
+    assert persistencia.datas_disponiveis() == [data]
+
+
+def test_tenant_grava_campo_no_registro(tmp_path, monkeypatch):
+    _caminho_tmp(tmp_path, monkeypatch)
+    monkeypatch.setenv("TENANT_ID", "acme")
+    registro = persistencia.registrar_triagem({"resumo": "x"})
+    assert registro["tenant_id"] == "acme"
+
+
+def test_registro_antigo_sem_tenant_vale_como_global(tmp_path, monkeypatch):
+    _caminho_tmp(tmp_path, monkeypatch)
+    persistencia._salvar_jsonl({"resumo": "pré-SaaS"})  # sem tenant_id
+    monkeypatch.setenv("TENANT_ID", "global")
+    assert len(persistencia.carregar_registros()) == 1
+    monkeypatch.setenv("TENANT_ID", "outra")
+    assert persistencia.carregar_registros() == []

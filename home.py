@@ -12,6 +12,7 @@ import jira_client
 import persistencia
 import guardrails
 import notificacoes
+import plano
 import dashboard as dashboard_qa
 import pix
 
@@ -604,6 +605,9 @@ if st.button("Executar Triagem Inteligente"):
                         # RAG: se há histórico persistido, o Gemini consulta os top-k
                         # registros similares (retrieval local) para ver se já aconteceu.
                         registros_para_rag = persistencia.carregar_registros()
+                        if not plano.pago():
+                            # Plano free: RAG desligado (consulta direta do LLM).
+                            registros_para_rag = []
                         provedor = {
                             "Automático (Gemini → Groq)": None,
                             "Gemini": "gemini",
@@ -714,8 +718,9 @@ if st.button("Executar Triagem Inteligente"):
             # de rede, a triagem segue normalmente (nunca levanta exceção).
             _provedor_alerta = ia.ULTIMO_PROVEDOR if usar_llm else None
             _prio_alerta = prioridade_final or gravidade
-            _email_cfg = notificacoes.email_configurado()
-            _discord_cfg = notificacoes.discord_configurado()
+            _email_cfg, _discord_cfg = plano.aplicar_limite_canais(
+                notificacoes.email_configurado(), notificacoes.discord_configurado()
+            )
             _email_ok = notificacoes.notificar_email(_prio_alerta, descricao_limpa, provedor=_provedor_alerta) if _email_cfg else None
             _discord_ok = notificacoes.notificar_discord(_prio_alerta, descricao_limpa, provedor=_provedor_alerta) if _discord_cfg else None
             if "CRÍTICA" in _prio_alerta or "ALTA" in _prio_alerta:
@@ -913,12 +918,21 @@ if r:
 
 # --- 6.5 HISTÓRICO PERSISTIDO (JSONL local ou Supabase na nuvem) ---
 registros_totais = persistencia.carregar_registros()
+if not plano.pago() and len(registros_totais) > plano.limite_historico_free():
+    # Plano free: resumo limitado às últimas triagens (história completa = pago).
+    registros_totais = registros_totais[-plano.limite_historico_free():]
 if registros_totais:
     backend = (
         "☁️ Supabase (nuvem — público)"
         if persistencia._usar_nuvem()
         else "💾 JSONL local (efêmero na Cloud — só você vê)"
     )
+    if not plano.pago():
+        st.caption(
+            f"🔓 Plano **grátis**: histórico resumido às últimas "
+            f"{plano.limite_historico_free()} triagens · RAG desligado · 1 canal de alerta. "
+            "O plano pago libera histórico completo, multi-canal e análise de IA."
+        )
     with st.expander(f"📁 Histórico persistido ({backend}) — {len(registros_totais)} triagem(ns) salva(s)", key="ex_historico"):
         st.markdown('<div class="marca-historico" style="display:none"></div>', unsafe_allow_html=True)
         st.markdown("##### 📤 Exportar histórico completo (backup)")
