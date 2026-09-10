@@ -174,6 +174,20 @@ _TEMA_CSS = """
 [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-jira) [data-testid="stExpanderDetails"] { background:rgba(0,82,204,.07) !important; border-color:#9ec5ff !important; }
 [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-notif) [data-testid="stExpanderDetails"] { background:rgba(124,58,237,.07) !important; border-color:#cbb7f7 !important; }
 
+/* Botão "⚙️ Configurações" (sidebar) com cor sólida nos dois temas */
+[data-testid="stSidebar"] [data-testid="stButton"] button[data-testid="stBaseButton-primary"] { background:#7c3aed !important; color:#ffffff !important; border:none !important; font-weight:600 !important; }
+[data-testid="stSidebar"] [data-testid="stButton"] button[data-testid="stBaseButton-primary"]:hover { background:#6d28d9 !important; color:#ffffff !important; }
+
+/* Ações do expander de Notificações com cor sólida por intenção */
+[data-testid="stDialog"] [data-testid="stElementContainer"]:has(> [data-testid="stButton"]):has(~ [data-testid="stElementContainer"] .marca-notif-salvar) [data-testid="stButton"] button,
+[data-testid="stDialog"] [data-testid="stElementContainer"]:has(> [data-testid="stButton"]):has(~ [data-testid="stElementContainer"] .marca-notif-salvar) [data-testid="stButton"] button:hover { background:#059669 !important; color:#ffffff !important; }
+[data-testid="stDialog"] [data-testid="stColumn"]:has(.marca-notif-disc) [data-testid="stButton"] button,
+[data-testid="stDialog"] [data-testid="stColumn"]:has(.marca-notif-disc) [data-testid="stButton"] button:hover { background:#2563eb !important; color:#ffffff !important; }
+[data-testid="stDialog"] [data-testid="stColumn"]:has(.marca-notif-mail) [data-testid="stButton"] button,
+[data-testid="stDialog"] [data-testid="stColumn"]:has(.marca-notif-mail) [data-testid="stButton"] button:hover { background:#7c3aed !important; color:#ffffff !important; }
+[data-testid="stDialog"] [data-testid="stElementContainer"]:has(> [data-testid="stButton"]):has(~ [data-testid="stElementContainer"] .marca-notif-limpar) [data-testid="stButton"] button,
+[data-testid="stDialog"] [data-testid="stElementContainer"]:has(> [data-testid="stButton"]):has(~ [data-testid="stElementContainer"] .marca-notif-limpar) [data-testid="stButton"] button:hover { background:#475569 !important; color:#ffffff !important; }
+
 /* -------- MODO ESCURO: paleta própria do app -------- */
 body:has([data-st-tema="escuro"]) { color-scheme: dark; }
 body:has([data-st-tema="escuro"]) [data-testid="stAppViewContainer"] { background: linear-gradient(180deg, #0d1410 0%, #0f1115 420px) !important; }
@@ -278,9 +292,9 @@ body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stColum
 body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stColumn"]:has(.tema-ativo) [data-testid="stButton"] button { background:#1e3a5f !important; border:1.5px solid #3b82f6 !important; color:#ffffff !important; outline:2.5px solid #3b82f6 !important; outline-offset:2px !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-jira) [data-testid="stButton"] button,
 body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-jira) [data-testid="stButton"] button:hover { background:#059669 !important; color:#ffffff !important; }
-body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpanderDetails"] { background:#161c26 !important; color:#d7dbe0 !important; border:1px solid #2b3443 !important; border-radius:0 0 10px 10px !important; }
-body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-jira) [data-testid="stExpanderDetails"] { background:rgba(59,130,246,.07) !important; border-color:#1e3a5f !important; }
-body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-notif) [data-testid="stExpanderDetails"] { background:rgba(167,139,250,.07) !important; border-color:#3b2f5a !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpanderDetails"] { background:#0b1018 !important; color:#d7dbe0 !important; border:1px solid #2b3443 !important; border-radius:0 0 10px 10px !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-jira) [data-testid="stExpanderDetails"] { background:#0d1523 !important; border-color:#1e3a5f !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-notif) [data-testid="stExpanderDetails"] { background:#141021 !important; border-color:#3b2f5a !important; }
 
 /* Métricas e código */
 body:has([data-st-tema="escuro"]) [data-testid="stMetricValue"] { color:#f3f4f6 !important; }
@@ -1063,32 +1077,40 @@ def abrir_configuracoes():
         n_porta = _nc2.text_input(
             "Porta", key="cfg_porta", placeholder="587",
             value=notificacoes._ler("SMTP_PORT") or "587")
-        if st.button("💾 Salvar notificações (sessão)", key="cfg_salvar", use_container_width=True):
-            notificacoes.set_config(
-                DISCORD_WEBHOOK=n_discord, ALERTA_EMAIL_TO=n_para, SMTP_USER=n_user,
-                SMTP_PASS=n_senha, SMTP_HOST=n_host, SMTP_PORT=n_porta,
-            )
-            st.success("✅ Notificações desta sessão salvas.")
+        with st.container():
+            if st.button("💾 Salvar notificações (sessão)", key="cfg_salvar", use_container_width=True):
+                notificacoes.set_config(
+                    DISCORD_WEBHOOK=n_discord, ALERTA_EMAIL_TO=n_para, SMTP_USER=n_user,
+                    SMTP_PASS=n_senha, SMTP_HOST=n_host, SMTP_PORT=n_porta,
+                )
+                st.success("✅ Notificações desta sessão salvas.")
+            st.markdown('<div class="marca-notif-salvar" style="display:none"></div>', unsafe_allow_html=True)
 
         _t1, _t2 = st.columns(2)
-        if _t1.button("🔔 Testar Discord", key="cfg_teste_disc"):
-            try:
-                _ok, _msg = notificacoes.testar_discord()
-            except Exception as _e:
-                _ok, _msg = False, f"Falha inesperada ao testar o Discord ({type(_e).__name__})."
-            (st.success if _ok else st.error)(_msg)
-        if _t2.button("✉️ Testar e-mail", key="cfg_teste_email"):
-            try:
-                _ok, _msg = notificacoes.testar_email()
-            except Exception as _e:
-                _ok, _msg = False, f"Falha inesperada ao testar o e-mail ({type(_e).__name__})."
-            (st.success if _ok else st.error)(_msg)
-        if st.button("↩️ Limpar meu config (voltar ao do dono)", key="cfg_limpar"):
-            if notificacoes.config_sessao():
-                notificacoes.limpar_config_sessao()
-                st.success("Override desta sessão removido.")
-            else:
-                st.info("Nenhum override ativo — já usa o config do dono.")
+        with _t1:
+            st.markdown('<div class="marca-notif-disc" style="display:none"></div>', unsafe_allow_html=True)
+            if st.button("🔔 Testar Discord", key="cfg_teste_disc", width="stretch"):
+                try:
+                    _ok, _msg = notificacoes.testar_discord()
+                except Exception as _e:
+                    _ok, _msg = False, f"Falha inesperada ao testar o Discord ({type(_e).__name__})."
+                (st.success if _ok else st.error)(_msg)
+        with _t2:
+            st.markdown('<div class="marca-notif-mail" style="display:none"></div>', unsafe_allow_html=True)
+            if st.button("✉️ Testar e-mail", key="cfg_teste_email", width="stretch"):
+                try:
+                    _ok, _msg = notificacoes.testar_email()
+                except Exception as _e:
+                    _ok, _msg = False, f"Falha inesperada ao testar o e-mail ({type(_e).__name__})."
+                (st.success if _ok else st.error)(_msg)
+        with st.container():
+            if st.button("↩️ Limpar meu config (voltar ao do dono)", key="cfg_limpar", width="stretch"):
+                if notificacoes.config_sessao():
+                    notificacoes.limpar_config_sessao()
+                    st.success("Override desta sessão removido.")
+                else:
+                    st.info("Nenhum override ativo — já usa o config do dono.")
+            st.markdown('<div class="marca-notif-limpar" style="display:none"></div>', unsafe_allow_html=True)
 
         # Status renderizado DEPOIS das ações para refletir o estado pós-clique no mesmo run
         st.markdown("##### Status")
@@ -1102,7 +1124,7 @@ def abrir_configuracoes():
             st.caption("✉️ E-mail: ❌ sem destinatário/usuário/senha")
 
 
-if st.sidebar.button("⚙️ Configurações", key="abrir_config", width="stretch", help="Tema, Jira e notificações"):
+if st.sidebar.button("⚙️ Configurações", key="abrir_config", type="primary", width="stretch", help="Tema, Jira e notificações"):
     abrir_configuracoes()
 
 # Um botão DENTRO do dialog usou st.rerun() (ex.: trocar tema), que fecha o modal.
