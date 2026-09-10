@@ -120,12 +120,17 @@ A análise por IA usa a chave `GEMINI_API_KEY` (gratuita em [aistudio.google.com
 - 🔑 **Local**: crie um arquivo `.env` na raiz com `GEMINI_API_KEY=...` (ele é ignorado pelo `.gitignore`).
 - ☁️ **Streamlit Cloud**: `Settings → Secrets → GEMINI_API_KEY` (nunca coloque a chave em código ou no repositório).
 
-### 🔔 Alerta no Discord (triagens CRÍTICAS/ALTAS)
+### 🔔 Alerta de triagens CRÍTICAS/ALTAS (e-mail ou Discord)
 
-Quando uma triagem resulta em **CRÍTICA 🚨 ou ALTA 🚨**, o app envia um embed automático pro canal (prioridade, resumo e motor) — vira "monitor de QA". Para ativar:
+Quando uma triagem resulta em **CRÍTICA 🚨 ou ALTA 🚨**, o app avisa automaticamente — vira "monitor de QA". Dois canais (pode configurar os dois):
 
-- 🖱️ **Discord**: servidor/canal → Configurações → **Integrações → Webhooks → Novo webhook** → copie a URL (formato `https://discord.com/api/webhooks/...`).
-- ⚙️ Configure o segredo **`DISCORD_WEBHOOK`** (Streamlit Cloud Secrets ou `.env` local). Sem o webhook (ou em falha de rede), a notificação é silenciosa — nunca interrompe a triagem.
+**✉️ E-mail (Gmail/SMTP) — não precisa criar conta nova:**
+1. No Google, ative a "verificação em 2 etapas" e gere um **app password** em `https://myaccount.google.com/apppasswords` (a senha do Gmail normal não funciona no SMTP).
+2. Configure nos Secrets (Cloud) ou `.env` (local): `ALERTA_EMAIL_TO` (para onde chega o alerta), `SMTP_USER` (seu Gmail) e `SMTP_PASS` (o app password). Opcionais: `SMTP_HOST`/`SMTP_PORT` (padrão `smtp.gmail.com:587`).
+
+**🔔 Discord (opcional):** servidor/canal → Configurações → **Integrações → Webhooks → Novo webhook** → copie a URL e configure `DISCORD_WEBHOOK` (`https://discord.com/api/webhooks/...`).
+
+Sem canal configurado (ou em falha de rede), o alerta é silencioso — nunca interrompe a triagem.
 
 ### 🔗 Exportação para o Jira (API REST)
 

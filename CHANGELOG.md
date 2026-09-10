@@ -7,6 +7,7 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 ## [Não lançado]
 
 ### Adicionado
+- **✉️ Alerta por e-mail (SMTP/Gmail) (v2.5.1)** — mesmo alerta de CRÍTICA/ALTA agora também chega por **e-mail**: perfeito pra quem não quer criar conta de Discord. Config (secrets `.env`/Cloud): `ALERTA_EMAIL_TO` (destinatário), `SMTP_USER` + `SMTP_PASS` (Gmail: seu e-mail + **app password** do Google) — e opcionalmente `SMTP_HOST`/`SMTP_PORT` (padrão `smtp.gmail.com:587`). Sem config, fica silencioso e nunca interrompe a triagem.
 - **🔔 Alerta no Discord (v2.5.0)** — nova camada de notificação: quando uma triagem resulta em **CRÍTICA 🚨 ou ALTA 🚨**, o app envia um embed automático pro canal (prioridade, resumo e motor — local/IA) via webhook. É o "monitor de QA" do roadmap: o time recebe a mensagem sem abrir o app. Para ativar, crie um webhook no Discord e configure o segredo `DISCORD_WEBHOOK` (Streamlit Cloud: Secrets; local: `.env`). Sem webhook/em falha de rede, a triagem segue normalmente — a notificação **nunca** derruba o fluxo.
 - **🔒 Auditoria dos guardrails (v2.5.0)** — o Dashboard agora mostra quantas triagens tiveram **credencial/PII mascarada** (métrica + coluna "🔒" na tabela de recentes) e um expander **"Por que mascaramos?"** que explica o motivo de cada tipo (e-mail/LGPD, CPF/fraude, token/GitHub, senha...). No aviso do relato, o motivo também aparece ("...e-mail (dado pessoal (LGPD)). A informação sensível foi mascarada e não será enviada...").
 

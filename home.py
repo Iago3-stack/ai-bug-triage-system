@@ -15,7 +15,7 @@ import notificacoes
 import dashboard as dashboard_qa
 import pix
 
-VERSAO = "v2.5.0"
+VERSAO = "v2.5.1"
 
 # Símbolo oficial do Pix (Banco Central) — PD-textlogo via Wikimedia Commons.
 # Só os 3 paths verdes da marca (o "losango"), sem a tipografia do logo.
@@ -585,13 +585,15 @@ if st.button("Executar Triagem Inteligente"):
             # alimentar o RAG ("como foi resolvido da última vez").
             st.session_state["ultimo_registro_id"] = persistencia.registrar_triagem(snapshot).get("id", "")
 
-            # --- 3.6 ALERTA (Discord) para prioridades CRÍTICA/ALTA ---
-            # Roda em background silencioso: sem webhook configurado ou em falha
+            # --- 3.6 ALERTA (Discord/e-mail) para prioridades CRÍTICA/ALTA ---
+            # Roda em background silencioso: sem canal configurado ou em falha
             # de rede, a triagem segue normalmente (nunca levanta exceção).
+            _provedor_alerta = ia.ULTIMO_PROVEDOR if usar_llm else None
             notificacoes.notificar_discord(
-                prioridade_final or gravidade,
-                descricao_limpa,
-                provedor=ia.ULTIMO_PROVEDOR if usar_llm else None,
+                prioridade_final or gravidade, descricao_limpa, provedor=_provedor_alerta
+            )
+            notificacoes.notificar_email(
+                prioridade_final or gravidade, descricao_limpa, provedor=_provedor_alerta
             )
 
             # --- 4. GUARDA O RESULTADO (sobrevive a reruns dos botões de exportação) ---

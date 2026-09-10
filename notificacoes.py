@@ -1,12 +1,14 @@
-"""Notificações: alerta no Discord quando uma triagem é CRÍTICA/ALTA.
+"""Notificações: alerta por e-mail (SMTP) ou Discord quando uma triagem é CRÍTICA/ALTA.
 
-Objetivo: transformar o app em "monitor de QA" — o time recebe a mensagem no
-canal sem abrir o app. Todas as funções são à prova de erro: uma falha de rede
-ou webhook ausente NUNCA pode derrubar a triagem.
+Objetivo: transformar o app em "monitor de QA" — o time recebe a mensagem no canal
+sem abrir o app. Todas as funções são à prova de erro: uma falha de rede/credencial
+ou canal não configurado NUNCA pode derrubar a triagem.
 """
 
 import json
 import os
+import smtplib
+from email.message import EmailMessage
 import urllib.request
 
 _SOPADRA = "***"
@@ -46,6 +48,10 @@ def webhook_discord() -> str:
     return _ler("DISCORD_WEBHOOK")
 
 
+def _merece_alerta(prioridade_final: str) -> bool:
+    return bool(prioridade_final) and ("CRÍTICA" in prioridade_final or "ALTA" in prioridade_final)
+
+
 def _cor(prioridade: str) -> int:
     return 0xDC2626 if "CRÍTICA" in prioridade else 0xEA580C
 
@@ -56,7 +62,7 @@ def notificar_discord(prioridade_final: str, resumo: str, provedor: str | None =
     Retorna True se enviou, False se não se aplica / sem webhook / falha.
     Nunca levanta exceção.
     """
-    if not prioridade_final or not ("CRÍTICA" in prioridade_final or "ALTA" in prioridade_final):
+    if not _merece_alerta(prioridade_final):
         return False
     url = webhook_discord()
     if not url:
@@ -89,5 +95,52 @@ def notificar_discord(prioridade_final: str, resumo: str, provedor: str | None =
         )
         with urllib.request.urlopen(req, timeout=5) as resp:
             return resp.status == 204
+    except Exception:
+        return False
+
+
+def _smtp_config() -> dict:
+    """Configuração SMTP (Gmail por padrão) — campos vazios = desligado."""
+    return {
+        "para": _ler("ALERTA_EMAIL_TO"),
+        "user": _ler("SMTP_USER"),
+        "senha": _ler("SMTP_PASS"),
+        "host": _ler("SMTP_HOST") or "smtp.gmail.com",
+        "porta": int(_ler("SMTP_PORT") or "587"),
+    }
+
+
+def notificar_email(prioridade_final: str, resumo: str, provedor: str | None = None) -> bool:
+    """Envia e-mail (SMTP) quando a prioridade for CRÍTICA/ALTA.
+
+    Config (secrets/.env): ALERTA_EMAIL_TO (destinatário), SMTP_USER + SMTP_PASS
+    (para Gmail: seu e-mail + um "app password" do Google). SMTP_HOST/SMTP_PORT
+    são opcionais (padrão smtp.gmail.com:587).
+    Retorna True se enviou, False se não se aplica / sem config / falha.
+    Nunca levanta exceção.
+    """
+    if not _merece_alerta(prioridade_final):
+        return False
+    cfg = _smtp_config()
+    para = cfg["para"]
+    if not para or not cfg["user"] or not cfg["senha"]:
+        return False
+    try:
+        msg = EmailMessage()
+        msg["Subject"] = f"🚨 [AI Bug Triage] {prioridade_final} — {resumo[:60]}"
+        msg["From"] = cfg["user"]
+        msg["To"] = para
+        msg.set_content(
+            "🚨 Uma triagem crítica foi detectada pelo AI Bug Triage System.\n\n"
+            f"Prioridade final: {prioridade_final}\n"
+            f"Relato: {(resumo or '—')[:800]}\n"
+            f"Motor: {provedor or 'offline (léxico)'}\n\n"
+            "Abra o app para ver a triagem completa."
+        )
+        with smtplib.SMTP(cfg["host"], cfg["porta"], timeout=10) as smtp:
+            smtp.starttls()
+            smtp.login(cfg["user"], cfg["senha"])
+            smtp.send_message(msg)
+        return True
     except Exception:
         return False
