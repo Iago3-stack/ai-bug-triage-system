@@ -16,7 +16,7 @@ import plano
 import dashboard as dashboard_qa
 import pix
 
-VERSAO = "v2.5.6"
+VERSAO = "v2.6.0"
 
 # Símbolo oficial do Pix (Banco Central) — PD-textlogo via Wikimedia Commons.
 # Só os 3 paths verdes da marca (o "losango"), sem a tipografia do logo.
@@ -386,6 +386,63 @@ _PROVID_CSS = """
 </style>
 """
 st.markdown(_PROVID_CSS, unsafe_allow_html=True)
+
+# --- MASTHEAD ("rodapé superior"): card do plano — fica acima do nome do site ---
+if plano.pago():
+    _badge_plano = (
+        '<span style="background:rgba(251,191,36,.16);color:#fde68a;border:1px solid rgba(251,191,36,.5);'
+        'border-radius:999px;padding:4px 14px;font-size:12px;font-weight:800;letter-spacing:.03em">⭐ Plano Pago</span>'
+    )
+    _frase_plano = "Você está no <b style='color:#86efac'>plano pago</b> — histórico completo, RAG com \u201ccomo foi resolvido\u201d e múltiplos canais de alerta liberados."
+    _emojis_feats = "🧠 📚 🔔 🧺"
+else:
+    _badge_plano = (
+        '<span style="background:rgba(37,211,102,.16);color:#86efac;border:1px solid rgba(37,211,102,.5);'
+        'border-radius:999px;padding:4px 14px;font-size:12px;font-weight:800;letter-spacing:.03em">🔓 Plano Grátis</span>'
+    )
+    _frase_plano = "Você está no <b style='color:#86efac'>plano grátis</b> — a ferramenta já funciona 100%. O plano pago libera RAG, causas raiz via IA e canais de alerta múltiplos (veja a tabela abaixo)."
+    _emojis_feats = "🧠 📚 🔔 🧺"
+
+_pill_on = 'background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:4px 13px;font-size:12px;color:#e2e8f0'
+_pill_off = 'background:rgba(255,255,255,.05);border:1px dashed rgba(255,255,255,.20);border-radius:999px;padding:4px 13px;font-size:12px;color:#94a3b8'
+_pill_feat = lambda on: _pill_on if on else _pill_off
+
+st.markdown(f"""
+<div style="width:100%;background:linear-gradient(135deg,#0f172a 0%,#16233c 52%,#25D366 175%);border-radius:16px;padding:18px 22px;margin:4px 0 16px;box-shadow:0 8px 22px rgba(15,23,42,.18)">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      {_badge_plano}
+      <span style="color:#94a3b8;font-size:12px;font-weight:700;letter-spacing:.05em">💼 CONHEÇA O PLANO · SaaS de QA com IA</span>
+    </div>
+    <span style="color:#64748b;font-size:12px;font-weight:600">{VERSAO}</span>
+  </div>
+  <div style="color:#ffffff;font-size:20px;font-weight:800;margin-top:12px;letter-spacing:-.01em">Conheça o plano {'⭐' if plano.pago() else '💎'}</div>
+  <div style="color:#cbd5e1;font-size:14px;line-height:1.6;margin-top:6px;max-width:92%">{_frase_plano}</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+    <span style="{_pill_feat(True)}">✅ Triagem NLP + IA (Gemini/Groq)</span>
+    <span style="{_pill_feat(plano.pago())}">🧠 Causas raiz + comparativo IA×local</span>
+    <span style="{_pill_feat(plano.pago())}">📚 RAG · \u201ccomo foi resolvido\u201d</span>
+    <span style="{_pill_feat(plano.pago())}">🔔 Alertas multi-canal (e-mail + Discord)</span>
+    <span style="{_pill_feat(plano.pago())}">🧺 Histórico completo (Dashboard)</span>
+  </div>
+  <div style="color:#94a3b8;font-size:13px;margin-top:14px">🔽 Abra a tabela <b>💼 Comparar planos — Grátis × Pago</b> logo abaixo para ver tudo que cada um libera.</div>
+</div>
+""", unsafe_allow_html=True)
+
+with st.expander("💼 Comparar planos — Grátis × Pago", expanded=False):
+    st.markdown(f"""
+| Recurso | 🔓 Grátis | ⭐ Pago |
+|---|---|---|
+| ✅ Triagem NLP + motor determinístico | liberado | liberado |
+| 🔮 IA (Gemini / Groq / modelo próprio) | liberado | liberado |
+| 🧠 Análises de IA — *causas raiz* e *comparativo IA×local* | — | 🔒 liberado |
+| 📚 RAG — consulta casos similares + \u201ccomo foi resolvido\u201d | — | 🔒 liberado |
+| 🧺 Histórico / Dashboard de QA | últimas **{plano.limite_historico_free()}** triagens | completo |
+| 🔔 Canais de alerta (e-mail/Discord) | **1** canal | múltiplos canais |
+| 🚨 Prioridade máxima ao alertar CRÍTICA/ALTA | liberado | liberado |
+| **Ideal para** | testar / demonstrar | produção contínua |
+""")
+    st.caption("O plano é uma variável de ambiente no seu deploy: `PLANO = \"pago\"`. Sem cobrança neste projeto — é a vitrine de um produto real.")
 
 # --- CABEÇALHO ---
 col_foto, col_info = st.columns([1, 2])
