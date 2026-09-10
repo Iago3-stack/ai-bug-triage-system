@@ -201,6 +201,13 @@ body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:not(:has(.marca-res
 body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:not(:has(.marca-resolucao,.marca-sessao,.marca-historico,.marca-dashboard,.marca-diag,.marca-modelo,.marca-jira)) summary { color:#e6ecf2 !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stExpander"] summary:hover { color:#f1f5f9 !important; }
 
+/* Título (summary) com FUNDO sólido escuro sempre — sem hover abrir/clarear:
+   o Streamlit pinta o título de quase-branco quando o expander fica aberto,
+   e de cinza translúcido no hover (herdado do tema claro); isso escondia o texto. */
+body:has([data-st-tema="escuro"]) [data-testid="stExpander"] summary,
+body:has([data-st-tema="escuro"]) [data-testid="stExpander"] summary:hover,
+body:has([data-st-tema="escuro"]) [data-testid="stExpander"] summary:focus-visible { background:#0d1117 !important; }
+
 /* Títulos-chave com cor sólida no escuro (não mudam nem com hover sobre eles) */
 body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:has(.marca-jira) summary,
 body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:has(.marca-jira) summary:hover { color:#3b82f6 !important; }
