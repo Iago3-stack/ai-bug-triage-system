@@ -1039,8 +1039,7 @@ _footer_html = f"""
       ⚖️ Licença MIT
     </a>
     <a href="https://www.gov.br/anpd/pt-br" target="_blank" rel="noopener" style="color:#cbd5e1;text-decoration:none;display:inline-flex;align-items:center;gap:6px">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm2 15.5-2-1.2-2 1.2.4-2.6-1.9-1.8 2.6-.4 1.1-2.4 1.1 2.4 2.6.4-1.9 1.8.4 2.6z"/></svg>
-      LGPD · Proteção de Dados
+      🛡️ LGPD · Proteção de Dados
     </a>
   </div>
   <div style="padding:12px 16px;text-align:center;font-size:12px;color:#64748b;border-top:1px solid rgba(255,255,255,.08)">
@@ -1050,5 +1049,3 @@ _footer_html = f"""
 </div>
 """
 st.iframe(_footer_html, height=560)
-
-# Botão "copiar chave pix" + legenda do QR — removidos: agora vivem dentro do card (iframe).
