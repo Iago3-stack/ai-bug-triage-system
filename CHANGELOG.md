@@ -6,6 +6,9 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 
 ## [Não lançado]
 
+### Corrigido
+- **✨ Icons 100% emoji (v2.5.5)** — o **sparkle oficial do Gemini** (SVG) não renderizava como estrela no Cloud: foi removido do projeto e trocado pelo emoji **✨️** no pill do hero e no título "Análise por IA (Gemini)" do resultado (o ícone correto pra quem usa). A balança do rodapé também saía cortada ("quebrada" no topo) como SVG: agora é o emoji **⚖️** — o escudo continua só no LGPD. No hero, a pill do Streamlit troca o foguete pela coroa **👑** e a pill "NLP PT" mantém a lâmpada 💡.
+
 ### Adicionado
 - **✨ Icons do rodapé e do hero (v2.5.4)** — o **sparkle oficial do Gemini** agora também aparece (tamanho maior) no herói animado ao lado do 🤖⚡ (antes só na pill); e o link **"Licença MIT"** trocou o escudo pela **balança da justiça ⚖️** — o escudo fica só para o **LGPD · Proteção de Dados**, que é onde faz sentido.
 - **🔔 Status do alerta dentro do app (v2.5.3)** — após uma triagem **CRÍTICA/ALTA**, o app mostra verde/amarelo o resultado real do envio: "✉️ e-mail enviado ✅ / FALHOU ❌", "🔔 Discord enviado ✅ / FALHOU ❌" — ou o aviso "nenhum canal configurado" com o caminho para os Secrets. Funciona também na triagem só com o motor local (sem IA).

@@ -7,7 +7,7 @@ from triagem import triar
 import ia
 import rag
 import hero_animado
-from hero_animado import _svg_gemini, _svg_groq
+from hero_animado import _svg_groq
 import jira_client
 import persistencia
 import guardrails
@@ -15,7 +15,7 @@ import notificacoes
 import dashboard as dashboard_qa
 import pix
 
-VERSAO = "v2.5.4"
+VERSAO = "v2.5.5"
 
 # Símbolo oficial do Pix (Banco Central) — PD-textlogo via Wikimedia Commons.
 # Só os 3 paths verdes da marca (o "losango"), sem a tipografia do logo.
@@ -653,7 +653,7 @@ if r:
     if resultado_llm:
         provedor_rotulo = ia.ULTIMO_PROVEDOR or "LLM"
         if provedor_rotulo.startswith("Gemini"):
-            icone_ai = _svg_gemini(16)
+            icone_ai = "✨️"
         elif provedor_rotulo.startswith("Groq"):
             icone_ai = _svg_groq(18)
         else:
@@ -1036,8 +1036,7 @@ _footer_html = f"""
       Perfil
     </a>
     <a href="{repo_url}blob/main/LICENSE" target="_blank" style="color:#cbd5e1;text-decoration:none;display:inline-flex;align-items:center;gap:6px">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12,3C10.73,3 9.6,3.8 9.21,5H3.5V7H9.21C9.6,8.2 10.73,9 12,9C13.27,9 14.4,8.2 14.79,7H20.5V5H14.79C14.4,3.8 13.27,3 12,3M12,5A1,1 0 0,1 13,6A1,1 0 0,1 12,7A1,1 0 0,1 11,6A1,1 0 0,1 12,5M19,10L21.27,11.94C21.7,12.32 22,12.87 22,13.5A2.5,2.5 0 0,1 19.5,16A2.5,2.5 0 0,1 17,13.5C17,12.87 17.3,12.32 17.73,11.94L16,10H19M5,10L7.27,11.94C7.7,12.32 8,12.87 8,13.5A2.5,2.5 0 0,1 5.5,16A2.5,2.5 0 0,1 3,13.5C3,12.87 3.3,12.32 3.73,11.94L1,10H5M11,12V14.06C12.38,14.35 13.5,15.55 13.5,17H18.26L16.56,15.3C16.97,14.26 18.18,14.07 19.22,14.48C20.26,14.89 20.45,16.1 20.04,17.14C19.63,18.18 18.42,18.37 17.38,17.96L16.5,17.11H13.5A2.5,2.5 0 0,1 11,19.5A2.5,2.5 0 0,1 8.5,17H3.5C3.5,15.9 4.4,15 5.5,15H8.5C9.94,15 11,15.56 11,15.62V12H12Z"/></svg>
-      Licença MIT
+      ⚖️ Licença MIT
     </a>
     <a href="https://www.gov.br/anpd/pt-br" target="_blank" rel="noopener" style="color:#cbd5e1;text-decoration:none;display:inline-flex;align-items:center;gap:6px">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm2 15.5-2-1.2-2 1.2.4-2.6-1.9-1.8 2.6-.4 1.1-2.4 1.1 2.4 2.6.4-1.9 1.8.4 2.6z"/></svg>

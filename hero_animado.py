@@ -1,5 +1,3 @@
-import itertools
-
 import streamlit as st
 
 CSS = """
@@ -96,26 +94,25 @@ def render():
     _css()
     pill_gemini = (
         '<span class="hero-pill" style="background:rgba(246,130,29,.16);color:#d97706">'
-        f'{_svg_gemini(13)} Gemini</span>'
+        '✨️ Gemini</span>'
     )
-    sparkle = f'<span style="display:inline-flex">{_svg_gemini(26)}</span>'
     st.markdown("""
 <div class="hero-wrap">
 <div class="hero-card">
-  <div style="display:inline-flex;align-items:center;gap:12px;font-size:32px">🤖⚡{sparkle}</div>
+  <div style="font-size:34px">🤖⚡</div>
   <div class="hero-grad" style="font-size:23px">QA Automation + IA</div>
   <div style="margin-top:13px"><span class="hero-dot"></span>&nbsp;<b>Disponível para vagas</b></div>
   <div class="hero-sub" style="font-size:14px;color:#444;margin-top:4px">Remote Global · São Luís, MA</div>
   <div style="margin-top:14px">
     <span class="hero-pill" style="background:rgba(37,211,102,.16);color:#1e8f4b">💡 NLP PT</span>
     {pill_gemini}
-    <span class="hero-pill" style="background:rgba(46,124,246,.16);color:#1d63d8">🚀 Streamlit</span>
+    <span class="hero-pill" style="background:rgba(46,124,246,.16);color:#1d63d8">👑 Streamlit</span>
   </div>
   <div class="hero-marquee"><span>{MARQUEE_TEXT}</span></div>
   <div style="margin-top:12px;font-weight:700">⚡ Vamos construir?</div>
 </div>
 </div>
-""".format(MARQUEE_TEXT=MARQUEE_TEXT, pill_gemini=pill_gemini, sparkle=sparkle), unsafe_allow_html=True)
+""".format(MARQUEE_TEXT=MARQUEE_TEXT, pill_gemini=pill_gemini), unsafe_allow_html=True)
 
 # --- BOTÕES DE CONTATO (ícones oficiais embutidos) ---
 # auto-gerado
@@ -126,37 +123,6 @@ _B64 = {
 }
 
 # --- SÍMBOLOS OFICIAIS DAS MARCAS DE IA (PD-textlogo via Wikimedia Commons) ---
-# Ícone oficial do Google Gemini ("sparkle") — paths e gradiente originais da gstatic
-# (arquivo "Gemini sparkle v002.svg": #9168C0 -> #5684D1 -> #1BA1E3).
-_GEMINI_SPARKLE_PATH = (
-    "M14 28C14 26.0633 13.6267 24.2433 12.88 22.54C12.1567 20.8367 11.165 19.355 9.905 18.095"
-    "C8.645 16.835 7.16333 15.8433 5.46 15.12C3.75667 14.3733 1.93667 14 0 14C1.93667 14 3.75667 "
-    "13.6383 5.46 12.915C7.16333 12.1683 8.645 11.165 9.905 9.905C11.165 8.645 12.1567 7.16333 12.88 5.46"
-    "C13.6267 3.75667 14 1.93667 14 0C14 1.93667 14.3617 3.75667 15.085 5.46C15.8317 7.16333 16.835 8.645"
-    "18.095 9.905C19.355 11.165 20.8367 12.1683 22.54 12.915C24.2433 13.6383 26.0633 14 28 14C26.0633 14 "
-    "24.2433 14.3733 22.54 15.12C20.8367 15.8433 19.355 16.835 18.095 18.095C16.835 19.355 15.8317 20.8367 "
-    "15.085 22.54C14.3617 24.2433 14 26.0633 14 28Z"
-)
-
-_GEMINI_GRAD_ID = itertools.count()
-
-
-def _svg_gemini(tamanho: int = 16) -> str:
-    # id único por instância (evita conflito quando o símbolo aparece mais de uma vez na página).
-    gid = f"gemini-grad-{next(_GEMINI_GRAD_ID)}"
-    return (
-        f'<svg width="{tamanho}" height="{tamanho}" viewBox="0 0 28 28" role="img" aria-label="Gemini" '
-        f'style="display:inline-block;vertical-align:-0.18em">'
-        f'<defs><radialGradient id="{gid}" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" '
-        f'gradientTransform="translate(2.77876 11.3795) rotate(18.6832) scale(29.8025 238.737)">'
-        f'<stop offset="0.0671246" stop-color="#9168C0"/>'
-        f'<stop offset="0.342551" stop-color="#5684D1"/>'
-        f'<stop offset="0.672076" stop-color="#1BA1E3"/>'
-        f'</radialGradient></defs>'
-        f'<path d="{_GEMINI_SPARKLE_PATH}" fill="url(#{gid})"/></svg>'
-    )
-
-
 # Logotipo "groq" (wordmark oficial) — viewBox real 152x55.5.
 _GROQ_WORDMARK_PATHS = (
     '<path d="M84.848,34.137c-9.798,0-17.769,7.971-17.769,17.77s7.971,17.769,17.769,17.769'
