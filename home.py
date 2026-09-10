@@ -303,6 +303,10 @@ body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpan
 body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-jira) [data-testid="stExpanderDetails"] { background:#0d1523 !important; border-color:#1e3a5f !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-notif) [data-testid="stExpanderDetails"] { background:#141021 !important; border-color:#3b2f5a !important; }
 
+/* Título do modal e "🎨 Tema" no escuro com cor de destaque (não esbranquiçados) */
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] h2 { color:#a78bfa !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] .tit-modal-sec { color:#3b82f6 !important; }
+
 /* Seção "Status" no modo escuro — título branco destacado, linhas claras */
 body:has([data-st-tema="escuro"]) [data-testid="stDialog"] .notif-st-tit { color:#ffffff !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stDialog"] .notif-st-linha { color:#d7dbe0 !important; }
@@ -1015,7 +1019,7 @@ def abrir_configuracoes():
     st.markdown('<div class="marca-config" style="display:none"></div>', unsafe_allow_html=True)
 
     # 🎨 Tema (claro/escuro — fonte de verdade é a URL ?tema=)
-    st.markdown('<div class="campo-tit" style="font-weight:600;color:#0f172a;margin-bottom:2px">🎨 Tema</div>', unsafe_allow_html=True)
+    st.markdown('<div class="campo-tit tit-modal-sec" style="font-weight:600;color:#0f172a;margin-bottom:2px">🎨 Tema</div>', unsafe_allow_html=True)
     _tcols = st.columns(2)
     for _tc, (_tv, _tl) in zip(_tcols, (("claro", "☀️ Claro"), ("escuro", "🌙 Escuro"))):
         _ativo = tema == _tv
