@@ -99,7 +99,9 @@ st.markdown("""
     [data-testid="stExpander"]:has(.marca-historico) summary { color: #059669 !important; font-weight: 700 !important; }
     [data-testid="stExpander"]:has(.marca-historico) [data-testid="stDownloadButton"], [data-testid="stExpander"]:has(.marca-historico) [data-testid="stButton"] { width: 100%; }
     [data-testid="stExpander"]:has(.marca-historico) [data-testid="stDownloadButton"] button { background: #065f46 !important; color: #ffffff !important; }
+    [data-testid="stExpander"]:has(.marca-historico) [data-testid="stDownloadButton"] button:hover { background: #065f46 !important; color: #ffffff !important; }
     [data-testid="stExpander"]:has(.marca-historico) [data-testid="stButton"] button { background: #059669 !important; color: #ffffff !important; }
+    [data-testid="stExpander"]:has(.marca-historico) [data-testid="stButton"] button:hover { background: #059669 !important; color: #ffffff !important; }
     [data-testid="stExpander"]:has(.marca-dashboard) { border: 2px solid #7c3aed !important; border-radius: 12px !important; }
     [data-testid="stExpander"]:has(.marca-dashboard) summary { color: #7c3aed !important; font-weight: 700 !important; }
     [data-testid="stExpander"]:has(.marca-diag) { border: 2px solid #d97706 !important; border-radius: 12px !important; }
@@ -113,8 +115,10 @@ st.markdown("""
     [data-testid="stElementContainer"]:has(.marca-executar) + [data-testid="stElementContainer"] [data-testid="stButton"] button { background: #059669 !important; color: #ffffff !important; }
     [data-testid="stElementContainer"]:has(.marca-executar) + [data-testid="stElementContainer"] [data-testid="stButton"] button:hover { background: #047857 !important; }
     [data-testid="stColumn"]:has(.marca-download) [data-testid="stDownloadButton"] button { background: #0d9488 !important; color: #ffffff !important; }
+    [data-testid="stColumn"]:has(.marca-download) [data-testid="stDownloadButton"] button:hover { background: #0d9488 !important; color: #ffffff !important; }
     [data-testid="stColumn"]:has(.marca-issue) [data-testid="stLinkButton"] a { background: #18181b !important; color: #ffffff !important; }
     [data-testid="stColumn"]:has(.marca-jira) [data-testid="stButton"] button { background: #0052cc !important; color: #ffffff !important; }
+    [data-testid="stColumn"]:has(.marca-jira) [data-testid="stButton"] button:hover { background: #0052cc !important; color: #ffffff !important; }
     [data-testid="stExpander"]:has(.marca-jira) { border: 2px solid #0052cc !important; border-radius: 12px !important; background: rgba(0, 82, 204, 0.05) !important; }
     [data-testid="stExpander"]:has(.marca-jira) summary { color: #0052cc !important; font-weight: 700 !important; }
     [data-testid="stSidebar"] [data-testid="stExpander"]:has(.marca-jira) summary { color: #3b82f6 !important; }
@@ -196,6 +200,16 @@ body:has([data-st-tema="escuro"]) [data-testid="stSelectbox"] [role="combobox"] 
 body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:not(:has(.marca-resolucao,.marca-sessao,.marca-historico,.marca-dashboard,.marca-diag,.marca-modelo,.marca-jira)) { background:transparent !important; border:1px solid #2b3443 !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:not(:has(.marca-resolucao,.marca-sessao,.marca-historico,.marca-dashboard,.marca-diag,.marca-modelo,.marca-jira)) summary { color:#e6ecf2 !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stExpander"] summary:hover { color:#f1f5f9 !important; }
+
+/* Títulos-chave com cor sólida no escuro (não mudam nem com hover sobre eles) */
+body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:has(.marca-jira) summary,
+body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:has(.marca-jira) summary:hover { color:#3b82f6 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:has(.marca-historico) summary,
+body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:has(.marca-historico) summary:hover { color:#34d399 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:has(.marca-dashboard) summary,
+body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:has(.marca-dashboard) summary:hover { color:#a78bfa !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:has(.marca-modelo) summary,
+body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:has(.marca-modelo) summary:hover { color:#fb923c !important; }
 
 /* Setinha de expandir/recolher (chevron) dos expanders — some sumindo no fundo claro do tema escuro */
 body:has([data-st-tema="escuro"]) [data-testid="stExpander"] [data-testid="stBaseButton-secondary"] { background:transparent !important; color:#8b94a3 !important; border:none !important; box-shadow:none !important; }
