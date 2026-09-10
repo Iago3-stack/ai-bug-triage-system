@@ -1063,10 +1063,16 @@ def abrir_configuracoes():
 
         _t1, _t2 = st.columns(2)
         if _t1.button("🔔 Testar Discord", key="cfg_teste_disc"):
-            _ok, _msg = notificacoes.testar_discord()
+            try:
+                _ok, _msg = notificacoes.testar_discord()
+            except Exception as _e:
+                _ok, _msg = False, f"Falha inesperada ao testar o Discord ({type(_e).__name__})."
             (st.success if _ok else st.error)(_msg)
         if _t2.button("✉️ Testar e-mail", key="cfg_teste_email"):
-            _ok, _msg = notificacoes.testar_email()
+            try:
+                _ok, _msg = notificacoes.testar_email()
+            except Exception as _e:
+                _ok, _msg = False, f"Falha inesperada ao testar o e-mail ({type(_e).__name__})."
             (st.success if _ok else st.error)(_msg)
         if st.button("↩️ Limpar meu config (voltar ao do dono)", key="cfg_limpar"):
             if notificacoes.config_sessao():

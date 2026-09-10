@@ -315,3 +315,34 @@ def test_testar_email_falha_smtp_nao_levanta(monkeypatch):
     ok, msg = notificacoes.testar_email()
     assert ok is False
     assert "Falha" in msg
+
+
+def test_smtp_porta_malformada_cai_no_587(monkeypatch):
+    def _ler(nome):
+        return {"SMTP_PORT": "abc"}.get(nome, "")
+
+    monkeypatch.setattr(notificacoes, "_ler", _ler)
+    assert notificacoes._smtp_config()["porta"] == 587
+
+
+def test_smtp_porta_fora_do_range_cai_no_587(monkeypatch):
+    def _ler(nome):
+        return {"SMTP_PORT": "99999"}.get(nome, "")
+
+    monkeypatch.setattr(notificacoes, "_ler", _ler)
+    assert notificacoes._smtp_config()["porta"] == 587
+
+
+def test_testar_email_porta_invalida_nao_levanta(monkeypatch):
+    def _ler(nome):
+        return {
+            "ALERTA_EMAIL_TO": "qa@empresa.com",
+            "SMTP_USER": "u",
+            "SMTP_PASS": "p",
+            "SMTP_PORT": "não é número",
+        }.get(nome, "")
+
+    monkeypatch.setattr(notificacoes, "_ler", _ler)
+    ok, msg = notificacoes.testar_email()
+    assert ok is False
+    assert "Falha" in msg

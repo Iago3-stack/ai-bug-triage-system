@@ -142,12 +142,18 @@ def notificar_discord(prioridade_final: str, resumo: str, provedor: str | None =
 
 def _smtp_config() -> dict:
     """Configuração SMTP (Gmail por padrão) — campos vazios = desligado."""
+    try:
+        _porta = int(str(_ler("SMTP_PORT") or "").strip())
+        if not (1 <= _porta <= 65535):
+            _porta = 587
+    except (TypeError, ValueError):
+        _porta = 587
     return {
         "para": _ler("ALERTA_EMAIL_TO"),
         "user": _ler("SMTP_USER"),
         "senha": _ler("SMTP_PASS"),
         "host": _ler("SMTP_HOST") or "smtp.gmail.com",
-        "porta": int(_ler("SMTP_PORT") or "587"),
+        "porta": _porta,
     }
 
 
@@ -170,10 +176,10 @@ def _enviar_email(cfg: dict, para: str, assunto: str, corpo: str) -> bool:
 
 def testar_discord() -> tuple[bool, str]:
     """Envia um teste ao webhook do Discord configurado. Nunca levanta exceção."""
-    url = webhook_discord()
-    if not url:
-        return False, "Sem webhook do Discord configurado."
     try:
+        url = webhook_discord()
+        if not url:
+            return False, "Sem webhook do Discord configurado."
         payload = {"content": "✅ Teste de notificação — AI Bug Triage System"}
         corpo = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         req = urllib.request.Request(
@@ -192,18 +198,21 @@ def testar_discord() -> tuple[bool, str]:
 
 def testar_email() -> tuple[bool, str]:
     """Envia um e-mail de teste pelo SMTP configurado. Nunca levanta exceção."""
-    cfg = _smtp_config()
-    if not (cfg["para"] and cfg["user"] and cfg["senha"]):
-        return False, "E-mail não configurado (destinatário + usuário + senha SMTP)."
-    if _enviar_email(
-        cfg,
-        cfg["para"],
-        "🧪 [AI Bug Triage] Teste de notificação",
-        "✅ Teste de notificação — AI Bug Triage System.\n\n"
-        "Se você recebeu este e-mail, o canal de alertas está funcionando.",
-    ):
-        return True, "E-mail de teste enviado."
-    return False, "Falha ao enviar o e-mail (SMTP)."
+    try:
+        cfg = _smtp_config()
+        if not (cfg["para"] and cfg["user"] and cfg["senha"]):
+            return False, "E-mail não configurado (destinatário + usuário + senha SMTP)."
+        if _enviar_email(
+            cfg,
+            cfg["para"],
+            "🧪 [AI Bug Triage] Teste de notificação",
+            "✅ Teste de notificação — AI Bug Triage System.\n\n"
+            "Se você recebeu este e-mail, o canal de alertas está funcionando.",
+        ):
+            return True, "E-mail de teste enviado."
+        return False, "Falha ao enviar o e-mail (SMTP)."
+    except Exception as e:
+        return False, f"Falha inesperada ao testar e-mail: {type(e).__name__}"
 
 
 def notificar_email(prioridade_final: str, resumo: str, provedor: str | None = None) -> bool:
