@@ -7,6 +7,9 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 ## [Não lançado]
 
 ### Adicionado
+- **🧹 Cabeçalho reorganizado + animação removida (v2.6.3)** — a animação de digitação ("Bem-vindo ao meu site! / Informações sobre mim e meus projetos / QA+IA no Lab Hack28") e a imagem-cápsula foram **removidas**. O card "🚀 Construo automação de QA com IA... / 📍 São Luís" subiu para o **lado direito, logo abaixo do nome**, formando um cabeçalho de perfil compacto; a foto permanece à esquerda.
+
+### Adicionado
 - **🏷️ Planos renomeados: Grátis → Basic e Pago → Premium (v2.6.2)** — toda a copy visível do app (badge do masthead, frases, tabela "💼 Comparar planos — Basic × Premium" e captions do histórico/dashboard) agora usa **Basic × Premium**. Os nomes internos (`PLANO = "free"|"pago"`, `plano.pago()`) e o env de deploy seguem intactos — só o discurso comercial mudou.
 
 ### Adicionado

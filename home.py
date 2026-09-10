@@ -16,7 +16,7 @@ import plano
 import dashboard as dashboard_qa
 import pix
 
-VERSAO = "v2.6.2"
+VERSAO = "v2.6.3"
 
 # Símbolo oficial do Pix (Banco Central) — PD-textlogo via Wikimedia Commons.
 # Só os 3 paths verdes da marca (o "losango"), sem a tipografia do logo.
@@ -459,22 +459,20 @@ col_foto, col_info = st.columns([1, 2])
 with col_info:
     st.markdown('<h1 class="nome-site" style="font-weight:700; line-height:1.2; letter-spacing:-0.02em; padding:0; margin:0; color:black">Iago Nunes<span style="font-size:0.5em; vertical-align:super; font-weight:400; color:#6b7280; margin-left:2px">©</span></h1>', unsafe_allow_html=True)
     hero_animado.linha()
-    st.markdown('<img src="https://capsule-render.vercel.app/api?type=soft&color=gradient&customColorList=20,24,25&height=56&section=header&text=Bem-vindo%20ao%20meu%20site&fontSize=22&fontColor=fff&fontAlignY=62" width="100%" />', unsafe_allow_html=True)
-    hero_animado.typing_frases()
-with col_foto:    
-    st.image("assets/o novo.png", width=250,caption="Iago Nunes")
     st.markdown("""
-<div style="margin-top:10px;width:100%;background:linear-gradient(135deg,#047857 0%,#0d9488 50%,#7c3aed 185%);border-radius:14px;color:#ffffff;font-size:14px;line-height:1.5;padding:14px 16px">
+<div style="margin-top:10px;width:100%;background:linear-gradient(135deg,#047857 0%,#0d9488 50%,#7c3aed 185%);border-radius:14px;color:#ffffff;font-size:14px;line-height:1.5;padding:14px 16px;box-shadow:0 6px 18px rgba(15,23,42,.14)">
   <div style="font-weight:700">🚀 Construo automação de QA com IA (NLP + Gemini) | Auxiliar Administrativo | Graduando IA &amp; ML Uniasselvi (Dez/2027)</div>
   <div style="margin-top:6px;color:#dcfce7">📍 São Luís, MA (Disponível para Remote Global)</div>
 </div>
 """, unsafe_allow_html=True)
+with col_foto:    
+    st.image("assets/o novo.png", width=250,caption="Iago Nunes")
     
     st.markdown("""
 <div style="height:3px;width:100%;background:linear-gradient(90deg,transparent,#25D366,#2E7CF6,#7c3aed,transparent);border-radius:999px;margin:8px 0"></div>
 """, unsafe_allow_html=True)
 
-# HERO animado centralizado: abaixo do Bem-vindo/digitação e acima do Sobre Mim
+# HERO animado centralizado: separa o cabeçalho do Sobre Mim
 hero_animado.render()
 
 esq, centro = st.columns([1, 8])
