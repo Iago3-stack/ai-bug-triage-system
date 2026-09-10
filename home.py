@@ -16,7 +16,7 @@ import plano
 import dashboard as dashboard_qa
 import pix
 
-VERSAO = "v2.6.1"
+VERSAO = "v2.6.2"
 
 # Símbolo oficial do Pix (Banco Central) — PD-textlogo via Wikimedia Commons.
 # Só os 3 paths verdes da marca (o "losango"), sem a tipografia do logo.
@@ -401,16 +401,16 @@ st.markdown(_PROVID_CSS, unsafe_allow_html=True)
 if plano.pago():
     _badge_plano = (
         '<span style="background:rgba(251,191,36,.16);color:#fde68a;border:1px solid rgba(251,191,36,.5);'
-        'border-radius:999px;padding:4px 14px;font-size:12px;font-weight:800;letter-spacing:.03em">⭐ Plano Pago</span>'
+        'border-radius:999px;padding:4px 14px;font-size:12px;font-weight:800;letter-spacing:.03em">⭐ Plano Premium</span>'
     )
-    _frase_plano = "Você está no <b style='color:#86efac'>plano pago</b> — histórico completo, RAG com \u201ccomo foi resolvido\u201d e múltiplos canais de alerta liberados."
+    _frase_plano = "Você está no <b style='color:#86efac'>plano Premium</b> — histórico completo, RAG com \u201ccomo foi resolvido\u201d e múltiplos canais de alerta liberados."
     _emojis_feats = "🧠 📚 🔔 🧺"
 else:
     _badge_plano = (
         '<span style="background:rgba(37,211,102,.16);color:#86efac;border:1px solid rgba(37,211,102,.5);'
-        'border-radius:999px;padding:4px 14px;font-size:12px;font-weight:800;letter-spacing:.03em">🔓 Plano Grátis</span>'
+        'border-radius:999px;padding:4px 14px;font-size:12px;font-weight:800;letter-spacing:.03em">🔓 Plano Basic</span>'
     )
-    _frase_plano = "Você está no <b style='color:#86efac'>plano grátis</b> — a ferramenta já funciona 100%. O plano pago libera RAG, causas raiz via IA e canais de alerta múltiplos (veja a tabela abaixo)."
+    _frase_plano = "Você está no <b style='color:#86efac'>plano Basic</b> — a ferramenta já funciona 100%. O plano Premium libera RAG, causas raiz via IA e canais de alerta múltiplos (veja a tabela abaixo)."
     _emojis_feats = "🧠 📚 🔔 🧺"
 
 _pill_on = 'background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:4px 13px;font-size:12px;color:#e2e8f0'
@@ -435,13 +435,13 @@ st.markdown(f"""
     <span style="{_pill_feat(plano.pago())}">🔔 Alertas multi-canal (e-mail + Discord)</span>
     <span style="{_pill_feat(plano.pago())}">🧺 Histórico completo (Dashboard)</span>
   </div>
-  <div style="color:#94a3b8;font-size:13px;margin-top:18px">🔽 Abra a tabela <b>💼 Comparar planos — Grátis × Pago</b> logo abaixo para ver tudo que cada um libera.</div>
+  <div style="color:#94a3b8;font-size:13px;margin-top:18px">🔽 Abra a tabela <b>💼 Comparar planos — Basic × Premium</b> logo abaixo para ver tudo que cada um libera.</div>
 </div>
 """, unsafe_allow_html=True)
 
-with st.expander("💼 Comparar planos — Grátis × Pago", expanded=False):
+with st.expander("💼 Comparar planos — Basic × Premium", expanded=False):
     st.markdown(f"""
-| Recurso | 🔓 Grátis | ⭐ Pago |
+| Recurso | 🔓 Basic | ⭐ Premium |
 |---|---|---|
 | ✅ Triagem NLP + motor determinístico | liberado | liberado |
 | 🔮 IA (Gemini / Groq / modelo próprio) | liberado | liberado |
@@ -996,9 +996,9 @@ if registros_totais:
     )
     if not plano.pago():
         st.caption(
-            f"🔓 Plano **grátis**: histórico resumido às últimas "
+            f"🔓 Plano **Basic**: histórico resumido às últimas "
             f"{plano.limite_historico_free()} triagens · RAG desligado · 1 canal de alerta. "
-            "O plano pago libera histórico completo, multi-canal e análise de IA."
+            "O plano Premium libera histórico completo, multi-canal e análise de IA."
         )
     with st.expander(f"📁 Histórico persistido ({backend}) — {len(registros_totais)} triagem(ns) salva(s)", key="ex_historico"):
         st.markdown('<div class="marca-historico" style="display:none"></div>', unsafe_allow_html=True)

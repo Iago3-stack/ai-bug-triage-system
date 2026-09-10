@@ -7,6 +7,9 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 ## [Não lançado]
 
 ### Adicionado
+- **🏷️ Planos renomeados: Grátis → Basic e Pago → Premium (v2.6.2)** — toda a copy visível do app (badge do masthead, frases, tabela "💼 Comparar planos — Basic × Premium" e captions do histórico/dashboard) agora usa **Basic × Premium**. Os nomes internos (`PLANO = "free"|"pago"`, `plano.pago()`) e o env de deploy seguem intactos — só o discurso comercial mudou.
+
+### Adicionado
 - **🧭 Masthead mais alto e colado no topo (v2.6.1)** — a barra nativa do Streamlit (`stHeader`) é ocultada e o card "Conheça o plano" sobe para **6px do topo**, preenchendo o espaço antes vazio, com card **mais alto** (padding 30px/34px, título 26px, textos 16px). O alinhamento é igual nos **dois temas** (`margin-top` negativo por tema para compensar containers zero-altura). O conteúdo seguinte (cabeçalho) não colide.
 
 ### Adicionado

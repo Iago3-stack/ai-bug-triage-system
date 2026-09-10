@@ -53,7 +53,7 @@ Cada número abaixo tem um **gatilho** e uma **interpretação**. Este guia vale
 
 - **📉 Score médio** — média da polaridade do texto: varia de **-100** (relato muito negativo / bug severo) a **+100** (elogio). Quanto menor, pior o sinal.
 
-- **🔮 Com IA (LLM)** — quantas triagens rodaram com **LLM** (Gemini / Groq / modelo próprio). É a "linha divisória" do Dashboard: só triagens com IA alimentam *causas raiz* e *comparativo IA×local* (análises do plano pago).
+- **🔮 Com IA (LLM)** — quantas triagens rodaram com **LLM** (Gemini / Groq / modelo próprio). É a "linha divisória" do Dashboard: só triagens com IA alimentam *causas raiz* e *comparativo IA×local* (análises do plano Premium).
 
 - **🛡️ Saúde da suíte (0–10)** — nota sintética com componentes:
   base **5,0** + **2,0** × (parcela de triagens **NORMAL ✅**) + até **1,0** × (score médio normalizado) − **1,5** × (taxa de divergência IA×local) + **0,75** (usa IA) + **0,75** (tem histórico consultado por RAG).
@@ -68,11 +68,11 @@ Cada número abaixo tem um **gatilho** e uma **interpretação**. Este guia vale
 
 - **📍 Funcionalidades mais afetadas** — categorização **100% offline** (léxico de expressões) do que cada relato menciona (Login/Conta, Pagamento, Busca, Chat/Suporte...) — cada relato conta **uma vez por funcionalidade**.
 
-- **🧠 Análises de IA (plano pago)**:
+- **🧠 Análises de IA (plano Premium)**:
   - *Causas raiz mais comuns* — agrupa o que a IA apontou como causa;
   - *Comparativo IA vs. motor local* — divergências entre os dois motores e a **taxa de divergência** (%).
 
-- **📚 RAG (plano pago)** — o LLM consulta casos similares do histórico antes de responder (*"já aconteceu antes?"*, *"como foi resolvido?"*).
+- **📚 RAG (plano Premium)** — o LLM consulta casos similares do histórico antes de responder (*"já aconteceu antes?"*, *"como foi resolvido?"*).
 
 **Leia qualquer zero como informação, não como erro**: a métrica só conta **quando o padrão que ela observa aparece**.
 Zerado hoje significa apenas que **o padrão ainda não ocorreu** no histórico visível — não que o Dashboard está quebrado.
@@ -350,8 +350,8 @@ def render_dashboard(registros: list[dict]) -> None:
             )
     else:
         st.caption(
-            "🔓 Plano **grátis**: as análises avançadas (causas raiz via IA e comparativo "
-            "IA vs. motor local) fazem parte do plano pago."
+            "🔓 Plano **Basic**: as análises avançadas (causas raiz via IA e comparativo "
+            "IA vs. motor local) fazem parte do plano Premium."
         )
 
     st.markdown("##### Últimas triagens")
