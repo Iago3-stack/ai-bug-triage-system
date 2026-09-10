@@ -1069,28 +1069,29 @@ def abrir_configuracoes():
         st.caption("Alerta automático quando uma triagem resultar em **CRÍTICA** ou **ALTA**. "
                    "O que você salvar aqui vale **só nesta sessão** — o config do dono (secrets/.env) continua como padrão.")
         _nc1, _nc2 = st.columns(2)
+        _ovr = notificacoes.config_sessao()
         n_discord = _nc1.text_input(
-            "Webhook do Discord", key="cfg_discord",
+            "Webhook do Discord (só se quiser receber no seu canal)", key="cfg_discord",
             placeholder="https://discord.com/api/webhooks/...",
-            value=notificacoes._ler("DISCORD_WEBHOOK"))
+            value=_ovr.get("DISCORD_WEBHOOK", ""))
         n_para = _nc2.text_input(
-            "E-mail de destino", key="cfg_para",
+            "E-mail de destino (só se quiser receber no seu e-mail)", key="cfg_para",
             placeholder="ex.: qa@empresa.com",
-            value=notificacoes._ler("ALERTA_EMAIL_TO"))
+            value=_ovr.get("ALERTA_EMAIL_TO", ""))
         n_user = _nc1.text_input(
             "Usuário SMTP (remetente)", key="cfg_user",
             placeholder="ex.: app@gmail.com",
-            value=notificacoes._ler("SMTP_USER"))
+            value=_ovr.get("SMTP_USER", ""))
         n_senha = _nc2.text_input(
             "Senha / App Password (SMTP)", type="password", key="cfg_senha",
-            placeholder="Gmail: use um App Password",
-            value=notificacoes._ler("SMTP_PASS"))
+            placeholder="Digite seu App Password (o do dono fica em Secrets, preenchido automaticamente no envio)",
+            value=_ovr.get("SMTP_PASS", ""))
         n_host = _nc1.text_input(
             "Host SMTP", key="cfg_host", placeholder="smtp.gmail.com",
-            value=notificacoes._ler("SMTP_HOST") or "smtp.gmail.com")
+            value=_ovr.get("SMTP_HOST", ""))
         n_porta = _nc2.text_input(
             "Porta", key="cfg_porta", placeholder="587",
-            value=notificacoes._ler("SMTP_PORT") or "587")
+            value=_ovr.get("SMTP_PORT", ""))
         with st.container():
             if st.button("💾 Salvar notificações (sessão)", key="cfg_salvar", use_container_width=True):
                 notificacoes.set_config(
