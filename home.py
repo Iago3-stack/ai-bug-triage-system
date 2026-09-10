@@ -122,6 +122,8 @@ st.markdown("""
     [data-testid="stExpander"]:has(.marca-jira) { border: 2px solid #0052cc !important; border-radius: 12px !important; background: rgba(0, 82, 204, 0.05) !important; }
     [data-testid="stExpander"]:has(.marca-jira) summary { color: #0052cc !important; font-weight: 700 !important; }
     [data-testid="stSidebar"] [data-testid="stExpander"]:has(.marca-jira) summary { color: #3b82f6 !important; }
+    [data-testid="stSidebar"] [data-testid="stExpander"]:has(.marca-jira) [data-testid="stButton"] button { background: #059669 !important; color: #ffffff !important; }
+    [data-testid="stSidebar"] [data-testid="stExpander"]:has(.marca-jira) [data-testid="stButton"] button:hover { background: #059669 !important; color: #ffffff !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -970,7 +972,7 @@ with st.sidebar.expander("⚙️ Configurações", expanded=False):
                 if jira_client.configurado():
                     st.success("✅ Jira configurado nesta sessão!")
                 else:
-                    st.warning("Preencha e-mail, token e chave do projeto.")
+                    st.error("Preencha e-mail, token e chave do projeto.")
         else:
             st.markdown("**🔑 Jira**")
             st.success("✅ Jira configurado nesta sessão")
