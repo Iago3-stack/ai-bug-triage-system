@@ -40,6 +40,44 @@ FUNCOES = [
 # Termos do vocabulário de teste que NÃO devem escalar severidade sozinhos.
 TERMOS_TESTE = re.compile(r"\b(erro|bug|falha|defeito)\b")
 
+# Guia completo de leitura do Dashboard — explica TODAS as métricas, incluindo
+# por que uma pode aparecer zerada (ex.: Falso-positivo evitado).
+GUIA_DASHBOARD = """
+
+Cada número abaixo tem um **gatilho** e uma **interpretação**. Este guia vale para ler **qualquer métrica zerada**
+— como o **🟫 Falso-positivo evitado** — entendendo o que ela mede e o que faz o número subir.
+
+- **🧺 Total de triagens** — contagem bruta de relatos persistidos no histórico visível. Todas as outras métricas derivam dele.
+
+- **🚨 Críticas/Altas · ⚠️ Médias · ✅ Normais** — distribuição pela **prioridade final** (o **máximo** entre o motor local — léxico/sentimento — e a IA, quando ela entra). Um relato só vira CRÍTICA/ALTA se **um dos dois motores** apontar o pior caso.
+
+- **📉 Score médio** — média da polaridade do texto: varia de **-100** (relato muito negativo / bug severo) a **+100** (elogio). Quanto menor, pior o sinal.
+
+- **🔮 Com IA (LLM)** — quantas triagens rodaram com **LLM** (Gemini / Groq / modelo próprio). É a "linha divisória" do Dashboard: só triagens com IA alimentam *causas raiz* e *comparativo IA×local* (análises do plano pago).
+
+- **🛡️ Saúde da suíte (0–10)** — nota sintética com componentes:
+  base **5,0** + **2,0** × (parcela de triagens **NORMAL ✅**) + até **1,0** × (score médio normalizado) − **1,5** × (taxa de divergência IA×local) + **0,75** (usa IA) + **0,75** (tem histórico consultado por RAG).
+  Quanto mais próximas de 10, mais estável e "sem sustos" está a suíte.
+
+- **🟫 Falso-positivo evitado (vocab. de teste)** — relatos classificados como **NORMAL ✅ mesmo contendo "erro", "bug", "falha" ou "defeito"** no texto. É a prova de que o motor **não dispara por palavra isolada**: o termo técnico existe, mas o contexto não escala a severidade.
+  - **Quando é > 0**: existem relatos NORMAL com esse vocabulário (ex.: *"Erro ao carregar o feed, mas o cache cobre"* → NORMAL ✅ com "erro" na frase) — cada um soma 1.
+  - **Quando é 0**: duas explicações possíveis: **(a)** nenhum relato NORMAL usou essas palavras nos dados visíveis; ou **(b)** os relatos que usaram foram classificados mais graves (MÉDIA/CRÍTICA) e **não entram por definição**.
+  - **0 aqui não é defeito** — é a métrica dizendo *"nos dados atuais, não houve falso-positivo para corrigir"*. Para vê-lo subir, basta persistir relatos leves com esse vocabulário (o motor os mantém em NORMAL): cada um incrementa em 1.
+
+- **🔒 Credenciais/PII mascaradas** — número de triagens em que os **guardrails** esconderam dado sensível (**e-mail, CPF, token, senha**) **antes** de qualquer envio (IA, Jira, GitHub, histórico). O expander "Por que mascaramos?" detalha os tipos e os motivos LGPD. Zero = nenhum dado sensível passou pela triagem ainda.
+
+- **📍 Funcionalidades mais afetadas** — categorização **100% offline** (léxico de expressões) do que cada relato menciona (Login/Conta, Pagamento, Busca, Chat/Suporte...) — cada relato conta **uma vez por funcionalidade**.
+
+- **🧠 Análises de IA (plano pago)**:
+  - *Causas raiz mais comuns* — agrupa o que a IA apontou como causa;
+  - *Comparativo IA vs. motor local* — divergências entre os dois motores e a **taxa de divergência** (%).
+
+- **📚 RAG (plano pago)** — o LLM consulta casos similares do histórico antes de responder (*"já aconteceu antes?"*, *"como foi resolvido?"*).
+
+**Leia qualquer zero como informação, não como erro**: a métrica só conta **quando o padrão que ela observa aparece**.
+Zerado hoje significa apenas que **o padrão ainda não ocorreu** no histórico visível — não que o Dashboard está quebrado.
+"""
+
 
 def _texto(reg: dict, chave: str) -> str:
     valor = reg.get(chave)
@@ -214,10 +252,8 @@ def render_dashboard(registros: list[dict]) -> None:
 
     fp_col, mask_col, ia_col = st.columns(3)
     fp_col.metric("🟫 Falso-positivo evitado (vocab. de teste)", fp)
-    fp_expandir = fp_col.expander("O que é esse número?", expanded=False)
-    fp_expandir.caption(
-        "Relatos que usam 'erro', 'bug' ou 'falha' como vocabulário normal de teste e "
-        "foram classificados como NORMAL — prova de que o motor não dispara por palavra isolada."
+    fp_col.caption(
+        "Relatos NORMAL ✅ que citam 'erro/bug/falha/defeito'. Se está zerado, o guia abaixo explica o porquê."
     )
     n_sens = sum(1 for r in registros if _sensiveis(r))
     mask_col.metric("🔒 Credenciais/PII mascaradas", n_sens)
@@ -234,6 +270,10 @@ def render_dashboard(registros: list[dict]) -> None:
         )
     else:
         mask_exp.caption("Nenhuma ocorrência ainda — os guardrails vêm bloqueando o vazamento desde o início.")
+
+    # Guia completo: explica TODAS as métricas e como ler um zero (ex.: Falso-positivo evitado).
+    with st.expander("🧠 Guia completo — como ler todas as métricas do Dashboard (e por que uma pode estar zerada)", expanded=False):
+        st.markdown(GUIA_DASHBOARD)
 
     # --- Filtro global por funcionalidade ---
     funcoes_globais = funcoes_afetadas(registros)
