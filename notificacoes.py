@@ -48,6 +48,17 @@ def webhook_discord() -> str:
     return _ler("DISCORD_WEBHOOK")
 
 
+def email_configurado() -> bool:
+    """True se o e-mail está pronto (destinatário + remetente + senha SMTP)."""
+    cfg = _smtp_config()
+    return bool(cfg["para"] and cfg["user"] and cfg["senha"])
+
+
+def discord_configurado() -> bool:
+    """True se há webhook do Discord configurado."""
+    return bool(webhook_discord())
+
+
 def _merece_alerta(prioridade_final: str) -> bool:
     return bool(prioridade_final) and ("CRÍTICA" in prioridade_final or "ALTA" in prioridade_final)
 

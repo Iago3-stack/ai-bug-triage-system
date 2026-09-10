@@ -15,7 +15,7 @@ import notificacoes
 import dashboard as dashboard_qa
 import pix
 
-VERSAO = "v2.5.2"
+VERSAO = "v2.5.3"
 
 # Símbolo oficial do Pix (Banco Central) — PD-textlogo via Wikimedia Commons.
 # Só os 3 paths verdes da marca (o "losango"), sem a tipografia do logo.
@@ -476,7 +476,7 @@ if st.button("Executar Triagem Inteligente"):
                 # Blindagem extra: nenhum erro da camada de IA/RAG pode derrubar
                 # o app. Qualquer exceção vira aviso + diagnóstico salvo na sessão.
                 try:
-                    with st.spinner("🔮 A IA está analisando sua triagem — pode levar um pouco..."):
+                    with st.spinner("🔮 A IA está analisando sua triagem — pode levar um tempo..."):
                         # RAG: se há histórico persistido, o Gemini consulta os top-k
                         # registros similares (retrieval local) para ver se já aconteceu.
                         registros_para_rag = persistencia.carregar_registros()
@@ -585,16 +585,28 @@ if st.button("Executar Triagem Inteligente"):
             # alimentar o RAG ("como foi resolvido da última vez").
             st.session_state["ultimo_registro_id"] = persistencia.registrar_triagem(snapshot).get("id", "")
 
-            # --- 3.6 ALERTA (Discord/e-mail) para prioridades CRÍTICA/ALTA ---
+            # --- 3.6 ALERTA (e-mail/Discord) para prioridades CRÍTICA/ALTA ---
             # Roda em background silencioso: sem canal configurado ou em falha
             # de rede, a triagem segue normalmente (nunca levanta exceção).
             _provedor_alerta = ia.ULTIMO_PROVEDOR if usar_llm else None
-            notificacoes.notificar_discord(
-                prioridade_final or gravidade, descricao_limpa, provedor=_provedor_alerta
-            )
-            notificacoes.notificar_email(
-                prioridade_final or gravidade, descricao_limpa, provedor=_provedor_alerta
-            )
+            _prio_alerta = prioridade_final or gravidade
+            _email_cfg = notificacoes.email_configurado()
+            _discord_cfg = notificacoes.discord_configurado()
+            _email_ok = notificacoes.notificar_email(_prio_alerta, descricao_limpa, provedor=_provedor_alerta) if _email_cfg else None
+            _discord_ok = notificacoes.notificar_discord(_prio_alerta, descricao_limpa, provedor=_provedor_alerta) if _discord_cfg else None
+            if "CRÍTICA" in _prio_alerta or "ALTA" in _prio_alerta:
+                _detalhes = []
+                if _email_cfg:
+                    _detalhes.append(f"✉️ e-mail {'enviado ✅' if _email_ok else 'FALHOU ❌'}")
+                if _discord_cfg:
+                    _detalhes.append(f"🔔 Discord {'enviado ✅' if _discord_ok else 'FALHOU ❌'}")
+                st.session_state["status_alerta"] = (
+                    ("🔔 **Alerta CRÍTICA/ALTA:** " + " · ".join(_detalhes))
+                    if _detalhes
+                    else "🔕 **Alerta CRÍTICA/ALTA:** nenhum canal configurado (e-mail/Discord) — configure os Secrets para ser avisado daqui pra frente."
+                )
+            else:
+                st.session_state["status_alerta"] = None
 
             # --- 4. GUARDA O RESULTADO (sobrevive a reruns dos botões de exportação) ---
             st.session_state["resultado"] = {
@@ -633,6 +645,10 @@ if r:
 
     st.markdown("### 📝 Relatório Gerado! ✅")
     st.code(relatorio, language="markdown")
+
+    status_alerta = st.session_state.get("status_alerta")
+    if status_alerta:
+        (st.warning if "FALHOU" in status_alerta or "nenhum canal" in status_alerta else st.success)(status_alerta)
 
     if resultado_llm:
         provedor_rotulo = ia.ULTIMO_PROVEDOR or "LLM"

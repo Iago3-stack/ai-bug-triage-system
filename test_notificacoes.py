@@ -175,3 +175,28 @@ def test_falha_smtp_nao_levanta(monkeypatch):
     correio.login = lambda user, senha: (_ for _ in ()).throw(PermissionError("senha errada"))
     monkeypatch.setattr(notificacoes.smtplib, "SMTP", lambda h, po, t: correio)
     assert notificacoes.notificar_email("CRÍTICA 🚨", "resumo") is False
+
+
+# --- Detecção de canal configurado (mostra o status no app) ---
+def test_email_configurado_detecta_quando_tem_tudo(monkeypatch):
+    def _ler(nome):
+        return {
+            "ALERTA_EMAIL_TO": "qa@empresa.com",
+            "SMTP_USER": "u",
+            "SMTP_PASS": "p",
+        }.get(nome, "")
+
+    monkeypatch.setattr(notificacoes, "_ler", _ler)
+    assert notificacoes.email_configurado() is True
+
+
+def test_email_configurado_falso_sem_destino(monkeypatch):
+    monkeypatch.setattr(notificacoes, "_ler", lambda nome: "")
+    assert notificacoes.email_configurado() is False
+
+
+def test_discord_configurado_reflete_webhook(monkeypatch):
+    monkeypatch.setattr(notificacoes, "_ler", lambda nome: "" if nome == "DISCORD_WEBHOOK" else "x")
+    assert notificacoes.discord_configurado() is False
+    monkeypatch.setattr(notificacoes, "_ler", lambda nome: "https://discord/x")
+    assert notificacoes.discord_configurado() is True
