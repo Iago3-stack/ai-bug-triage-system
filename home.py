@@ -197,6 +197,10 @@ body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:not(:has(.marca-res
 body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:not(:has(.marca-resolucao,.marca-sessao,.marca-historico,.marca-dashboard,.marca-diag,.marca-modelo,.marca-jira)) summary { color:#e6ecf2 !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stExpander"] summary:hover { color:#ffffff !important; }
 
+/* Setinha de expandir/recolher (chevron) dos expanders — some sumindo no fundo claro do tema escuro */
+body:has([data-st-tema="escuro"]) [data-testid="stExpander"] [data-testid="stBaseButton-secondary"] { background:transparent !important; color:#8b94a3 !important; border:none !important; box-shadow:none !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stExpander"] [data-testid="stBaseButton-secondary"]:hover { background:rgba(255,255,255,.1) !important; color:#ffffff !important; }
+
 /* Botões de tema (☀️/🌙) no escuro — saem do visual claro default do Streamlit */
 body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] [data-testid="stColumn"]:has(.marca-tema) [data-testid="stButton"] button { background:#1a2029 !important; color:#e5e7eb !important; border:1.5px solid #2c3542 !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] [data-testid="stColumn"]:has(.marca-tema) [data-testid="stButton"] button:hover { background:#243040 !important; color:#ffffff !important; }
