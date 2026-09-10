@@ -303,8 +303,12 @@ body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpan
 body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-jira) [data-testid="stExpanderDetails"] { background:#0d1523 !important; border-color:#1e3a5f !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-notif) [data-testid="stExpanderDetails"] { background:#141021 !important; border-color:#3b2f5a !important; }
 
-/* Título do modal e "🎨 Tema" no escuro com cor de destaque (não esbranquiçados) */
-body:has([data-st-tema="escuro"]) [data-testid="stDialog"] h2 { color:#a78bfa !important; }
+/* Título do modal e "🎨 Tema" no escuro com cor de destaque (não esbranquiçados).
+   O título do st.dialog é um h2 > span > stMarkdownContainer: o container interno
+   ganha own-color #d7dbe0; por isso a regra precisa mirar o nó que pinta o texto. */
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] h2,
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] h2 [data-testid="stMarkdownContainer"],
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] h2 [data-testid="stMarkdownContainer"] p { color:#a78bfa !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stDialog"] .tit-modal-sec { color:#3b82f6 !important; }
 
 /* Seção "Status" no modo escuro — título branco destacado, linhas claras */
