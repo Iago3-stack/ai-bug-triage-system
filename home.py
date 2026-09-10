@@ -15,7 +15,7 @@ import notificacoes
 import dashboard as dashboard_qa
 import pix
 
-VERSAO = "v2.5.5"
+VERSAO = "v2.5.6"
 
 # Símbolo oficial do Pix (Banco Central) — PD-textlogo via Wikimedia Commons.
 # Só os 3 paths verdes da marca (o "losango"), sem a tipografia do logo.
@@ -893,25 +893,30 @@ if registros_totais:
     with st.expander("📈 Dashboard de QA — visão geral do histórico", key="ex_dashboard"):
         st.markdown('<div class="marca-dashboard" style="display:none"></div>', unsafe_allow_html=True)
         dashboard_qa.render_dashboard(registros_totais)
-# --- SELETOR DE TEMA (topo do sidebar) ---
-st.sidebar.markdown('<div class="campo-tit" style="font-weight:600;color:#0f172a;margin-bottom:2px">🎨 Tema</div>', unsafe_allow_html=True)
-_tcols = st.sidebar.columns(2)
-for _tc, (_tv, _tl) in zip(_tcols, (("claro", "☀️ Claro"), ("escuro", "🌙 Escuro"))):
-    _ativo = tema == _tv
-    with _tc:
-        st.sidebar.markdown(
-            f'<div class="marca-tema marca-tema-{_tv}{" tema-ativo" if _ativo else ""}" style="display:none"></div>',
-            unsafe_allow_html=True,
-        )
-        if st.sidebar.button(_tl, key=f"tema_{_tv}", width="stretch"):
-            st.session_state["tema"] = _tv
-            st.query_params["tema"] = _tv
-            st.rerun()
+# --- CONFIGURAÇÕES (tema + Jira + futuras opções) no sidebar ---
+with st.sidebar.expander("⚙️ Configurações", expanded=False):
+    st.markdown('<div class="marca-config" style="display:none"></div>', unsafe_allow_html=True)
 
-# --- CONFIGURAÇÃO DO JIRA (sidebar) ---
-if not jira_client.configurado():
-    with st.sidebar.expander("🔑 Jira — configurar exportação"):
-        st.markdown('<div class="marca-jira" style="display:none"></div>', unsafe_allow_html=True)
+    # 🎨 Tema (claro/escuro — fonte de verdade é a URL ?tema=)
+    st.markdown('<div class="campo-tit" style="font-weight:600;color:#0f172a;margin-bottom:2px">🎨 Tema</div>', unsafe_allow_html=True)
+    _tcols = st.columns(2)
+    for _tc, (_tv, _tl) in zip(_tcols, (("claro", "☀️ Claro"), ("escuro", "🌙 Escuro"))):
+        _ativo = tema == _tv
+        with _tc:
+            st.markdown(
+                f'<div class="marca-tema marca-tema-{_tv}{" tema-ativo" if _ativo else ""}" style="display:none"></div>',
+                unsafe_allow_html=True,
+            )
+            if st.button(_tl, key=f"tema_{_tv}", width="stretch"):
+                st.session_state["tema"] = _tv
+                st.query_params["tema"] = _tv
+                st.rerun()
+
+    st.markdown("---")
+
+    # 🔑 Jira — exportação de relatórios
+    if not jira_client.configurado():
+        st.markdown("**🔑 Jira — configurar exportação**")
         st.caption("Cole suas credenciais para ativar o botão 'Exportar para Jira'.")
         j_email = st.text_input("E-mail Atlassian", key="jira_email")
         j_token = st.text_input("API Token", type="password", key="jira_token")
@@ -923,16 +928,17 @@ if not jira_client.configurado():
                 st.success("✅ Jira configurado nesta sessão!")
             else:
                 st.warning("Preencha e-mail, token e chave do projeto.")
-else:
-    st.sidebar.success("✅ Jira configurado nesta sessão")
-    st.sidebar.caption("Botão 'Exportar para Jira' ativo.")
-    if st.sidebar.button("🔄 Reconectar / trocar credenciais", use_container_width=True):
-        limpar = getattr(jira_client, "limpar_config", None)
-        if limpar is not None:
-            limpar()
-            st.rerun()
-        else:
-            st.error("Cache antigo detectado — clique em 'Manage app' > 'Rebuild' (limpa o cache) e rode a triagem de novo.")
+    else:
+        st.markdown("**🔑 Jira**")
+        st.success("✅ Jira configurado nesta sessão")
+        st.caption("Botão 'Exportar para Jira' ativo.")
+        if st.button("🔄 Reconectar / trocar credenciais", use_container_width=True):
+            limpar = getattr(jira_client, "limpar_config", None)
+            if limpar is not None:
+                limpar()
+                st.rerun()
+            else:
+                st.error("Cache antigo detectado — clique em 'Manage app' > 'Rebuild' (limpa o cache) e rode a triagem de novo.")
 
 # --- CTA: ESTRELA NO GITHUB ---
 st.sidebar.markdown("### ⭐ Apoie o projeto")

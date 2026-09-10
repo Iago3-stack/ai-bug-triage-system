@@ -6,6 +6,9 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 
 ## [Não lançado]
 
+### Adicionado
+- **⚙️ Configurações unificadas (v2.5.6)** — o sidebar ganhou um expander único **"⚙️ Configurações"**: o **seletor de tema** (☀️/🌙) e a **configuração do Jira** (campos de credenciais ou "Jira configurado ✅ / Reconectar") migraram pra dentro. A sidebar fica limpa e pronta pra receber futuras opções (notificações, modelo padrão, etc.) sempre nesse mesmo lugar.
+
 ### Corrigido
 - **✨ Icons 100% emoji (v2.5.5)** — o **sparkle oficial do Gemini** (SVG) não renderizava como estrela no Cloud: foi removido do projeto e trocado pelo emoji **✨️** no pill do hero e no título "Análise por IA (Gemini)" do resultado (o ícone correto pra quem usa). A balança do rodapé também saía cortada ("quebrada" no topo) como SVG: agora é o emoji **⚖️** — o escudo continua só no LGPD. No hero, a pill do Streamlit troca o foguete pela coroa **👑** e a pill "NLP PT" mantém a lâmpada 💡.
 
