@@ -15,7 +15,7 @@ import notificacoes
 import dashboard as dashboard_qa
 import pix
 
-VERSAO = "v2.5.1"
+VERSAO = "v2.5.2"
 
 # Símbolo oficial do Pix (Banco Central) — PD-textlogo via Wikimedia Commons.
 # Só os 3 paths verdes da marca (o "losango"), sem a tipografia do logo.
@@ -1023,6 +1023,10 @@ _footer_html = f"""
       <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1.5 1.5 3.5v3.5c0 3.9 2.8 6.7 6.5 7.5 3.7-.8 6.5-3.6 6.5-7.5V3.5L8 1.5Zm-.75 9V10a3.9 3.9 0 0 0-1.66-.83c-.55 0-.86.42-.48.95.37.51.89.9 2.14 1.88Zm.74-.02c.84-.62 1.77-1.38 2.16-1.89L10 9.17a3.9 3.9 0 0 0-1.75.81l-.28.25ZM8 5.9a.8.8 0 1 0 0 1.6.8.8 0 0 0 0-1.6Z"/></svg>
       Licença MIT
     </a>
+    <a href="https://www.gov.br/anpd/pt-br" target="_blank" rel="noopener" style="color:#cbd5e1;text-decoration:none;display:inline-flex;align-items:center;gap:6px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm2 15.5-2-1.2-2 1.2.4-2.6-1.9-1.8 2.6-.4 1.1-2.4 1.1 2.4 2.6.4-1.9 1.8.4 2.6z"/></svg>
+      LGPD · Proteção de Dados
+    </a>
   </div>
   <div style="padding:12px 16px;text-align:center;font-size:12px;color:#64748b;border-top:1px solid rgba(255,255,255,.08)">
     © {VERSAO} <b style="color:#94a3b8">Iago Nunes de Araújo</b> · 🚀 QA Automation Engineer · Estudante de IA &amp; ML (UNIASSELVI)<br/>
@@ -1030,6 +1034,6 @@ _footer_html = f"""
   </div>
 </div>
 """
-st.iframe(_footer_html, height=520)
+st.iframe(_footer_html, height=560)
 
 # Botão "copiar chave pix" + legenda do QR — removidos: agora vivem dentro do card (iframe).
