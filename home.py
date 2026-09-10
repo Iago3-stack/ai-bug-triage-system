@@ -152,6 +152,23 @@ _TEMA_CSS = """
   outline:2.5px solid #0f172a !important; outline-offset:2px !important;
 }
 
+/* Modal "⚙️ Configurações" (@st.dialog) — mesmo visual do bloco do sidebar,
+   escopado a [data-testid="stDialog"] (o conteúdo do dialog NÃO está no sidebar) */
+[data-testid="stDialog"] [data-testid="stColumn"]:has(.marca-tema) [data-testid="stButton"] button {
+  height:40px; min-height:40px; border-radius:9px; font-weight:600; width:100%;
+  background:#eef2f7 !important; color:#334155 !important; border:1.5px solid #cbd5e1 !important;
+}
+[data-testid="stDialog"] [data-testid="stColumn"]:has(.marca-tema) [data-testid="stButton"] button:hover { background:#e2e8f0 !important; }
+[data-testid="stDialog"] [data-testid="stColumn"]:has(.tema-ativo) [data-testid="stButton"] button { outline:2.5px solid #0f172a !important; outline-offset:2px !important; }
+
+/* Seções do modal: Jira (azul) e Notificações (roxo), com ressalto de expansão */
+[data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-jira) { border:2px solid #0052cc !important; border-radius:12px !important; background:rgba(0,82,204,.05) !important; }
+[data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-jira) summary { color:#0052cc !important; font-weight:700 !important; }
+[data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-jira) [data-testid="stButton"] button,
+[data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-jira) [data-testid="stButton"] button:hover { background:#059669 !important; color:#ffffff !important; }
+[data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-notif) { border:2px solid #7c3aed !important; border-radius:12px !important; background:rgba(124,58,237,.05) !important; }
+[data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-notif) summary { color:#7c3aed !important; font-weight:700 !important; }
+
 /* -------- MODO ESCURO: paleta própria do app -------- */
 body:has([data-st-tema="escuro"]) { color-scheme: dark; }
 body:has([data-st-tema="escuro"]) [data-testid="stAppViewContainer"] { background: linear-gradient(180deg, #0d1410 0%, #0f1115 420px) !important; }
@@ -237,6 +254,25 @@ body:has([data-st-tema="escuro"]) [data-testid="stElementContainer"]:has(.marca-
 body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] [data-testid="stColumn"]:has(.marca-tema) [data-testid="stButton"] button { background:#1a2029 !important; color:#e5e7eb !important; border:1.5px solid #2c3542 !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] [data-testid="stColumn"]:has(.marca-tema) [data-testid="stButton"] button:hover { background:#243040 !important; color:#ffffff !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] [data-testid="stColumn"]:has(.tema-ativo) [data-testid="stButton"] button { background:#1e3a5f !important; border:1.5px solid #3b82f6 !important; color:#ffffff !important; outline:2.5px solid #3b82f6 !important; outline-offset:2px !important; }
+
+/* Modal "⚙️ Configurações" no escuro (mesma paleta do sidebar/expanders) */
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] { background:#111721 !important; border:1px solid #2b3443 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stMarkdownContainer"],
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] caption { color:#d7dbe0 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] input { background:#151a21 !important; color:#e5e7eb !important; border:1px solid #2c3542 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"] { border-color:#2b3443 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"] summary,
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"] summary:hover,
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"] summary:focus-visible { background:#0d1117 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-jira) summary,
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-jira) summary:hover { color:#3b82f6 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-notif) summary,
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-notif) summary:hover { color:#a78bfa !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stColumn"]:has(.marca-tema) [data-testid="stButton"] button { background:#1a2029 !important; color:#e5e7eb !important; border:1.5px solid #2c3542 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stColumn"]:has(.marca-tema) [data-testid="stButton"] button:hover { background:#243040 !important; color:#ffffff !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stColumn"]:has(.tema-ativo) [data-testid="stButton"] button { background:#1e3a5f !important; border:1.5px solid #3b82f6 !important; color:#ffffff !important; outline:2.5px solid #3b82f6 !important; outline-offset:2px !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-jira) [data-testid="stButton"] button,
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-jira) [data-testid="stButton"] button:hover { background:#059669 !important; color:#ffffff !important; }
 
 /* Métricas e código */
 body:has([data-st-tema="escuro"]) [data-testid="stMetricValue"] { color:#f3f4f6 !important; }
@@ -937,8 +973,9 @@ if registros_totais:
     with st.expander("📈 Dashboard de QA — visão geral do histórico", key="ex_dashboard"):
         st.markdown('<div class="marca-dashboard" style="display:none"></div>', unsafe_allow_html=True)
         dashboard_qa.render_dashboard(registros_totais)
-# --- CONFIGURAÇÕES (tema + Jira + futuras opções) no sidebar ---
-with st.sidebar.expander("⚙️ Configurações", expanded=False):
+# --- CONFIGURAÇÕES no modal (@st.dialog): tema + Jira + notificações ---
+@st.dialog("⚙️ Configurações")
+def abrir_configuracoes():
     st.markdown('<div class="marca-config" style="display:none"></div>', unsafe_allow_html=True)
 
     # 🎨 Tema (claro/escuro — fonte de verdade é a URL ?tema=)
@@ -954,6 +991,7 @@ with st.sidebar.expander("⚙️ Configurações", expanded=False):
             if st.button(_tl, key=f"tema_{_tv}", width="stretch"):
                 st.session_state["tema"] = _tv
                 st.query_params["tema"] = _tv
+                st.session_state["_reabrir_config"] = True  # st.rerun() fecha o dialog; reabre abaixo
                 st.rerun()
 
     st.markdown("---")
@@ -981,9 +1019,81 @@ with st.sidebar.expander("⚙️ Configurações", expanded=False):
                 limpar = getattr(jira_client, "limpar_config", None)
                 if limpar is not None:
                     limpar()
+                    st.session_state["_reabrir_config"] = True
                     st.rerun()
                 else:
                     st.error("Cache antigo detectado — clique em 'Manage app' > 'Rebuild' (limpa o cache) e rode a triagem de novo.")
+
+    st.markdown("---")
+
+    # 🔔 Notificações — cada usuário/empresa configura o seu (só nesta sessão)
+    with st.expander("🔔 Notificações (CRÍTICA/ALTA)"):
+        st.markdown('<div class="marca-notif" style="display:none"></div>', unsafe_allow_html=True)
+        st.caption("Alerta automático quando uma triagem resultar em **CRÍTICA** ou **ALTA**. "
+                   "O que você salvar aqui vale **só nesta sessão** — o config do dono (secrets/.env) continua como padrão.")
+        n_discord = st.text_input(
+            "Webhook do Discord", key="cfg_discord",
+            placeholder="https://discord.com/api/webhooks/...",
+            value=notificacoes._ler("DISCORD_WEBHOOK"))
+        n_para = st.text_input(
+            "E-mail de destino", key="cfg_para",
+            placeholder="ex.: qa@empresa.com",
+            value=notificacoes._ler("ALERTA_EMAIL_TO"))
+        n_user = st.text_input(
+            "Usuário SMTP (remetente)", key="cfg_user",
+            placeholder="ex.: app@gmail.com",
+            value=notificacoes._ler("SMTP_USER"))
+        n_senha = st.text_input(
+            "Senha / App Password (SMTP)", type="password", key="cfg_senha",
+            placeholder="Gmail: use um App Password",
+            value=notificacoes._ler("SMTP_PASS"))
+        _nh, _np = st.columns(2)
+        n_host = _nh.text_input(
+            "Host SMTP", key="cfg_host", placeholder="smtp.gmail.com",
+            value=notificacoes._ler("SMTP_HOST") or "smtp.gmail.com")
+        n_porta = _np.text_input(
+            "Porta", key="cfg_porta", placeholder="587",
+            value=notificacoes._ler("SMTP_PORT") or "587")
+        if st.button("💾 Salvar notificações (sessão)", key="cfg_salvar", use_container_width=True):
+            notificacoes.set_config(
+                DISCORD_WEBHOOK=n_discord, ALERTA_EMAIL_TO=n_para, SMTP_USER=n_user,
+                SMTP_PASS=n_senha, SMTP_HOST=n_host, SMTP_PORT=n_porta,
+            )
+            st.success("✅ Notificações desta sessão salvas.")
+
+        _t1, _t2 = st.columns(2)
+        if _t1.button("🔔 Testar Discord", key="cfg_teste_disc"):
+            _ok, _msg = notificacoes.testar_discord()
+            (st.success if _ok else st.error)(_msg)
+        if _t2.button("✉️ Testar e-mail", key="cfg_teste_email"):
+            _ok, _msg = notificacoes.testar_email()
+            (st.success if _ok else st.error)(_msg)
+        if st.button("↩️ Limpar meu config (voltar ao do dono)", key="cfg_limpar"):
+            if notificacoes.config_sessao():
+                notificacoes.limpar_config_sessao()
+                st.success("Override desta sessão removido.")
+            else:
+                st.info("Nenhum override ativo — já usa o config do dono.")
+
+        # Status renderizado DEPOIS das ações para refletir o estado pós-clique no mesmo run
+        st.markdown("##### Status")
+        if notificacoes.discord_configurado():
+            st.caption("🔔 Discord: ✅ configurado")
+        else:
+            st.caption("🔔 Discord: ❌ sem webhook")
+        if notificacoes.email_configurado():
+            st.caption("✉️ E-mail: ✅ configurado")
+        else:
+            st.caption("✉️ E-mail: ❌ sem destinatário/usuário/senha")
+
+
+if st.sidebar.button("⚙️ Configurações", key="abrir_config", width="stretch", help="Tema, Jira e notificações"):
+    abrir_configuracoes()
+
+# Um botão DENTRO do dialog usou st.rerun() (ex.: trocar tema), que fecha o modal.
+# Este flag reabre o modal com o corpo re-renderizado (marcas/estilos atualizados).
+if st.session_state.pop("_reabrir_config", False):
+    abrir_configuracoes()
 
 # --- CTA: ESTRELA NO GITHUB ---
 st.sidebar.markdown("### ⭐ Apoie o projeto")

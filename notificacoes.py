@@ -13,9 +13,39 @@ import urllib.request
 
 _SOPADRA = "***"
 
+# Override por sessão (cada usuário/empresa configura o seu): campos aqui têm
+# prioridade sobre secrets/env/.env. Nada é gravado em disco — some no reload.
+_SESSAO: dict[str, str] = {}
+
+
+def set_config(**campos: str) -> None:
+    """Sobrescreve (só nesta sessão) campos de configuração.
+
+    Valores vazios removem o override do campo (volta a valer o config do dono).
+    """
+    for k, v in campos.items():
+        v = (v or "").strip()
+        if v:
+            _SESSAO[k] = v
+        else:
+            _SESSAO.pop(k, None)
+
+
+def config_sessao() -> dict:
+    """Snapshot dos overrides da sessão atual."""
+    return dict(_SESSAO)
+
+
+def limpar_config_sessao() -> None:
+    """Remove todos os overrides (volta ao config do dono: secrets/env/.env)."""
+    _SESSAO.clear()
+
 
 def _ler(nome: str) -> str:
-    """Lê configuração com prioridade: st.secrets → os.environ → .env."""
+    """Lê configuração com prioridade: sessão → st.secrets → os.environ → .env."""
+    v = _SESSAO.get(nome)
+    if v is not None:
+        return str(v).strip()
     try:
         import streamlit as st
 
@@ -121,6 +151,61 @@ def _smtp_config() -> dict:
     }
 
 
+def _enviar_email(cfg: dict, para: str, assunto: str, corpo: str) -> bool:
+    """Envia e-mail via SMTP. True se enviou; nunca levanta exceção."""
+    try:
+        msg = EmailMessage()
+        msg["Subject"] = assunto
+        msg["From"] = cfg["user"]
+        msg["To"] = para
+        msg.set_content(corpo)
+        with smtplib.SMTP(cfg["host"], cfg["porta"], timeout=10) as smtp:
+            smtp.starttls()
+            smtp.login(cfg["user"], cfg["senha"])
+            smtp.send_message(msg)
+        return True
+    except Exception:
+        return False
+
+
+def testar_discord() -> tuple[bool, str]:
+    """Envia um teste ao webhook do Discord configurado. Nunca levanta exceção."""
+    url = webhook_discord()
+    if not url:
+        return False, "Sem webhook do Discord configurado."
+    try:
+        payload = {"content": "✅ Teste de notificação — AI Bug Triage System"}
+        corpo = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            data=corpo,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            if resp.status == 204:
+                return True, "Teste enviado ao Discord."
+            return False, f"Resposta inesperada do Discord (HTTP {resp.status})."
+    except Exception as e:
+        return False, f"Falha ao enviar: {type(e).__name__}"
+
+
+def testar_email() -> tuple[bool, str]:
+    """Envia um e-mail de teste pelo SMTP configurado. Nunca levanta exceção."""
+    cfg = _smtp_config()
+    if not (cfg["para"] and cfg["user"] and cfg["senha"]):
+        return False, "E-mail não configurado (destinatário + usuário + senha SMTP)."
+    if _enviar_email(
+        cfg,
+        cfg["para"],
+        "🧪 [AI Bug Triage] Teste de notificação",
+        "✅ Teste de notificação — AI Bug Triage System.\n\n"
+        "Se você recebeu este e-mail, o canal de alertas está funcionando.",
+    ):
+        return True, "E-mail de teste enviado."
+    return False, "Falha ao enviar o e-mail (SMTP)."
+
+
 def notificar_email(prioridade_final: str, resumo: str, provedor: str | None = None) -> bool:
     """Envia e-mail (SMTP) quando a prioridade for CRÍTICA/ALTA.
 
@@ -136,22 +221,13 @@ def notificar_email(prioridade_final: str, resumo: str, provedor: str | None = N
     para = cfg["para"]
     if not para or not cfg["user"] or not cfg["senha"]:
         return False
-    try:
-        msg = EmailMessage()
-        msg["Subject"] = f"🚨 [AI Bug Triage] {prioridade_final} — {resumo[:60]}"
-        msg["From"] = cfg["user"]
-        msg["To"] = para
-        msg.set_content(
-            "🚨 Uma triagem crítica foi detectada pelo AI Bug Triage System.\n\n"
-            f"Prioridade final: {prioridade_final}\n"
-            f"Relato: {(resumo or '—')[:800]}\n"
-            f"Motor: {provedor or 'offline (léxico)'}\n\n"
-            "Abra o app para ver a triagem completa."
-        )
-        with smtplib.SMTP(cfg["host"], cfg["porta"], timeout=10) as smtp:
-            smtp.starttls()
-            smtp.login(cfg["user"], cfg["senha"])
-            smtp.send_message(msg)
-        return True
-    except Exception:
-        return False
+    return _enviar_email(
+        cfg,
+        para,
+        f"🚨 [AI Bug Triage] {prioridade_final} — {resumo[:60]}",
+        "🚨 Uma triagem crítica foi detectada pelo AI Bug Triage System.\n\n"
+        f"Prioridade final: {prioridade_final}\n"
+        f"Relato: {(resumo or '—')[:800]}\n"
+        f"Motor: {provedor or 'offline (léxico)'}\n\n"
+        "Abra o app para ver a triagem completa.",
+    )
