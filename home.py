@@ -291,8 +291,8 @@ st.components.v1.html(
 _PROVID_CSS = """
 <style>
     [data-testid="stColumn"]:has(.marca-provid) [data-testid="stButton"] button { height:50px; min-height:50px; border-radius:10px; font-weight:600; width:100%; }
-    [data-testid="stColumn"]:has(.marca-prov-auto) [data-testid="stButton"] button { background:#334155 !important; color:#ffffff !important; border:1.5px solid #1e293b !important; }
-    [data-testid="stColumn"]:has(.marca-prov-auto) [data-testid="stButton"] button:hover { background:#24303f !important; }
+    [data-testid="stColumn"]:has(.marca-prov-auto) [data-testid="stButton"] button { background:linear-gradient(135deg,#2E7CF6 0%,#f55036 100%) !important; color:#ffffff !important; border:2px solid #1e293b !important; text-shadow:0 1px 2px rgba(15,23,42,.35) !important; }
+    [data-testid="stColumn"]:has(.marca-prov-auto) [data-testid="stButton"] button:hover { filter:brightness(1.08) !important; }
     [data-testid="stColumn"]:has(.marca-prov-gemini) [data-testid="stButton"] button { background:linear-gradient(135deg,#2E7CF6 0%,#7c3aed 100%) !important; color:#ffffff !important; border:2px solid #4f46e5 !important; text-shadow:0 1px 2px rgba(15,23,42,.35) !important; }
     [data-testid="stColumn"]:has(.marca-prov-gemini) [data-testid="stButton"] button:hover { filter:brightness(1.08) !important; }
     [data-testid="stColumn"]:has(.marca-prov-groq) [data-testid="stButton"] button { background:#f55036 !important; color:#ffffff !important; border:2px solid #f55036 !important; text-shadow:0 1px 2px rgba(15,23,42,.35) !important; }
