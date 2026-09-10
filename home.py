@@ -117,6 +117,7 @@ st.markdown("""
     [data-testid="stColumn"]:has(.marca-jira) [data-testid="stButton"] button { background: #0052cc !important; color: #ffffff !important; }
     [data-testid="stExpander"]:has(.marca-jira) { border: 2px solid #0052cc !important; border-radius: 12px !important; background: rgba(0, 82, 204, 0.05) !important; }
     [data-testid="stExpander"]:has(.marca-jira) summary { color: #0052cc !important; font-weight: 700 !important; }
+    [data-testid="stSidebar"] [data-testid="stExpander"]:has(.marca-jira) summary { color: #3b82f6 !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -914,31 +915,32 @@ with st.sidebar.expander("⚙️ Configurações", expanded=False):
 
     st.markdown("---")
 
-    # 🔑 Jira — exportação de relatórios
-    if not jira_client.configurado():
-        st.markdown("**🔑 Jira — configurar exportação**")
-        st.caption("Cole suas credenciais para ativar o botão 'Exportar para Jira'.")
-        j_email = st.text_input("E-mail Atlassian", key="jira_email")
-        j_token = st.text_input("API Token", type="password", key="jira_token")
-        j_key = st.text_input("Chave do projeto", placeholder="ex.: KAN", key="jira_key")
-        j_issue_type = st.text_input("Tipo de item (padrão: Tarefa)", placeholder="ex.: Tarefa", key="jira_issue_type")
-        if st.button("Salvar configuração (sessão)", use_container_width=True):
-            jira_client.configurar(j_email, j_token, j_key, j_issue_type)
-            if jira_client.configurado():
-                st.success("✅ Jira configurado nesta sessão!")
-            else:
-                st.warning("Preencha e-mail, token e chave do projeto.")
-    else:
-        st.markdown("**🔑 Jira**")
-        st.success("✅ Jira configurado nesta sessão")
-        st.caption("Botão 'Exportar para Jira' ativo.")
-        if st.button("🔄 Reconectar / trocar credenciais", use_container_width=True):
-            limpar = getattr(jira_client, "limpar_config", None)
-            if limpar is not None:
-                limpar()
-                st.rerun()
-            else:
-                st.error("Cache antigo detectado — clique em 'Manage app' > 'Rebuild' (limpa o cache) e rode a triagem de novo.")
+    # 🔑 Jira — exportação de relatórios (sub-expander azul persistente p/ ficar visível no tema claro)
+    with st.expander("🔑 Jira — configurar exportação"):
+        st.markdown('<div class="marca-jira" style="display:none"></div>', unsafe_allow_html=True)
+        if not jira_client.configurado():
+            st.caption("Cole suas credenciais para ativar o botão 'Exportar para Jira'.")
+            j_email = st.text_input("E-mail Atlassian", key="jira_email")
+            j_token = st.text_input("API Token", type="password", key="jira_token")
+            j_key = st.text_input("Chave do projeto", placeholder="ex.: KAN", key="jira_key")
+            j_issue_type = st.text_input("Tipo de item (padrão: Tarefa)", placeholder="ex.: Tarefa", key="jira_issue_type")
+            if st.button("Salvar configuração (sessão)", use_container_width=True):
+                jira_client.configurar(j_email, j_token, j_key, j_issue_type)
+                if jira_client.configurado():
+                    st.success("✅ Jira configurado nesta sessão!")
+                else:
+                    st.warning("Preencha e-mail, token e chave do projeto.")
+        else:
+            st.markdown("**🔑 Jira**")
+            st.success("✅ Jira configurado nesta sessão")
+            st.caption("Botão 'Exportar para Jira' ativo.")
+            if st.button("🔄 Reconectar / trocar credenciais", use_container_width=True):
+                limpar = getattr(jira_client, "limpar_config", None)
+                if limpar is not None:
+                    limpar()
+                    st.rerun()
+                else:
+                    st.error("Cache antigo detectado — clique em 'Manage app' > 'Rebuild' (limpa o cache) e rode a triagem de novo.")
 
 # --- CTA: ESTRELA NO GITHUB ---
 st.sidebar.markdown("### ⭐ Apoie o projeto")
