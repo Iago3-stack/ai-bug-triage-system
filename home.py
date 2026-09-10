@@ -16,7 +16,7 @@ import plano
 import dashboard as dashboard_qa
 import pix
 
-VERSAO = "v2.6.6"
+VERSAO = "v2.6.7"
 
 # Símbolo oficial do Pix (Banco Central) — PD-textlogo via Wikimedia Commons.
 # Só os 3 paths verdes da marca (o "losango"), sem a tipografia do logo.
@@ -467,9 +467,7 @@ with col_foto:
 <div style="height:3px;width:100%;background:linear-gradient(90deg,transparent,#25D366,#2E7CF6,#7c3aed,transparent);border-radius:999px;margin:8px 0"></div>
 """, unsafe_allow_html=True)
 
-esq, centro = st.columns([1, 8])
-with centro:
-    st.markdown("""
+st.markdown("""
 <div style="margin-top:14px;width:100%;background:linear-gradient(135deg,#0f172a 0%,#16233c 55%,#25D366 170%);border-radius:16px;color:#e2e8f0;font-size:15px;line-height:1.6;padding:22px 24px">
   <div style="font-size:19px;font-weight:800;color:#ffffff;margin-bottom:12px">🎯 Sobre Mim 🧔🏾‍♂️️</div>
   <p style="margin:0 0 12px">Sou um entusiasta de tecnologia e estudante de <b style="color:#25D366">IA &amp; Machine Learning</b>, focado em transformar a garantia de qualidade (QA) através da automação inteligente. Minha missão no laboratório <b style="color:#94a3b8">Hack28</b> é construir ferramentas que não apenas encontrem falhas, mas que tragam <b style="color:#94a3b8">insights valiosos para o negócio</b> usando <b style="color:#94a3b8">NLP</b> e <b style="color:#94a3b8">Engenharia de Prompt</b>.</p>

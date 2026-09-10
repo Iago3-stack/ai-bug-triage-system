@@ -7,6 +7,9 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 ## [Não lançado]
 
 ### Adicionado
+- **📐 "Sobre Mim" full-width (v2.6.7)** — removidas as colunas `esq, centro` que deixavam um vão à esquerda; o card agora ocupa **100% da largura** e fica **rentre ao divisor e ao título "🤖 Agente de Triagem e Documentação de Bugs 2026"** (gap 27 px, sem espaços laterais, sem overflow no mobile).
+
+### Adicionado
 - **➡️ Hero full-width (v2.6.6)** — o card do hero deixou de ter `max-width: 640px` e agora **ocupa 100% da largura da coluna/da tela**: no desktop acompanha as bordas (rentre à linha de cima do cabeçalho) e no celular se ajusta à largura da tela sem vazamento horizontal (validado em 390 px).
 
 ### Adicionado
