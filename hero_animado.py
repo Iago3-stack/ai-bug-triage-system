@@ -98,10 +98,11 @@ def render():
         '<span class="hero-pill" style="background:rgba(246,130,29,.16);color:#d97706">'
         f'{_svg_gemini(13)} Gemini</span>'
     )
+    sparkle = f'<span style="display:inline-flex">{_svg_gemini(26)}</span>'
     st.markdown("""
 <div class="hero-wrap">
 <div class="hero-card">
-  <div style="font-size:34px">🤖⚡</div>
+  <div style="display:inline-flex;align-items:center;gap:12px;font-size:32px">🤖⚡{sparkle}</div>
   <div class="hero-grad" style="font-size:23px">QA Automation + IA</div>
   <div style="margin-top:13px"><span class="hero-dot"></span>&nbsp;<b>Disponível para vagas</b></div>
   <div class="hero-sub" style="font-size:14px;color:#444;margin-top:4px">Remote Global · São Luís, MA</div>
@@ -114,7 +115,7 @@ def render():
   <div style="margin-top:12px;font-weight:700">⚡ Vamos construir?</div>
 </div>
 </div>
-""".format(MARQUEE_TEXT=MARQUEE_TEXT, pill_gemini=pill_gemini), unsafe_allow_html=True)
+""".format(MARQUEE_TEXT=MARQUEE_TEXT, pill_gemini=pill_gemini, sparkle=sparkle), unsafe_allow_html=True)
 
 # --- BOTÕES DE CONTATO (ícones oficiais embutidos) ---
 # auto-gerado
