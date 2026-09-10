@@ -169,6 +169,11 @@ _TEMA_CSS = """
 [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-notif) { border:2px solid #7c3aed !important; border-radius:12px !important; background:rgba(124,58,237,.05) !important; }
 [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-notif) summary { color:#7c3aed !important; font-weight:700 !important; }
 
+/* Corpo dos expanders com fundo próprio para os campos se destacarem sem depender de hover */
+[data-testid="stDialog"] [data-testid="stExpanderDetails"] { background:#f4f7fa !important; border:1px solid #cfd8e3 !important; border-radius:0 0 10px 10px !important; }
+[data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-jira) [data-testid="stExpanderDetails"] { background:rgba(0,82,204,.07) !important; border-color:#9ec5ff !important; }
+[data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-notif) [data-testid="stExpanderDetails"] { background:rgba(124,58,237,.07) !important; border-color:#cbb7f7 !important; }
+
 /* -------- MODO ESCURO: paleta própria do app -------- */
 body:has([data-st-tema="escuro"]) { color-scheme: dark; }
 body:has([data-st-tema="escuro"]) [data-testid="stAppViewContainer"] { background: linear-gradient(180deg, #0d1410 0%, #0f1115 420px) !important; }
@@ -273,6 +278,9 @@ body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stColum
 body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stColumn"]:has(.tema-ativo) [data-testid="stButton"] button { background:#1e3a5f !important; border:1.5px solid #3b82f6 !important; color:#ffffff !important; outline:2.5px solid #3b82f6 !important; outline-offset:2px !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-jira) [data-testid="stButton"] button,
 body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-jira) [data-testid="stButton"] button:hover { background:#059669 !important; color:#ffffff !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpanderDetails"] { background:#161c26 !important; color:#d7dbe0 !important; border:1px solid #2b3443 !important; border-radius:0 0 10px 10px !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-jira) [data-testid="stExpanderDetails"] { background:rgba(59,130,246,.07) !important; border-color:#1e3a5f !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-notif) [data-testid="stExpanderDetails"] { background:rgba(167,139,250,.07) !important; border-color:#3b2f5a !important; }
 
 /* Métricas e código */
 body:has([data-st-tema="escuro"]) [data-testid="stMetricValue"] { color:#f3f4f6 !important; }
