@@ -7,6 +7,9 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 ## [Não lançado]
 
 ### Adicionado
+- **🧭 Masthead mais alto e colado no topo (v2.6.1)** — a barra nativa do Streamlit (`stHeader`) é ocultada e o card "Conheça o plano" sobe para **6px do topo**, preenchendo o espaço antes vazio, com card **mais alto** (padding 30px/34px, título 26px, textos 16px). O alinhamento é igual nos **dois temas** (`margin-top` negativo por tema para compensar containers zero-altura). O conteúdo seguinte (cabeçalho) não colide.
+
+### Adicionado
 - **💼 Masthead "Conheça o plano" (v2.6.0)** — card fixo acima do nome do site ("rodapé superior"): badge do plano atual (**🔓 Grátis** / **⭐ Pago**, lido de `PLANO`), frase-resumo, pills dos recursos bloqueados/liberados e expander **"💼 Comparar planos — Grátis × Pago"** com a tabela completa por plano (IA/LLM, RAG, causas raiz, comparativo IA×local, histórico, canais de alerta). O card fica visível ao visitante em qualquer tema e sumariza de forma explícita o que cada plano libera.
 
 ### Adicionado

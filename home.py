@@ -16,7 +16,7 @@ import plano
 import dashboard as dashboard_qa
 import pix
 
-VERSAO = "v2.6.0"
+VERSAO = "v2.6.1"
 
 # Símbolo oficial do Pix (Banco Central) — PD-textlogo via Wikimedia Commons.
 # Só os 3 paths verdes da marca (o "losango"), sem a tipografia do logo.
@@ -80,7 +80,17 @@ st.markdown("""
     [data-testid="stCaptionContainer"], [data-testid="stSidebar"] caption { color: #64748b !important; }
     [data-testid="stMetricLabel"] { color: #64748b !important; }
     [data-testid="stMetricValue"] { color: #0f172a !important; }
-    [data-testid="stHeader"] { background: #ffffff !important; }
+    [data-testid="stHeader"] { display: none !important; }
+
+    /* Conteúdo do main sobe para ficar paralelo ao topo do sidebar (botão Configurações);
+       padrão do Streamlit era 6rem (~96px) e sobrava um vão acima do masthead. */
+    [data-testid="stMainBlockContainer"] { padding-top: 8px !important; }
+
+    /* Masthead (card do plano) sobe para o topo da página, preenchendo o espaço
+       vazio que sobrava antes da barra nativa do Streamlit (agora oculta). Os
+       containers <style> zero-altura antecipam o card; compensamos com margem negativa. */
+    .marca-mastro { margin-top: -66px !important; }
+    body:has([data-st-tema="escuro"]) .marca-mastro { margin-top: -82px !important; }
 
     /* Card do formulário: textarea da triagem com moldura colorida (marcador irmão) */
     [data-testid="stElementContainer"]:has(.marca-form) + [data-testid="stElementContainer"] [data-testid="stTextArea"] textarea { background: #fbfefc !important; border: 1.5px solid #25D366 !important; border-radius: 12px !important; box-shadow: 0 2px 12px rgba(37, 211, 102, 0.14) !important; }
@@ -408,7 +418,7 @@ _pill_off = 'background:rgba(255,255,255,.05);border:1px dashed rgba(255,255,255
 _pill_feat = lambda on: _pill_on if on else _pill_off
 
 st.markdown(f"""
-<div style="width:100%;background:linear-gradient(135deg,#0f172a 0%,#16233c 52%,#25D366 175%);border-radius:16px;padding:18px 22px;margin:4px 0 16px;box-shadow:0 8px 22px rgba(15,23,42,.18)">
+<div class="marca-mastro" style="width:100%;background:linear-gradient(135deg,#0f172a 0%,#16233c 52%,#25D366 175%);border-radius:16px;padding:30px 34px 26px 34px;margin:4px 0 18px;box-shadow:0 8px 22px rgba(15,23,42,.18)">
   <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       {_badge_plano}
@@ -416,16 +426,16 @@ st.markdown(f"""
     </div>
     <span style="color:#64748b;font-size:12px;font-weight:600">{VERSAO}</span>
   </div>
-  <div style="color:#ffffff;font-size:20px;font-weight:800;margin-top:12px;letter-spacing:-.01em">Conheça o plano {'⭐' if plano.pago() else '💎'}</div>
-  <div style="color:#cbd5e1;font-size:14px;line-height:1.6;margin-top:6px;max-width:92%">{_frase_plano}</div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+  <div style="color:#ffffff;font-size:26px;font-weight:800;margin-top:16px;letter-spacing:-.01em">Conheça o plano {'⭐' if plano.pago() else '💎'}</div>
+  <div style="color:#cbd5e1;font-size:16px;line-height:1.65;margin-top:8px;max-width:94%">{_frase_plano}</div>
+  <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:18px">
     <span style="{_pill_feat(True)}">✅ Triagem NLP + IA (Gemini/Groq)</span>
     <span style="{_pill_feat(plano.pago())}">🧠 Causas raiz + comparativo IA×local</span>
     <span style="{_pill_feat(plano.pago())}">📚 RAG · \u201ccomo foi resolvido\u201d</span>
     <span style="{_pill_feat(plano.pago())}">🔔 Alertas multi-canal (e-mail + Discord)</span>
     <span style="{_pill_feat(plano.pago())}">🧺 Histórico completo (Dashboard)</span>
   </div>
-  <div style="color:#94a3b8;font-size:13px;margin-top:14px">🔽 Abra a tabela <b>💼 Comparar planos — Grátis × Pago</b> logo abaixo para ver tudo que cada um libera.</div>
+  <div style="color:#94a3b8;font-size:13px;margin-top:18px">🔽 Abra a tabela <b>💼 Comparar planos — Grátis × Pago</b> logo abaixo para ver tudo que cada um libera.</div>
 </div>
 """, unsafe_allow_html=True)
 
