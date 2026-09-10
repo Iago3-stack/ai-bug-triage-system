@@ -7,6 +7,9 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 ## [Não lançado]
 
 ### Adicionado
+- **🦸 Card do perfil → Hero no cabeçalho (v2.6.5)** — o card "🚀 Construo automação de QA... / 📍 São Luís" foi **removido** (conteúdo já citado no Sobre Mim e no hero) e o **hero animado "QA Automation + IA"** passou a ocupar o lugar dele, ao lado direito, logo abaixo dos nome. O cabeçalho ficou: foto (esquerda) + nome + hero.
+
+### Adicionado
 - **🧩 Card "Sobre Mim" ampliado (v2.6.4)** — o conteúdo do antigo card da UNIASSELVI foi **integrado ao card "Sobre Mim"** numa seção "🎓 Formação &amp; Stack", com **menção explícita ao SaaS** (planos Basic/Premium por variável de ambiente, RAG, comparativo IA×local, multi-canal). O card único agora é um bloco de perfil completo. A linha divisória ficou **entre o card e o título "🤖 Agente de Triagem e Documentação de Bugs 2026"**.
 
 ### Adicionado
