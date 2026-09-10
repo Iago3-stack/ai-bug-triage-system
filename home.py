@@ -188,6 +188,13 @@ _TEMA_CSS = """
 [data-testid="stDialog"] [data-testid="stElementContainer"]:has(> [data-testid="stButton"]):has(~ [data-testid="stElementContainer"] .marca-notif-limpar) [data-testid="stButton"] button,
 [data-testid="stDialog"] [data-testid="stElementContainer"]:has(> [data-testid="stButton"]):has(~ [data-testid="stElementContainer"] .marca-notif-limpar) [data-testid="stButton"] button:hover { background:#475569 !important; color:#ffffff !important; }
 
+/* Seção "Status" das notificações no modal — legível e destacada nos dois temas */
+[data-testid="stDialog"] .notif-st-tit { font-size:1.05rem !important; font-weight:700 !important; color:#0f172a !important; margin:8px 0 4px !important; }
+[data-testid="stDialog"] .notif-st-linha { font-size:.92rem !important; color:#374151 !important; margin:2px 0 !important; }
+[data-testid="stDialog"] .notif-st-lb { font-weight:600 !important; color:#111827 !important; }
+[data-testid="stDialog"] .notif-st-ok { color:#059669 !important; font-weight:600 !important; }
+[data-testid="stDialog"] .notif-st-falta { color:#b45309 !important; font-weight:600 !important; }
+
 /* -------- MODO ESCURO: paleta própria do app -------- */
 body:has([data-st-tema="escuro"]) { color-scheme: dark; }
 body:has([data-st-tema="escuro"]) [data-testid="stAppViewContainer"] { background: linear-gradient(180deg, #0d1410 0%, #0f1115 420px) !important; }
@@ -295,6 +302,13 @@ body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpan
 body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpanderDetails"] { background:#0b1018 !important; color:#d7dbe0 !important; border:1px solid #2b3443 !important; border-radius:0 0 10px 10px !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-jira) [data-testid="stExpanderDetails"] { background:#0d1523 !important; border-color:#1e3a5f !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-notif) [data-testid="stExpanderDetails"] { background:#141021 !important; border-color:#3b2f5a !important; }
+
+/* Seção "Status" no modo escuro — título branco destacado, linhas claras */
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] .notif-st-tit { color:#ffffff !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] .notif-st-linha { color:#d7dbe0 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] .notif-st-lb { color:#f1f5f9 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] .notif-st-ok { color:#34d399 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] .notif-st-falta { color:#fbbf24 !important; }
 
 /* Métricas e código */
 body:has([data-st-tema="escuro"]) [data-testid="stMetricValue"] { color:#f3f4f6 !important; }
@@ -1113,15 +1127,17 @@ def abrir_configuracoes():
             st.markdown('<div class="marca-notif-limpar" style="display:none"></div>', unsafe_allow_html=True)
 
         # Status renderizado DEPOIS das ações para refletir o estado pós-clique no mesmo run
-        st.markdown("##### Status")
-        if notificacoes.discord_configurado():
-            st.caption("🔔 Discord: ✅ configurado")
-        else:
-            st.caption("🔔 Discord: ❌ sem webhook")
-        if notificacoes.email_configurado():
-            st.caption("✉️ E-mail: ✅ configurado")
-        else:
-            st.caption("✉️ E-mail: ❌ sem destinatário/usuário/senha")
+        st.markdown('<div class="notif-st-tit">📊 Status</div>', unsafe_allow_html=True)
+        disc_ok = notificacoes.discord_configurado()
+        mail_ok = notificacoes.email_configurado()
+        st.markdown(
+            f'<div class="notif-st-linha"><span class="notif-st-lb">🔔 Discord:</span> '
+            f'<span class="notif-st-{"ok" if disc_ok else "falta"}">{"✅ configurado" if disc_ok else "❌ sem webhook"}</span></div>',
+            unsafe_allow_html=True)
+        st.markdown(
+            f'<div class="notif-st-linha"><span class="notif-st-lb">✉️ E-mail:</span> '
+            f'<span class="notif-st-{"ok" if mail_ok else "falta"}">{"✅ configurado" if mail_ok else "❌ sem destinatário/usuário/senha"}</span></div>',
+            unsafe_allow_html=True)
 
 
 if st.sidebar.button("⚙️ Configurações", key="abrir_config", type="primary", width="stretch", help="Tema, Jira e notificações"):
