@@ -38,6 +38,9 @@ _BASE_CSS = """
             transform: none !important;
             transition: none !important;
         }
+        /* Com a sidebar forçada aberta, o botão ">>" (recolher) vira controle morto —
+           escondemos no desktop para não aparecer um controle que não faz nada. */
+        [data-testid="stSidebarCollapseButton"] { display: none !important; }
     }
 
     /* Conteúdo do main sobe para ficar paralelo ao topo do sidebar (botão Configurações);

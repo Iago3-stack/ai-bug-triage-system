@@ -7,6 +7,7 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 ## [Não lançado]
 
 ### Corrigido
+- **Botão ">>" (recolher sidebar) oculto no desktop (v2.6.23)** — com a sidebar forçada aberta em ≥769px (v2.6.20), o botão de recolher vira controle morto. Agora ele é escondido via `display: none` no desktop; no mobile (hambúrguer overlay) continua visível e funcional.
 - **Card CTA com fundo vazando para a página inteira (v2.6.22)** — o seletor `:has(.marca-cta)` pintava todos os blocos-ancestrais que continham o card ("página toda envolvida nas cores"). Agora o fundo é aplicado **somente ao bloco do container border** (o único cujo filho é o leiaute do card), via seletor com negação de filhos fora do card.
 - **Aviso "st.rerun() within a callback is a no-op" (v2.6.22)** — os botões do CTA chamavam `st.switch_page` dentro do `on_click` (callback), o que gerava o aviso. Trocado para o padrão `if st.button(...): st.switch_page(...)` (fluxo principal).
 
