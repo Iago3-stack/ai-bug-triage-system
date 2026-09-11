@@ -3,7 +3,11 @@ import streamlit as st
 
 _BASE_CSS = """
 <style>
-    #MainMenu {visibility: hidden;}
+    [data-testid="stMainMenuButton"] {visibility: hidden;}
+    /* Botão de recolher/expandir a sidebar: o Streamlit o mantém visibility:hidden
+       por padrão; se a sidebar recolher (re-render, iframe do Cloud, viewport), não
+       há como expandi-la de volta. Forçamos sempre visível. */
+    [data-testid="stSidebarCollapseButton"] { visibility: visible !important; opacity: 1 !important; }
     footer {visibility: hidden;}
     .stDeployButton {display: none;}
 
