@@ -7,7 +7,7 @@ import hero_animado
 import pix
 import ui_tema
 
-VERSAO = "v2.6.23"
+VERSAO = "v2.6.24"
 
 # Símbolo oficial do Pix (Banco Central) — PD-textlogo via Wikimedia Commons.
 # Símbolo oficial do Pix (Banco Central) — PD-textlogo via Wikimedia Commons.
@@ -66,7 +66,7 @@ def _svg_github(tamanho: int = 16, cor: str = "currentColor") -> str:
 
 def abrir_configuracoes():
     @st.dialog("⚙️ Configurações", width="large")
-    def abrir_configuracoes():
+    def _dialogo_config():
         st.markdown('<div class="marca-config" style="display:none"></div>', unsafe_allow_html=True)
 
         # 🎨 Tema (claro/escuro — fonte de verdade é a URL ?tema=)
@@ -196,6 +196,7 @@ def abrir_configuracoes():
                 f'<span class="notif-st-{"ok" if mail_ok else "falta"}">{"✅ configurado" if mail_ok else "❌ sem destinatário/usuário/senha"}</span></div>',
                 unsafe_allow_html=True)
 
+    _dialogo_config()
 
 
 def sidebar_comum():
