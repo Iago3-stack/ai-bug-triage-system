@@ -224,6 +224,12 @@ def sair(token: str | None) -> None:
     limpar_sessao()
 
 
+def sair_da_conta() -> None:
+    """Encerra a sessão (server + local) do usuário logado. Usado no botão Sair."""
+    dados = sessao()
+    sair((dados or {}).get("access_token"))
+
+
 def guardar_sessao(dados: dict) -> None:
     _armazem()[_SESSAO_KEY] = dados
 

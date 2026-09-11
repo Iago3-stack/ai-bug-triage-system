@@ -83,10 +83,10 @@
         } catch (e) {}
       }
 
-      // ── Aba de retorno do popup: captura o token do fragmento e grava no
-      //    localStorage (compartilhado com a aba original) para a Python pegar.
-      //    A aba de retorno roda o MESMO app → o component roda de novo; por isso
-      //    usamos sessionStorage como trava (evita loop de re-render).
+      // ── Retorno do OAuth na MESMA aba: captura o token do fragmento e grava
+      //    no localStorage (ponte) para o poll entregar à Python. Após o full
+      //    reload de volta do provider, o app roda de novo; a trava em
+      //    sessionStorage evita reprocessar o mesmo fragmento num reload.
       function capturarFragmento() {
         try {
           if (window.sessionStorage.getItem(LS_CAPTURED) === "1") return true;
@@ -101,8 +101,7 @@
             window.sessionStorage.setItem(LS_CAPTURED, "1");
           } catch (e) {}
           limparHashTopo();
-          notifyHost({ tipo: "captura", ok: true });
-          try { window.close(); } catch (e) {}
+          notifyHost({ tipo: "captura", ok: false, erro: p_erro.erro });
           return true;
         }
         var at = params.get("access_token");
@@ -121,7 +120,6 @@
         } catch (e) {}
         limparHashTopo();
         notifyHost({ tipo: "captura", ok: true });
-        try { window.close(); } catch (e) {}
         return true;
       }
 
@@ -152,8 +150,10 @@
           };
           btn.innerHTML = (logos[p] || "") + esc(label);
           btn.onclick = function () {
+            // Só avisa a Python; ela navega a PRÓPRIA aba (meta redirect no
+            // documento principal, fora do sandbox do componente). O Supabase
+            // devolve #access_token, capturado ao voltar.
             notifyHost({ tipo: "iniciado", provider: p });
-            window.open(cfg.url, "_blank", "width=640,height=660");
           };
           root.appendChild(btn);
         });

@@ -6,14 +6,15 @@
 #     token de OAuth no FRAGMENTO da URL (#access_token=...), que o servidor
 #     Python nunca vê — só o navegador consegue ler.
 #
-# FLUXO (abre popup + localStorage como "ponte" entre abas):
+# FLUXO (redirect na mesma aba, sem popup):
 #   1) o componente informa a URL do app (origin+path) à Python, que monta a URL
 #      de autorização (GET /auth/v1/authorize) com redirect_to = URL do app.
-#   2) clique no botão -> abertura de popup (window.open) + o componente passa
-#      a vigiar o localStorage (polling em JS). Quando o usuário volta, a ABA DE
-#      RETORNO captura o token do fragmento e grava no localStorage.
-#   3) a ABA ORIGINAL lê o localStorage, devolve a sessão à Python, que
-#      enriquece com GET /auth/v1/user e chama auth_supabase.guardar_sessao().
+#   2) clique no botão -> o componente só avisa a Python; ela navega a PRÓPRIA
+#      aba via <meta http-equiv="refresh"> no documento principal (o sandbox do
+#      iframe do componente BLOQUEIA window.top.location).
+#   3) o Supabase redireciona de volta com #access_token; na sessão nova o
+#      componente captura o token, grava no localStorage e o poll devolve à
+#      Python, que enriquece com GET /auth/v1/user e guarda a sessão.
 #
 # No Streamlit, o valor do componente "persiste" entre renders (faz parte do
 # estado do elemento). Para não reprocessar o mesmo evento, cada etapa consome
@@ -82,6 +83,19 @@ def _url_autorizacao(provider: str, redirect_to: str, apikey: str) -> dict:
     }
 
 
+def _meta_redirect(url: str) -> None:
+    """Navega a PÁGINA PRINCIPAL (não o iframe do componente, que é sandboxed).
+
+    O sandbox do componente bloqueia window.top.location; por isso o redirect
+    é feito via <meta http-equiv="refresh"> emitido pela Python no documento
+    principal do Streamlit (document body, fora do sandbox do iframe).
+    """
+    st.markdown(
+        f'<meta http-equiv="refresh" content="0; url={url}">',
+        unsafe_allow_html=True,
+    )
+
+
 def render() -> None:
     """Processa o fluxo de OAuth na página de login. Deve ser chamada em todo rerun."""
     if st is None:
@@ -96,7 +110,8 @@ def render() -> None:
     base = armazem.get(_BASE)
 
     if etapa == "fluxourl":
-        # 1º render: pede a URL do app ao navegador (o iframe sabe a quadra real).
+        # 1º render: pergunta a URL do app ao navegador (o iframe sabe a quadra)
+        # e detecta se já voltamos do OAuth (fragmento com token).
         evt = _bridge(
             primeiro=True,
             providers=providers,
@@ -105,10 +120,17 @@ def render() -> None:
             apikey="",
             timeout_ms=180000,
         )
-        if evt and evt.get("tipo") == "url" and evt.get("url"):
-            armazem[_BASE] = evt["url"]
-            armazem[_ETAPA] = "botoes"
-            st.rerun()  # agora monta a URL de autorização com o redirect_to certo
+        if evt:
+            tipo = evt.get("tipo")
+            if tipo == "url" and evt.get("url"):
+                # Vinda limpa: monta os botões.
+                armazem[_BASE] = evt["url"]
+                armazem[_ETAPA] = "botoes"
+                st.rerun()
+            elif tipo in ("captura", "sessao"):
+                # Retorno do OAuth na MESMA aba (fragmento já capturado).
+                armazem[_ETAPA] = "aguardando"
+                st.rerun()
         return
 
     if not base:
@@ -127,10 +149,15 @@ def render() -> None:
             apikey=config[1],
             timeout_ms=180000,
         )
-        # O valor persiste: só a PRIMEIRA aparição de "iniciado" interessa.
+        # O valor persiste: só a primeira aparição de "iniciado" importa.
         if evt and evt.get("tipo") == "iniciado" and not armazem.get("_oauth_imed"):
             armazem["_oauth_imed"] = True
             armazem[_ETAPA] = "aguardando"
+            url_auth = (af.get(evt.get("provider")) or {}).get("url")
+            if url_auth:
+                _meta_redirect(url_auth)
+            else:
+                st.error("Provedor de login não configurado.")
             st.rerun()
         return
 

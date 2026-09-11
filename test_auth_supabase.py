@@ -167,6 +167,23 @@ def test_sair_limpa_sessao(monkeypatch):
     assert "_auth_sessao" not in fake
 
 
+def test_sair_da_conta_usa_sessao_logada(monkeypatch):
+    fake = {"_auth_sessao": {"access_token": "t1", "user": {"email": "u@e.com"}}}
+    monkeypatch.setattr(auth_supabase, "_armazem", lambda: fake)
+    monkeypatch.setattr(auth_supabase, "_config", lambda: ("https://x.supabase.co", "key"))
+    chamou = []
+
+    def _logout(*a, **k):
+        chamou.append(a)
+        return _Resp(204)
+
+    monkeypatch.setattr(auth_supabase, "_base_auth_url", lambda: "https://x/auth/v1")
+    monkeypatch.setattr(auth_supabase.requests, "post", _logout)
+    auth_supabase.sair_da_conta()
+    assert chamou  # logout chamado
+    assert "_auth_sessao" not in fake
+
+
 def test_disponivel_true_e_false(monkeypatch):
     monkeypatch.setattr(auth_supabase, "_config", lambda: ("https://x", "k"))
     assert auth_supabase.disponivel()
