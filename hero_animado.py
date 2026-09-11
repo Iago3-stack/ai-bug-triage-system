@@ -81,7 +81,7 @@ CSS = """
 </style>
 """
 
-MARQUEE_TEXT = "QA • IA • NLP • Gemini • Streamlit • Python • Linux • "
+MARQUEE_TEXT = "QA • IA • NLP • RAG • Streamlit • Python • Linux • "
 
 def _css():
     st.markdown(CSS, unsafe_allow_html=True)
@@ -92,9 +92,9 @@ def linha():
 
 def render():
     _css()
-    pill_gemini = (
-        '<span class="hero-pill" style="background:rgba(246,130,29,.16);color:#d97706">'
-        '✨️ Gemini</span>'
+    pill_rag = (
+        '<span class="hero-pill" style="background:rgba(139,92,246,.16);color:#7c3aed">'
+        '📚 RAG</span>'
     )
     st.markdown("""
 <div class="hero-wrap">
@@ -105,14 +105,14 @@ def render():
   <div class="hero-sub" style="font-size:14px;color:#444;margin-top:4px">Remote Global · São Luís, MA</div>
   <div style="margin-top:14px">
     <span class="hero-pill" style="background:rgba(37,211,102,.16);color:#1e8f4b">💡 NLP PT</span>
-    {pill_gemini}
+    {pill_rag}
     <span class="hero-pill" style="background:rgba(46,124,246,.16);color:#1d63d8">👑 Streamlit</span>
   </div>
   <div class="hero-marquee"><span>{MARQUEE_TEXT}</span></div>
   <div style="margin-top:12px;font-weight:700">⚡ Vamos construir?</div>
 </div>
 </div>
-""".format(MARQUEE_TEXT=MARQUEE_TEXT, pill_gemini=pill_gemini), unsafe_allow_html=True)
+""".format(MARQUEE_TEXT=MARQUEE_TEXT, pill_rag=pill_rag), unsafe_allow_html=True)
 
 # --- BOTÕES DE CONTATO (ícones oficiais embutidos) ---
 # auto-gerado

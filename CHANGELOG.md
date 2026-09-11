@@ -7,6 +7,9 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 ## [Não lançado]
 
 ### Adicionado
+- **📚 Gemini → RAG no hero (v2.6.10)** — no card animado, a pill "✨️ Gemini" virou **"📚 RAG"** (roxo) e o marquee trocou `Gemini` por `RAG` ("QA • IA • NLP • RAG • Streamlit • Python • Linux").
+
+### Adicionado
 - **📱 Sidebar de volta no mobile (v2.6.9)** — em telas < 768 px a barra nativa do Streamlit **reaparece** (com o hambúrguer) e o masthead desce para logo abaixo dela (sem margem negativa). Antes o header ficava oculto em qualquer largura e o menu da sidebar era inalcançável no celular. No desktop nada muda (header continua oculto, masthead no topo).
 
 ### Adicionado
