@@ -8,6 +8,7 @@
 import streamlit as st
 
 import auth_supabase
+import oauth_bridge
 import ui_tema
 
 
@@ -30,6 +31,15 @@ def render() -> bool:
     esquerda, direita = st.columns([1.25, 1])
 
     with st.container(border=True):
+        oauth_bridge.render()
+        st.markdown(
+            "<div style='display:flex;align-items:center;gap:10px;margin:6px 0'>"
+            "<div style='flex:1;height:1px;background:rgba(128,128,128,.25)'></div>"
+            "<span style='opacity:.55;font-size:12px'>ou com e-mail</span>"
+            "<div style='flex:1;height:1px;background:rgba(128,128,128,.25)'></div>"
+            "</div>",
+            unsafe_allow_html=True,
+        )
         st.markdown("#### Entre na sua conta")
         with st.form("form_login", clear_on_submit=False):
             email = st.text_input("E-mail", placeholder="voce@empresa.com", key="_auth_email")

@@ -163,6 +163,53 @@ def logar(email: str, senha: str) -> tuple[bool, str, dict | None]:
     return False, _mensagem_erro(resposta.status_code, resposta.text), None
 
 
+def providers_habilitados() -> dict:
+    """Dicionário com os providers externos do projeto (ex.: google/github → bool).
+
+    Vem de GET /auth/v1/settings. Retorna {} se indisponível/inválido.
+    """
+    if not disponivel():
+        return {}
+    try:
+        resposta = requests.get(f"{_base_auth_url()}/settings", headers=_headers_anon(), timeout=10)
+    except requests.RequestException:
+        return {}
+    if resposta.status_code != 200:
+        return {}
+    return resposta.json().get("external") or {}
+
+
+def url_autorizacao(provider: str, redirect_to: str) -> str:
+    """Monta a URL de autorização do provider (fluxo OAuth via GoTrue /authorize).
+
+    Usada na tela de login: o provider (Google/GitHub) redireciona o usuário de
+    volta para `redirect_to` com o access_token no fragmento da URL.
+    """
+    from urllib.parse import urlencode
+
+    return f"{_base_auth_url()}/authorize?{urlencode({'provider': provider, 'redirect_to': redirect_to})}"
+
+
+def sessao_oauth(dados: dict) -> dict | None:
+    """Enriquece a sessão vinda do OAuth (fragmento) com o usuário real.
+
+    O fragmento traz access_token/refresh_token sem o objeto `user`; buscamos em
+    GET /auth/v1/user. Retorna a sessão completa ou None se o token for inválido.
+    """
+    token = (dados or {}).get("access_token")
+    if not token:
+        return None
+    try:
+        resposta = requests.get(f"{_base_auth_url()}/user", headers=_headers_auth(token), timeout=10)
+    except requests.RequestException:
+        return None
+    if resposta.status_code != 200:
+        return None
+    sessao = dict(dados or {})
+    sessao["user"] = resposta.json()
+    return sessao
+
+
 def sair(token: str | None) -> None:
     """Encerra a sessão no servidor (best-effort) e limpa localmente."""
     if token and disponivel():
