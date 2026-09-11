@@ -7,7 +7,7 @@ import hero_animado
 import pix
 import ui_tema
 
-VERSAO = "v2.6.18"
+VERSAO = "v2.6.19"
 
 # Símbolo oficial do Pix (Banco Central) — PD-textlogo via Wikimedia Commons.
 # Símbolo oficial do Pix (Banco Central) — PD-textlogo via Wikimedia Commons.

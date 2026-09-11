@@ -7,6 +7,10 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 ## [Não lançado]
 
 ### Corrigido
+- **CTA do Início: sidebar "sumia" ao clicar nos botões (v2.6.19)** — os botões eram âncoras cruas (`<a href="/dashboard?tema=…">`) que **fugiam do iframe** do Cloud: em caminho externo, o app respondia `303 → auth` e renderizava página vazia sem sidebar ("tenta aparecer e some"). Troquei por `st.page_link` nativo (navegação SPA que permanece dentro do app; tema preservado via session_state). Validado: clique mantém sidebar aberta e leva à tela de login.
+- **Import circular (v2.6.19)** — `secoes/inicio` passou a importar `roteador`, que já importava `inicio`; movido para dentro de `render()` (lazy).
+
+### Corrigido
 - **Login: erro 429 traduzido (v2.6.18)** — o Supabase Auth devolve 429 (rate limit OU "Email signups are disabled for this project") com corpo usando `msg`/`error_code` (não `error_description`). O parser agora lê esses campos e mostra mensagem clara: "Cadastro por e-mail está desativado… ative 'Enable email signups'" ou "Muitas tentativas… aguarde ~1 minuto". Antes caía em "Falha inesperada (código 429)" sem explicação.
 
 ### Corrigido
