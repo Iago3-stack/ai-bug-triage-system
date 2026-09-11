@@ -115,7 +115,11 @@ def render() -> None:
                 armazem[_ETAPA] = "botoes"
                 st.rerun()
             elif tipo in ("captura", "sessao"):
-                # Retorno do OAuth na MESMA aba (fragmento já capturado).
+                # Retorno do OAuth na MESMA aba (fragmento já capturado). O JS
+                # manda a url junto: sem ela o Python não tem _BASE e o fluxo
+                # "reseta" para fluxourl (voltava à tela de login).
+                if evt.get("url"):
+                    armazem[_BASE] = evt["url"]
                 armazem[_ETAPA] = "aguardando"
                 st.rerun()
         return

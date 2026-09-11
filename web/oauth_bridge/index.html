@@ -64,23 +64,36 @@
         return url.replace(/\/+$/, "");
       }
 
-      // Fragmento da URL DA APLICAÇÃO (está no topo; o iframe não tem o token).
+      // Fragmento da URL DA APLICAÇÃO: na Cloud o app roda DENTRO de iframes
+      // (shell -> streamlitApp -> componente). O Supabase devolve o token no
+      // fragmento da URL da aba/iframe onde o app roda, que pode ser qualquer
+      // nível da cadeia. Varre todos os frames do self até o topo.
       function hashDaApp() {
-        try {
-          var top = window.top;
-          if (top && top.location && top.location.hash) return top.location.hash;
-        } catch (e) {}
-        return window.location.hash || "";
+        var w = window;
+        while (w) {
+          try {
+            if (w.location && w.location.hash) return w.location.hash;
+          } catch (e) {}
+          try {
+            w = w !== window.top ? w.parent : null;
+          } catch (e) { w = null; }
+        }
+        return "";
       }
 
-      // Remove o fragmento do topo (evita re-processar no reload).
+      // Remove o fragmento do frame onde ele está (evita re-processar no reload).
       function limparHashTopo() {
-        try {
-          var top = window.top;
-          if (top && top.location && top.location.hash) {
-            top.history.replaceState(null, "", top.location.origin + top.location.pathname + top.location.search);
-          }
-        } catch (e) {}
+        var w = window;
+        while (w) {
+          try {
+            if (w.location && w.location.hash) {
+              w.history.replaceState(null, "", w.location.origin + w.location.pathname + w.location.search);
+            }
+          } catch (e) {}
+          try {
+            w = w !== window.top ? w.parent : null;
+          } catch (e) { w = null; }
+        }
       }
 
       // ── Retorno do OAuth na MESMA aba: captura o token do fragmento e grava
@@ -88,12 +101,20 @@
       //    reload de volta do provider, o app roda de novo; a trava em
       //    sessionStorage evita reprocessar o mesmo fragmento num reload.
       function capturarFragmento() {
-        try {
-          if (window.sessionStorage.getItem(LS_CAPTURED) === "1") return true;
-        } catch (e) {}
         var hash = hashDaApp();
         if (hash.length < 2) return false;
+        // Já processado neste navegador (reload após captura): não re-notifica.
+        // O fragmento já foi limpo, então aqui nunca entra no fluxo real;
+        // apenas evita loop se algo reaparecer.
+        try {
+          if (window.sessionStorage.getItem(LS_CAPTURED) === "1") return false;
+        } catch (e) {}
         var params = new URLSearchParams(hash.substring(1));
+        // A URL do app é enviada junto na captura: no retorno do OAuth (full
+        // reload) o Python chega sem _BASE; sem ela a etapa "aguardando" ecoa
+        // para "fluxourl" e o login "reseta" — exatamente o que causava voltar
+        // à tela de login após autenticar com sucesso.
+        var urlApp = appUrl();
         if (params.get("error")) {
           var p_erro = { erro: params.get("error_description") || params.get("error") || "erro" };
           try {
@@ -101,7 +122,7 @@
             window.sessionStorage.setItem(LS_CAPTURED, "1");
           } catch (e) {}
           limparHashTopo();
-          notifyHost({ tipo: "captura", ok: false, erro: p_erro.erro });
+          notifyHost({ tipo: "captura", ok: false, erro: p_erro.erro, url: urlApp });
           return true;
         }
         var at = params.get("access_token");
@@ -119,7 +140,7 @@
           window.sessionStorage.setItem(LS_CAPTURED, "1");
         } catch (e) {}
         limparHashTopo();
-        notifyHost({ tipo: "captura", ok: true });
+        notifyHost({ tipo: "captura", ok: true, url: urlApp });
         return true;
       }
 
