@@ -62,29 +62,30 @@ _BASE_CSS = """
     /* Card do formulário: textarea da triagem com moldura colorida (marcador irmão) */
     [data-testid="stElementContainer"]:has(.marca-form) + [data-testid="stElementContainer"] [data-testid="stTextArea"] textarea { background: #fbfefc !important; border: 1.5px solid #25D366 !important; border-radius: 12px !important; box-shadow: 0 2px 12px rgba(37, 211, 102, 0.14) !important; }
 
-    /* Card CTA do Início: container border= com visual de bloco escuro + botões internos */
-    [data-testid="stVerticalBlock"]:has(.marca-cta) {
+    /* Card CTA do Início: pinta APENAS o bloco do container border cujo único filho
+       é o leiaute de colunas (o :has() simples vazaria para os ancestrais e tingiria
+       a página inteira). */
+    [data-testid="stVerticalBlock"]:has(.marca-cta):has(> [data-testid="stLayoutWrapper"]):not(:has(> :not([data-testid="stLayoutWrapper"]))) {
         background: linear-gradient(135deg,#0f172a 0%,#16233c 55%,#25D366 175%) !important;
-        border: none !important;
-        border-radius: 16px !important;
-        padding: 22px 22px 18px !important;
+        border-radius: 14px !important;
+        padding: 14px 14px 12px !important;
     }
     .marca-cta { text-align: center; color: #e2e8f0 !important; font-size: 15px; line-height: 1.6; }
     .marca-cta-título { font-size: 19px; font-weight: 800; color: #ffffff !important; margin-bottom: 8px; }
     .marca-cta-desc { color: #94a3b8 !important; font-size: 14px; max-width: 640px; margin: 0 auto; }
-    [data-testid="stVerticalBlock"]:has(.marca-cta) [data-testid="stColumn"]:nth-child(2) [data-testid="stButton"] button {
+    [data-testid="stVerticalBlock"]:has(.marca-cta):has(> [data-testid="stLayoutWrapper"]):not(:has(> :not([data-testid="stLayoutWrapper"]))) [data-testid="stColumn"]:nth-child(2) [data-testid="stButton"] button {
         background: linear-gradient(135deg,#e11d48 0%,#db2777 100%) !important;
         color: #ffffff !important; font-weight: 800 !important; font-size: 14px !important;
         border: none !important; border-radius: 10px !important; padding: 12px 16px !important;
         box-shadow: 0 4px 14px rgba(225,29,72,.35) !important;
     }
-    [data-testid="stVerticalBlock"]:has(.marca-cta) [data-testid="stColumn"]:nth-child(3) [data-testid="stButton"] button {
+    [data-testid="stVerticalBlock"]:has(.marca-cta):has(> [data-testid="stLayoutWrapper"]):not(:has(> :not([data-testid="stLayoutWrapper"]))) [data-testid="stColumn"]:nth-child(3) [data-testid="stButton"] button {
         background: linear-gradient(135deg,#0d9488 0%,#25D366 100%) !important;
         color: #ffffff !important; font-weight: 800 !important; font-size: 14px !important;
         border: none !important; border-radius: 10px !important; padding: 12px 16px !important;
         box-shadow: 0 4px 14px rgba(13,148,136,.35) !important;
     }
-    [data-testid="stVerticalBlock"]:has(.marca-cta) [data-testid="stButton"] button:hover {
+    [data-testid="stVerticalBlock"]:has(.marca-cta):has(> [data-testid="stLayoutWrapper"]):not(:has(> :not([data-testid="stLayoutWrapper"]))) [data-testid="stButton"] button:hover {
         opacity: .92 !important; box-shadow: 0 6px 18px rgba(255,255,255,.12) !important;
     }
 

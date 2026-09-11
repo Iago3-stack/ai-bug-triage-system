@@ -106,8 +106,8 @@ def render():
 </div>
 """, unsafe_allow_html=True)
         with c_b1:
-            st.button("🚀 Ir para a Ferramenta", key="cta_ferramenta", use_container_width=True,
-                      on_click=lambda: st.switch_page(roteador.PAGINAS["triagem"]))
+            if st.button("🚀 Ir para a Ferramenta", key="cta_ferramenta", use_container_width=True):
+                st.switch_page(roteador.PAGINAS["triagem"])
         with c_b2:
-            st.button("📈 Ver Dashboard de QA", key="cta_dashboard", use_container_width=True,
-                      on_click=lambda: st.switch_page(roteador.PAGINAS["dashboard"]))
+            if st.button("📈 Ver Dashboard de QA", key="cta_dashboard", use_container_width=True):
+                st.switch_page(roteador.PAGINAS["dashboard"])

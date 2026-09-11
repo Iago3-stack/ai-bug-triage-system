@@ -7,6 +7,10 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 ## [Não lançado]
 
 ### Corrigido
+- **Card CTA com fundo vazando para a página inteira (v2.6.22)** — o seletor `:has(.marca-cta)` pintava todos os blocos-ancestrais que continham o card ("página toda envolvida nas cores"). Agora o fundo é aplicado **somente ao bloco do container border** (o único cujo filho é o leiaute do card), via seletor com negação de filhos fora do card.
+- **Aviso "st.rerun() within a callback is a no-op" (v2.6.22)** — os botões do CTA chamavam `st.switch_page` dentro do `on_click` (callback), o que gerava o aviso. Trocado para o padrão `if st.button(...): st.switch_page(...)` (fluxo principal).
+
+### Corrigido
 - **Botões de volta para dentro do card CTA (v2.6.21)** — os botões "Ir para a Ferramenta" e "Ver Dashboard de QA" voltaram para dentro do card escuro do Início, agora como `st.button` + `st.switch_page` (navegação nativa; sem as âncoras que fugiam do iframe) e com os mesmos gradientes de antes (vermelho/verde).
 
 ### Corrigido
