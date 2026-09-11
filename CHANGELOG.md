@@ -7,6 +7,9 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 ## [Não lançado]
 
 ### Adicionado
+- **🐙 Ícone do GitHub nos botões "Dar estrela" (v2.6.13)** — os botões **"Dar estrela no GitHub"** (sidebar e rodapé) agora exibem o **ícone oficial do GitHub (octocat)** ao lado do texto, o mesmo já usado nas colunas "Repositório" e "Perfil" do rodapé. No sidebar o botão virou flex com ícone centralizado à esquerda do texto.
+
+### Adicionado
 - **🔘 Botões do CTA lado a lado (v2.6.12)** — no card "🤖 Pronto para triar bugs?", os links **"🚀 Ir para a Ferramenta"** e **"📈 Ver Dashboard de QA"** ficam agora **emparelhados na mesma linha** (2 colunas) em vez de um embaixo do outro. No mobile, em telas estreitas, voltam a empilhar automaticamente (cada um em largura total) para não apertar o texto.
 
 ### Adicionado
