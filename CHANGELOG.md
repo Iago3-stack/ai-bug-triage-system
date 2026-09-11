@@ -7,6 +7,9 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 ## [Não lançado]
 
 ### Adicionado
+- **🔐 Login real (Supabase Auth) — passo 2 do SaaS (v2.6.16)** — novo módulo `auth_supabase.py` (GoTrue via REST, sem dependências novas; reusa as credenciais `SUPABASE_URL`/`SUPABASE_ANON_KEY` da persistência). Fluxos de **cadastro** (com confirmação de e-mail) e **login** (e-mail + senha, token na sessão), com mensagens amigáveis em pt-BR (credenciais inválidas, e-mail não confirmado, e-mail já cadastrado). Nova página `secoes/login.py`: **Início continua público**, enquanto **Ferramenta e Dashboard exigem login** quando o Supabase está configurado. Sem configuração (ex.: ambiente local sem secrets), o app permanece integralmente aberto — comportamento anterior. Sidebar ganhou **status de usuário** (👤 e-mail + botão "Sair") quando logado, ou aviso "Faça login" quando não. 17 testes novos (187 no total, todos verdes). **Validação real do fluxo de login fica para depois do deploy** (o Supabase local não tem credenciais). Antes de publicar: manter `SUPABASE_URL`/`SUPABASE_ANON_KEY` e habilitar Authentication -> Providers -> Email no painel.
+
+### Adicionado
 - **📖 Guia do Dashboard unificado (v2.6.15)** — removido o expander duplicado ("📖 Como ler este dashboard") da página Dashboard; como o `render_dashboard` já exibia o guia completo lá dentro (e é reutilizado na página **Ferramenta**), o expander foi **renomeado para "📖 Como ler este Dashboard — Guia Completo"** e virou o único lugar do guia nas duas páginas. Na página Dashboard agora há **1 único expander de guia** (além de "Por que mascaramos?").
 
 ### Adicionado
