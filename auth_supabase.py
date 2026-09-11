@@ -39,22 +39,33 @@ def _armazem():
 def _mensagem_erro(status: int, texto: str) -> str:
     """Traduz o erro do GoTrue em uma mensagem amigável em pt-BR."""
     detalhe = ""
+    erro = ""
     try:
         dados = json.loads(texto)
-        detalhe = dados.get("error_description") or dados.get("message") or str(dados.get("error") or "")
     except Exception:
         dados = None
-    if not detalhe and dados:
-        detalhe = str(dados.get("error") or "")
-    erro = str(dados.get("error") or "") if dados else ""
-    if "email_not_confirmed" in erro or "Email not confirmed" in detalhe:
+    if dados:
+        detalhe = (
+            dados.get("error_description")
+            or dados.get("message")
+            or dados.get("msg")
+            or ""
+        )
+        erro = str(dados.get("error") or dados.get("error_code") or "")
+    baixo = (str(detalhe) + " " + erro).lower()
+    if "email_not_confirmed" in baixo:
         return "Confirme seu e-mail antes de entrar (veja a caixa de entrada)."
-    if "invalid_grant" in erro or "Invalid login credentials" in detalhe:
+    if "invalid_grant" in baixo or "invalid login credentials" in baixo:
         return "E-mail ou senha inválidos."
-    if status == 422 or "already been registered" in detalhe or "already" in erro:
+    if status == 429 or "rate" in baixo or "signups are disabled" in baixo:
+        if "disabled" in baixo or "signup" in baixo:
+            return (
+                "Cadastro por e-mail está desativado no Supabase — ative "
+                "'Enable email signups' (Auth → Sign In / Providers → Email)."
+            )
+        return "Muitas tentativas em sequência. Aguarde ~1 minuto e tente de novo."
+    if status == 422 or "already" in baixo:
         return "Este e-mail já está cadastrado — tente fazer login."
-    if "over_request_rate_limit" in erro.lower():
-        return "Muitas tentativas em sequência. Aguarde um minuto e tente de novo."
     if detalhe:
         return f"Erro: {detalhe}"
     return f"Falha inesperada (código {status})."

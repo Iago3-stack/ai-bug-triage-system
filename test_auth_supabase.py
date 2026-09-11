@@ -40,6 +40,17 @@ def test_mensagem_email_nao_confirmed():
     assert "confirme" in _mensagem_erro(400, texto).lower()
 
 
+def test_mensagem_429_signups_desativados():
+    texto = json.dumps({"code": 429, "error_code": "over_request_rate_limit", "msg": "Email signups are disabled for this project"})
+    msg = _mensagem_erro(429, texto)
+    assert "email signups" in msg.lower()
+
+
+def test_mensagem_429_rate_limit():
+    texto = json.dumps({"code": 429, "error_code": "over_request_rate_limit", "msg": "Too many requests"})
+    assert "aguarde" in _mensagem_erro(429, texto).lower()
+
+
 def test_mensagem_invalid_grant():
     texto = json.dumps({"error": "invalid_grant", "error_description": "Invalid login credentials"})
     assert "inválidos" in _mensagem_erro(400, texto)

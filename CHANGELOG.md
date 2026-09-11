@@ -7,6 +7,9 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 ## [Não lançado]
 
 ### Corrigido
+- **Login: erro 429 traduzido (v2.6.18)** — o Supabase Auth devolve 429 (rate limit OU "Email signups are disabled for this project") com corpo usando `msg`/`error_code` (não `error_description`). O parser agora lê esses campos e mostra mensagem clara: "Cadastro por e-mail está desativado… ative 'Enable email signups'" ou "Muitas tentativas… aguarde ~1 minuto". Antes caía em "Falha inesperada (código 429)" sem explicação.
+
+### Corrigido
 - **Sidebar que "sumia" (v2.6.17)** — o Streamlit 1.62 mantém o botão de recolher/expandir a sidebar (`stSidebarCollapseButton`) com `visibility: hidden` no CSS padrão. Se a sidebar recolhia (re-render ou no iframe do Community Cloud), não havia **como expandi-la de volta** — resultado: "a sidebar apareceu com a setinha e sumiu". Agora esse botão é forçado sempre visível (`visibility: visible !important`), e o seletor que escondia o menu principal foi trocado de `#MainMenu` (genérico, antigo) para `[data-testid="stMainMenuButton"]` (mais preciso). Comportamento preservado: desktop abre com a sidebar expandida; ≤767px a sidebar recolhe e o menu hambúrguer assume (como no celular, que já funcionava).
 
 ### Adicionado
