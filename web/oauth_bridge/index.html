@@ -52,12 +52,16 @@
       }
 
       // URL da aplicação (o iframe roda dentro dela; em aba normal é a própria).
+      // Normaliza: remove a barra final para casar exatamente com as Redirect
+      // URLs cadastradas no Supabase (ex.: https://app.streamlit.app).
       function appUrl() {
+        var url = "";
         try {
           var top = window.top.location;
-          if (top) return top.origin + top.pathname;
+          if (top && top.origin) url = top.origin + top.pathname;
         } catch (e) {}
-        return window.location.origin + window.location.pathname;
+        if (!url) url = window.location.origin + window.location.pathname;
+        return url.replace(/\/+$/, "");
       }
 
       // Fragmento da URL DA APLICAÇÃO (está no topo; o iframe não tem o token).
