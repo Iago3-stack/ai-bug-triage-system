@@ -83,19 +83,6 @@ def _url_autorizacao(provider: str, redirect_to: str, apikey: str) -> dict:
     }
 
 
-def _meta_redirect(url: str) -> None:
-    """Navega a PÁGINA PRINCIPAL (não o iframe do componente, que é sandboxed).
-
-    O sandbox do componente bloqueia window.top.location; por isso o redirect
-    é feito via <meta http-equiv="refresh"> emitido pela Python no documento
-    principal do Streamlit (document body, fora do sandbox do iframe).
-    """
-    st.markdown(
-        f'<meta http-equiv="refresh" content="0; url={url}">',
-        unsafe_allow_html=True,
-    )
-
-
 def render() -> None:
     """Processa o fluxo de OAuth na página de login. Deve ser chamada em todo rerun."""
     if st is None:
@@ -155,10 +142,25 @@ def render() -> None:
             armazem[_ETAPA] = "aguardando"
             url_auth = (af.get(evt.get("provider")) or {}).get("url")
             if url_auth:
-                _meta_redirect(url_auth)
+                # Navegação da aba/iframe via meta-refresh.
+                st.markdown(
+                    f'<meta http-equiv="refresh" content="0; url={url_auth}">',
+                    unsafe_allow_html=True,
+                )
             else:
                 st.error("Provedor de login não configurado.")
-            st.rerun()
+            # Mostra o estado "aguardando" (spinner) e arma o poll de retorno.
+            # IMPORTANTE: NÃO chamar st.rerun() neste run — o rerun descarta o
+            # <meta http-equiv=refresh> do DOM antes do navegador processá-lo.
+            _bridge(
+                primeiro=False,
+                aguardando=True,
+                providers=providers,
+                authorizeUrl={p: _url_autorizacao(p, base, config[1]) for p in providers},
+                locale=_LOCALE,
+                apikey=config[1],
+                timeout_ms=180000,
+            )
         return
 
     if etapa == "aguardando":

@@ -211,17 +211,21 @@ def sessao_oauth(dados: dict) -> dict | None:
 
 
 def sair(token: str | None) -> None:
-    """Encerra a sessão no servidor (best-effort) e limpa localmente."""
+    """Encerra a sessão no servidor (best-effort) e limpa localmente.
+
+    A limpeza local vem PRIMEIRO: o botão Sair precisa deslogar na hora
+    (o POST de logout é só um detalhe de higiene e nunca pode bloquear a UI).
+    """
+    limpar_sessao()
     if token and disponivel():
         try:
             requests.post(
                 f"{_base_auth_url()}/logout",
                 headers=_headers_auth(token),
-                timeout=10,
+                timeout=3,
             )
         except requests.RequestException:
             pass
-    limpar_sessao()
 
 
 def sair_da_conta() -> None:

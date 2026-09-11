@@ -209,34 +209,37 @@ def sidebar_comum():
         abrir_configuracoes()
 
     # --- AUTENTICAÇÃO (Supabase Auth — passo 2 SaaS) ---
+    _usuario = None
     try:
         import auth_supabase
 
         if auth_supabase.disponivel():
             _usuario = auth_supabase.usuario_logado()
-            if _usuario:
-                st.sidebar.markdown(
-                    f"""
-                    <div style="display:flex;align-items:center;gap:8px;background:rgba(46,124,246,.10);
-                                border:1px solid rgba(46,124,246,.25);border-radius:10px;padding:8px 10px;
-                                font-size:12px;color:#e2e8f0;margin-bottom:8px">
-                      👤 <b>{_usuario}</b>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-                if st.sidebar.button("🚪 Sair", use_container_width=True, key="btn_sair"):
-                    auth_supabase.sair_da_conta()
-                    st.rerun()
-            else:
-                st.sidebar.markdown(
-                    '<div style="margin-bottom:10px;padding:8px 10px;border-radius:10px;'
-                    "background:rgba(232,121,249,.10);border:1px solid rgba(232,121,249,.25);"
-                    'font-size:12px;line-height:1.4">🔒 <b>Faça login</b> para usar a <b>Ferramenta</b> e o <b>Dashboard</b>.</div>',
-                    unsafe_allow_html=True,
-                )
     except Exception:
         pass
+
+    if _usuario:
+        # Sair fica FORA do try: o rerun nunca pode ser engolido por exceção.
+        if st.sidebar.button("🚪 Sair", use_container_width=True, key="btn_sair"):
+            auth_supabase.limpar_sessao()  # desloga imediatamente
+            st.rerun()
+        st.sidebar.markdown(
+            f"""
+            <div style="display:flex;align-items:center;gap:8px;background:rgba(46,124,246,.10);
+                        border:1px solid rgba(46,124,246,.25);border-radius:10px;padding:8px 10px;
+                        font-size:12px;color:#e2e8f0;margin-bottom:8px">
+              👤 <b>{_usuario}</b>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    else:
+        st.sidebar.markdown(
+            '<div style="margin-bottom:10px;padding:8px 10px;border-radius:10px;'
+            "background:rgba(232,121,249,.10);border:1px solid rgba(232,121,249,.25);"
+            'font-size:12px;line-height:1.4">🔒 <b>Faça login</b> para usar a <b>Ferramenta</b> e o <b>Dashboard</b>.</div>',
+            unsafe_allow_html=True,
+        )
 
     # --- CTA: ESTRELA NO GITHUB ---
     st.sidebar.markdown("### ⭐ Apoie o projeto")
