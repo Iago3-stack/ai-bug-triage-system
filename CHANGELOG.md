@@ -7,6 +7,9 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 ## [Não lançado]
 
 ### Adicionado
+- **🎯 Botões do CTA dentro do card (v2.6.14)** — os links "🚀 Ir para a Ferramenta" e "📈 Ver Dashboard de QA" foram **embutidos no card "🤖 Pronto para triar bugs?"** (hoje um bloco único via `st.html`), com **cores de destaque** estilo Gemini/Groq: vermelho-rosa (`#e11d48→#db2777`) e verde-água (`#0d9488→#25D366`). No desktop ficam **lado a lado dentro do card**; no mobile empilham sozinhos (flex-wrap) sem vazar. A navegação é **na mesma aba**, preservando o tema (`/triagem?tema=escuro`). Bônus técnico: `st.html` não reescreve os links com `target="_blank"` como o markdown faz.
+
+### Adicionado
 - **🐙 Ícone do GitHub nos botões "Dar estrela" (v2.6.13)** — os botões **"Dar estrela no GitHub"** (sidebar e rodapé) agora exibem o **ícone oficial do GitHub (octocat)** ao lado do texto, o mesmo já usado nas colunas "Repositório" e "Perfil" do rodapé. No sidebar o botão virou flex com ícone centralizado à esquerda do texto.
 
 ### Adicionado

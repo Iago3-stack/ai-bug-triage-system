@@ -4,7 +4,7 @@ import streamlit as st
 import plano
 import hero_animado
 import ui_comum
-import roteador
+import ui_tema
 
 
 def render():
@@ -95,16 +95,18 @@ def render():
     st.markdown("""
 <div style="height:3px;width:100%;background:linear-gradient(90deg,transparent,#25D366,#2E7CF6,#7c3aed,transparent);border-radius:999px;margin:8px 0"></div>
 """, unsafe_allow_html=True)
-    st.markdown("""
-<div style="margin-top:14px;width:100%;background:linear-gradient(135deg,#0f172a 0%,#16233c 55%,#25D366 175%);border-radius:16px;color:#e2e8f0;font-size:15px;line-height:1.6;padding:22px 24px;text-align:center">
+    _qs = f'?tema={ui_tema.tema_atual()}'
+    st.html(f"""
+<div style="width:100%;background:linear-gradient(135deg,#0f172a 0%,#16233c 55%,#25D366 175%);border-radius:16px;color:#e2e8f0;font-size:15px;line-height:1.6;padding:22px 24px 26px;text-align:center;box-sizing:border-box">
   <div style="font-size:19px;font-weight:800;color:#ffffff;margin-bottom:8px">🤖 Pronto para triar bugs?</div>
-  <div style="color:#94a3b8;font-size:14px;max-width:640px;margin:0 auto 14px">Cole um relato de bug e receba a triagem técnica e emocional com NLP + IA, com RAG e plano de ação. Veja também o Dashboard de QA consolidado.</div>
+  <div style="color:#94a3b8;font-size:14px;max-width:640px;margin:0 auto 18px">Cole um relato de bug e receba a triagem técnica e emocional com NLP + IA, com RAG e plano de ação. Veja também o Dashboard de QA consolidado.</div>
+  <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+    <a href="/triagem{_qs}" target="_self" style="text-decoration:none">
+      <button style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#e11d48 0%,#db2777 100%);color:#ffffff;font-weight:800;font-size:14px;border:none;padding:12px 24px;border-radius:10px;cursor:pointer;box-shadow:0 4px 14px rgba(225,29,72,.35)">🚀 Ir para a Ferramenta</button>
+    </a>
+    <a href="/dashboard{_qs}" target="_self" style="text-decoration:none">
+      <button style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#0d9488 0%,#25D366 100%);color:#ffffff;font-weight:800;font-size:14px;border:none;padding:12px 24px;border-radius:10px;cursor:pointer;box-shadow:0 4px 14px rgba(13,148,136,.35)">📈 Ver Dashboard de QA</button>
+    </a>
+  </div>
 </div>
-""", unsafe_allow_html=True)
-    _, cnt, _ = st.columns([1, 2, 1])
-    with cnt:
-        c_ferr, c_dash = st.columns(2, gap="small")
-        with c_ferr:
-            st.page_link(roteador.PAGINAS["triagem"], label="🚀 Ir para a Ferramenta", width="stretch")
-        with c_dash:
-            st.page_link(roteador.PAGINAS["dashboard"], label="📈 Ver Dashboard de QA", width="stretch")
+""")
