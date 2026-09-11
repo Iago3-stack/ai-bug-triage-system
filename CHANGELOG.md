@@ -7,6 +7,9 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 ## [Não lançado]
 
 ### Corrigido
+- **Botões de volta para dentro do card CTA (v2.6.21)** — os botões "Ir para a Ferramenta" e "Ver Dashboard de QA" voltaram para dentro do card escuro do Início, agora como `st.button` + `st.switch_page` (navegação nativa; sem as âncoras que fugiam do iframe) e com os mesmos gradientes de antes (vermelho/verde).
+
+### Corrigido
 - **Sidebar "aparece e some" no desktop (v2.6.20)** — em larguras ~768-820px o Streamlit 1.62 flutua entre o modo desktop e o modo hambúrguer e o sidebar colapsa sozinho. Agora ≥769px o sidebar fica **forçado aberto** (300px fixos, sem transição de colapso). <769px segue o modo hambúrguer (celular inalterado).
 
 ### Corrigido

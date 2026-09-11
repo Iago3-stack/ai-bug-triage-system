@@ -92,18 +92,22 @@ def render():
       <p style="margin:0">💼 <b style="color:#94a3b8">SaaS em construção:</b> esse mesmo motor está sendo transformado em um <b style="color:#25D366">produto SaaS de QA</b> — planos <b style="color:#94a3b8">Basic</b> e <b style="color:#fde68a">Premium</b> controlados por variável de ambiente, RAG com "como foi resolvido", comparação IA × motor local e alertas multi-canal. É a prova prática de como transformar engenharia em produto.</p>
     </div>
     """, unsafe_allow_html=True)
-    # --- CTA: convite para usar a ferramenta / ver o dashboard ---
+    # --- CTA: convite para usar a ferramenta / ver o dashboard (card único) ---
     st.markdown("""
 <div style="height:3px;width:100%;background:linear-gradient(90deg,transparent,#25D366,#2E7CF6,#7c3aed,transparent);border-radius:999px;margin:8px 0"></div>
 """, unsafe_allow_html=True)
-    st.html(f"""
-<div style="width:100%;background:linear-gradient(135deg,#0f172a 0%,#16233c 55%,#25D366 175%);border-radius:16px;color:#e2e8f0;font-size:15px;line-height:1.6;padding:22px 24px 18px;text-align:center;box-sizing:border-box">
-  <div style="font-size:19px;font-weight:800;color:#ffffff;margin-bottom:8px">🤖 Pronto para triar bugs?</div>
-  <div style="color:#94a3b8;font-size:14px;max-width:640px;margin:0 auto 18px">Cole um relato de bug e receba a triagem técnica e emocional com NLP + IA, com RAG e plano de ação. Veja também o Dashboard de QA consolidado.</div>
+    with st.container(border=True):
+        c_tit, c_b1, c_b2 = st.columns([1.6, 1, 1], vertical_alignment="center")
+        with c_tit:
+            st.markdown(f"""
+<div class="marca-cta">
+  <div class="marca-cta-título">🤖 Pronto para triar bugs?</div>
+  <div class="marca-cta-desc">Cole um relato de bug e receba a triagem técnica e emocional com NLP + IA, com RAG e plano de ação. Veja também o Dashboard de QA consolidado.</div>
 </div>
-""")
-    c1, c2 = st.columns(2)
-    with c1:
-        st.page_link(roteador.PAGINAS["triagem"], label="🚀 Ir para a Ferramenta", use_container_width=True)
-    with c2:
-        st.page_link(roteador.PAGINAS["dashboard"], label="📈 Ver Dashboard de QA", use_container_width=True)
+""", unsafe_allow_html=True)
+        with c_b1:
+            st.button("🚀 Ir para a Ferramenta", key="cta_ferramenta", use_container_width=True,
+                      on_click=lambda: st.switch_page(roteador.PAGINAS["triagem"]))
+        with c_b2:
+            st.button("📈 Ver Dashboard de QA", key="cta_dashboard", use_container_width=True,
+                      on_click=lambda: st.switch_page(roteador.PAGINAS["dashboard"]))
