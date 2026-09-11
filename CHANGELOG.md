@@ -7,6 +7,9 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 ## [Não lançado]
 
 ### Adicionado
+- **🗂️ App multi-página via `st.navigation` (v2.6.11)** — o app deixou de ser um `home.py` monolítico e virou um **roteador de páginas**: `Início` (default), `Triagem de Bugs` e `Dashboard QA`, com menu nativo na sidebar e URLs próprias (`/inicio`, `/triagem`, `/dashboard`). O código foi fatiado em módulos comuns (`ui_tema.py` — tema claro/escuro + CSS global + bootstrap; `ui_comum.py` — versão, Pix, modal de configurações, sidebar e rodapé) e páginas (`secoes/inicio.py`, `secoes/ferramenta.py`, `secoes/dashboard_pagina.py`). Zero mudança visual/estrutural: masthead, hero, Sobre Mim, CTA ("Ir para a Ferramenta" / "Ver Dashboard de QA" agora via `st.page_link`) e dashboard idênticos em desktop e mobile, nos dois temas. (Passo 1 do caminho SaaS: próximo vem **login** e o plano vindo da assinatura.)
+
+### Adicionado
 - **📚 Gemini → RAG no hero (v2.6.10)** — no card animado, a pill "✨️ Gemini" virou **"📚 RAG"** (roxo) e o marquee trocou `Gemini` por `RAG` ("QA • IA • NLP • RAG • Streamlit • Python • Linux").
 
 ### Adicionado
