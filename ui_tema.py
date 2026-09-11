@@ -27,6 +27,19 @@ _BASE_CSS = """
     [data-testid="stMetricValue"] { color: #0f172a !important; }
     [data-testid="stHeader"] { display: none !important; }
 
+    /* Sidebar sempre aberta no desktop: o Streamlit pode colapsar sozinho em larguras
+       ~768-820px (flutuação entre desktop e modo hambúrguer) — força 300px fixos e
+       corta a transição que dava o efeito "aparece e some". (<769px segue hambúrguer.) */
+    @media (min-width: 769px) {
+        [data-testid="stSidebar"] {
+            width: 300px !important;
+            min-width: 300px !important;
+            max-width: 300px !important;
+            transform: none !important;
+            transition: none !important;
+        }
+    }
+
     /* Conteúdo do main sobe para ficar paralelo ao topo do sidebar (botão Configurações);
        padrão do Streamlit era 6rem (~96px) e sobrava um vão acima do masthead. */
     [data-testid="stMainBlockContainer"] { padding-top: 8px !important; }

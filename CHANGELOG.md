@@ -7,6 +7,9 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 ## [Não lançado]
 
 ### Corrigido
+- **Sidebar "aparece e some" no desktop (v2.6.20)** — em larguras ~768-820px o Streamlit 1.62 flutua entre o modo desktop e o modo hambúrguer e o sidebar colapsa sozinho. Agora ≥769px o sidebar fica **forçado aberto** (300px fixos, sem transição de colapso). <769px segue o modo hambúrguer (celular inalterado).
+
+### Corrigido
 - **CTA do Início: sidebar "sumia" ao clicar nos botões (v2.6.19)** — os botões eram âncoras cruas (`<a href="/dashboard?tema=…">`) que **fugiam do iframe** do Cloud: em caminho externo, o app respondia `303 → auth` e renderizava página vazia sem sidebar ("tenta aparecer e some"). Troquei por `st.page_link` nativo (navegação SPA que permanece dentro do app; tema preservado via session_state). Validado: clique mantém sidebar aberta e leva à tela de login.
 - **Import circular (v2.6.19)** — `secoes/inicio` passou a importar `roteador`, que já importava `inicio`; movido para dentro de `render()` (lazy).
 
