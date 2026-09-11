@@ -51,6 +51,13 @@ def test_mensagem_429_rate_limit():
     assert "aguarde" in _mensagem_erro(429, texto).lower()
 
 
+def test_mensagem_429_email_send_rate_limit():
+    texto = json.dumps({"code": 429, "error_code": "over_email_send_rate_limit", "msg": "email rate limit exceeded"})
+    msg = _mensagem_erro(429, texto)
+    assert "limite" in msg.lower()
+    assert "smtp" in msg.lower()
+
+
 def test_mensagem_invalid_grant():
     texto = json.dumps({"error": "invalid_grant", "error_description": "Invalid login credentials"})
     assert "inválidos" in _mensagem_erro(400, texto)

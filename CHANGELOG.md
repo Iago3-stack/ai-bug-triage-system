@@ -7,6 +7,7 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 ## [Não lançado]
 
 ### Corrigido
+- **Erro 429 "email rate limit exceeded" no cadastro (v2.6.25)** — a resposta `over_email_send_rate_limit` do Supabase agora é traduzida corretamente: avisa que o limite de e-mails de confirmação foi atingido (aguardar até 1h ou configurar SMTP próprio), em vez da mensagem genérica de "muitas tentativas".
 - **Botão "⚙️ Configurações" não abria o dialog (v2.6.24)** — `abrir_configuracoes()` só *definia* a função do dialog interno mas nunca a chamava; o clique simplesmente não fazia nada. Agora o dialog é invocado no final da função.
 - **Botão ">>" (recolher sidebar) oculto no desktop (v2.6.23)** — com a sidebar forçada aberta em ≥769px (v2.6.20), o botão de recolher vira controle morto. Agora ele é escondido via `display: none` no desktop; no mobile (hambúrguer overlay) continua visível e funcional.
 - **Card CTA com fundo vazando para a página inteira (v2.6.22)** — o seletor `:has(.marca-cta)` pintava todos os blocos-ancestrais que continham o card ("página toda envolvida nas cores"). Agora o fundo é aplicado **somente ao bloco do container border** (o único cujo filho é o leiaute do card), via seletor com negação de filhos fora do card.

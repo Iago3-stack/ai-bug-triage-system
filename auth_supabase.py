@@ -63,6 +63,11 @@ def _mensagem_erro(status: int, texto: str) -> str:
                 "Cadastro por e-mail está desativado no Supabase — ative "
                 "'Enable email signups' (Auth → Sign In / Providers → Email)."
             )
+        if "over_email_send_rate_limit" in erro or "email rate limit" in baixo:
+            return (
+                "Limite de e-mails de confirmação atingido (Supabase): aguarde até 1 hora "
+                "ou configure SMTP próprio (Auth → Emails → SMTP) para enviar sem esse limite."
+            )
         return "Muitas tentativas em sequência. Aguarde ~1 minuto e tente de novo."
     if status == 422 or "already" in baixo:
         return "Este e-mail já está cadastrado — tente fazer login."

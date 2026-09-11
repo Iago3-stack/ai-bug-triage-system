@@ -34,6 +34,7 @@ def test_config_ignora_meias_credenciais(monkeypatch):
 
 
 def test_config_lida_secrets_e_env(monkeypatch):
+    _sem_config(monkeypatch)  # isola da leitura real do arquivo .env
     monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
     monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-teste")
     url, chave = nuvem_supabase._config()
