@@ -7,6 +7,9 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 ## [Não lançado]
 
 ### Adicionado
+- **📱 Sidebar de volta no mobile (v2.6.9)** — em telas < 768 px a barra nativa do Streamlit **reaparece** (com o hambúrguer) e o masthead desce para logo abaixo dela (sem margem negativa). Antes o header ficava oculto em qualquer largura e o menu da sidebar era inalcançável no celular. No desktop nada muda (header continua oculto, masthead no topo).
+
+### Adicionado
 - **✏️ Copy do subtítulo da ferramenta (v2.6.8)** — novo texto de valor: "Triagem automática de bugs com NLP + IA: técnico, emocional e com plano de ação em segundos." (antes: "Esta ferramenta demonstra o uso de NLP para automatizar..."). Mais direto e orientado a benefício.
 
 ### Adicionado

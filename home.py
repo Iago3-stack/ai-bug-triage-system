@@ -16,7 +16,7 @@ import plano
 import dashboard as dashboard_qa
 import pix
 
-VERSAO = "v2.6.8"
+VERSAO = "v2.6.9"
 
 # Símbolo oficial do Pix (Banco Central) — PD-textlogo via Wikimedia Commons.
 # Só os 3 paths verdes da marca (o "losango"), sem a tipografia do logo.
@@ -91,6 +91,15 @@ st.markdown("""
        containers <style> zero-altura antecipam o card; compensamos com margem negativa. */
     .marca-mastro { margin-top: -66px !important; }
     body:has([data-st-tema="escuro"]) .marca-mastro { margin-top: -82px !important; }
+
+    /* No mobile (largura < 768px) a barra nativa do Streamlit reaparece para que o
+       botão hambúrguer (abrir sidebar) fique acessível; o masthead desce para logo
+       abaixo dela (sem margem negativa). */
+    @media (max-width: 767px) {
+        [data-testid="stHeader"] { display: flex !important; }
+        .marca-mastro { margin-top: 0 !important; }
+        body:has([data-st-tema="escuro"]) .marca-mastro { margin-top: 0 !important; }
+    }
 
     /* Card do formulário: textarea da triagem com moldura colorida (marcador irmão) */
     [data-testid="stElementContainer"]:has(.marca-form) + [data-testid="stElementContainer"] [data-testid="stTextArea"] textarea { background: #fbfefc !important; border: 1.5px solid #25D366 !important; border-radius: 12px !important; box-shadow: 0 2px 12px rgba(37, 211, 102, 0.14) !important; }
