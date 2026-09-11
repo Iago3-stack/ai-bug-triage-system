@@ -103,5 +103,8 @@ def render():
 """, unsafe_allow_html=True)
     _, cnt, _ = st.columns([1, 2, 1])
     with cnt:
-        st.page_link(roteador.PAGINAS["triagem"], label="🚀 Ir para a Ferramenta", width="stretch")
-        st.page_link(roteador.PAGINAS["dashboard"], label="📈 Ver Dashboard de QA", width="stretch")
+        c_ferr, c_dash = st.columns(2, gap="small")
+        with c_ferr:
+            st.page_link(roteador.PAGINAS["triagem"], label="🚀 Ir para a Ferramenta", width="stretch")
+        with c_dash:
+            st.page_link(roteador.PAGINAS["dashboard"], label="📈 Ver Dashboard de QA", width="stretch")
