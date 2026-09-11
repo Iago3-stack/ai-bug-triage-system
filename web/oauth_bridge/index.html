@@ -38,7 +38,14 @@
         window.parent.postMessage(out, "*");
       }
       function setFrameHeight(h) { sendMessage(SET_FRAME_HEIGHT, { height: h }); }
-      function notifyHost(data) { sendMessage(SET_COMPONENT_VALUE, data); }
+      // O valor do componente deve ir na chave "value" do topo do payload;
+      // do contrario o Streamlit ignora ("missing 'value' prop").
+      function notifyHost(data) {
+        window.parent.postMessage(
+          { isStreamlitMessage: true, type: SET_COMPONENT_VALUE, value: data },
+          "*"
+        );
+      }
       function esc(s) {
         return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
           .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
