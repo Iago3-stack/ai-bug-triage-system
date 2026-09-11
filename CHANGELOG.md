@@ -7,6 +7,9 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 ## [Não lançado]
 
 ### Adicionado
+- **📖 Guia do Dashboard unificado (v2.6.15)** — removido o expander duplicado ("📖 Como ler este dashboard") da página Dashboard; como o `render_dashboard` já exibia o guia completo lá dentro (e é reutilizado na página **Ferramenta**), o expander foi **renomeado para "📖 Como ler este Dashboard — Guia Completo"** e virou o único lugar do guia nas duas páginas. Na página Dashboard agora há **1 único expander de guia** (além de "Por que mascaramos?").
+
+### Adicionado
 - **🎯 Botões do CTA dentro do card (v2.6.14)** — os links "🚀 Ir para a Ferramenta" e "📈 Ver Dashboard de QA" foram **embutidos no card "🤖 Pronto para triar bugs?"** (hoje um bloco único via `st.html`), com **cores de destaque** estilo Gemini/Groq: vermelho-rosa (`#e11d48→#db2777`) e verde-água (`#0d9488→#25D366`). No desktop ficam **lado a lado dentro do card**; no mobile empilham sozinhos (flex-wrap) sem vazar. A navegação é **na mesma aba**, preservando o tema (`/triagem?tema=escuro`). Bônus técnico: `st.html` não reescreve os links com `target="_blank"` como o markdown faz.
 
 ### Adicionado

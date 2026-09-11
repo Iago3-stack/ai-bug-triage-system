@@ -20,9 +20,6 @@ def render():
         st.warning("Nenhuma triagem persistida ainda — faça uma triagem e volte aqui para ver o painel.")
         return
 
-    with st.expander("📖 Como ler este dashboard", expanded=False):
-        st.markdown(dashboard_qa.GUIA_DASHBOARD)
-
     if not plano.pago():
         st.caption(
             f"🔓 Plano **Basic**: dashboard resumido às últimas "

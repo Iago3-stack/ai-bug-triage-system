@@ -272,7 +272,7 @@ def render_dashboard(registros: list[dict]) -> None:
         mask_exp.caption("Nenhuma ocorrência ainda — os guardrails vêm bloqueando o vazamento desde o início.")
 
     # Guia completo: explica TODAS as métricas e como ler um zero (ex.: Falso-positivo evitado).
-    with st.expander("🧠 Guia completo — como ler todas as métricas do Dashboard (e por que uma pode estar zerada)", expanded=False):
+    with st.expander("📖 Como ler este Dashboard — Guia Completo", expanded=False):
         st.markdown(GUIA_DASHBOARD)
 
     # --- Filtro global por funcionalidade ---
