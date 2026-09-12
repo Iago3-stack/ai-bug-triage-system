@@ -64,6 +64,19 @@
         return url.replace(/\/+$/, "");
       }
 
+      // URL da "página de retorno" da OAuth (fim.html). O componente é servido
+      // em um caminho estável (http://host/component/oauth_bridge.oauth_login/
+      // index.html, sempre na mesma origin da app); colocamos fim.html ao lado.
+      // O provider redireciona a POPUP para esta página: ela roda no NÍVEL TOPO
+      // da popup (não sandboxed), grava o token no localStorage e chama
+      // window.close(), que funciona em janela aberta por window.open. Dentro
+      // do iframe do componente (sandboxed) o window.close() não fecha a popup.
+      function fimUrl() {
+        var base = window.location.href.split(/[?#]/)[0];
+        base = base.replace(/\/index\.html(\/.*)?$/, "/index.html");
+        return base.replace(/index\.html$/, "fim.html");
+      }
+
       // Fragmento da URL DA APLICAÇÃO: na Cloud o app roda DENTRO de iframes
       // (shell -> streamlitApp -> componente). O Supabase devolve o token no
       // fragmento da URL da aba/iframe onde o app roda, que pode ser qualquer
@@ -96,11 +109,29 @@
         }
       }
 
-      // ── Retorno do OAuth na MESMA aba: captura o token do fragmento e grava
-      //    no localStorage (ponte) para o poll entregar à Python. Após o full
-      //    reload de volta do provider, o app roda de novo; a trava em
-      //    sessionStorage evita reprocessar o mesmo fragmento num reload.
-      function capturarFragmento() {
+      // Captura o token no fragmento e grava no localStorage (ponte). Dentro da
+      // popup do OAuth o retorno do provider navega para esta app (mesma
+      // origin) com #access_token; capturamos, fechamos a popup e a janela
+      // PRINCIPAL (que mantém o poll ativo) lê o token do localStorage.
+      // Na janela principal `emPopup`=false mantém o fluxo de captura+notify.
+      // Detecção da popup em XX formas (nenhuma interfere na janela principal,
+      // que nunca tem fragmento e portanto nunca usa estas funções para decisão
+      // de poll):
+      //   1) sentinela em localStorage escrita logo antes do window.open (mesma
+      //      origin => visível na popup quando ela carrega a app com fragmento);
+      //   2) window.open/opener (quando o navegador preservar o opener).
+      function ehPopup() {
+        try { if (localStorage.getItem("_sb_oauth_popup") === "1") return true; } catch (e) {}
+        try { if (window.top && window.top.opener) return true; } catch (e) {}
+        return false;
+      }
+      function fecharPopups() {
+        try { window.top && window.top.close(); } catch (e) {}
+        try { window.close(); } catch (e) {}
+        try { localStorage.removeItem("_sb_oauth_popup"); } catch (e) {}
+      }
+
+      function capturarFragmento(emPopup) {
         var hash = hashDaApp();
         if (hash.length < 2) return false;
         // Já processado neste navegador (reload após captura): não re-notifica.
@@ -122,6 +153,7 @@
             window.sessionStorage.setItem(LS_CAPTURED, "1");
           } catch (e) {}
           limparHashTopo();
+          if (emPopup) { fecharPopups(); return true; } // erro: grava e fecha
           notifyHost({ tipo: "captura", ok: false, erro: p_erro.erro, url: urlApp });
           return true;
         }
@@ -140,6 +172,7 @@
           window.sessionStorage.setItem(LS_CAPTURED, "1");
         } catch (e) {}
         limparHashTopo();
+        if (emPopup) { fecharPopups(); return true; } // sucesso: grava e fecha
         notifyHost({ tipo: "captura", ok: true, url: urlApp });
         return true;
       }
@@ -171,10 +204,38 @@
           };
           btn.innerHTML = (logos[p] || "") + esc(label);
           btn.onclick = function () {
-            // Só avisa a Python; ela navega a PRÓPRIA aba (meta redirect no
-            // documento principal, fora do sandbox do componente). O Supabase
-            // devolve #access_token, capturado ao voltar.
-            notifyHost({ tipo: "iniciado", provider: p });
+            // Abre o OAuth numa POPUP (janelinha, como no Supabase). O redirect
+            // da authorize URL aponta para fim.html (mesma origin): é o "close
+            // page" do OAuth — o token chega no fragmento da popup, que grava no
+            // localStorage (ponte) e se fecha (window.close). A janela principal
+            // mantém o poll de retorno e nunca sai da tela. Se o navegador
+            // bloquear (window.open==null), avisamos a Python {popup:false} para
+            // ela navegar a própria aba (fallback meta).
+            var cfg = args.authorizeUrl[p];
+            var abriuPopup = false;
+            try {
+              try { localStorage.setItem("_sb_oauth_popup", "1"); } catch (e) {}
+              // Troca o redirect_to da authorize URL DE "app URL" PARA "fim.html"
+              // (a página de fechamento no topo da popup). Mantém os demais
+              // parâmetros intactos; o alvo de autorização muda, não o provider.
+              var urlPop = cfg.url;
+              try {
+                var u = new URL(cfg.url);
+                var f = fimUrl();
+                if (f && u) {
+                  u.searchParams.set("redirect_to", f);
+                  urlPop = u.href;
+                }
+              } catch (e) {}
+              var pop = window.open(urlPop, "oauth_login", "width=520,height=660,popup=yes,resizable=yes,scrollbars=yes");
+              if (pop && !pop.closed) {
+                abriuPopup = true;
+                _popupRef = pop;
+              } else {
+                try { localStorage.removeItem("_sb_oauth_popup"); } catch (e) {}
+              }
+            } catch (e) { abriuPopup = false; }
+            notifyHost({ tipo: "iniciado", provider: p, popup: abriuPopup });
           };
           root.appendChild(btn);
         });
@@ -187,6 +248,7 @@
       }
 
       var _poll = null;
+      var _popupRef = null;
 
       function pararPoll() { if (_poll) { clearInterval(_poll); _poll = null; } }
 
@@ -195,9 +257,16 @@
         var inicio = Date.now();
         _poll = setInterval(function () {
           var s = lerSessao(true);
-          if (s) { pararPoll(); notifyHost({ tipo: "sessao", sessao: s }); }
+          if (s) {
+            pararPoll();
+            if (_popupRef && !_popupRef.closed) { try { _popupRef.close(); } catch (e) {} }
+            try { localStorage.removeItem("_sb_oauth_popup"); } catch (e) {}
+            notifyHost({ tipo: "sessao", sessao: s });
+          }
           else if (Date.now() - inicio > (timeoutMs || 120000)) {
-            pararPoll(); notifyHost({ tipo: "sessao", sessao: null });
+            pararPoll();
+            try { localStorage.removeItem("_sb_oauth_popup"); } catch (e) {}
+            notifyHost({ tipo: "sessao", sessao: null });
           }
         }, 600);
       }
@@ -205,12 +274,18 @@
       window.addEventListener("message", function (event) {
         if (event.data.type !== RENDER) return;
         var args = event.data.args || {};
+        var emPopup = ehPopup();
 
-        if (capturarFragmento()) return; // aba de retorno: captura salva, fecha
+        if (capturarFragmento(emPopup)) return; // retorno OAuth: captura+notify (ou popup)
 
         var root = document.getElementById("root");
 
         if (args.aguardando) {
+          // Janela PRINCIPAL: spinner + poll aguardando o token no localStorage.
+          // Sempre inicia o poll aqui: a janela principal nunca tem fragmento
+          // (capturarFragmento acima retorna false), então não há risco de a
+          // popup "consumir" o token — quem captura é a popup, quem consome é
+          // esta janela.
           root.innerHTML = "";
           var d = document.createElement("div");
           d.className = "oauth-msg";

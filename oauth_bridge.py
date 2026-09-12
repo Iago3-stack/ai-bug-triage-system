@@ -6,15 +6,24 @@
 #     token de OAuth no FRAGMENTO da URL (#access_token=...), que o servidor
 #     Python nunca vê — só o navegador consegue ler.
 #
-# FLUXO (redirect na mesma aba, sem popup):
+# FLUXO (popup, como o login do próprio Supabase):
 #   1) o componente informa a URL do app (origin+path) à Python, que monta a URL
 #      de autorização (GET /auth/v1/authorize) com redirect_to = URL do app.
-#   2) clique no botão -> o componente só avisa a Python; ela navega a PRÓPRIA
-#      aba via <meta http-equiv="refresh"> no documento principal (o sandbox do
-#      iframe do componente BLOQUEIA window.top.location).
-#   3) o Supabase redireciona de volta com #access_token; na sessão nova o
-#      componente captura o token, grava no localStorage e o poll devolve à
-#      Python, que enriquece com GET /auth/v1/user e guarda a sessão.
+#   2) clique no botão -> JS abre um POPUP (window.open; o sandbox do componente
+#      tem allow-popups na Cloud) com a authorize URL cujo redirect_to aponta
+#      para fim.html (a "close page" do OAuth, servida na mesma origin da app,
+#      ao lado do componente). O app principal NÃO sai da tela, só mostra
+#      "Aguardando autenticação…" + poll de retorno.
+#   3) o Supabase redireciona a popup para fim.html com #access_token. Como essa
+#      página roda no NÍVEL TOPO da popup (aberta por window.open), ela grava o
+#      token no localStorage (mesma origin => compartilhado com a janela
+#      principal) e se fecha com window.close() — que funciona em janelas
+#      abertas por script (dentro do iframe sandboxed do componente NÃO fecha).
+#   4) o poll da janela principal lê o token do localStorage e devolve à Python,
+#      que enriquece com GET /auth/v1/user e guarda a sessão. Nenhum reload.
+#   FALLBACK: se o navegador bloquear o popup (window.open => null), o botão
+#   avisa a Python sem o flag "popup" e ela navega a PRÓPRIA aba via
+#   <meta http-equiv="refresh"> no documento principal.
 #
 # No Streamlit, o valor do componente "persiste" entre renders (faz parte do
 # estado do elemento). Para não reprocessar o mesmo evento, cada etapa consome
@@ -144,23 +153,25 @@ def render() -> None:
         if evt and evt.get("tipo") == "iniciado" and not armazem.get("_oauth_imed"):
             armazem["_oauth_imed"] = True
             armazem[_ETAPA] = "aguardando"
+            popup = bool(evt.get("popup"))
             url_auth = (af.get(evt.get("provider")) or {}).get("url")
-            if url_auth:
-                # Navegação da aba/iframe via meta-refresh.
-                st.markdown(
-                    f'<meta http-equiv="refresh" content="0; url={url_auth}">',
-                    unsafe_allow_html=True,
-                )
-            else:
-                st.error("Provedor de login não configurado.")
+            if not popup:
+                # Fallback (popup bloqueado): navega a própria aba/iframe via
+                # meta-refresh. IMPORTANTE: NÃO chamar st.rerun() neste run —
+                # o rerun descarta o <meta http-equiv=refresh> antes de navegar.
+                if url_auth:
+                    st.markdown(
+                        f'<meta http-equiv="refresh" content="0; url={url_auth}">',
+                        unsafe_allow_html=True,
+                    )
+                else:
+                    st.error("Provedor de login não configurado.")
             # Mostra o estado "aguardando" (spinner) e arma o poll de retorno.
-            # IMPORTANTE: NÃO chamar st.rerun() neste run — o rerun descarta o
-            # <meta http-equiv=refresh> do DOM antes do navegador processá-lo.
             _bridge(
                 primeiro=False,
                 aguardando=True,
                 providers=providers,
-                authorizeUrl={p: _url_autorizacao(p, base, config[1]) for p in providers},
+                authorizeUrl=af,
                 locale=_LOCALE,
                 apikey=config[1],
                 timeout_ms=180000,
