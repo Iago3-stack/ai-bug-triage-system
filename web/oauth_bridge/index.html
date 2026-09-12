@@ -204,30 +204,21 @@
           };
           btn.innerHTML = (logos[p] || "") + esc(label);
           btn.onclick = function () {
-            // Abre o OAuth numa POPUP (janelinha, como no Supabase). O redirect
-            // da authorize URL aponta para fim.html (mesma origin): é o "close
-            // page" do OAuth — o token chega no fragmento da popup, que grava no
-            // localStorage (ponte) e se fecha (window.close). A janela principal
-            // mantém o poll de retorno e nunca sai da tela. Se o navegador
-            // bloquear (window.open==null), avisamos a Python {popup:false} para
-            // ela navegar a própria aba (fallback meta).
-            var cfg = args.authorizeUrl[p];
+            // Abre o OAuth numa POPUP (janelinha, como no Supabase). A janela
+            // principal mantém o poll de retorno e nunca sai da tela. Se o
+            // navegador bloquear (window.open==null), avisamos a Python
+            // {popup:false} para ela navegar a própria aba (fallback meta).
             var abriuPopup = false;
             try {
               try { localStorage.setItem("_sb_oauth_popup", "1"); } catch (e) {}
-              // Troca o redirect_to da authorize URL DE "app URL" PARA "fim.html"
-              // (a página de fechamento no topo da popup). Mantém os demais
-              // parâmetros intactos; o alvo de autorização muda, não o provider.
-              var urlPop = cfg.url;
-              try {
-                var u = new URL(cfg.url);
-                var f = fimUrl();
-                if (f && u) {
-                  u.searchParams.set("redirect_to", f);
-                  urlPop = u.href;
-                }
-              } catch (e) {}
-              var pop = window.open(urlPop, "oauth_login", "width=520,height=660,popup=yes,resizable=yes,scrollbars=yes");
+              // redirect_to fica = URL do app (allowlistada no Supabase): depois
+              // do Google a POPUP volta para a app com #access_token, o componente
+              // dentro dela captura o token para o localStorage (mesma origin) e a
+              // janela PRINCIPAL, ao consumir, NAVEGA a popup até fim.html (fimUrl),
+              // que roda no topo da popup e a fecha (window.close). O fim.html NÃO
+              // precisa estar na allowlist do Supabase: ele só é usado como "close
+              // page", nunca como redirect_to do provider.
+              var pop = window.open(cfg.url, "oauth_login", "width=520,height=660,popup=yes,resizable=yes,scrollbars=yes");
               if (pop && !pop.closed) {
                 abriuPopup = true;
                 _popupRef = pop;
@@ -259,7 +250,16 @@
           var s = lerSessao(true);
           if (s) {
             pararPoll();
-            if (_popupRef && !_popupRef.closed) { try { _popupRef.close(); } catch (e) {} }
+            if (_popupRef && !_popupRef.closed) {
+              // Navega a popup até a "close page" fim.html (mesma origin). Lá o
+              // script roda no NÍVEL TOPO da popup (página aberta via window.open)
+              // e o window.close() dela funciona — algo que NÃO acontece com o
+              // close() chamado daqui (iframe sandboxed). O token já foi gravado
+              // no localStorage pelo componente DENTRO da popup quando ela voltou
+              // do Google com #access_token.
+              try { _popupRef.location.href = fimUrl(); } catch (e) {}
+              try { _popupRef.close(); } catch (e) {}
+            }
             try { localStorage.removeItem("_sb_oauth_popup"); } catch (e) {}
             notifyHost({ tipo: "sessao", sessao: s });
           }

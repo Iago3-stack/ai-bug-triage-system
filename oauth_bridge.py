@@ -9,18 +9,21 @@
 # FLUXO (popup, como o login do próprio Supabase):
 #   1) o componente informa a URL do app (origin+path) à Python, que monta a URL
 #      de autorização (GET /auth/v1/authorize) com redirect_to = URL do app.
-#   2) clique no botão -> JS abre um POPUP (window.open; o sandbox do componente
-#      tem allow-popups na Cloud) com a authorize URL cujo redirect_to aponta
-#      para fim.html (a "close page" do OAuth, servida na mesma origin da app,
-#      ao lado do componente). O app principal NÃO sai da tela, só mostra
-#      "Aguardando autenticação…" + poll de retorno.
-#   3) o Supabase redireciona a popup para fim.html com #access_token. Como essa
-#      página roda no NÍVEL TOPO da popup (aberta por window.open), ela grava o
-#      token no localStorage (mesma origin => compartilhado com a janela
-#      principal) e se fecha com window.close() — que funciona em janelas
-#      abertas por script (dentro do iframe sandboxed do componente NÃO fecha).
-#   4) o poll da janela principal lê o token do localStorage e devolve à Python,
-#      que enriquece com GET /auth/v1/user e guarda a sessão. Nenhum reload.
+#   2) clique no botão -> JS abre uma POPUP (window.open; o sandbox do componente
+#      tem allow-popups na Cloud) com a authorize URL. O app principal NÃO sai da
+#      tela, só mostra "Aguardando autenticação…" + poll de retorno.
+#   3) o Supabase redireciona a POPUP de volta para a URL do app (allowlistada)
+#      com #access_token. DENTRO da popup volta a rodar o próprio app; o
+#      componente na popup captura o token e grava no localStorage (mesma origin
+#      => ponte com a janela principal).
+#   4) quando o token aparece, o POLL da janela principal (1) o lê e devolve à
+#      Python (que enriquece com GET /auth/v1/user e guarda a sessão) e (2)
+#      NAVEGA a popup até a "close page" fim.html (fimUrl, mesma origin). Como
+#      fim.html roda no NÍVEL TOPO da popup (aberta por script), o window.close()
+#      dela funciona — coisa que NÃO acontece com window.close()/top.close()
+#      chamados de dentro do componente sandboxed, nem com _popupRef.close() do
+#      opener sandboxed. fim.html NÃO precisa estar na allowlist do Supabase:
+#      ele só é usado como close page, nunca como redirect_to do provider.
 #   FALLBACK: se o navegador bloquear o popup (window.open => null), o botão
 #   avisa a Python sem o flag "popup" e ela navega a PRÓPRIA aba via
 #   <meta http-equiv="refresh"> no documento principal.

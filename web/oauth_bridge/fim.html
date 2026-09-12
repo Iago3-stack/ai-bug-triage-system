@@ -10,23 +10,29 @@
 <body>
   <div class="ok" id="msg">Autenticação concluída. Esta janela pode ser fechada.</div>
   <script type="text/javascript">
-    // Página de RETORNO do OAuth dentro da popup (nivel TOPO: o provider
-    // redireciona Cc popup para esta URL com o token no fragmento).
-    // Grava o token no localStorage (mesma origin => compartilhado com a
-    // janela principal, que mantem o poll de retorno) e fecha a popup.
-    // window.close() FUNCIONA aqui porque a popup foi aberta via window.open
+    // Página de RETORNO/fechamento do OAuth dentro da popup (nivel TOPO: aberta
+    // via window.open). Duas formas de chegar aqui:
+    //   a) "close page": a janela PRINCIPAL navega a popup para cá (redirect_to
+    //      do provider = URL do app, que JÁ é allowlistada no Supabase; quem
+    //      captura o token é o componente dentro da app que rodou na popup ao
+    //      voltar do Google). Sem hash => só fecha; NÃO mexe no localStorage.
+    //   b) "return page": se um dia o fim.html entrar na allowlist e for o
+    //      redirect_to do provider, o token chega no fragmento e gravamos aqui
+    //      (mesma origin => localStorage compartilhado com a janela principal).
+    // window.close() FUNCIONA porque a popup foi aberta via window.open
     // (script-opened); dentro do componente sandboxed isso NAO funciona.
     (function () {
-      var LS_KEY = "_sb_auth_oauth";
-      function salvar(dados) {
-        try { localStorage.setItem(LS_KEY, JSON.stringify(dados)); } catch (e) {}
-      }
       var params = new URLSearchParams(window.location.hash.substring(1));
-      if (params.get("error")) {
-        salvar({ erro: params.get("error_description") || params.get("error") || "erro" });
-      } else {
-        var at = params.get("access_token");
-        if (at) {
+      if (params.get("access_token") || params.get("error")) {
+        // Caso (b): temos token/erro no fragmento -> grava na ponte.
+        var LS_KEY = "_sb_auth_oauth";
+        function salvar(dados) {
+          try { localStorage.setItem(LS_KEY, JSON.stringify(dados)); } catch (e) {}
+        }
+        if (params.get("error")) {
+          salvar({ erro: params.get("error_description") || params.get("error") || "erro" });
+        } else {
+          var at = params.get("access_token");
           salvar({
             access_token: at,
             refresh_token: params.get("refresh_token") || "",
@@ -36,8 +42,6 @@
             provider: params.get("provider") || "oauth"
           });
           document.getElementById("msg").textContent = "Autenticação concluída. Esta janela pode ser fechada.";
-        } else {
-          salvar({ erro: "sem token" });
         }
       }
       try { window.location.hash = ""; } catch (e) {}
