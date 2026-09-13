@@ -191,8 +191,8 @@ def test_renovar_sessao_token_invalido(monkeypatch):
     assert sessao is None
 
 
-def test_renovar_sessao_sem_refresh():
-    monkeypatch = None
+def test_renovar_sessao_sem_refresh(monkeypatch):
+    monkeypatch.setattr(auth_supabase, "disponivel", lambda: True)
     ok, msg, _ = auth_supabase.renovar_sessao("")
     assert not ok
     assert "refresh_token" in msg
