@@ -167,6 +167,44 @@ def test_sair_limpa_sessao(monkeypatch):
     assert "_auth_sessao" not in fake
 
 
+# ── Renovação de sessão (refresh_token no F5) ─────────────────────────────
+
+def test_renovar_sessao_ok(monkeypatch):
+    monkeypatch.setattr(auth_supabase, "_config", lambda: ("https://x.supabase.co", "k"))
+    monkeypatch.setattr(
+        auth_supabase.requests, "post",
+        lambda *a, **k: _Resp(200, {"access_token": "novo", "user": {"email": "u@e.com"}}),
+    )
+    ok, msg, sessao = auth_supabase.renovar_sessao("refresh123")
+    assert ok
+    assert sessao["access_token"] == "novo"
+
+
+def test_renovar_sessao_token_invalido(monkeypatch):
+    monkeypatch.setattr(auth_supabase, "_config", lambda: ("https://x.supabase.co", "k"))
+    monkeypatch.setattr(
+        auth_supabase.requests, "post",
+        lambda *a, **k: _Resp(400, {"error_description": "Invalid Refresh Token"}),
+    )
+    ok, msg, sessao = auth_supabase.renovar_sessao("refresh-invalido")
+    assert not ok
+    assert sessao is None
+
+
+def test_renovar_sessao_sem_refresh():
+    monkeypatch = None
+    ok, msg, _ = auth_supabase.renovar_sessao("")
+    assert not ok
+    assert "refresh_token" in msg
+
+
+def test_renovar_sessao_sem_configuracao(monkeypatch):
+    monkeypatch.setattr(auth_supabase, "_config", lambda: None)
+    ok, msg, _ = auth_supabase.renovar_sessao("refresh123")
+    assert not ok
+    assert "configurado" in msg
+
+
 # ── Confirmação de e-mail (link com token_hash) ───────────────────────────
 
 def test_confirmar_cadastro_troca_hash_por_sessao(monkeypatch):

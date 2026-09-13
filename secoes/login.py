@@ -9,6 +9,7 @@ import streamlit as st
 
 import auth_supabase
 import ui_tema
+import sessao_persist
 
 
 def render() -> bool:
@@ -67,6 +68,7 @@ def render() -> bool:
                 ok, msg, dados = auth_supabase.logar(email, senha)
                 if ok:
                     auth_supabase.guardar_sessao(dados)
+                    sessao_persist.salvar(dados)  # permanece logado ao recarregar (F5)
                     st.rerun()
                 else:
                     st.error(msg)

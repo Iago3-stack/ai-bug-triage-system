@@ -5,6 +5,7 @@ import auth_supabase
 import ui_tema
 import roteador
 import ui_comum
+import sessao_persist
 from secoes import login as pagina_login
 
 
@@ -34,6 +35,7 @@ def _processar_confirmacao_email() -> None:
     ok, msg, sessao = auth_supabase.confirmar_cadastro(token_hash)
     if ok and sessao and sessao.get("user"):
         auth_supabase.guardar_sessao(sessao)
+        sessao_persist.salvar(sessao)
         st.success("E-mail confirmado! Bem-vindo(a).")
     elif ok:
         st.success("E-mail confirmado! Agora é só entrar com e-mail e senha.")
@@ -52,6 +54,10 @@ ui_tema.config_pagina()
 pg = st.navigation(list(roteador.PAGINAS.values()), position="sidebar")
 
 ui_tema.aplicar_css()
+
+# Reload (F5): restaura a sessão salva no navegador (localStorage) renovando o
+# access_token via refresh_token. Assim o usuário não desloga ao recarregar.
+sessao_persist.carregar()
 
 # Confirmação de cadastro vinda do link do e-mail (query param, não fragmento):
 # ?token_hash=...&type=signup -> troca o hash por uma sessão e loga o usuário.

@@ -6,6 +6,7 @@ import notificacoes
 import hero_animado
 import pix
 import ui_tema
+import sessao_persist
 
 VERSAO = "v2.6.26"
 
@@ -235,6 +236,7 @@ def sidebar_comum():
         # Sair fica FORA do try: o rerun nunca pode ser engolido por exceção.
         if st.sidebar.button("🚪 Sair", use_container_width=True, key="btn_sair"):
             auth_supabase.limpar_sessao()  # desloga imediatamente
+            sessao_persist.limpar()  # apaga a sessão do navegador (não reidratar no F5)
             st.rerun()
         st.sidebar.markdown(
             f"""

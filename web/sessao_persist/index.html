@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+</head>
+<body>
+  <script type="text/javascript">
+    (function () {
+      var SET_COMPONENT_VALUE = "streamlit:setComponentValue";
+      var RENDER = "streamlit:render";
+      var SET_FRAME_HEIGHT = "streamlit:setFrameHeight";
+      var KEY = "_auth_sessao_persist";
+
+      function sendMessage(type, data) {
+        var out = Object.assign({ isStreamlitMessage: true, type: type }, data);
+        window.parent.postMessage(out, "*");
+      }
+      function setFrameHeight(h) { sendMessage(SET_FRAME_HEIGHT, { height: h }); }
+      // O valor do componente deve ir na chave "value" do topo do payload.
+      function notifyHost(data) {
+        window.parent.postMessage(
+          { isStreamlitMessage: true, type: SET_COMPONENT_VALUE, value: data },
+          "*"
+        );
+      }
+
+      function ler() {
+        try { return JSON.parse(localStorage.getItem(KEY) || "null"); }
+        catch (e) { return null; }
+      }
+      function salvar(valor) {
+        try { localStorage.setItem(KEY, JSON.stringify(valor)); } catch (e) {}
+      }
+      function limpar() {
+        try { localStorage.removeItem(KEY); } catch (e) {}
+      }
+
+      window.addEventListener("message", function (event) {
+        if (!event.data || event.data.type !== RENDER) return;
+        var args = event.data.args || {};
+        var comando = args.comando || "ler";
+        if (comando === "salvar" && args.valor !== undefined) salvar(args.valor);
+        if (comando === "limpar") limpar();
+        notifyHost(ler());
+        setFrameHeight(1);
+      });
+
+      window.addEventListener("load", function () {
+        setFrameHeight(1);
+      });
+    })();
+  </script>
+</body>
+</html>

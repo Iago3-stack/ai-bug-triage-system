@@ -163,6 +163,36 @@ def logar(email: str, senha: str) -> tuple[bool, str, dict | None]:
     return False, _mensagem_erro(resposta.status_code, resposta.text), None
 
 
+def renovar_sessao(refresh_token: str) -> tuple[bool, str, dict | None]:
+    """Troca o refresh_token por uma sessão nova (access_token renovado).
+
+    Usado quando a página é recarregada (F5): a sessão salva no navegador pode
+    ter access_token expirado, então renovamos com o refresh_token antes de
+    restaurar. Retorna (ok, mensagem, sessão nova).
+    """
+    if not disponivel():
+        return False, "Supabase não configurado neste ambiente (sem SUPABASE_URL/ANON_KEY).", None
+    if not refresh_token:
+        return False, "Sessão sem refresh_token.", None
+    payload = {"grant_type": "refresh_token", "refresh_token": refresh_token}
+    try:
+        resposta = requests.post(
+            f"{_base_auth_url()}/token",
+            json=payload,
+            headers=_headers_anon(),
+            timeout=15,
+        )
+    except requests.RequestException:
+        return False, "Falha de rede ao renovar a sessão. Refaça o login.", None
+
+    if resposta.status_code == 200:
+        dados = resposta.json()
+        if dados.get("access_token"):
+            return True, "ok", dados
+        return False, _mensagem_erro(resposta.status_code, resposta.text), None
+    return False, _mensagem_erro(resposta.status_code, resposta.text), None
+
+
 def confirmar_cadastro(token_hash: str) -> tuple[bool, str, dict | None]:
     """Confirma o cadastro pelo link do e-mail (fluxo do template com token_hash).
 
