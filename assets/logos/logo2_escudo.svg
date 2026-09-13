@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0B1322"/>
+      <stop offset="1" stop-color="#16233C"/>
+    </linearGradient>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#60A5FA"/>
+      <stop offset="1" stop-color="#2E7CF6"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="496" height="496" rx="96" fill="url(#bg)" stroke="rgba(255,255,255,.07)" stroke-width="2"/>
+  <path d="M256 88 L424 140 V282 C424 388 358 448 256 474 C154 448 88 388 88 282 V140 Z"
+        fill="url(#ring)" opacity=".96"/>
+  <path d="M256 124 L396 168 V280 C396 366 344 420 256 442 C168 420 116 366 116 280 V168 Z"
+        fill="none" stroke="#ffffff" stroke-opacity=".20" stroke-width="6"/>
+  <g fill="#ffffff">
+    <path d="M214 260 C196 260 186 276 184 296" fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round"/>
+    <path d="M212 288 C196 298 190 316 190 330" fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round"/>
+    <path d="M218 314 C204 330 202 348 206 362" fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round"/>
+    <path d="M298 260 C316 260 326 276 328 296" fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round"/>
+    <path d="M300 288 C316 298 322 316 322 330" fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round"/>
+    <path d="M294 314 C308 330 310 348 306 362" fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round"/>
+    <ellipse cx="256" cy="318" rx="58" ry="42" fill="#ffffff"/>
+    <circle cx="256" cy="248" r="26"/>
+    <ellipse cx="256" cy="300" rx="30" ry="14" fill="#0B1322" opacity=".20"/>
+  </g>
+  <path d="M246 226 C234 200 224 190 212 184" fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round"/>
+  <path d="M266 226 C278 200 288 190 300 184" fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="208" cy="182" r="8" fill="#ffffff"/>
+  <circle cx="304" cy="182" r="8" fill="#ffffff"/>
+  <circle cx="247" cy="242" r="4.5" fill="#0B1322"/>
+  <circle cx="265" cy="242" r="4.5" fill="#0B1322"/>
+</svg>

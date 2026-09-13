@@ -197,14 +197,15 @@ _TEMA_CSS = """
 
 /* -------- Barra de navegação superior (estilo SaaS) -------- */
 [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"]:has(.marca-tbn)) { background: linear-gradient(135deg,#0f172a 0%,#16233c 60%,#25D366 190%) !important; border-radius: 12px !important; padding: 8px 14px !important; margin-bottom: 14px !important; }
-.marca-top-logo { color:#ffffff !important; font-weight:800 !important; font-size:16px !important; letter-spacing:-.01em !important; white-space:nowrap !important; }
+.marca-top-logo { display:flex !important; align-items:center !important; gap:8px !important; color:#ffffff !important; font-weight:800 !important; font-size:16px !important; letter-spacing:-.01em !important; white-space:nowrap !important; }
+.marca-top-logo img { width:28px !important; height:28px !important; border-radius:9px !important; flex:none !important; box-shadow:0 1px 4px rgba(0,0,0,.35) !important; }
 .marca-top-user { color:#0f172a !important; font-size:13px !important; text-align:center !important; padding:6px 14px !important; background:rgba(37,99,235,.10) !important; border:1px solid rgba(37,99,235,.30) !important; border-radius:999px !important; font-weight:600 !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; }
 body:has([data-st-tema="escuro"]) .marca-top-user { color:#e2e8f0 !important; background:rgba(30,41,59,.45) !important; border:1px solid rgba(46,124,246,.4) !important; }
 [data-testid="stColumn"]:has(.marca-nav) [data-testid="stButton"] button { background:transparent !important; color:#cbd5e1 !important; border:none !important; box-shadow:none !important; font-weight:600 !important; padding:7px 10px !important; border-radius:9px !important; }
 [data-testid="stColumn"]:has(.marca-nav) [data-testid="stButton"] button:hover { background:rgba(255,255,255,.09) !important; color:#ffffff !important; }
 [data-testid="stColumn"]:has(.marca-nav-ativo) [data-testid="stButton"] button,
 [data-testid="stColumn"]:has(.marca-nav-ativo) [data-testid="stButton"] button:hover { color:#86efac !important; background:rgba(37,211,102,.14) !important; }
-@media (max-width: 620px) { .marca-top-logo { display:none !important; } }
+@media (max-width: 620px) { .marca-top-logo span { display:none !important; } .marca-top-logo { gap:0 !important; } }
 
 /* -------- MODO ESCURO: paleta própria do app -------- */
 body:has([data-st-tema="escuro"]) { color-scheme: dark; }
@@ -402,7 +403,7 @@ _PROVID_CSS = """
 
 
 def config_pagina():
-    st.set_page_config(page_title="Iago Nunes | IA & QA Portfolio", page_icon="🤖", layout="wide")
+    st.set_page_config(page_title="Iago Nunes | IA & QA Portfolio", page_icon="assets/logos/logo7_robo.png", layout="wide")
 
 
 def tema_atual() -> str:

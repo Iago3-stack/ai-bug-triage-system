@@ -1,4 +1,7 @@
 """Partes comuns do app: versão, Pix, modal de configurações, sidebar e rodapé."""
+import base64
+from pathlib import Path
+
 import streamlit as st
 
 import jira_client
@@ -10,6 +13,14 @@ import sessao_persist
 import roteador
 
 VERSAO = "v2.6.26"
+
+# Logo do sistema (SVG embutido como data URI para funcionar na Cloud).
+_LOGO_DATA_URI = (
+    "data:image/svg+xml;base64,"
+    + base64.b64encode(
+        (Path(__file__).parent / "assets" / "logos" / "logo7_robo.svg").read_bytes()
+    ).decode("ascii")
+)
 
 # Símbolo oficial do Pix (Banco Central) — PD-textlogo via Wikimedia Commons.
 # Símbolo oficial do Pix (Banco Central) — PD-textlogo via Wikimedia Commons.
@@ -281,7 +292,7 @@ def menu_top(pg_atual):
 
     _caminhos = (
         ("inicio", "🏠 Início"),
-        ("triagem", "🐞 Triagem de Bugs"),
+        ("triagem", "🔍 Triagem de Bugs"),
         ("dashboard", "📈 Dashboard QA"),
     )
 
@@ -289,7 +300,12 @@ def menu_top(pg_atual):
         st.markdown('<div class="marca-tbn" style="display:none"></div>', unsafe_allow_html=True)
         _c_logo, _c_nav, _c_user = st.columns([1, 2.2, 1.3], vertical_alignment="center")
         with _c_logo:
-            st.markdown('<div class="marca-top-logo">🐞 AI Bug Triage</div>', unsafe_allow_html=True)
+            st.markdown(
+                f'<div class="marca-top-logo">'
+                f'<img class="marca-top-logo-img" alt="AI Bug Triage" src="{_LOGO_DATA_URI}">'
+                f'<span>AI Bug Triage</span></div>',
+                unsafe_allow_html=True,
+            )
         with _c_nav:
             _subs = st.columns(len(_caminhos))
             for _col, (_chave, _rotulo) in zip(_subs, _caminhos):

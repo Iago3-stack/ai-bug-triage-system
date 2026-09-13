@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0B1322"/>
+      <stop offset="1" stop-color="#16233C"/>
+    </linearGradient>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3B82F6"/>
+      <stop offset="1" stop-color="#1E6FE8"/>
+    </linearGradient>
+    <linearGradient id="buggrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#25D366"/>
+      <stop offset="1" stop-color="#16A34A"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="496" height="496" rx="96" fill="url(#bg)" stroke="rgba(255,255,255,.07)" stroke-width="2"/>
+  <circle cx="256" cy="256" r="168" fill="none" stroke="url(#ring)" stroke-width="22" opacity=".95"/>
+  <circle cx="256" cy="256" r="118" fill="none" stroke="#ffffff" stroke-opacity=".18" stroke-width="10"/>
+  <g stroke="url(#ring)" stroke-width="11" stroke-linecap="round" opacity=".6">
+    <line x1="256" y1="44" x2="256" y2="98"/>
+    <line x1="256" y1="414" x2="256" y2="468"/>
+    <line x1="44" y1="256" x2="98" y2="256"/>
+    <line x1="414" y1="256" x2="468" y2="256"/>
+  </g>
+  <g>
+    <path d="M214 258 C196 258 188 272 186 290" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round"/>
+    <path d="M212 284 C196 292 190 308 190 320" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round"/>
+    <path d="M218 308 C206 322 204 338 207 350" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round"/>
+    <path d="M298 258 C316 258 324 272 326 290" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round"/>
+    <path d="M300 284 C316 292 322 308 322 320" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round"/>
+    <path d="M294 308 C306 322 308 338 305 350" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round"/>
+    <ellipse cx="256" cy="278" rx="56" ry="40" fill="url(#buggrad)"/>
+    <circle cx="256" cy="200" r="25" fill="url(#buggrad)"/>
+    <circle cx="247" cy="194" r="5.5" fill="#ffffff"/>
+    <circle cx="265" cy="194" r="5.5" fill="#ffffff"/>
+    <path d="M246 180 C234 154 224 146 212 140" fill="none" stroke="url(#buggrad)" stroke-width="9" stroke-linecap="round"/>
+    <path d="M266 180 C278 154 288 146 300 140" fill="none" stroke="url(#buggrad)" stroke-width="9" stroke-linecap="round"/>
+    <circle cx="208" cy="138" r="8" fill="url(#buggrad)"/>
+    <circle cx="304" cy="138" r="8" fill="url(#buggrad)"/>
+  </g>
+</svg>
