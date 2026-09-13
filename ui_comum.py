@@ -199,15 +199,17 @@ def abrir_configuracoes():
     _dialogo_config()
 
 
+def _auth_habilitado() -> bool:
+    """True quando o login por conta está ativo (Supabase configurado)."""
+    try:
+        import auth_supabase
+
+        return auth_supabase.disponivel()
+    except Exception:
+        return False
+
+
 def sidebar_comum():
-    if st.sidebar.button("⚙️ Configurações", key="abrir_config", type="primary", width="stretch", help="Tema, Jira e notificações"):
-        abrir_configuracoes()
-
-    # Um botão DENTRO do dialog usou st.rerun() (ex.: trocar tema), que fecha o modal.
-    # Este flag reabre o modal com o corpo re-renderizado (marcas/estilos atualizados).
-    if st.session_state.pop("_reabrir_config", False):
-        abrir_configuracoes()
-
     # --- AUTENTICAÇÃO (Supabase Auth — passo 2 SaaS) ---
     _usuario = None
     try:
@@ -217,6 +219,17 @@ def sidebar_comum():
             _usuario = auth_supabase.usuario_logado()
     except Exception:
         pass
+
+    # Configurações (tema, Jira e notificações) ficam disponíveis só PARA
+    # QUEM ESTÁ LOGADO. Sem Supabase configurado, o app é aberto e todos veem.
+    if _usuario or not _auth_habilitado():
+        if st.sidebar.button("⚙️ Configurações", key="abrir_config", type="primary", width="stretch", help="Tema, Jira e notificações"):
+            abrir_configuracoes()
+
+        # Um botão DENTRO do dialog usou st.rerun() (ex.: trocar tema), que fecha o modal.
+        # Este flag reabre o modal com o corpo re-renderizado (marcas/estilos atualizados).
+        if st.session_state.pop("_reabrir_config", False):
+            abrir_configuracoes()
 
     if _usuario:
         # Sair fica FORA do try: o rerun nunca pode ser engolido por exceção.
