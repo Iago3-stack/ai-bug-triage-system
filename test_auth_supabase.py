@@ -167,6 +167,44 @@ def test_sair_limpa_sessao(monkeypatch):
     assert "_auth_sessao" not in fake
 
 
+# ── Confirmação de e-mail (link com token_hash) ───────────────────────────
+
+def test_confirmar_cadastro_troca_hash_por_sessao(monkeypatch):
+    monkeypatch.setattr(auth_supabase, "_config", lambda: ("https://x.supabase.co", "k"))
+    monkeypatch.setattr(
+        auth_supabase.requests, "post",
+        lambda *a, **k: _Resp(200, {"access_token": "tok1", "user": {"email": "u@e.com"}}),
+    )
+    ok, msg, sessao = auth_supabase.confirmar_cadastro("hash123")
+    assert ok
+    assert sessao["user"]["email"] == "u@e.com"
+
+
+def test_confirmar_cadastro_link_expirado(monkeypatch):
+    monkeypatch.setattr(auth_supabase, "_config", lambda: ("https://x.supabase.co", "k"))
+    monkeypatch.setattr(
+        auth_supabase.requests, "post",
+        lambda *a, **k: _Resp(400, {"error_description": "Email link is invalid or has expired"}),
+    )
+    ok, msg, sessao = auth_supabase.confirmar_cadastro("hash123")
+    assert not ok
+    assert "expirado" in msg
+    assert sessao is None
+
+
+def test_confirmar_cadastro_sem_hash():
+    ok, msg, _ = auth_supabase.confirmar_cadastro("")
+    assert not ok
+    assert "inválido" in msg
+
+
+def test_confirmar_cadastro_sem_configuracao(monkeypatch):
+    monkeypatch.setattr(auth_supabase, "_config", lambda: None)
+    ok, msg, _ = auth_supabase.confirmar_cadastro("hash123")
+    assert not ok
+    assert "configurado" in msg
+
+
 def test_sair_da_conta_usa_sessao_logada(monkeypatch):
     fake = {"_auth_sessao": {"access_token": "t1", "user": {"email": "u@e.com"}}}
     monkeypatch.setattr(auth_supabase, "_armazem", lambda: fake)

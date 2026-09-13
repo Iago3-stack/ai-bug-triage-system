@@ -163,6 +163,41 @@ def logar(email: str, senha: str) -> tuple[bool, str, dict | None]:
     return False, _mensagem_erro(resposta.status_code, resposta.text), None
 
 
+def confirmar_cadastro(token_hash: str) -> tuple[bool, str, dict | None]:
+    """Confirma o cadastro pelo link do e-mail (fluxo do template com token_hash).
+
+    Troca o token_hash do link (`?token_hash=...&type=signup`) por uma sessão via
+    POST /auth/v1/verify. O link aponta para o app como QUERY PARAM (não
+    fragmento), pois o Streamlit consegue ler query string mas ignora o
+    fragmento (#...) que o fluxo padrão do Supabase usa. Retorna
+    (ok, mensagem, sessão) — sessão só quando há access_token.
+    """
+    if not token_hash:
+        return False, "Link inválido ou incompleto.", None
+    if not disponivel():
+        return False, "Supabase não configurado neste ambiente (sem SUPABASE_URL/ANON_KEY).", None
+    try:
+        resposta = requests.post(
+            f"{_base_auth_url()}/verify",
+            json={"type": "signup", "token_hash": token_hash},
+            headers=_headers_anon(),
+            timeout=15,
+        )
+    except requests.RequestException:
+        return False, "Falha de rede ao confirmar o e-mail. Tente de novo.", None
+
+    if resposta.status_code == 200:
+        dados = resposta.json()
+        sessao = dict(dados or {})
+        if sessao.get("user") or sessao.get("access_token"):
+            return True, "E-mail confirmado! Entrando…", sessao
+        return True, "E-mail confirmado! Você já pode entrar.", sessao
+    baixo = resposta.text.lower()
+    if "expired" in baixo or "invalid" in baixo or "token" in baixo:
+        return False, "Link de confirmação expirado ou inválido. Peça um novo cadastro.", None
+    return False, _mensagem_erro(resposta.status_code, resposta.text), None
+
+
 def sair(token: str | None) -> None:
     """Encerra a sessão no servidor (best-effort) e limpa localmente.
 
