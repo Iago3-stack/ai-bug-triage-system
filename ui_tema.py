@@ -348,6 +348,10 @@ body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] .marca-usuario { col
 .marca-aviso-plano { color:#475569 !important; font-size:14px !important; }
 body:has([data-st-tema="escuro"]) .marca-aviso-plano { color:#9aa3af !important; }
 
+/* Dica "e-mail do Google" na tela de login — legível nos dois temas */
+.marca-g-google { font-size:13px !important; color:#475569 !important; }
+body:has([data-st-tema="escuro"]) .marca-g-google { color:#9aa3af !important; }
+
 /* Botões da tela de login/cadastro — cor sólida nos dois temas */
 [data-testid="stColumn"]:has(.marca-entrar) [data-testid="stFormSubmitButton"] button { background:#059669 !important; color:#ffffff !important; border:none !important; font-weight:600 !important; }
 [data-testid="stColumn"]:has(.marca-entrar) [data-testid="stFormSubmitButton"] button:hover { background:#047857 !important; color:#ffffff !important; }
