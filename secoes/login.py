@@ -26,8 +26,8 @@ def render() -> bool:
             "erro": "Houve uma falha ao restaurar sua sessão. Faça login de novo.",
         }
         st.info(f"🔑 {_textos.get(_motivo, 'Restauração da sessão falhou. Faça login.')}")
-        # Mostra uma vez por recarga e limpa para não repetir em cada interação.
-        st.session_state.pop("_sessao_persist_motivo", None)
+        # NÃO limpa o motivo aqui — ele permanece até o usuário fazer login
+        # ou a sessão ser reiniciada, garantindo que a mensagem seja vista.
 
     st.markdown(
         """

@@ -30,6 +30,13 @@
         try { return JSON.parse(localStorage.getItem(KEY) || "null"); }
         catch (e) { return null; }
       }
+      function lerEnvelope() {
+        // Envelope com a sessão + timestamp da última escrita: permite ao boot
+        // distinguir "nunca gravou" de "gravou mas a leitura falhou".
+        var ts = null;
+        try { ts = parseInt(localStorage.getItem(KEY_TS) || "null", 10); } catch (e) {}
+        return { sessao: ler(), ts: ts };
+      }
       function salvar(valor) {
         try {
           localStorage.setItem(KEY, JSON.stringify(valor));
@@ -53,8 +60,8 @@
         var comando = args.comando || "ler";
         if (comando === "salvar" && args.valor !== undefined) salvar(args.valor);
         if (comando === "limpar") limpar();
-        if (comando === "info") { notifyHost(info()); }
-        else { notifyHost(ler()); }
+        if (comando === "info") { notifyHost(lerEnvelope()); }
+        else { notifyHost(lerEnvelope()); }
         setFrameHeight(1);
       });
 

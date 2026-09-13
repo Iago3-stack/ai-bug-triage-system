@@ -44,6 +44,10 @@ _BOOT_FEITO = "feito"
 # "tempo" (componente não respondeu a tempo), "expirada" (refresh_token recusado),
 # "ausente" (não há sessão salva) ou "erro" (falha inesperada).
 _KEY_MOTIVO = "_sessao_persist_motivo"
+# Timestamp (ms) da última gravação no localStorage (diagnóstico exibido na
+# tela de login quando a restauração falha: distingue "nunca gravou" de
+# "gravou mas a leitura falhou").
+_KEY_TS = "_sessao_persist_ts"
 # Máximo de reruns esperando o valor do componente no boot. O browser precisa
 # carregar o iframe do componente e devolver o localStorage; se desistíssemos
 # no 1º "vazio", um reload lento nunca restauraria a sessão. Este limite evita
@@ -92,6 +96,7 @@ def limpar() -> None:
     st.session_state.pop(_KEY_BOOT, None)
     st.session_state.pop(_KEY_TENTATIVAS, None)
     st.session_state.pop(_KEY_MOTIVO, None)
+    st.session_state.pop(_KEY_TS, None)
 
 
 def carregar() -> None:
@@ -129,7 +134,20 @@ def carregar() -> None:
     st.session_state[_KEY_BOOT] = _BOOT_FEITO
     st.session_state.pop(_KEY_MOTIVO, None)
 
-    if isinstance(valor, dict):
-        _restaurar(valor)
+    # Envelope novo: {sessao, ts}; valores antigos no localStorage eram o dict
+    # cru com "refresh_token". Aceitamos os dois formatos.
+    if isinstance(valor, dict) and set(valor) >= {"sessao", "ts"}:
+        ts = valor.get("ts")
+        if isinstance(ts, int):
+            st.session_state[_KEY_TS] = ts
+        interno = valor.get("sessao")
+        if isinstance(interno, dict) and interno.get("refresh_token"):
+            if _restaurar(interno) != "ok":
+                st.session_state[_KEY_MOTIVO] = "expirada"
+        else:
+            st.session_state[_KEY_MOTIVO] = "ausente"
+    elif isinstance(valor, dict) and valor.get("refresh_token"):
+        if _restaurar(valor) != "ok":
+            st.session_state[_KEY_MOTIVO] = "expirada"
     else:
         st.session_state[_KEY_MOTIVO] = "ausente"
