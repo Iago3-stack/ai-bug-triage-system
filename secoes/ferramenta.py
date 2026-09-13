@@ -19,10 +19,12 @@ import notificacoes
 import plano
 import dashboard as dashboard_qa
 
+_FPDF_ERRO = ""
 try:
     from fpdf import FPDF
-except Exception:  # pragma: no cover — só falha em ambiente sem a dependência
+except Exception as _e:  # pragma: no cover — só falha em ambiente sem a dependência
     FPDF = None
+    _FPDF_ERRO = repr(_e)
 
 _FONTE_REGULAR = str(Path(__file__).parent.parent / "assets" / "pdf" / "DejaVuSans.ttf")
 _FONTE_NEGRITO = str(Path(__file__).parent.parent / "assets" / "pdf" / "DejaVuSans-Bold.ttf")
@@ -678,7 +680,7 @@ def render():
                         key="btn_pdf",
                     )
                 else:
-                    st.caption("PDF indisponível")
+                    st.caption(f"PDF indisponível: {_FPDF_ERRO or 'fpdf2 não importou'}")
             datas = persistencia.datas_disponiveis()
             data_sel = st.selectbox("📅 Escolha a data", datas, key="hp_data")
             do_dia = persistencia.registros_por_data(data_sel)
