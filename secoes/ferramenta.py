@@ -1,6 +1,10 @@
 """Página Ferramenta — triagem de bugs (NLP + IA + RAG) com histórico e dashboard."""
-import streamlit as st
+import re
 import json
+import io
+from pathlib import Path
+
+import streamlit as st
 import pandas as pd
 from urllib.parse import quote
 
@@ -14,6 +18,117 @@ import guardrails
 import notificacoes
 import plano
 import dashboard as dashboard_qa
+
+try:
+    from fpdf import FPDF
+except Exception:  # pragma: no cover — só falha em ambiente sem a dependência
+    FPDF = None
+
+_FONTE_REGULAR = str(Path(__file__).parent.parent / "assets" / "pdf" / "DejaVuSans.ttf")
+_FONTE_NEGRITO = str(Path(__file__).parent.parent / "assets" / "pdf" / "DejaVuSans-Bold.ttf")
+
+
+def _limpar_markdown(texto: str) -> str:
+    """Remove marcação markdown, mantendo o texto legível no PDF."""
+    if not texto:
+        return ""
+    texto = re.sub(r"#+\s?", "", texto)
+    texto = re.sub(r"\*\*([^*]+)\*\*", r"\1", texto)
+    texto = re.sub(r"\*([^*]+)\*", r"\1", texto)
+    texto = re.sub(r"`([^`]+)`", r"\1", texto)
+    texto = re.sub(r"!\[[^\]]*\]\([^)]*\)", "", texto)
+    texto = re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", texto)
+    texto = re.sub(r"-?\s*[-*]\s", "\n", texto)
+    return texto.strip()
+
+
+def _gerar_pdf_relatorio(dados: dict) -> bytes:
+    """Gera um PDF A4 do relatório de triagem (baixado como application/pdf)."""
+    pdf = FPDF(orientation="P", unit="mm", format="A4")
+    pdf.set_auto_page_break(auto=True, margin=18)
+    pdf.add_page()
+    try:
+        pdf.add_font("DejaVu", "", _FONTE_REGULAR)
+        pdf.add_font("DejaVu", "B", _FONTE_NEGRITO)
+    except Exception:
+        pdf = FPDF(orientation="P", unit="mm", format="A4")
+        pdf.set_auto_page_break(auto=True, margin=18)
+        pdf.add_page()
+        pdf.add_font("DejaVu", "", _FONTE_REGULAR)
+        pdf.add_font("DejaVu", "B", _FONTE_NEGRITO)
+
+    largura = pdf.w - pdf.l_margin - pdf.r_margin
+    azul, verde, cinza, escuro = (46, 124, 246), (37, 211, 102), (100, 116, 139), (15, 23, 42)
+
+    # Cabeçalho
+    pdf.set_fill_color(*cinza)
+    pdf.rect(0, 0, pdf.w, 26, style="F")
+    pdf.set_font("DejaVu", "B", 15)
+    pdf.set_text_color(*verde)
+    pdf.set_xy(10, 8)
+    pdf.cell(largura, 7, "AI Bug Triage System", align="C")
+    pdf.set_font("DejaVu", "", 11)
+    pdf.set_text_color(255, 255, 255)
+    pdf.set_xy(10, 15)
+    pdf.cell(largura, 6, "Relatório de Triagem de Bug", align="C")
+    pdf.set_y(34)
+
+    # Descrição
+    pdf.set_text_color(*escuro)
+    pdf.set_font("DejaVu", "B", 12)
+    pdf.cell(0, 8, "Descrição do bug", ln=True)
+    pdf.set_font("DejaVu", "", 11)
+    pdf.set_text_color(30, 41, 59)
+    pdf.multi_cell(0, 6, _limpar_markdown(dados.get("descricao_limpa", "")))
+    pdf.ln(3)
+
+    # Métricas
+    pdf.set_text_color(*escuro)
+    pdf.set_font("DejaVu", "B", 12)
+    pdf.cell(0, 8, "Resultado da triagem", ln=True)
+    pdf.set_font("DejaVu", "", 11)
+    pdf.set_text_color(30, 41, 59)
+    linhas = [
+        ("Gravidade", dados.get("gravidade", "—")),
+        ("Prioridade final", dados.get("prioridade_final", "—")),
+        ("Sentimento", f"{dados.get('polaridade', 0.0):.2f}"),
+        ("Divergência motor x IA", "Sim" if dados.get("divergente") else "Não"),
+    ]
+    for rotulo, valor in linhas:
+        pdf.set_font("DejaVu", "B", 11)
+        pdf.cell(52, 7, rotulo + ":", ln=False)
+        pdf.set_font("DejaVu", "", 11)
+        pdf.cell(0, 7, str(valor), ln=True)
+    pdf.ln(3)
+
+    # Análise por IA
+    resultado_llm = dados.get("resultado_llm") or {}
+    if resultado_llm:
+        pdf.set_text_color(*escuro)
+        pdf.set_font("DejaVu", "B", 12)
+        pdf.cell(0, 8, f"Análise por IA ({dados.get('provedor_ia', 'LLM')} · {dados.get('modelo_ia', '')})", ln=True)
+        pdf.set_font("DejaVu", "", 11)
+        pdf.set_text_color(30, 41, 59)
+        pdf.multi_cell(0, 6, "Severidade por IA: " + str(resultado_llm.get("severidade", "—")).upper(), ln=True)
+        pdf.multi_cell(0, 6, "Categoria: " + str(resultado_llm.get("categoria", "—")).capitalize(), ln=True)
+        if resultado_llm.get("causa_raiz"):
+            pdf.multi_cell(0, 6, "Causa raiz provável: " + _limpar_markdown(str(resultado_llm["causa_raiz"])), ln=True)
+        passos = resultado_llm.get("passos_repro") or []
+        if passos:
+            pdf.multi_cell(0, 6, "Passos para reproduzir:", ln=True)
+            for i, passo in enumerate(passos, 1):
+                pdf.multi_cell(0, 6, f"  {i}. {_limpar_markdown(str(passo))}", ln=True)
+        pdf.ln(3)
+
+    # Relatório completo (markdown limpo)
+    pdf.set_text_color(*escuro)
+    pdf.set_font("DejaVu", "B", 12)
+    pdf.cell(0, 8, "Relatório completo", ln=True)
+    pdf.set_font("DejaVu", "", 11)
+    pdf.set_text_color(30, 41, 59)
+    pdf.multi_cell(0, 6, _limpar_markdown(dados.get("relatorio", "")))
+
+    return bytes(pdf.output())
 
 
 def render():
@@ -440,13 +555,36 @@ def render():
 
         # --- 5. EXPORTAR: baixar relatório + abrir no GitHub + enviar ao Jira ---
         colunas = st.columns(3)
-        colunas[0].markdown('<div class="marca-download" style="display:none"></div>', unsafe_allow_html=True)
-        colunas[0].download_button(
-            "📥 Baixar relatório (.md)",
-            data=relatorio.encode("utf-8"),
-            file_name="relatorio_triagem_bug.md",
-            mime="text/markdown",
-        )
+        with colunas[0]:
+            st.markdown('<div class="marca-download" style="display:none"></div>', unsafe_allow_html=True)
+            st.download_button(
+                "📥 Baixar relatório (.md)",
+                data=relatorio.encode("utf-8"),
+                file_name="relatorio_triagem_bug.md",
+                mime="text/markdown",
+            )
+            st.markdown('<div class="marca-pdf" style="display:none"></div>', unsafe_allow_html=True)
+            if FPDF is not None:
+                dados_pdf = {
+                    "descricao_limpa": descricao_limpa,
+                    "relatorio": relatorio,
+                    "gravidade": gravidade,
+                    "prioridade_final": r.get("prioridade_final", ""),
+                    "polaridade": r.get("polaridade", 0.0),
+                    "divergente": r.get("divergente"),
+                    "resultado_llm": r.get("resultado_llm"),
+                    "provedor_ia": getattr(ia, "ULTIMO_PROVEDOR", None) or "LLM",
+                    "modelo_ia": getattr(ia, "ULTIMO_MODELO", None) or "",
+                }
+                st.download_button(
+                    "📄 Baixar relatório em PDF",
+                    data=_gerar_pdf_relatorio(dados_pdf),
+                    file_name=f"relatorio_triagem_bug_{r.get('data_hora', '')[:10] or 'hoje'}.pdf",
+                    mime="application/pdf",
+                    key="btn_pdf",
+                )
+            else:
+                st.caption("PDF indisponível neste ambiente (dependência ausente).")
         titulo = quote(descricao_limpa[:80])
         corpo = quote(relatorio[:4000])
         colunas[1].markdown('<div class="marca-issue" style="display:none"></div>', unsafe_allow_html=True)
@@ -454,8 +592,8 @@ def render():
             "🐙 Nova Issue no GitHub",
             f"https://github.com/iago3-stack/ai-bug-triage-system/issues/new?title={titulo}&body={corpo}",
         )
-        colunas[2].markdown('<div class="marca-jira" style="display:none"></div>', unsafe_allow_html=True)
-        if colunas[2].button("📋 Exportar para Jira", use_container_width=True, key="btn_exportar_jira"):
+        colunas[2].markdown('<div class="marca-jira-expo" style="display:none"></div>', unsafe_allow_html=True)
+        if colunas[2].button("Exportar para Jira", use_container_width=True, key="btn_exportar_jira"):
             if jira_client.configurado():
                 with st.spinner("📋 Enviando issue ao Jira..."):
                     ok_export, resultado_jira, erro_jira = jira_client.criar_issue(

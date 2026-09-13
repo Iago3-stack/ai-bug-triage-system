@@ -15,3 +15,5 @@ requests==2.34.2
 # V2.2.0 — QR Code Pix (BR Code) gerado localmente no rodapé (doações), config via secrets/.env.
 # V2.3.0 — Fallback de IA via Groq (open-weight) + seletor de provedor (Automático/Gemini/Groq) + modelo próprio (OpenAI-compatível/Gemini custom, chave só na sessão).
 qrcode==8.2
+# V2.7 — exportação de relatório em PDF (fpdf2, fontes DejaVu embutidas em assets/pdf).
+fpdf2==2.8.8

@@ -1,0 +1,53 @@
+import pytest
+
+
+@pytest.fixture(scope="module")
+def dados_relatorio():
+    return {
+        "descricao_limpa": "estou tentando baixar meus relatórios em pdf mas toda vez que aperto no botão baixar a página recarrega sozinha e me leva para outra guia",
+        "relatorio": "# Relatório\n\n## Análise\n\n**Gravidade:** ALTA\n\nPassos para reproduzir:\n- clicar em baixar\n- ver a aba abrir",
+        "gravidade": "ALTA",
+        "prioridade_final": "ALTA",
+        "polaridade": -0.5,
+        "divergente": False,
+        "resultado_llm": {
+            "severidade": "alta",
+            "categoria": "ux",
+            "causa_raiz": "Botão de download não abre a página de forma esperada.",
+            "passos_repro": ["Clicar em baixar PDF", "Observar nova aba"],
+        },
+        "provedor_ia": "Gemini",
+        "modelo_ia": "gemini-3-pro",
+    }
+
+
+def test_gerar_pdf_relatorio_gera_pdf_valido(dados_relatorio):
+    from secoes.ferramenta import FPDF, _gerar_pdf_relatorio
+
+    if FPDF is None:
+        pytest.skip("fpdf2 ausente neste ambiente")
+
+    pdf_bytes = _gerar_pdf_relatorio(dados_relatorio)
+    assert pdf_bytes[:4] == b"%PDF"
+    assert len(pdf_bytes) > 1024
+
+
+def test_gerar_pdf_relatorio_aceita_extras(dados_relatorio):
+    from secoes.ferramenta import FPDF, _gerar_pdf_relatorio
+
+    if FPDF is None:
+        pytest.skip("fpdf2 ausente neste ambiente")
+
+    pdf_bytes = _gerar_pdf_relatorio({"descricao_limpa": "bug de login"})
+    assert pdf_bytes[:4] == b"%PDF"
+
+
+def test_limpar_markdown_remove_marcacao():
+    from secoes.ferramenta import _limpar_markdown
+
+    texto = "## Título\n**negrito** e `código` e [link](https://x)"
+    limpo = _limpar_markdown(texto)
+    assert "Título" in limpo
+    assert "negrito" in limpo and "**" not in limpo
+    assert "código" in limpo
+    assert "[link](" in limpo or "link" in limpo
