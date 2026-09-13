@@ -240,25 +240,6 @@ def sidebar_comum():
             auth_supabase.limpar_sessao()  # desloga imediatamente
             sessao_persist.limpar()  # apaga a sessão do navegador (não reidratar no F5)
             st.rerun()
-        st.sidebar.markdown(
-            f"""
-            <div class="marca-usuario">
-              👤 <b>{_usuario}</b>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    else:
-        # Quem não está logado ganha um botão que LEVA à tela de login
-        # (as páginas Triagem de Bugs e Dashboard QA exigem login no app).
-        if st.sidebar.button("🔒 Faça login", type="primary", use_container_width=True, key="btn_ir_login"):
-            st.switch_page(roteador.PAGINAS["triagem"])
-        st.sidebar.markdown(
-            '<div style="margin-bottom:10px;padding:8px 10px;border-radius:10px;'
-            "background:rgba(232,121,249,.10);border:1px solid rgba(232,121,249,.25);"
-            'font-size:11px;line-height:1.4">A <b>Ferramenta</b> e o <b>Dashboard</b> exigem conta.</div>',
-            unsafe_allow_html=True,
-        )
 
     # --- CTA: ESTRELA NO GITHUB ---
     st.sidebar.markdown("### ⭐ Apoie o projeto")

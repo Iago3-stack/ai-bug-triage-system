@@ -393,6 +393,9 @@ _PROVID_CSS = """
 _JS_BOOTSTRAP = """<script>
     (() => {
       const T = '[data-st-tema="escuro"]';
+      /* Só removemos os NÓS QUE NÓS CRIAMOS (filhos diretos do <body>). O Streamlit
+         também renderiza um marcador [data-st-tema] gerenciado pelo React; mexer nele
+         quebra a reconciliação ('Failed to execute removeChild' do React). */
       /* Persistência do tema: o ?tema= da URL manda quando presente (botão ☀️/🌙),
          mas o st.navigation DROPA query params ao trocar de página; por isso o
          fallback é o sessionStorage do navegador (sobrevive a navegação e ao F5). */
@@ -414,7 +417,7 @@ _JS_BOOTSTRAP = """<script>
         if (tema === 'escuro' && !d.querySelector(T)) {
           const m = d.createElement('div'); m.setAttribute('data-st-tema', 'escuro'); d.body.appendChild(m);
         } else if (tema !== 'escuro') {
-          d.querySelectorAll(T).forEach((n) => n.remove());
+          d.querySelectorAll('body > [data-st-tema="escuro"]').forEach((n) => n.remove());
         }
         setTimeout(sync, 600);
       };
