@@ -660,7 +660,11 @@ def render():
             )
             with col_pdf:
                 st.markdown('<div class="marca-pdf" style="display:none"></div>', unsafe_allow_html=True)
-                if FPDF is not None and r:
+                if FPDF is None:
+                    st.caption(f"PDF indisponível: {_FPDF_ERRO or 'fpdf2 não importou'}")
+                elif not r:
+                    st.caption("Gere uma triagem para exportar PDF")
+                else:
                     dados_pdf = {
                         "descricao_limpa": r.get("descricao_limpa", ""),
                         "relatorio": r.get("relatorio", ""),
@@ -679,8 +683,6 @@ def render():
                         mime="application/pdf",
                         key="btn_pdf",
                     )
-                else:
-                    st.caption(f"PDF indisponível: {_FPDF_ERRO or 'fpdf2 não importou'}")
             datas = persistencia.datas_disponiveis()
             data_sel = st.selectbox("📅 Escolha a data", datas, key="hp_data")
             do_dia = persistencia.registros_por_data(data_sel)
