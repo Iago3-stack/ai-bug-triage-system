@@ -347,8 +347,8 @@ body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] .marca-usuario { col
 /* Botões da tela de login/cadastro — cor sólida nos dois temas */
 [data-testid="stColumn"]:has(.marca-entrar) [data-testid="stFormSubmitButton"] button { background:#059669 !important; color:#ffffff !important; border:none !important; font-weight:600 !important; }
 [data-testid="stColumn"]:has(.marca-entrar) [data-testid="stFormSubmitButton"] button:hover { background:#047857 !important; color:#ffffff !important; }
-[data-testid="stColumn"]:has(.marca-criar) [data-testid="stFormSubmitButton"] button { background:#eab308 !important; color:#1f2937 !important; border:none !important; font-weight:700 !important; }
-[data-testid="stColumn"]:has(.marca-criar) [data-testid="stFormSubmitButton"] button:hover { background:#ca8a04 !important; color:#ffffff !important; }
+[data-testid="stColumn"]:has(.marca-criar) [data-testid="stFormSubmitButton"] button { background:linear-gradient(135deg,#4285F4 0%,#EA4335 45%,#FBBC05 78%,#34A853 120%) !important; color:#ffffff !important; border:none !important; font-weight:700 !important; text-shadow:0 1px 2px rgba(15,23,42,.35) !important; }
+[data-testid="stColumn"]:has(.marca-criar) [data-testid="stFormSubmitButton"] button:hover { background:linear-gradient(135deg,#4285F4 0%,#EA4335 45%,#FBBC05 78%,#34A853 120%) !important; color:#ffffff !important; }
 </style>
 """
 
