@@ -174,10 +174,11 @@ def renovar_sessao(refresh_token: str) -> tuple[bool, str, dict | None]:
         return False, "Supabase não configurado neste ambiente (sem SUPABASE_URL/ANON_KEY).", None
     if not refresh_token:
         return False, "Sessão sem refresh_token.", None
-    payload = {"grant_type": "refresh_token", "refresh_token": refresh_token}
+    payload = {"refresh_token": refresh_token}
     try:
         resposta = requests.post(
             f"{_base_auth_url()}/token",
+            params={"grant_type": "refresh_token"},
             json=payload,
             headers=_headers_anon(),
             timeout=15,
