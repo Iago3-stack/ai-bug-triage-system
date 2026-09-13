@@ -32,8 +32,18 @@ _SENTINELA = "__sessao_persist_nao_lida__"
 _bridge = components.declare_component("sessao_persist", path=_PASTA)
 
 
-def _render(comando: str, valor=None):
-    return _bridge(comando=comando, valor=valor, default=_SENTINELA, key="sessao_persist")
+# Keys distintas por operação: no MESMO run pode haver ler (boot) + salvar
+# (login). Com a mesma key o Streamlit levanta DuplicatedWidgetIDError.
+_KEY_LER = "sessao_persist_ler"
+_KEY_SALVAR = "sessao_persist_salvar"
+_KEY_LIMPAR = "sessao_persist_limpar"
+_KEY_BOOT = "_sessao_persist_boot"
+_BOOT_PENDENTE = "pendente"
+_BOOT_FEITO = "feito"
+
+
+def _render(comando: str, key: str, valor=None):
+    return _bridge(comando=comando, valor=valor, default=_SENTINELA, key=key)
 
 
 def _restaurar(valor) -> None:
@@ -49,7 +59,7 @@ def _restaurar(valor) -> None:
 def salvar(dados: dict) -> None:
     """Grava a sessão no localStorage (após login ou confirmação de e-mail)."""
     try:
-        _render("salvar", valor=dados)
+        _render("salvar", _KEY_SALVAR, valor=dados)
     except Exception:
         pass
 
@@ -57,7 +67,7 @@ def salvar(dados: dict) -> None:
 def limpar() -> None:
     """Apaga a sessão do localStorage (no logout)."""
     try:
-        _render("limpar", valor=None)
+        _render("limpar", _KEY_LIMPAR, valor=None)
     except Exception:
         pass
 
@@ -65,9 +75,10 @@ def limpar() -> None:
 def carregar() -> None:
     """Restaura a sessão salva no navegador, se houver.
 
-    Chame no topo do boot do app. Na 1ª passada o componente ainda não devolveu
-    valor (default = sentinela) e disparamos um rerun; na 2ª passada a sessão
-    gravada chega e é restaurada. Retorna silenciosamente se nada foi gravado.
+    Tenta UMA vez por sessão do Streamlit: na 1ª renderização o componente
+    ainda não devolveu valor (default = sentinela) e pedimos um rerun; na 2ª,
+    marcamos a sessão como "boot feito" e aplicamos o que vier. Nominalmente um
+    único rerun no boot — nunca nos runs de interação (botões/formulários).
     """
     if not auth_supabase.disponivel():
         return
@@ -76,14 +87,25 @@ def carregar() -> None:
     if auth_supabase.sessao():
         return
 
-    tentativas = st.session_state.get("_sessao_persist_volta", 0)
-    valor = _render("ler", valor=None)
-    if valor == _SENTINELA and tentativas < 2:
-        st.session_state["_sessao_persist_volta"] = tentativas + 1
+    # Boot da sessão já concluído (valor lido ou desistimos): não mexer de novo.
+    if st.session_state.get(_KEY_BOOT) == _BOOT_FEITO:
+        return
+
+    valor = _render("ler", _KEY_LER, valor=None)
+
+    if valor == _SENTINELA:
+        # Segunda tentativa veio vazia também (ex.: componente não respondeu):
+        # desistir para nunca travar em loop nem bloquear interações futuras.
+        if st.session_state.get(_KEY_BOOT) == _BOOT_PENDENTE:
+            st.session_state[_KEY_BOOT] = _BOOT_FEITO
+            return
+        # Ainda não chegou o valor real do componente: marca o boot em andamento
+        # e re-executa para a 2ª renderização devolver o localStorage.
+        st.session_state[_KEY_BOOT] = _BOOT_PENDENTE
         st.rerun()
         return
 
-    st.session_state.pop("_sessao_persist_volta", None)
+    st.session_state[_KEY_BOOT] = _BOOT_FEITO
 
     if isinstance(valor, dict):
         _restaurar(valor)
