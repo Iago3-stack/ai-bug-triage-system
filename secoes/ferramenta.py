@@ -585,7 +585,7 @@ def render():
                     st.session_state["exportacao_jira"] = (False, None, erro_jira)
             else:
                 st.session_state["exportacao_jira"] = (
-                    False, None, "Configure o e-mail, o API token e a chave do projeto no sidebar."
+                    False, None, "Configure o e-mail, o API token e a chave do projeto nas configurações no painel lateral."
                 )
 
         if "exportacao_jira" in st.session_state:
