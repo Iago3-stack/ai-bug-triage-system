@@ -344,6 +344,10 @@ body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] .marca-usuario { col
 [data-testid="stElementContainer"]:has(.marca-sair) + [data-testid="stElementContainer"] [data-testid="stButton"] button { background:#dc2626 !important; color:#ffffff !important; border:none !important; font-weight:600 !important; box-shadow:0 2px 8px rgba(220,38,38,.25) !important; }
 [data-testid="stElementContainer"]:has(.marca-sair) + [data-testid="stElementContainer"] [data-testid="stButton"] button:hover { background:#b91c1c !important; color:#ffffff !important; box-shadow:0 4px 12px rgba(220,38,38,.35) !important; }
 
+/* Aviso sob a tabela de planos — legível nos dois temas */
+.marca-aviso-plano { color:#475569 !important; font-size:14px !important; }
+body:has([data-st-tema="escuro"]) .marca-aviso-plano { color:#9aa3af !important; }
+
 /* Botões da tela de login/cadastro — cor sólida nos dois temas */
 [data-testid="stColumn"]:has(.marca-entrar) [data-testid="stFormSubmitButton"] button { background:#059669 !important; color:#ffffff !important; border:none !important; font-weight:600 !important; }
 [data-testid="stColumn"]:has(.marca-entrar) [data-testid="stFormSubmitButton"] button:hover { background:#047857 !important; color:#ffffff !important; }

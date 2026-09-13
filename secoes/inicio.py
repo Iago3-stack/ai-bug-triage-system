@@ -64,7 +64,12 @@ def render():
     | 🚨 Prioridade máxima ao alertar CRÍTICA/ALTA | liberado | liberado |
     | **Ideal para** | testar / demonstrar | produção contínua |
     """)
-        st.caption("O plano é uma variável de ambiente no seu deploy: `PLANO = \"pago\"`. Sem cobrança neste projeto — é a vitrine de um produto real.")
+        st.markdown(
+            '<div class="marca-aviso-plano" style="font-size:14px;margin-top:4px">O plano é uma '
+            'variável de ambiente no seu deploy: <code>PLANO = &quot;pago&quot;</code>. Sem cobrança '
+            'neste projeto — é a vitrine de um produto real.</div>',
+            unsafe_allow_html=True,
+        )
 
     # --- CABEÇALHO ---
     col_foto, col_info = st.columns([1, 2])
