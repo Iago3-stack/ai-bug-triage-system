@@ -132,6 +132,14 @@ _BASE_CSS = """
     [data-testid="stColumn"]:has(.marca-pdf) [data-testid="stDownloadButton"] button { background: #dc2626 !important; color: #ffffff !important; }
     [data-testid="stColumn"]:has(.marca-pdf) [data-testid="stDownloadButton"] button:hover { background: #b91c1c !important; color: #ffffff !important; }
     [data-testid="stColumn"]:has(.marca-issue) [data-testid="stLinkButton"] a { background: #18181b !important; color: #ffffff !important; }
+    /* No tema claro o texto nativo do link pinta escuro e fica ilegível sobre o
+       fundo preto fixo; força branco também nos elementos internos do botão. */
+    body:not(:has([data-st-tema="escuro"])) [data-testid="stColumn"]:has(.marca-issue) [data-testid="stLinkButton"] a,
+    body:not(:has([data-st-tema="escuro"])) [data-testid="stColumn"]:has(.marca-issue) [data-testid="stLinkButton"] a span,
+    body:not(:has([data-st-tema="escuro"])) [data-testid="stColumn"]:has(.marca-issue) [data-testid="stLinkButton"] a p,
+    body:not(:has([data-st-tema="escuro"])) [data-testid="stColumn"]:has(.marca-issue) [data-testid="stLinkButton"] a div {
+        color: #ffffff !important;
+    }
     [data-testid="stColumn"]:has(.marca-jira) [data-testid="stButton"] button { background: #0052cc !important; color: #ffffff !important; }
     [data-testid="stColumn"]:has(.marca-jira) [data-testid="stButton"] button:hover { background: #0052cc !important; color: #ffffff !important; }
     [data-testid="stColumn"]:has(.marca-jira-expo) [data-testid="stButton"] button { background:#0052cc url("data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjZmZmZmZmIiByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+SmlyYTwvdGl0bGU+PHBhdGggZD0iTTExLjU3MSAxMS41MTNIMGE1LjIxOCA1LjIxOCAwIDAgMCA1LjIzMiA1LjIxNWgyLjEzdjIuMDU3QTUuMjE1IDUuMjE1IDAgMCAwIDEyLjU3NSAyNFYxMi41MThhMS4wMDUgMS4wMDUgMCAwIDAtMS4wMDUtMS4wMDV6bTUuNzIzLTUuNzU2SDUuNzM2YTUuMjE1IDUuMjE1IDAgMCAwIDUuMjE1IDUuMjE0aDIuMTI5djIuMDU4YTUuMjE4IDUuMjE4IDAgMCAwIDUuMjE1IDUuMjE0VjYuNzU4YTEuMDAxIDEuMDAxIDAgMCAwLTEuMDAxLTEuMDAxek0yMy4wMTMgMEgxMS40NTVhNS4yMTUgNS4yMTUgMCAwIDAgNS4yMTUgNS4yMTVoMi4xMjl2Mi4wNTdBNS4yMTUgNS4yMTUgMCAwIDAgMjQgMTIuNDgzVjEuMDA1QTEuMDAxIDEuMDAxIDAgMCAwIDIzLjAxMyAwWiIvPjwvc3ZnPg==") no-repeat 10px center !important; background-size:16px !important; color:#ffffff !important; padding-left:34px !important; }
