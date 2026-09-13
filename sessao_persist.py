@@ -25,7 +25,9 @@ _PASTA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web", "sessao
 # O Streamlit só retorna o valor do componente na renderização SEGUINTE à
 # primeira: na 1ª passada recebemos o default (sentinela), pedimos um rerun e
 # na 2ª passada o valor real do localStorage chega.
-_SENTINELA = object()
+# O default PRECISA ser serializável (JSON) — um objeto Python não passa pelo
+# marshal do componente, então usamos uma string que nunca é valor legítimo.
+_SENTINELA = "__sessao_persist_nao_lida__"
 
 _bridge = components.declare_component("sessao_persist", path=_PASTA)
 
@@ -76,7 +78,7 @@ def carregar() -> None:
 
     tentativas = st.session_state.get("_sessao_persist_volta", 0)
     valor = _render("ler", valor=None)
-    if valor is _SENTINELA and tentativas < 2:
+    if valor == _SENTINELA and tentativas < 2:
         st.session_state["_sessao_persist_volta"] = tentativas + 1
         st.rerun()
         return
