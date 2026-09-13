@@ -66,6 +66,8 @@ _processar_confirmacao_email()
 with st.sidebar:
     ui_comum.sidebar_comum()
 
+ui_comum.menu_top(pg)
+
 # Passo 2 (SaaS): Início é público; Ferramenta e Dashboard exigem login quando o
 # Supabase Auth está configurado. Sem configuração, o app segue integralmente aberto.
 if pg.url_path in ("triagem", "dashboard") and pagina_login.render():

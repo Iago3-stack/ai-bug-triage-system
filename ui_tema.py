@@ -31,6 +31,9 @@ _BASE_CSS = """
        ~768-820px (flutuação entre desktop e modo hambúrguer) — força 300px fixos e
        corta a transição que dava o efeito "aparece e some". (<769px segue hambúrguer.) */
     @media (min-width: 769px) {
+        /* A navegação nativa (Início/Triagem/Dashboard) sai da sidebar: ela agora
+           vive na barra do topo. No mobile (<768px) volta a aparecer (hambúrguer). */
+        [data-testid="stSidebarNav"] { display: none !important; }
         [data-testid="stSidebar"] {
             width: 300px !important;
             min-width: 300px !important;
@@ -47,11 +50,10 @@ _BASE_CSS = """
        padrão do Streamlit era 6rem (~96px) e sobrava um vão acima do masthead. */
     [data-testid="stMainBlockContainer"] { padding-top: 8px !important; }
 
-    /* Masthead (card do plano) sobe para o topo da página, preenchendo o espaço
-       vazio que sobrava antes da barra nativa do Streamlit (agora oculta). Os
-       containers <style> zero-altura antecipam o card; compensamos com margem negativa. */
-    .marca-mastro { margin-top: -66px !important; }
-    body:has([data-st-tema="escuro"]) .marca-mastro { margin-top: -82px !important; }
+    /* Masthead (card do plano) — agora fica logo abaixo da barra de navegação
+       do topo; margem negativa não é mais necessária (a barra ocupa o topo). */
+    .marca-mastro { margin-top: 0 !important; }
+    body:has([data-st-tema="escuro"]) .marca-mastro { margin-top: 0 !important; }
 
     /* No mobile (largura < 768px) a barra nativa do Streamlit reaparece para que o
        botão hambúrguer (abrir sidebar) fique acessível; o masthead desce para logo
@@ -192,6 +194,16 @@ _TEMA_CSS = """
 [data-testid="stDialog"] .notif-st-lb { font-weight:600 !important; color:#111827 !important; }
 [data-testid="stDialog"] .notif-st-ok { color:#059669 !important; font-weight:600 !important; }
 [data-testid="stDialog"] .notif-st-falta { color:#b45309 !important; font-weight:600 !important; }
+
+/* -------- Barra de navegação superior (estilo SaaS) -------- */
+[data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"]:has(.marca-tbn)) { background: linear-gradient(135deg,#0f172a 0%,#16233c 60%,#25D366 190%) !important; border-radius: 12px !important; padding: 8px 14px !important; margin-bottom: 14px !important; }
+.marca-top-logo { color:#ffffff !important; font-weight:800 !important; font-size:16px !important; letter-spacing:-.01em !important; white-space:nowrap !important; }
+.marca-top-user { color:#e2e8f0 !important; font-size:13px !important; text-align:center !important; padding:6px 12px !important; background:rgba(46,124,246,.15) !important; border:1px solid rgba(46,124,246,.35) !important; border-radius:999px !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; }
+[data-testid="stColumn"]:has(.marca-nav) [data-testid="stButton"] button { background:transparent !important; color:#cbd5e1 !important; border:none !important; box-shadow:none !important; font-weight:600 !important; padding:7px 10px !important; border-radius:9px !important; }
+[data-testid="stColumn"]:has(.marca-nav) [data-testid="stButton"] button:hover { background:rgba(255,255,255,.09) !important; color:#ffffff !important; }
+[data-testid="stColumn"]:has(.marca-nav-ativo) [data-testid="stButton"] button,
+[data-testid="stColumn"]:has(.marca-nav-ativo) [data-testid="stButton"] button:hover { color:#86efac !important; background:rgba(37,211,102,.14) !important; }
+@media (max-width: 620px) { .marca-top-logo { display:none !important; } }
 
 /* -------- MODO ESCURO: paleta própria do app -------- */
 body:has([data-st-tema="escuro"]) { color-scheme: dark; }

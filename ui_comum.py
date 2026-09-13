@@ -284,6 +284,51 @@ def sidebar_comum():
     """, unsafe_allow_html=True)
 
 
+def menu_top(pg_atual):
+    """Barra de navegação global no topo (estilo SaaS): marca à esquerda,
+    links das páginas no centro e 'Faça login' (ou usuário) à direita."""
+    import roteador
+
+    _usuario = None
+    try:
+        import auth_supabase
+
+        if auth_supabase.disponivel():
+            _usuario = auth_supabase.usuario_logado()
+    except Exception:
+        pass
+
+    _caminhos = (
+        ("inicio", "🏠 Início"),
+        ("triagem", "🐞 Triagem de Bugs"),
+        ("dashboard", "📈 Dashboard QA"),
+    )
+
+    with st.container():
+        st.markdown('<div class="marca-tbn" style="display:none"></div>', unsafe_allow_html=True)
+        _c_logo, _c_nav, _c_user = st.columns([1, 2.2, 1.3], vertical_alignment="center")
+        with _c_logo:
+            st.markdown('<div class="marca-top-logo">🐞 AI Bug Triage</div>', unsafe_allow_html=True)
+        with _c_nav:
+            _subs = st.columns(len(_caminhos))
+            for _col, (_chave, _rotulo) in zip(_subs, _caminhos):
+                with _col:
+                    _ativo = pg_atual.url_path == _chave
+                    _classe = " marca-nav-ativo" if _ativo else ""
+                    st.markdown(
+                        f'<div class="marca-nav{_classe}" style="display:none"></div>',
+                        unsafe_allow_html=True,
+                    )
+                    if st.button(_rotulo, key=f"topnav_{_chave}", use_container_width=True):
+                        st.switch_page(roteador.PAGINAS[_chave])
+        with _c_user:
+            if _usuario:
+                st.markdown(f'<div class="marca-top-user">👤 {_usuario}</div>', unsafe_allow_html=True)
+            else:
+                if st.button("🔒 Faça login", key="topnav_login", type="primary", use_container_width=True):
+                    st.switch_page(roteador.PAGINAS["triagem"])
+
+
 def rodape():
     # --- RODAPÉ DE CRÉDITO (autoria blindada, visível mesmo em forks) ---
     pix_bloco = ""
