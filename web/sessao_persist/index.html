@@ -9,6 +9,7 @@
       var SET_COMPONENT_VALUE = "streamlit:setComponentValue";
       var RENDER = "streamlit:render";
       var SET_FRAME_HEIGHT = "streamlit:setFrameHeight";
+      var COMPONENT_READY = "streamlit:componentReady";
       var KEY = "_auth_sessao_persist";
 
       function sendMessage(type, data) {
@@ -46,6 +47,7 @@
       });
 
       window.addEventListener("load", function () {
+        sendMessage(COMPONENT_READY, { apiVersion: 1 });
         setFrameHeight(1);
       });
     })();
