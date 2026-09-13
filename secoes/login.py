@@ -108,13 +108,16 @@ def render() -> bool:
 """)
 
     st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
-    tema = ui_tema.tema_atual()
-    st.markdown(
-        f"""
-        <div style="text-align:center;opacity:.75;font-size:13px">
-          <a href="/?tema={tema}" style="text-decoration:none">🏠 Voltar ao Início</a>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    import roteador
+
+    with st.container():
+        st.markdown('<div class="marca-voltar" style="display:none"></div>', unsafe_allow_html=True)
+        _c1, _c2, _c3 = st.columns([1, 0.7, 1])
+        with _c2:
+            st.button(
+                "🏠 Voltar ao Início",
+                key="voltar_inicio",
+                use_container_width=True,
+                on_click=lambda: st.switch_page(roteador.PAGINAS["inicio"]),
+            )
     return True

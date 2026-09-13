@@ -376,6 +376,10 @@ body:has([data-st-tema="escuro"]) .marca-g-google { color:#9aa3af !important; }
 [data-testid="stColumn"]:has(.marca-entrar) [data-testid="stFormSubmitButton"] button:hover { background:#047857 !important; color:#ffffff !important; }
 [data-testid="stColumn"]:has(.marca-criar) [data-testid="stFormSubmitButton"] button { background:linear-gradient(135deg,#4285F4 0%,#EA4335 45%,#FBBC05 78%,#34A853 120%) !important; color:#ffffff !important; border:none !important; font-weight:700 !important; text-shadow:0 1px 2px rgba(15,23,42,.35) !important; }
 [data-testid="stColumn"]:has(.marca-criar) [data-testid="stFormSubmitButton"] button:hover { background:linear-gradient(135deg,#4285F4 0%,#EA4335 45%,#FBBC05 78%,#34A853 120%) !important; color:#ffffff !important; }
+[data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"]:has(.marca-voltar)) [data-testid="stButton"] button { background:transparent !important; border:1px solid rgba(148,163,184,.55) !important; color:#475569 !important; border-radius:999px !important; }
+[data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"]:has(.marca-voltar)) [data-testid="stButton"] button:hover { color:#2E7CF6 !important; border-color:#2E7CF6 !important; background:rgba(46,124,246,.08) !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"]:has(.marca-voltar)) [data-testid="stButton"] button { border-color:#3a4658 !important; color:#9aa3af !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"]:has(.marca-voltar)) [data-testid="stButton"] button:hover { color:#e5e7eb !important; border-color:#2E7CF6 !important; background:rgba(46,124,246,.16) !important; }
 </style>
 """
 
