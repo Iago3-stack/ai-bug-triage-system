@@ -555,36 +555,13 @@ def render():
 
         # --- 5. EXPORTAR: baixar relatório + abrir no GitHub + enviar ao Jira ---
         colunas = st.columns(3)
-        with colunas[0]:
-            st.markdown('<div class="marca-download" style="display:none"></div>', unsafe_allow_html=True)
-            st.download_button(
-                "📥 Baixar relatório (.md)",
-                data=relatorio.encode("utf-8"),
-                file_name="relatorio_triagem_bug.md",
-                mime="text/markdown",
-            )
-            st.markdown('<div class="marca-pdf" style="display:none"></div>', unsafe_allow_html=True)
-            if FPDF is not None:
-                dados_pdf = {
-                    "descricao_limpa": descricao_limpa,
-                    "relatorio": relatorio,
-                    "gravidade": gravidade,
-                    "prioridade_final": r.get("prioridade_final", ""),
-                    "polaridade": r.get("polaridade", 0.0),
-                    "divergente": r.get("divergente"),
-                    "resultado_llm": r.get("resultado_llm"),
-                    "provedor_ia": getattr(ia, "ULTIMO_PROVEDOR", None) or "LLM",
-                    "modelo_ia": getattr(ia, "ULTIMO_MODELO", None) or "",
-                }
-                st.download_button(
-                    "📄 Baixar relatório em PDF",
-                    data=_gerar_pdf_relatorio(dados_pdf),
-                    file_name=f"relatorio_triagem_bug_{r.get('data_hora', '')[:10] or 'hoje'}.pdf",
-                    mime="application/pdf",
-                    key="btn_pdf",
-                )
-            else:
-                st.caption("PDF indisponível neste ambiente (dependência ausente).")
+        colunas[0].markdown('<div class="marca-download" style="display:none"></div>', unsafe_allow_html=True)
+        colunas[0].download_button(
+            "📥 Baixar relatório (.md)",
+            data=relatorio.encode("utf-8"),
+            file_name="relatorio_triagem_bug.md",
+            mime="text/markdown",
+        )
         titulo = quote(descricao_limpa[:80])
         corpo = quote(relatorio[:4000])
         colunas[1].markdown('<div class="marca-issue" style="display:none"></div>', unsafe_allow_html=True)
@@ -664,7 +641,7 @@ def render():
         with st.expander(f"📁 Histórico persistido ({backend}) — {len(registros_totais)} triagem(ns) salva(s)", key="ex_historico"):
             st.markdown('<div class="marca-historico" style="display:none"></div>', unsafe_allow_html=True)
             st.markdown("##### 📤 Exportar histórico completo (backup)")
-            col_js, col_csv, _ = st.columns([1, 1, 2])
+            col_js, col_csv, col_pdf, _ = st.columns([1, 1, 1, 1])
             col_js.download_button(
                 "⬇️ Exportar JSON",
                 data=json.dumps(registros_totais, ensure_ascii=False, indent=2).encode("utf-8"),
@@ -679,6 +656,29 @@ def render():
                 mime="text/csv",
                 key="hp_exp_csv",
             )
+            with col_pdf:
+                st.markdown('<div class="marca-pdf" style="display:none"></div>', unsafe_allow_html=True)
+                if FPDF is not None and r:
+                    dados_pdf = {
+                        "descricao_limpa": r.get("descricao_limpa", ""),
+                        "relatorio": r.get("relatorio", ""),
+                        "gravidade": r.get("gravidade", ""),
+                        "prioridade_final": r.get("prioridade_final", ""),
+                        "polaridade": r.get("polaridade", 0.0),
+                        "divergente": r.get("divergente"),
+                        "resultado_llm": r.get("resultado_llm"),
+                        "provedor_ia": getattr(ia, "ULTIMO_PROVEDOR", None) or "LLM",
+                        "modelo_ia": getattr(ia, "ULTIMO_MODELO", None) or "",
+                    }
+                    st.download_button(
+                        "📄 Exportar PDF",
+                        data=_gerar_pdf_relatorio(dados_pdf),
+                        file_name=f"relatorio_triagem_bug_{r.get('data_hora', '')[:10] or 'hoje'}.pdf",
+                        mime="application/pdf",
+                        key="btn_pdf",
+                    )
+                else:
+                    st.caption("PDF indisponível")
             datas = persistencia.datas_disponiveis()
             data_sel = st.selectbox("📅 Escolha a data", datas, key="hp_data")
             do_dia = persistencia.registros_por_data(data_sel)
