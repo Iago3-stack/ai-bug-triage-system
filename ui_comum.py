@@ -290,7 +290,7 @@ def rodape():
     _link_pix = pix.link_pagamento()
     if _link_pix:
         pix_bloco = f"""
-      <div style="flex:1 1 320px;text-align:center">
+      <div style="flex:0 1 340px;text-align:center">
         <div style="display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:800;color:#ffffff">{_svg_pix(18)}{_TEXTO_APOIE} 🤝</div>
         <div style="color:#94a3b8;font-size:13px;margin:6px auto 12px;max-width:340px">Este é um projeto independente, feito por uma pessoa. Se ele te ajudou, considere uma contribuição voluntária via Pix.</div>
         <a href="{_link_pix}" target="_blank" style="text-decoration:none">
@@ -327,7 +327,7 @@ def rodape():
         </script>""" if _chave_pix else "\n    <div style=\"color:#64748b;font-size:12px;margin-top:8px\">Escaneie o QR Code com a câmera do seu banco — e ajude a manter este projeto open source.</div>"
             )
             pix_bloco = f"""
-      <div style="flex:1 1 320px;text-align:center">
+      <div style="flex:0 1 340px;text-align:center">
         <div style="display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:800;color:#ffffff">{_svg_pix(18)}{_TEXTO_APOIE} 🤝</div>
         <div style="color:#94a3b8;font-size:13px;margin:6px auto 12px;max-width:340px">Este é um projeto independente, feito por uma pessoa. Se ele te ajudou, considere uma contribuição voluntária via Pix.</div>
         <img src="{_qr_pix}" width="140" style="border-radius:10px;background:#ffffff;padding:6px" alt="QR Code Pix"/>
@@ -337,8 +337,8 @@ def rodape():
             pix_bloco = ""
     _footer_html = f"""
     <div style="margin-top:32px;width:100%;background:linear-gradient(135deg,#0f172a 0%,#16233c 55%,#25D366 170%);border-radius:18px 18px 0 0;color:#e2e8f0;font-size:14px;line-height:1.55">
-      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:24px;padding:26px 26px 20px">
-        <div style="flex:1 1 320px;text-align:center">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:32px;padding:22px 26px 16px">
+        <div style="flex:0 1 360px;text-align:center">
           <div style="font-size:17px;font-weight:700;color:#ffffff">Gostou do <span style="color:#25D366">AI Bug Triage System</span>?</div>
           <div style="color:#94a3b8;font-size:13px;margin:6px 0 14px">Uma estrelinha no repositório ajuda mais QAs a encontrarem o app.</div>
           <a href="{repo_url}" target="_blank" style="text-decoration:none">
@@ -347,6 +347,10 @@ def rodape():
               Dar estrela no GitHub
             </button>
           </a>
+          <div style="color:#cbd5e1;font-size:13px;margin-top:12px">🎯 Acesse de qualquer lugar — desktop, tablet ou celular</div>
+          <div style="margin-top:8px">
+            <span style="display:inline-block;background:rgba(37,211,102,.16);border:1px solid rgba(37,211,102,.45);color:#86efac;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700">🌐 100% Web — nada para instalar</span>
+          </div>
         </div>
         {pix_bloco}
       </div>
