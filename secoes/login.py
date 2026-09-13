@@ -17,6 +17,18 @@ def render() -> bool:
     if auth_supabase.usuario_logado() or not auth_supabase.disponivel():
         return False
 
+    _motivo = st.session_state.get("_sessao_persist_motivo")
+    if _motivo:
+        _textos = {
+            "tempo": "Não foi possível restaurar sua sessão automaticamente (o navegador não respondeu a tempo). Faça login de novo.",
+            "expirada": "Sua sessão anterior expirou. Faça login de novo.",
+            "ausente": "Não há sessão salva neste navegador. Faça login.",
+            "erro": "Houve uma falha ao restaurar sua sessão. Faça login de novo.",
+        }
+        st.info(f"🔑 {_textos.get(_motivo, 'Restauração da sessão falhou. Faça login.')}")
+        # Mostra uma vez por recarga e limpa para não repetir em cada interação.
+        st.session_state.pop("_sessao_persist_motivo", None)
+
     st.markdown(
         """
         <div style="text-align:center;margin:26px 0 4px">

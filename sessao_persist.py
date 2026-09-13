@@ -40,25 +40,39 @@ _KEY_LIMPAR = "sessao_persist_limpar"
 _KEY_BOOT = "_sessao_persist_boot"
 _KEY_TENTATIVAS = "_sessao_persist_tentativas"
 _BOOT_FEITO = "feito"
+# Motivo da falha de restauração, exibido na tela de login (diagnóstico):
+# "tempo" (componente não respondeu a tempo), "expirada" (refresh_token recusado),
+# "ausente" (não há sessão salva) ou "erro" (falha inesperada).
+_KEY_MOTIVO = "_sessao_persist_motivo"
 # Máximo de reruns esperando o valor do componente no boot. O browser precisa
 # carregar o iframe do componente e devolver o localStorage; se desistíssemos
 # no 1º "vazio", um reload lento nunca restauraria a sessão. Este limite evita
 # loop infinito e nunca bloqueia interações (cliques) depois que o boot conclui.
-_MAX_TENTATIVAS = 8
+_MAX_TENTATIVAS = 30
 
 
 def _render(comando: str, key: str, valor=None):
     return _bridge(comando=comando, valor=valor, default=_SENTINELA, key=key)
 
 
-def _restaurar(valor) -> None:
-    """Reidrata a sessão com o refresh_token salvo, renovando o access_token."""
+def _restaurar(valor) -> str:
+    """Reidrata a sessão com o refresh_token salvo, renovando o access_token.
+
+    Retorna status: "ok", "ausente" (sem refresh_token), "expirada" (recusado pelo
+    Supabase) ou "erro" (falha inesperada de rede/status). Serve para exibir o
+    motivo na tela de login quando a restauração falha.
+    """
     if not isinstance(valor, dict) or not valor.get("refresh_token"):
-        return
-    ok, _, nova = auth_supabase.renovar_sessao(valor["refresh_token"])
+        return "ausente"
+    try:
+        ok, _, nova = auth_supabase.renovar_sessao(valor["refresh_token"])
+    except Exception:
+        return "erro"
     if ok and nova and nova.get("access_token"):
         auth_supabase.guardar_sessao(nova)
         salvar(nova)  # atualiza tokens no navegador (access_token é renovado)
+        return "ok"
+    return "expirada"
 
 
 def salvar(dados: dict) -> None:
@@ -75,6 +89,9 @@ def limpar() -> None:
         _render("limpar", _KEY_LIMPAR, valor=None)
     except Exception:
         pass
+    st.session_state.pop(_KEY_BOOT, None)
+    st.session_state.pop(_KEY_TENTATIVAS, None)
+    st.session_state.pop(_KEY_MOTIVO, None)
 
 
 def carregar() -> None:
@@ -103,12 +120,16 @@ def carregar() -> None:
         tentativas = st.session_state.get(_KEY_TENTATIVAS, 0) + 1
         if tentativas > _MAX_TENTATIVAS:
             st.session_state[_KEY_BOOT] = _BOOT_FEITO
+            st.session_state[_KEY_MOTIVO] = "tempo"
             return
         st.session_state[_KEY_TENTATIVAS] = tentativas
         st.rerun()
         return
 
     st.session_state[_KEY_BOOT] = _BOOT_FEITO
+    st.session_state.pop(_KEY_MOTIVO, None)
 
     if isinstance(valor, dict):
         _restaurar(valor)
+    else:
+        st.session_state[_KEY_MOTIVO] = "ausente"

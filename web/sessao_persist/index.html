@@ -11,6 +11,7 @@
       var SET_FRAME_HEIGHT = "streamlit:setFrameHeight";
       var COMPONENT_READY = "streamlit:componentReady";
       var KEY = "_auth_sessao_persist";
+      var KEY_TS = "_auth_sessao_persist_ts";
 
       function sendMessage(type, data) {
         var out = Object.assign({ isStreamlitMessage: true, type: type }, data);
@@ -30,10 +31,20 @@
         catch (e) { return null; }
       }
       function salvar(valor) {
-        try { localStorage.setItem(KEY, JSON.stringify(valor)); } catch (e) {}
+        try {
+          localStorage.setItem(KEY, JSON.stringify(valor));
+          localStorage.setItem(KEY_TS, String(Date.now()));
+        } catch (e) {}
       }
       function limpar() {
-        try { localStorage.removeItem(KEY); } catch (e) {}
+        try {
+          localStorage.removeItem(KEY);
+          localStorage.removeItem(KEY_TS);
+        } catch (e) {}
+      }
+      function info() {
+        try { return { ts: JSON.parse(localStorage.getItem(KEY_TS) || "null") }; }
+        catch (e) { return { ts: null }; }
       }
 
       window.addEventListener("message", function (event) {
@@ -42,7 +53,8 @@
         var comando = args.comando || "ler";
         if (comando === "salvar" && args.valor !== undefined) salvar(args.valor);
         if (comando === "limpar") limpar();
-        notifyHost(ler());
+        if (comando === "info") { notifyHost(info()); }
+        else { notifyHost(ler()); }
         setFrameHeight(1);
       });
 
