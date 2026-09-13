@@ -337,7 +337,13 @@ def rodape():
             pix_bloco = ""
     _footer_html = f"""
     <div style="margin-top:32px;width:100%;background:linear-gradient(135deg,#0f172a 0%,#16233c 55%,#25D366 170%);border-radius:18px 18px 0 0;color:#e2e8f0;font-size:14px;line-height:1.55">
-      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:32px;padding:22px 26px 16px">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:28px;padding:22px 26px 16px">
+        <div style="flex:0 1 190px;text-align:center">
+          <div style="color:#cbd5e1;font-size:12px;line-height:1.45">🎯 Acesse de qualquer lugar<br/>— desktop, tablet ou celular</div>
+          <div style="margin-top:8px">
+            <span style="display:inline-block;background:rgba(37,211,102,.16);border:1px solid rgba(37,211,102,.45);color:#86efac;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700">🌐 100% Web — nada para instalar</span>
+          </div>
+        </div>
         <div style="flex:0 1 360px;text-align:center">
           <div style="font-size:17px;font-weight:700;color:#ffffff">Gostou do <span style="color:#25D366">AI Bug Triage System</span>?</div>
           <div style="color:#94a3b8;font-size:13px;margin:6px 0 14px">Uma estrelinha no repositório ajuda mais QAs a encontrarem o app.</div>
@@ -347,10 +353,6 @@ def rodape():
               Dar estrela no GitHub
             </button>
           </a>
-          <div style="color:#cbd5e1;font-size:13px;margin-top:12px">🎯 Acesse de qualquer lugar — desktop, tablet ou celular</div>
-          <div style="margin-top:8px">
-            <span style="display:inline-block;background:rgba(37,211,102,.16);border:1px solid rgba(37,211,102,.45);color:#86efac;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700">🌐 100% Web — nada para instalar</span>
-          </div>
         </div>
         {pix_bloco}
       </div>
