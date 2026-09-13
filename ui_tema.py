@@ -335,6 +335,14 @@ body:has([data-st-tema="escuro"]) .hcard-s { color:#94a3b8 !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stColumn"]:has(.marca-prov-custom) [data-testid="stButton"] button { background:#2b1608 !important; color:#fdba74 !important; border:2px solid #7c2d12 !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stColumn"]:has(.prov-provid-sel) [data-testid="stButton"] button { outline-color:#f8fafc !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] [data-testid="stColumn"]:has(.tema-ativo) [data-testid="stButton"] button { outline:2.5px solid #7dd3fc !important; }
+
+/* Card do usuário logado na sidebar — legível nos dois temas */
+[data-testid="stSidebar"] .marca-usuario { display:flex !important; align-items:center !important; gap:8px !important; background:rgba(46,124,246,.10) !important; border:1px solid rgba(46,124,246,.25) !important; border-radius:10px !important; padding:8px 10px !important; font-size:12px !important; color:#0f172a !important; margin-bottom:8px !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] .marca-usuario { color:#e2e8f0 !important; }
+
+/* Botão "🚪 Sair" com cor sólida vermelha (padrão :has() + marcador oculto) */
+[data-testid="stElementContainer"]:has(.marca-sair) + [data-testid="stElementContainer"] [data-testid="stButton"] button { background:#dc2626 !important; color:#ffffff !important; border:none !important; font-weight:600 !important; box-shadow:0 2px 8px rgba(220,38,38,.25) !important; }
+[data-testid="stElementContainer"]:has(.marca-sair) + [data-testid="stElementContainer"] [data-testid="stButton"] button:hover { background:#b91c1c !important; color:#ffffff !important; box-shadow:0 4px 12px rgba(220,38,38,.35) !important; }
 </style>
 """
 
@@ -356,9 +364,24 @@ _PROVID_CSS = """
 _JS_BOOTSTRAP = """<script>
     (() => {
       const T = '[data-st-tema="escuro"]';
+      /* Persistência do tema: o ?tema= da URL manda quando presente (botão ☀️/🌙),
+         mas o st.navigation DROPA query params ao trocar de página; por isso o
+         fallback é o sessionStorage do navegador (sobrevive a navegação e ao F5). */
+      const CLAVE = '_tema_app';
       const sync = () => {
         const p = parent || window, d = p.document;
-        const tema = new URL(p.location.href).searchParams.get('tema');
+        let tema;
+        try {
+          const urlTema = new URL(p.location.href).searchParams.get('tema');
+          if (urlTema === 'claro' || urlTema === 'escuro') {
+            sessionStorage.setItem(CLAVE, urlTema);
+            tema = urlTema;
+          } else {
+            tema = sessionStorage.getItem(CLAVE) || 'claro';
+          }
+        } catch (_) {
+          tema = 'claro';
+        }
         if (tema === 'escuro' && !d.querySelector(T)) {
           const m = d.createElement('div'); m.setAttribute('data-st-tema', 'escuro'); d.body.appendChild(m);
         } else if (tema !== 'escuro') {

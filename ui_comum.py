@@ -235,15 +235,14 @@ def sidebar_comum():
 
     if _usuario:
         # Sair fica FORA do try: o rerun nunca pode ser engolido por exceção.
+        st.sidebar.markdown('<div class="marca-sair" style="display:none"></div>', unsafe_allow_html=True)
         if st.sidebar.button("🚪 Sair", use_container_width=True, key="btn_sair"):
             auth_supabase.limpar_sessao()  # desloga imediatamente
             sessao_persist.limpar()  # apaga a sessão do navegador (não reidratar no F5)
             st.rerun()
         st.sidebar.markdown(
             f"""
-            <div style="display:flex;align-items:center;gap:8px;background:rgba(46,124,246,.10);
-                        border:1px solid rgba(46,124,246,.25);border-radius:10px;padding:8px 10px;
-                        font-size:12px;color:#e2e8f0;margin-bottom:8px">
+            <div class="marca-usuario">
               👤 <b>{_usuario}</b>
             </div>
             """,
