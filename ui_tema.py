@@ -343,6 +343,12 @@ body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] .marca-usuario { col
 /* Botão "🚪 Sair" com cor sólida vermelha (padrão :has() + marcador oculto) */
 [data-testid="stElementContainer"]:has(.marca-sair) + [data-testid="stElementContainer"] [data-testid="stButton"] button { background:#dc2626 !important; color:#ffffff !important; border:none !important; font-weight:600 !important; box-shadow:0 2px 8px rgba(220,38,38,.25) !important; }
 [data-testid="stElementContainer"]:has(.marca-sair) + [data-testid="stElementContainer"] [data-testid="stButton"] button:hover { background:#b91c1c !important; color:#ffffff !important; box-shadow:0 4px 12px rgba(220,38,38,.35) !important; }
+
+/* Botões da tela de login/cadastro — cor sólida nos dois temas */
+[data-testid="stColumn"]:has(.marca-entrar) [data-testid="stFormSubmitButton"] button { background:#059669 !important; color:#ffffff !important; border:none !important; font-weight:600 !important; }
+[data-testid="stColumn"]:has(.marca-entrar) [data-testid="stFormSubmitButton"] button:hover { background:#047857 !important; color:#ffffff !important; }
+[data-testid="stColumn"]:has(.marca-criar) [data-testid="stFormSubmitButton"] button { background:#eab308 !important; color:#1f2937 !important; border:none !important; font-weight:700 !important; }
+[data-testid="stColumn"]:has(.marca-criar) [data-testid="stFormSubmitButton"] button:hover { background:#ca8a04 !important; color:#ffffff !important; }
 </style>
 """
 

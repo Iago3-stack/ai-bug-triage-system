@@ -48,8 +48,13 @@ def render() -> bool:
                 placeholder="mínimo 8 caracteres",
                 key="_auth_senha",
             )
-            entrar = st.form_submit_button("🚪 Entrar", use_container_width=True)
-            criar = st.form_submit_button("✨ Criar conta grátis", use_container_width=True)
+            entrar_col, criar_col = st.columns(2)
+            with entrar_col:
+                st.markdown('<div class="marca-entrar" style="display:none"></div>', unsafe_allow_html=True)
+                entrar = st.form_submit_button("🚪 Entrar", use_container_width=True)
+            with criar_col:
+                st.markdown('<div class="marca-criar" style="display:none"></div>', unsafe_allow_html=True)
+                criar = st.form_submit_button("✨ Criar conta grátis", use_container_width=True)
 
         if entrar or criar:
             if criar:
