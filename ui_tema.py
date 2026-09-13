@@ -390,40 +390,14 @@ _PROVID_CSS = """
 </style>
 """
 
-_JS_BOOTSTRAP = """<script>
-    (() => {
-      const T = '[data-st-tema="escuro"]';
-      /* Só removemos os NÓS QUE NÓS CRIAMOS (filhos diretos do <body>). O Streamlit
-         também renderiza um marcador [data-st-tema] gerenciado pelo React; mexer nele
-         quebra a reconciliação ('Failed to execute removeChild' do React). */
-      /* Persistência do tema: o ?tema= da URL manda quando presente (botão ☀️/🌙),
-         mas o st.navigation DROPA query params ao trocar de página; por isso o
-         fallback é o sessionStorage do navegador (sobrevive a navegação e ao F5). */
-      const CLAVE = '_tema_app';
-      const sync = () => {
-        const p = parent || window, d = p.document;
-        let tema;
-        try {
-          const urlTema = new URL(p.location.href).searchParams.get('tema');
-          if (urlTema === 'claro' || urlTema === 'escuro') {
-            sessionStorage.setItem(CLAVE, urlTema);
-            tema = urlTema;
-          } else {
-            tema = sessionStorage.getItem(CLAVE) || 'claro';
-          }
-        } catch (_) {
-          tema = 'claro';
-        }
-        if (tema === 'escuro' && !d.querySelector(T)) {
-          const m = d.createElement('div'); m.setAttribute('data-st-tema', 'escuro'); d.body.appendChild(m);
-        } else if (tema !== 'escuro') {
-          d.querySelectorAll('body > [data-st-tema="escuro"]').forEach((n) => n.remove());
-        }
-        setTimeout(sync, 600);
-      };
-      sync();
-    })();
-    </script>"""
+# Não usamos mais um bootstrap JS de tema. O antigo injetava/removia o marcador
+# [data-st-tema] no <body> (DOM gerenciado pelo React do Streamlit) e quebrava a
+# reconciliação do React:
+#   NotFoundError: Failed to execute 'removeChild' on 'Node'
+# Agora a persistência do tema entre páginas usa apenas o session_state do
+# servidor (sobrevive à navegação) + o botão ☀️/🌙 que grava ?tema= na URL.
+# Se um dia quisermos tema persistente no F5, devemos fazê-lo pelo componente
+# sessao_persist (localStorage via React) — NUNCA mutando o DOM do Streamlit.
 
 
 def config_pagina():
@@ -447,4 +421,3 @@ def aplicar_css():
     st.markdown(_PROVID_CSS, unsafe_allow_html=True)
     if tema_atual() == "escuro":
         st.markdown('<div data-st-tema="escuro" style="display:none"></div>', unsafe_allow_html=True)
-    st.components.v1.html(_JS_BOOTSTRAP, height=0)
