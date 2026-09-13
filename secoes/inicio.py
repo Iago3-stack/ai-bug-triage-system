@@ -107,7 +107,13 @@ def render():
             st.markdown(f"""
 <div class="marca-cta">
   <div class="marca-cta-título">🤖 Pronto para triar bugs?</div>
-  <div class="marca-cta-desc">Cole um relato de bug e receba a triagem técnica e emocional com NLP + IA, com RAG e plano de ação. Veja também o Dashboard de QA consolidado.</div>
+  <div class="marca-cta-sub">🛠️ O que a Ferramenta de QA faz</div>
+  <div class="marca-cta-passo"><b>1.</b> Cole o relato do bug</div>
+  <div class="marca-cta-passo"><b>2.</b> Motor NLP + IA (<b style="color:#86efac">Gemini/Groq</b>, sem segredo: enumera causa raiz, gravidade e plano de ação)</div>
+  <div class="marca-cta-passo"><b>3.</b> IA compara com o motor determinístico</div>
+  <div class="marca-cta-passo"><b>4.</b> RAG busca <i>“como foi resolvido”</i> em casos similares</div>
+  <div class="marca-cta-passo"><b>5.</b> Tudo vai pro Histórico/Dashboard com alertas automáticos (e-mail/Discord) para CRÍTICA/ALTA</div>
+  <div class="marca-cta-desc" style="margin-top:10px">⚡ Teste na hora — cole um relato e veja a triagem acontecer em segundos.</div>
 </div>
 """, unsafe_allow_html=True)
         with c_b1:

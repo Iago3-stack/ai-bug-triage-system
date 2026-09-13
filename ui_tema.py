@@ -75,6 +75,9 @@ _BASE_CSS = """
     }
     .marca-cta { text-align: center; color: #e2e8f0 !important; font-size: 15px; line-height: 1.6; }
     .marca-cta-título { font-size: 19px; font-weight: 800; color: #ffffff !important; margin-bottom: 8px; }
+    .marca-cta-sub { color: #25D366 !important; font-size: 15px; font-weight: 800; margin: 0 0 6px; }
+    .marca-cta-passo { color: #e2e8f0 !important; font-size: 14px; line-height: 1.5; margin: 3px 0; text-align: left; }
+    .marca-cta-passo b { color: #2E7CF6 !important; margin-right: 2px; }
     .marca-cta-desc { color: #94a3b8 !important; font-size: 14px; max-width: 640px; margin: 0 auto; }
     [data-testid="stVerticalBlock"]:has(.marca-cta):has(> [data-testid="stLayoutWrapper"]):not(:has(> :not([data-testid="stLayoutWrapper"]))) [data-testid="stColumn"]:nth-child(2) [data-testid="stButton"] button {
         background: linear-gradient(135deg,#e11d48 0%,#db2777 100%) !important;
