@@ -213,8 +213,9 @@ def render():
                 "Modelo", key="cm_modelo_gemini",
                 placeholder="Ex: gemini-3-pro — qualquer modelo que sua chave acesse")
             chave_custom = st.text_input(
-                "API Key (opcional — se vazia, usa a sua GEMINI_API_KEY)",
-                type="password", key="cm_chave_gemini")
+                "API Key (opcional — se vazia, usa a GEMINI_API_KEY do Sistema)",
+                type="password", key="cm_chave_gemini",
+                placeholder="Cole sua chave (ex.: AQ.Ab...) — fica só na sessão, não é salva")
         else:
             base_url_custom = st.text_input(
                 "Base URL (OpenAI-compatível)", key="cm_base",
@@ -225,7 +226,7 @@ def render():
                 placeholder="Ex: gpt-4o · gpt-4o-mini · deepseek-chat")
             chave_custom = st.text_input(
                 "API Key", type="password", key="cm_chave_openai",
-                placeholder="sk-... (fica só na sessão, não é salva)")
+                placeholder="Cole sua chave (ex.: sk-...) — fica só na sessão, não é salva")
         st.markdown('<div class="marca-modelo-btn" style="display:none"></div>', unsafe_allow_html=True)
         editando = st.session_state.get("cm_editando")
         if st.button("💾 Salvar alterações" if editando is not None else "💾 Adicionar modelo", key="cm_add"):
