@@ -136,6 +136,41 @@ def _provedor_normalizado(provedor: str | None) -> str | None:
     return None
 
 
+def _traduzir_erro_ia(texto, status=None):
+    """Converte um erro cru da API em mensagem amigável em pt-BR.
+
+    O SDK do Gemini às vezes devolve mensagens cruas em inglês (ex.:
+    "Error from provider (Console): Rate limit exceeded."). O usuário não
+    precisa ler isso; aqui capturamos os padrões comuns (rate limit, quota,
+    503, chave inválida, rede) e devolvemos algo direto. Se nada bater,
+    devolvemos o texto truncado mesmo, sem perder a causa.
+    """
+    s = status
+    t = (texto or "").lower()
+    if s == 429 or "rate limit" in t or "request limit" in t or "quota" in t or "too many" in t:
+        return ("Limite de requisições da API atingido (429). Aguarde um instante "
+                "e tente de novo, ou verifique o plano/limite da chave.")
+    if s == 503 or "unavailable" in t or "high demand" in t or "overload" in t or "busy" in t:
+        return ("A API do provedor está sobrecarregada (503) no momento — "
+                "tente novamente em alguns instantes.")
+    if s in (400, 401) or "api key" in t or "invalid" in t or "unauthorized" in t:
+        return "Chave da API inválida ou sem permissão. Confira a chave configurada nos Secrets."
+    if s == 403 or "forbidden" in t or "permission" in t or "billing" in t or "blocked" in t:
+        return "Acesso negado (403): a chave não tem permissão ou há restrição de cobrança/quota."
+    if "timeout" in t or "timed out" in t or ("connect" in t and ("error" in t or "failed" in t)):
+        return "Falha de rede ou tempo esgotado ao falar com a API. Tente de novo."
+    return (texto or "").strip()[:180] or "Falha ao chamar a API."
+
+
+def mensagem_amigavel_erro(erro):
+    """Wrapper público: traduz o erro agregado (ex. 'Gemini ... | Groq ...') em um
+    texto curto para a UI. Se o erro tiver múltiplas partes, resumimos a primeira."""
+    if not erro:
+        return ""
+    partes = str(erro).split(" | ")
+    return _traduzir_erro_ia(partes[0])
+
+
 def _chamar_gemini(conteudo, temperatura=0.2, max_output_tokens=1024, modelos=None, chave=None):
     """Chama o Gemini com fallback entre modelos. Retorna (dict | None, erro).
 
@@ -172,12 +207,12 @@ def _chamar_gemini(conteudo, temperatura=0.2, max_output_tokens=1024, modelos=No
                     ULTIMO_MODELO = modelo
                     return _extrair_json(resposta.text or "{}"), None
                 except Exception as exc:
-                    ultimo_erro = f"{modelo}: {type(exc).__name__}: {str(exc)[:90]}"
+                    ultimo_erro = f"{modelo}: {_traduzir_erro_ia(str(exc))}"
                     time.sleep(1.5)
 
         return None, ultimo_erro or "Falha ao chamar a API."
     except Exception as exc:  # qualquer falha de rede/API/JSON
-        return None, f"{type(exc).__name__}: {str(exc)[:120]}"
+        return None, _traduzir_erro_ia(str(exc))
 
 
 def _chamar_openai_compat(conteudo, config, temperatura=0.2, max_output_tokens=1024):
@@ -212,7 +247,7 @@ def _chamar_openai_compat(conteudo, config, temperatura=0.2, max_output_tokens=1
         try:
             resposta = requests.post(url, headers=cabecalho, json=corpo, timeout=60)
             if resposta.status_code != 200:
-                ultimo_erro = f"HTTP {resposta.status_code}: {str(resposta.text)[:90]}"
+                ultimo_erro = _traduzir_erro_ia(str(resposta.text)[:200], status=resposta.status_code)
                 continue
             payload = resposta.json()
             texto = payload["choices"][0]["message"]["content"]
@@ -221,7 +256,7 @@ def _chamar_openai_compat(conteudo, config, temperatura=0.2, max_output_tokens=1
             ULTIMO_MODELO = modelo
             return _extrair_json(texto), None
         except Exception as exc:
-            ultimo_erro = f"{type(exc).__name__}: {str(exc)[:120]}"
+            ultimo_erro = _traduzir_erro_ia(str(exc))
             continue
     return None, f"Custom ({modelo}): {ultimo_erro}"
 
@@ -314,7 +349,7 @@ def _chamar_groq(conteudo, temperatura=0.2, max_output_tokens=1024):
             timeout=60,
         )
         if resposta.status_code != 200:
-            return None, f"Groq HTTP {resposta.status_code}: {str(resposta.text)[:90]}"
+            return None, f"Groq: {_traduzir_erro_ia(str(resposta.text)[:200], status=resposta.status_code)}"
         payload = resposta.json()
         texto = payload["choices"][0]["message"]["content"]
         global ULTIMO_PROVEDOR, ULTIMO_MODELO

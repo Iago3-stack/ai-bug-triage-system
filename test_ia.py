@@ -62,7 +62,42 @@ def test_groq_http_429_retorna_mensagem(monkeypatch):
     monkeypatch.setattr(ia.requests, "post", _fake_post)
     dados, erro = ia._chamar_groq("relato")
     assert dados is None
-    assert "429" in erro
+    assert "429" in erro or "Limite de requisições" in erro
+
+
+def test_tradutor_rate_limit_em_ptbr():
+    msg = ia._traduzir_erro_ia(
+        "Error from provider (Console): Rate limit exceeded. Please try again later.",
+        status=429,
+    )
+    assert "Limite de requisições" in msg
+
+
+def test_tradutor_rate_limit_sem_status():
+    msg = ia._traduzir_erro_ia("API request limit exceeded for this endpoint")
+    assert "Limite de requisições" in msg
+
+
+def test_tradutor_503_sobrecarga():
+    msg = ia._traduzir_erro_ia("Model overloaded, please retry later.", status=503)
+    assert "sobrecarregada" in msg
+
+
+def test_tradutor_chave_invalida():
+    msg = ia._traduzir_erro_ia("API key not valid. Please pass a valid API key.")
+    assert "Chave da API inválida" in msg
+
+
+def test_tradutor_desconhecido_mantem_texto():
+    msg = ia._traduzir_erro_ia("something weird happened")
+    assert "something weird happened" in msg
+
+
+def test_mensagem_amigavel_erro_agregada():
+    msg = ia.mensagem_amigavel_erro(
+        "Rate limit exceeded. Please try again later. | Chave GROQ_API_KEY não configurada."
+    )
+    assert "Limite de requisições" in msg
 
 
 def test_groq_json_invalido_retorna_erro(monkeypatch):

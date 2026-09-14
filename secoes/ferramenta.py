@@ -544,11 +544,12 @@ def render():
             else:
                 st.success("✅ Motores concordam na prioridade.")
         elif erro_llm:
-            st.info("🔮 Análise por IA indisponível neste momento — o motor local determinístico segue no controle.")
+            _msg_ia = ia.mensagem_amigavel_erro(erro_llm)
+            st.info(f"🔮 Análise por IA indisponível neste momento — {_msg_ia} O motor local determinístico segue no controle.")
             with st.expander("🔧 Diagnóstico interno (IA/RAG)", key="ex_diag"):
                 st.markdown('<div class="marca-diag" style="display:none"></div>', unsafe_allow_html=True)
                 st.write(f"**Módulo `ia` tem `analisar_llm_rag`:** {'sim' if hasattr(ia, 'analisar_llm_rag') else 'NÃO → deploy desatualizado'}")
-                st.write(f"**Erro redigido pela Cloud:** `{erro_llm}`")
+                st.write(f"**Erro do provedor:** `{erro_llm}`")
                 trace_ia = st.session_state.get("erro_ia_bruto")
                 if trace_ia:
                     st.code(trace_ia, language="python")
