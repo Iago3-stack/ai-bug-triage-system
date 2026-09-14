@@ -95,6 +95,25 @@ def test_taxa_divergencia():
     assert dashboard.taxa_divergencia([_registro("x", usou_ia=False)]) is None
 
 
+def test_taxa_divergencia_ignora_nan():
+    """IA falhou → divergente=None/NaN: não deve contar como divergência."""
+    registros = [
+        _registro("a", usou_ia=True, divergente=True),
+        _registro("b", usou_ia=True, divergente=False),
+        _registro("c", usou_ia=True, divergente=None),
+    ]
+    assert dashboard.taxa_divergencia(registros) == 33.3
+
+
+def test_taxa_divergencia_so_nan_retorna_zero():
+    """Todos com divergente ausente (IA falhou em todas) → 0%."""
+    registros = [
+        _registro("a", usou_ia=True, divergente=None),
+        _registro("b", usou_ia=True),
+    ]
+    assert dashboard.taxa_divergencia(registros) == 0.0
+
+
 # --- Auditoria dos guardrails (credenciais/PII mascaradas) ---
 def test_guardrails_auditoria_conta_por_tipo():
     registros = [

@@ -89,7 +89,7 @@ def taxa_divergencia(registros: list[dict]) -> float | None:
     com_ia = [r for r in registros if r.get("usou_ia")]
     if not com_ia:
         return None
-    n_div = sum(1 for r in com_ia if r.get("divergente"))
+    n_div = sum(1 for r in com_ia if r.get("divergente") is True)
     return round(n_div / len(com_ia) * 100, 1)
 
 
@@ -326,7 +326,11 @@ def render_dashboard(registros: list[dict]) -> None:
         st.markdown("##### Comparativo IA vs. motor local")
         if "usou_ia" in df_f and not df_f[df_f["usou_ia"]].empty:
             com_ia = df_f[df_f["usou_ia"]]
-            n_div = int(com_ia["divergente"].sum()) if "divergente" in com_ia else 0
+            divergente_col = (
+                com_ia["divergente"].fillna(False).astype(bool)
+                if "divergente" in com_ia else pd.Series(False, index=com_ia.index)
+            )
+            n_div = int(divergente_col.sum())
             taxa = taxa_divergencia(regs)
             m1, m2 = st.columns(2)
             m1.metric("Divergências IA vs. léxico", f"{n_div} de {len(com_ia)}")
@@ -339,7 +343,7 @@ def render_dashboard(registros: list[dict]) -> None:
                     "severidade_ia": "IA",
                     "prioridade_final": "Final",
                 }
-                div_df = com_ia[com_ia["divergente"]].sort_values("data_hora", ascending=False).head(10)
+                div_df = com_ia[divergente_col].sort_values("data_hora", ascending=False).head(10)
                 st.dataframe(div_df[list(cols)].rename(columns=cols), use_container_width=True, hide_index=True)
             else:
                 st.caption("Nenhuma divergência registrada até agora — IA e motor local em sintonia ✓")

@@ -227,7 +227,8 @@ def render():
                 "API Key", type="password", key="cm_chave_openai",
                 placeholder="sk-... (fica só na sessão, não é salva)")
         st.markdown('<div class="marca-modelo-btn" style="display:none"></div>', unsafe_allow_html=True)
-        if st.button("💾 Adicionar modelo", key="cm_add"):
+        editando = st.session_state.get("cm_editando")
+        if st.button("💾 Salvar alterações" if editando is not None else "💾 Adicionar modelo", key="cm_add"):
             nome, modelo = nome_custom.strip(), modelo_custom.strip()
             base = base_url_custom.strip().rstrip("/")
             tipo = "gemini" if tipo_custom.startswith("Gemini") else "openai"
@@ -242,18 +243,43 @@ def render():
                     "nome": nome, "tipo": tipo, "modelo": modelo,
                     "base_url": base, "chave": chave_custom.strip(), "rotulo": nome,
                 })
-                st.success(f"Modelo '{nome}' adicionado! Selecione ⭐ {nome} no seletor acima.")
+                st.session_state.pop("cm_editando", None)
+                st.success(f"Modelo '{nome}' {'atualizado' if editando is not None else 'adicionado'}! "
+                           f"Selecione ⭐ {nome} no seletor acima.")
                 for k in ("cm_nome", "cm_modelo_gemini", "cm_chave_gemini",
                           "cm_modelo_openai", "cm_chave_openai"):
                     st.session_state.pop(k, None)
-        if modelos_custom:
+        if modelos_custom or st.session_state.get("cm_editando") is not None:
             st.markdown("##### Modelos adicionados:")
-            for i, m in enumerate(modelos_custom):
-                c1, c2 = st.columns([5, 1])
-                c1.caption(f"⭐ {m['nome']} · {m['tipo']} · {m['modelo']}")
-                if c2.button("🗑", key=f"cm_del_{i}", help="Remover este modelo"):
-                    modelos_custom.pop(i)
-                    st.rerun()
+            if modelos_custom:
+                for i, m in enumerate(modelos_custom):
+                    c1, c2, c3 = st.columns([5, 1, 1])
+                    c1.caption(f"⭐ {m['nome']} · {m['tipo']} · {m['modelo']}")
+                    if c2.button("✏️", key=f"cm_edit_{i}", help=f"Editar '{m['nome']}'"):
+                        st.session_state["cm_editando"] = i
+                        st.session_state["cm_nome"] = m["nome"]
+                        st.session_state["cm_tipo"] = (
+                            "Gemini (google-genai)" if m["tipo"] == "gemini"
+                            else "OpenAI-compatível (OpenAI/DeepSeek/local)"
+                        )
+                        st.session_state["cm_modelo_gemini"] = m.get("modelo", "") if m["tipo"] == "gemini" else ""
+                        st.session_state["cm_chave_gemini"] = m.get("chave", "") if m["tipo"] == "gemini" else ""
+                        st.session_state["cm_modelo_openai"] = m.get("modelo", "") if m["tipo"] == "openai" else ""
+                        st.session_state["cm_chave_openai"] = m.get("chave", "") if m["tipo"] == "openai" else ""
+                        st.session_state["cm_base"] = m.get("base_url", "https://api.openai.com/v1")
+                        modelos_custom.pop(i)
+                        st.rerun()
+                    if c3.button("🗑", key=f"cm_del_{i}", help="Remover este modelo"):
+                        modelos_custom.pop(i)
+                        st.rerun()
+            else:
+                st.caption("Nenhum modelo na lista — preencha o formulário acima e clique em 💾.")
+        if st.session_state.get("cm_editando") is not None and st.button("✖ Cancelar edição", key="cm_cancel"):
+            st.session_state.pop("cm_editando", None)
+            for k in ("cm_nome", "cm_modelo_gemini", "cm_chave_gemini",
+                      "cm_modelo_openai", "cm_chave_openai"):
+                st.session_state.pop(k, None)
+            st.rerun()
 
     st.markdown('<div class="marca-executar" style="display:none"></div>', unsafe_allow_html=True)
     if st.button("Executar Triagem Inteligente"):
@@ -392,7 +418,7 @@ def render():
                     "score": round(polaridade, 2),
                     "sentimento": sentimento,
                     "fatores": fatores,
-                    "usou_ia": bool(usar_llm),
+                    "usou_ia": bool(usar_llm and resultado_llm),
                     "sensiveis_mascarados": list(sensiveis) if sensiveis else [],
                 }
                 if resultado_llm:

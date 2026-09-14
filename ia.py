@@ -153,6 +153,11 @@ def _traduzir_erro_ia(texto, status=None):
     if s == 503 or "unavailable" in t or "high demand" in t or "overload" in t or "busy" in t:
         return ("A API do provedor está sobrecarregada (503) no momento — "
                 "tente novamente em alguns instantes.")
+    if ("model_not_found" in t or "is not found" in t or "model not found" in t
+            or ("model" in t and "does not exist" in t)):
+        return ("Modelo não encontrado no provedor — confira o nome exato no "
+                "painel do provedor (ex.: gemini-3.5-flash, sem espaços) e o "
+                "acesso que a chave tem a ele.")
     if s in (400, 401) or "api key" in t or "invalid" in t or "unauthorized" in t:
         return "Chave da API inválida ou sem permissão. Confira a chave configurada nos Secrets."
     if s == 403 or "forbidden" in t or "permission" in t or "billing" in t or "blocked" in t:

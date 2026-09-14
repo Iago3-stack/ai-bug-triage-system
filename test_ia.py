@@ -88,6 +88,18 @@ def test_tradutor_chave_invalida():
     assert "Chave da API inválida" in msg
 
 
+def test_tradutor_modelo_nao_encontrado_nao_confunde_com_chave_invalida():
+    """Gemini devolve 400 quando modelo não existe — o tradutor deve dizer 'modelo não encontrado'."""
+    msg = ia._traduzir_erro_ia("400 MODEL_NOT_FOUND: models/gemine-3.8-flash is not found for API version v1beta")
+    assert "Modelo não encontrado" in msg
+    assert "não encontrado" in msg
+
+
+def test_tradutor_modelo_nao_encontrado_variacoes():
+    assert "Modelo não encontrado" in ia._traduzir_erro_ia("models/gemini-x does not exist for API")
+    assert "Modelo não encontrado" in ia._traduzir_erro_ia("model not found: xyz")
+
+
 def test_tradutor_desconhecido_mantem_texto():
     msg = ia._traduzir_erro_ia("something weird happened")
     assert "something weird happened" in msg
