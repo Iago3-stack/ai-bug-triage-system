@@ -20,7 +20,7 @@ def render() -> bool:
     _motivo = st.session_state.get("_sessao_persist_motivo")
     if _motivo:
         _textos = {
-            "tempo": "Não foi possível restaurar sua sessão automaticamente (o navegador não respondeu a tempo). Faça login de novo.",
+            "tempo": "Sua sessão expirou ou foi perdida ao recarregar a página. Faça login novamente.",
             "expirada": "Sua sessão anterior expirou. Faça login de novo.",
             "ausente": "Não há sessão salva neste navegador. Faça login.",
             "erro": "Houve uma falha ao restaurar sua sessão. Faça login de novo.",
