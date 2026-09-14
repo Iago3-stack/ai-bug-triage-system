@@ -40,15 +40,6 @@ def render() -> bool:
         unsafe_allow_html=True,
     )
 
-    st.caption("")
-    st.markdown("""
-<div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin:0 0 16px">
-  <span style="opacity:.85;font-size:12.5px">🔒 história **isolada por usuário** na nuvem</span>
-  <span style="opacity:.85;font-size:12.5px">💾 recupere **testes, RAG e regras** em qualquer device</span>
-  <span style="opacity:.85;font-size:12.5px">⭐ plano **Premium** chega por assinatura</span>
-</div>
-""", unsafe_allow_html=True)
-
     with st.container(border=True):
         st.markdown(
             "<div style='display:flex;align-items:center;gap:10px;margin:6px 0'>"
@@ -114,9 +105,9 @@ def render() -> bool:
         st.caption("")
         st.markdown("""
 ### Por que criar uma conta?
-- Seu histórico de triagens fica **isolado por usuário** no Supabase.
-- Você recupera **testes, confiança (RAG) e regras** em qualquer dispositivo.
-- O plano pago (**Premium**) chega por assinatura — tudo pronto aqui.
+- 🔒 Seu histórico de triagens fica **isolado por usuário** no Supabase.
+- 💾 Você recupera **testes, confiança (RAG) e regras** em qualquer dispositivo.
+- ⭐ O plano pago (**Premium**) chega por assinatura — tudo pronto aqui.
         """)
 
     with direita:
