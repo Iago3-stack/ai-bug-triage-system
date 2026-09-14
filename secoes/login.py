@@ -40,8 +40,6 @@ def render() -> bool:
         unsafe_allow_html=True,
     )
 
-    esquerda, direita = st.columns([1.25, 1])
-
     with st.container(border=True):
         st.markdown(
             "<div style='display:flex;align-items:center;gap:10px;margin:6px 0'>"
@@ -102,6 +100,7 @@ def render() -> bool:
                 else:
                     st.error(msg)
 
+    esquerda, direita = st.columns([1.25, 1], gap="medium")
     with esquerda:
         st.caption("")
         st.markdown("""

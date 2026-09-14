@@ -151,6 +151,17 @@ def _ler_cookie_refresh() -> str | None:
         return valor
 
 
+def _tem_limpar_pendente() -> bool:
+    """True se há um logout ("limpar") enfileirado e ainda não confirmado.
+
+    Guarda o boot: enquanto a ponte não terminar de limpar o navegador, o cookie
+    ainda traz o refresh_token — e reidratar nesse momento transformaria o
+    botão Sair em login imediato.
+    """
+    fila = st.session_state.get(_KEY_FILA)
+    return bool(fila and fila[0] == "limpar")
+
+
 def carregar() -> None:
     """Restaura a sessão salva no navegador, se houver.
 
@@ -166,6 +177,13 @@ def carregar() -> None:
 
     # Já logado nesta sessão do Streamlit (ex.: login recém-feito)? Nada a fazer.
     if auth_supabase.sessao():
+        return
+
+    # ACABOU DE CLICAR EM SAIR: a ponte limpará localStorage+cookie neste run.
+    # Não tentar reidratar do cookie (ainda presente até a ponte executar) —
+    # senão o logout se transforma em login imediato.
+    if _tem_limpar_pendente():
+        st.session_state[_KEY_BOOT] = _BOOT_FEITO
         return
 
     # Boot concluído (valor aplicado ou desistimos): não mexer de novo.

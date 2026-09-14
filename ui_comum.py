@@ -248,7 +248,7 @@ def sidebar_comum():
         # Sair fica FORA do try: o rerun nunca pode ser engolido por exceção.
         st.sidebar.markdown('<div class="marca-sair" style="display:none"></div>', unsafe_allow_html=True)
         if st.sidebar.button("🚪 Sair", use_container_width=True, key="btn_sair"):
-            auth_supabase.limpar_sessao()  # desloga imediatamente
+            auth_supabase.sair_da_conta()  # revoga o token no Supabase + limpa a sessão local
             sessao_persist.limpar()  # apaga a sessão do navegador (não reidratar no F5)
             st.rerun()
 

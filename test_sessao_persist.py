@@ -58,3 +58,36 @@ def test_restaurar_sucesso_guarda_e_resalva(monkeypatch):
     assert sessao_persist._restaurar({"refresh_token": "abc"}) == "ok"
     assert guardado == [nova]
     assert registros == [nova]
+
+
+# ── _tem_limpar_pendente (guard do logout) ───────────────────────────────────
+
+def test_tem_limpar_pendente_sem_fila(monkeypatch):
+    class SS:
+        def get(self, _k, _d=None):
+            return _d
+
+    monkeypatch.setattr(sessao_persist.st, "session_state", SS())
+    assert sessao_persist._tem_limpar_pendente() is False
+
+
+def test_tem_limpar_pendente_com_salvar_na_fila(monkeypatch):
+    class SS:
+        def get(self, _k, _d=None):
+            if _k == sessao_persist._KEY_FILA:
+                return ("salvar", {"access_token": "x"})
+            return _d
+
+    monkeypatch.setattr(sessao_persist.st, "session_state", SS())
+    assert sessao_persist._tem_limpar_pendente() is False
+
+
+def test_tem_limpar_pendente_com_limpar_na_fila(monkeypatch):
+    class SS:
+        def get(self, _k, _d=None):
+            if _k == sessao_persist._KEY_FILA:
+                return ("limpar", None)
+            return _d
+
+    monkeypatch.setattr(sessao_persist.st, "session_state", SS())
+    assert sessao_persist._tem_limpar_pendente() is True
