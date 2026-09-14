@@ -40,6 +40,11 @@ _KEY_SALVAR = "sessao_persist_salvar"
 _KEY_LIMPAR = "sessao_persist_limpar"
 _KEY_BOOT = "_sessao_persist_boot"
 _KEY_TENTATIVAS = "_sessao_persist_tentativas"
+# Cookie com o refresh_token gravado pelo JS do componente (o iframe roda com
+# allow-same-origin, então o cookie pertence à origem do app). O Python lê esse
+# cookie direto do request via st.context.cookies — sem depender do timing do
+# componente — garantindo restauração mesmo se o localStorage do iframe falhar.
+_COOKIE_RF = "_auth_sessao_persist_rf"
 _BOOT_FEITO = "feito"
 # Motivo da falha de restauração, exibido na tela de login (diagnóstico):
 # "tempo" (componente não respondeu a tempo), "expirada" (refresh_token recusado),
@@ -102,13 +107,35 @@ def limpar() -> None:
     st.session_state.pop(_KEY_TS, None)
 
 
+def _ler_cookie_refresh() -> str | None:
+    """Lê o refresh_token do cookie (JS) — caminho determinístico de restauração.
+
+    O cookie do componente chega ao servidor em todo request e o Streamlit o
+    expõe via st.context.cookies. Retorna o refresh_token cru ou None.
+    """
+    try:
+        valor = st.context.cookies.get(_COOKIE_RF)
+    except Exception:
+        return None
+    if not valor:
+        return None
+    try:
+        import urllib.parse
+
+        return urllib.parse.unquote(valor)
+    except Exception:
+        return valor
+
+
 def carregar() -> None:
     """Restaura a sessão salva no navegador, se houver.
 
-    Tenta uma vez por sessão do Streamlit: enquanto o componente não devolve o
-    valor do localStorage (default = sentinela), pedimos rerun até receber o
-    valor real ou esgotar _MAX_TENTATIVAS. Nominalmente 1-2 reruns; nunca nos
-    runs de interação (botões/formulários) porque o boot conclui antes.
+    Ordem de confiança:
+      1. Cookie (refresh_token gravado pelo JS) — lido direto do request, sem
+         esperar o componente. Funciona no 1º run e sobrevive a localStorage
+         bloqueado/falho.
+      2. Componente/localStorage — fallback, mantido para navegadores que
+         bloqueiam cookies.
     """
     if not auth_supabase.disponivel():
         return
@@ -119,6 +146,18 @@ def carregar() -> None:
 
     # Boot concluído (valor aplicado ou desistimos): não mexer de novo.
     if st.session_state.get(_KEY_BOOT) == _BOOT_FEITO:
+        return
+
+    # 1º caminho (determinístico): cookie. Se restaurar, fim.
+    refresh = _ler_cookie_refresh()
+    if refresh:
+        st.session_state[_KEY_BOOT] = _BOOT_FEITO
+        st.session_state.pop(_KEY_TENTATIVAS, None)
+        status = _restaurar({"refresh_token": refresh})
+        if status == "ok":
+            st.session_state.pop(_KEY_MOTIVO, None)
+            return
+        st.session_state[_KEY_MOTIVO] = "expirada" if status != "erro" else "erro"
         return
 
     valor = _render("ler", _KEY_LER, valor=None)

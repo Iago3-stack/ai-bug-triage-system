@@ -12,6 +12,7 @@
       var COMPONENT_READY = "streamlit:componentReady";
       var KEY = "_auth_sessao_persist";
       var KEY_TS = "_auth_sessao_persist_ts";
+      var KEY_COOKIE = "_auth_sessao_persist_rf";
 
       function sendMessage(type, data) {
         var out = Object.assign({ isStreamlitMessage: true, type: type }, data);
@@ -37,17 +38,34 @@
         try { ts = parseInt(localStorage.getItem(KEY_TS) || "null", 10); } catch (e) {}
         return { sessao: ler(), ts: ts };
       }
+      function setCookie(v) {
+        try {
+          // O iframe roda com allow-same-origin: document.cookie pertence à
+          // ORIGEM DO APP (não à origem do iframe), então o cookie viaja para o
+          // servidor em todo request e é lido pelo Python via st.context.cookies.
+          // Só guardamos o refresh_token (curto) para caber no limite de ~4KB.
+          var valor = (v && v.refresh_token) ? v.refresh_token : "";
+          if (valor) {
+            document.cookie = KEY_COOKIE + "=" + encodeURIComponent(valor) +
+              "; path=/; SameSite=Lax; Secure";
+          } else {
+            document.cookie = KEY_COOKIE + "=; path=/; SameSite=Lax; Secure; Max-Age=0";
+          }
+        } catch (e) {}
+      }
       function salvar(valor) {
         try {
           localStorage.setItem(KEY, JSON.stringify(valor));
           localStorage.setItem(KEY_TS, String(Date.now()));
         } catch (e) {}
+        setCookie(valor);
       }
       function limpar() {
         try {
           localStorage.removeItem(KEY);
           localStorage.removeItem(KEY_TS);
         } catch (e) {}
+        try { document.cookie = KEY_COOKIE + "=; path=/; Max-Age=0"; } catch (e) {}
       }
       function info() {
         try { return { ts: JSON.parse(localStorage.getItem(KEY_TS) || "null") }; }
