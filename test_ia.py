@@ -328,3 +328,27 @@ def test_dispatcher_dict_openai_nao_tenta_gemini_groq(monkeypatch):
     dados, erro = ia._chamar_llm("relato", provedor=config)
     assert erro is None
     assert dados["severidade"] == "baixa"
+
+
+def test_mensagem_modelo_proprio_nao_cita_secrets(monkeypatch):
+    """Chave do usuário é inválida → o aviso deve citar a chave do modelo, não os Secrets."""
+    _sem_chaves(monkeypatch)
+
+    def _fake_gemini(conteudo, temperatura=0.2, max_output_tokens=1024,
+                     modelos=None, chave=None):
+        return None, "Chave da API inválida ou sem permissão. Confira a chave configurada nos Secrets."
+
+    monkeypatch.setattr(ia, "_chamar_gemini", _fake_gemini)
+    config = {"tipo": "gemini", "modelo": "gemini-3.5-flash", "chave": "aq-teste",
+              "rotulo": "MEU STUDIO"}
+    dados, erro = ia._chamar_llm("relato", provedor=config)
+    assert dados is None
+    assert "Secrets" not in erro
+    assert "API Key" in erro
+    assert "que você informou" in erro
+
+
+def test_mensagem_modelo_proprio_nao_quebra_sem_erro():
+    assert ia._ajustar_mensagem_modelo_proprio(None) is None
+    assert ia._ajustar_mensagem_modelo_proprio("") == ""
+    assert ia._ajustar_mensagem_modelo_proprio("A API 503") == "A API 503"

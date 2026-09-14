@@ -211,6 +211,21 @@ def mensagem_amigavel_erro(erro):
     return _traduzir_erro_ia(partes[0])
 
 
+def _ajustar_mensagem_modelo_proprio(erro):
+    """Troca a referência aos Secrets (do Gemini do sistema) pela chave do usuário.
+
+    Quando o usuário traz a própria API (modelo próprio), dizer 'confira a chave
+    nos Secrets' não faz sentido: ele não tem acesso aos Secrets. Aqui reparamos
+    a frase traduzida para apontar para a chave que ele informou no formulário.
+    """
+    if not erro:
+        return erro
+    return (str(erro)
+            .replace("Confira a chave configurada nos Secrets.",
+                     "Confira a chave que você informou no campo 'API Key' deste modelo.")
+            .replace("chave configurada nos Secrets", "chave informada no modelo"))
+
+
 def _chamar_gemini(conteudo, temperatura=0.2, max_output_tokens=4096, modelos=None, chave=None):
     """Chama o Gemini com fallback entre modelos. Retorna (dict | None, erro).
 
@@ -324,9 +339,10 @@ def _chamar_llm(conteudo, temperatura=0.2, max_output_tokens=4096, provedor=None
             if dados is not None:
                 global ULTIMO_PROVEDOR
                 ULTIMO_PROVEDOR = cfg.get("rotulo") or "Gemini"
-            return dados, erro
+            return dados, _ajustar_mensagem_modelo_proprio(erro)
         if cfg.get("tipo") == "openai":
-            return _chamar_openai_compat(conteudo, cfg, temperatura, max_output_tokens)
+            dados, erro = _chamar_openai_compat(conteudo, cfg, temperatura, max_output_tokens)
+            return dados, _ajustar_mensagem_modelo_proprio(erro)
         return None, "Configuração de modelo próprio desconhecida."
     escolha = _provedor_normalizado(provedor)
     if escolha == "groq":
