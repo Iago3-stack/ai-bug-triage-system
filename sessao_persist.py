@@ -1,17 +1,25 @@
-# Persistência da sessão de login no navegador (localStorage).
+# Persistência da sessão de login no navegador (localStorage + cookie).
 #
 # O st.session_state vive apenas na memória do servidor do Streamlit e morre
 # quando o usuário recarrega a página (F5). Este módulo guarda uma cópia da
-# sessão no localStorage do navegador e a devolve no boot seguinte, de modo que
-# o usuário permanece logado ao recarregar.
+# sessão no navegador (localStorage E cookie do app) e a devolve no boot
+# seguinte, de modo que o usuário permanece logado ao recarregar.
 #
 # Uso:
-#   sessao_persist.salvar(dados)   -> grava no navegador (após login/confirmação)
-#   sessao_persist.carregar()      -> lê do navegador e restaura a sessão no boot
-#   sessao_persist.limpar()        -> apaga (no logout)
+#   sessao_persist.salvar(dados)         -> enfileira gravação (após login/confirmação)
+#   sessao_persist.carregar()            -> lê do navegador e restaura no boot
+#   sessao_persist.limpar()              -> apaga (no logout)
+#   sessao_persist.processar_pendente()  -> renderiza a ponte de escrita (home.py)
 #
-# Segurança: o refresh_token em localStorage é o padrão do próprio Supabase JS;
-# fica na origem do app e em conexão HTTPS.
+# Por que enfileirar (e não gravar na hora)? O login chama salvar() e dispara
+# um st.rerun() logo em seguida (login.py). Um componente custom renderizado
+# durante essa ação é DESCARTADO pela rerun antes de o navegador montar o iframe
+# e processar o evento — a gravação se perdia silenciosamente. Agora a escrita é
+# uma "pendência" em st.session_state e um componente-ponte (montado em home.py,
+# DENTRO do fluxo normal, sem rerun da ação) re-renderiza até o iframe confirmar.
+#
+# Segurança: o refresh_token em localStorage/cookie na origem do app é o padrão
+# do próprio Supabase JS; fica na origem do app e em conexão HTTPS.
 
 import os
 import time
@@ -24,26 +32,29 @@ import auth_supabase
 _PASTA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web", "sessao_persist")
 
 # O Streamlit só retorna o valor do componente na renderização SEGUINTE à
-# primeira: na 1ª passada recebemos o default (sentinela), pedimos um rerun e
-# na 2ª passada o valor real do localStorage chega.
-# O default PRECISA ser serializável (JSON) — um objeto Python não passa pelo
-# marshal do componente, então usamos uma string que nunca é valor legítimo.
+# primeira: na 1ª passada recebemos o default (sentinela) e na 2ª passada o valor
+# real devolvido pelo navegador chega.
+# O default PRECISA ser serializável (JSON) — usamos uma string que nunca é
+# valor legítimo.
 _SENTINELA = "__sessao_persist_nao_lida__"
 
 _bridge = components.declare_component("sessao_persist", path=_PASTA)
 
 
-# Keys distintas por operação: no MESMO run pode haver ler (boot) + salvar
-# (login). Com a mesma key o Streamlit levanta DuplicatedWidgetIDError.
+# Keys distintas por operação: no MESMO run pode haver ler (boot) + ponte de
+# escrita (pendência). Com a mesma key o Streamlit levanta DuplicatedWidgetIDError.
 _KEY_LER = "sessao_persist_ler"
-_KEY_SALVAR = "sessao_persist_salvar"
-_KEY_LIMPAR = "sessao_persist_limpar"
+_KEY_PONTE = "sessao_persist_ponte"
 _KEY_BOOT = "_sessao_persist_boot"
 _KEY_TENTATIVAS = "_sessao_persist_tentativas"
+# Pendência de escrita: ("salvar", dados) ou ("limpar", None). Fica em
+# st.session_state até o iframe confirmar (retorno != sentinela).
+_KEY_FILA = "_sessao_persist_fila"
 # Cookie com o refresh_token gravado pelo JS do componente (o iframe roda com
 # allow-same-origin, então o cookie pertence à origem do app). O Python lê esse
-# cookie direto do request via st.context.cookies — sem depender do timing do
-# componente — garantindo restauração mesmo se o localStorage do iframe falhar.
+# cookie direto do handshake do WebSocket via st.context.cookies — sem depender
+# do timing do componente — garantindo restauração mesmo se o localStorage do
+# iframe falhar.
 _COOKIE_RF = "_auth_sessao_persist_rf"
 _BOOT_FEITO = "feito"
 # Motivo da falha de restauração, exibido na tela de login (diagnóstico):
@@ -51,14 +62,12 @@ _BOOT_FEITO = "feito"
 # "ausente" (não há sessão salva) ou "erro" (falha inesperada).
 _KEY_MOTIVO = "_sessao_persist_motivo"
 # Timestamp (ms) da última gravação no localStorage (diagnóstico exibido na
-# tela de login quando a restauração falha: distingue "nunca gravou" de
-# "gravou mas a leitura falhou").
+# tela de login quando a restauração falha).
 _KEY_TS = "_sessao_persist_ts"
 # Máximo de segundos esperando o valor do componente no boot. O browser precisa
 # carregar o iframe do componente e devolver o localStorage; uma contagem cega de
 # reruns esgotava em milissegundos (todos os reruns aconteciam antes de o navegador
-# responder), daí o motivo "tempo" em reloads lentos. Agora o orçamento é real
-# (relógio) e _PASSO_S dá um respiro real entre as tentativas.
+# responder). O orçamento é por relógio (8s) com respiro real (0.3s) entre tentativas.
 _MAX_ESPERA_S = 8.0
 _PASSO_S = 0.3
 
@@ -71,8 +80,8 @@ def _restaurar(valor) -> str:
     """Reidrata a sessão com o refresh_token salvo, renovando o access_token.
 
     Retorna status: "ok", "ausente" (sem refresh_token), "expirada" (recusado pelo
-    Supabase) ou "erro" (falha inesperada de rede/status). Serve para exibir o
-    motivo na tela de login quando a restauração falha.
+    Supabase) ou "erro" (falha inesperada). Serve para exibir o motivo na tela
+    de login quando a restauração falha.
     """
     if not isinstance(valor, dict) or not valor.get("refresh_token"):
         return "ausente"
@@ -88,30 +97,45 @@ def _restaurar(valor) -> str:
 
 
 def salvar(dados: dict) -> None:
-    """Grava a sessão no localStorage (após login ou confirmação de e-mail)."""
-    try:
-        _render("salvar", _KEY_SALVAR, valor=dados)
-    except Exception:
-        pass
+    """Enfileira a gravação da sessão no navegador (após login/confirmação).
+
+    A gravação real acontece no run seguinte, via processar_pendente() — porque
+    renderizar o componente aqui (dentro da ação de login, seguida de st.rerun())
+    fazia a árvore ser descartada antes de o iframe processar o evento.
+    """
+    st.session_state[_KEY_FILA] = ("salvar", dados)
 
 
 def limpar() -> None:
-    """Apaga a sessão do localStorage (no logout)."""
-    try:
-        _render("limpar", _KEY_LIMPAR, valor=None)
-    except Exception:
-        pass
+    """Enfileira a limpeza da sessão salva no navegador (no logout)."""
+    st.session_state[_KEY_FILA] = ("limpar", None)
     st.session_state.pop(_KEY_BOOT, None)
     st.session_state.pop(_KEY_TENTATIVAS, None)
     st.session_state.pop(_KEY_MOTIVO, None)
     st.session_state.pop(_KEY_TS, None)
 
 
+def processar_pendente() -> None:
+    """Renderiza a ponte de escrita enquanto houver pendência não confirmada.
+
+    Chamado do home.py em todo run (fluxo normal, sem rerun da ação de login).
+    Mantém o componente montado até o iframe devolver um valor (!= sentinela),
+    confirmando que a gravação foi processada pelo navegador.
+    """
+    fila = st.session_state.get(_KEY_FILA)
+    if not fila:
+        return
+    comando, valor = fila
+    ret = _render(comando, _KEY_PONTE, valor=valor)
+    if ret != _SENTINELA:
+        st.session_state.pop(_KEY_FILA, None)
+
+
 def _ler_cookie_refresh() -> str | None:
     """Lê o refresh_token do cookie (JS) — caminho determinístico de restauração.
 
-    O cookie do componente chega ao servidor em todo request e o Streamlit o
-    expõe via st.context.cookies. Retorna o refresh_token cru ou None.
+    O cookie do componente viaja no handshake do WebSocket e o Streamlit o expõe
+    via st.context.cookies. Retorna o refresh_token cru ou None.
     """
     try:
         valor = st.context.cookies.get(_COOKIE_RF)

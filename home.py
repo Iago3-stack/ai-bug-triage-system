@@ -59,6 +59,10 @@ ui_tema.aplicar_css()
 # access_token via refresh_token. Assim o usuário não desloga ao recarregar.
 sessao_persist.carregar()
 
+# Ponte de escrita para o navegador (login/logout enfileirados): mantém o
+# componente montado até o iframe confirmar a gravação.
+sessao_persist.processar_pendente()
+
 # Confirmação de cadastro vinda do link do e-mail (query param, não fragmento):
 # ?token_hash=...&type=signup -> troca o hash por uma sessão e loga o usuário.
 _processar_confirmacao_email()
