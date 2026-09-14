@@ -105,6 +105,39 @@ def test_tradutor_desconhecido_mantem_texto():
     assert "something weird happened" in msg
 
 
+def test_tradutor_json_truncado():
+    msg = ia._traduzir_erro_ia("Unterminated string starting at: line 4 column 3 (char 64)")
+    assert "incompleta" in msg or "cortado" in msg
+
+
+def test_reparar_json_string_aberta_no_fim():
+    reparado = ia._reparar_json_truncado('{"severidade": "critica", "categoria": "func"')
+    assert reparado is not None
+    assert reparado["severidade"] == "critica"
+    assert reparado["categoria"] == "func"
+
+
+def test_reparar_json_falta_chaves():
+    reparado = ia._reparar_json_truncado('{"severidade": "critica", "passos_repro": ["1", "2"]')
+    assert reparado is not None
+    assert reparado["severidade"] == "critica"
+    assert reparado["passos_repro"] == ["1", "2"]
+
+
+def test_reparar_json_ja_valido_nao_alterado():
+    assert ia._reparar_json_truncado('{"a": 1}') == {"a": 1}
+
+
+def test_reparar_json_inuteil_retorna_none():
+    assert ia._reparar_json_truncado("garbage") is None
+    assert ia._reparar_json_truncado("") is None
+
+
+def test_extrair_json_recupera_truncado():
+    conteudo = '{"severidade": "critica", "categoria": "func"'
+    assert ia._extrair_json(conteudo)["severidade"] == "critica"
+
+
 def test_mensagem_amigavel_erro_agregada():
     msg = ia.mensagem_amigavel_erro(
         "Rate limit exceeded. Please try again later. | Chave GROQ_API_KEY não configurada."

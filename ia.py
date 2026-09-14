@@ -102,13 +102,45 @@ def _chave(nome):
     return _ler_do_env(nome)
 
 
+def _reparar_json_truncado(texto):
+    """Tenta recuperar JSON cortado pelo modelo (string em aberto / faltando fechamentos).
+
+    Heurística: se o número de aspas for ímpar, uma string ficou aberta no corte
+    (fecha com aspas); completa colchetes e chaves que abriram e não fecharam.
+    Retorna dict|list se a recuperação produzir JSON válido, senão None.
+    """
+    t = (texto or "").strip().rstrip("`")
+    if not t:
+        return None
+    if t.count('"') % 2 == 1:
+        t += '"'
+    for aberto, fechou in (("[", "]"), ("{", "}")):
+        faltam = t.count(aberto) - t.count(fechou)
+        if faltam > 0:
+            t += fechou * faltam
+    try:
+        return json.loads(t)
+    except Exception:
+        return None
+
+
 def _extrair_json(texto):
-    """Remove cercas de markdown (```json) caso o modelo desobedeça o prompt."""
+    """Remove cercas de markdown (```json) e devolve dict/list.
+
+    Se o modelo cortar a resposta no meio (JSON truncado), tenta recuperar via
+    _reparar_json_truncado antes de desistir; só então propaga o JSONDecodeError.
+    """
     texto = texto.strip()
     cercas = re.findall(r"```(?:json)?\s*(.*?)```", texto, re.DOTALL)
     if cercas:
         texto = cercas[-1].strip()
-    return json.loads(texto)
+    try:
+        return json.loads(texto)
+    except json.JSONDecodeError:
+        reparado = _reparar_json_truncado(texto)
+        if reparado is not None:
+            return reparado
+        raise
 
 
 # Último provedor/modelo que respondeu com sucesso (para mostrar na UI).
@@ -162,6 +194,9 @@ def _traduzir_erro_ia(texto, status=None):
         return "Chave da API inválida ou sem permissão. Confira a chave configurada nos Secrets."
     if s == 403 or "forbidden" in t or "permission" in t or "billing" in t or "blocked" in t:
         return "Acesso negado (403): a chave não tem permissão ou há restrição de cobrança/quota."
+    if "unterminated string" in t or "truncat" in t or "expecting value" in t or "jsondecode" in t:
+        return ("A resposta do modelo veio incompleta ou em formato inválido (JSON "
+                "cortado/malformado). Tente rodar a triagem de novo.")
     if "timeout" in t or "timed out" in t or ("connect" in t and ("error" in t or "failed" in t)):
         return "Falha de rede ou tempo esgotado ao falar com a API. Tente de novo."
     return (texto or "").strip()[:180] or "Falha ao chamar a API."
@@ -176,7 +211,7 @@ def mensagem_amigavel_erro(erro):
     return _traduzir_erro_ia(partes[0])
 
 
-def _chamar_gemini(conteudo, temperatura=0.2, max_output_tokens=1024, modelos=None, chave=None):
+def _chamar_gemini(conteudo, temperatura=0.2, max_output_tokens=4096, modelos=None, chave=None):
     """Chama o Gemini com fallback entre modelos. Retorna (dict | None, erro).
 
     modelos: lista de nomes a tentar (padrão: MODELOS). chave: API key;
@@ -220,7 +255,7 @@ def _chamar_gemini(conteudo, temperatura=0.2, max_output_tokens=1024, modelos=No
         return None, _traduzir_erro_ia(str(exc))
 
 
-def _chamar_openai_compat(conteudo, config, temperatura=0.2, max_output_tokens=1024):
+def _chamar_openai_compat(conteudo, config, temperatura=0.2, max_output_tokens=4096):
     """Chama qualquer endpoint OpenAI-compatível (/v1/chat/completions).
 
     config: {"base_url", "chave", "modelo", "rotulo", "tipo": "openai"}.
@@ -266,7 +301,7 @@ def _chamar_openai_compat(conteudo, config, temperatura=0.2, max_output_tokens=1
     return None, f"Custom ({modelo}): {ultimo_erro}"
 
 
-def _chamar_llm(conteudo, temperatura=0.2, max_output_tokens=1024, provedor=None):
+def _chamar_llm(conteudo, temperatura=0.2, max_output_tokens=4096, provedor=None):
     """Dispatcher: Gemini, Groq, modelo próprio (dict) ou ambos (auto/fallback).
 
     provedor:
@@ -329,7 +364,7 @@ def analisar_llm_rag(relato, contexto, provedor=None):
     return _chamar_llm(prompt, provedor=provedor)
 
 
-def _chamar_groq(conteudo, temperatura=0.2, max_output_tokens=1024):
+def _chamar_groq(conteudo, temperatura=0.2, max_output_tokens=4096):
     """Chama o modelo open-weight (Groq) com resposta em JSON. Retorna (dict | None, erro)."""
     chave = _chave("GROQ_API_KEY")
     if not chave:
