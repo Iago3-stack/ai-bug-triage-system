@@ -116,19 +116,26 @@ def limpar() -> None:
 
 
 def processar_pendente() -> None:
-    """Renderiza a ponte de escrita enquanto houver pendência não confirmada.
+    """Processa a pendência de escrita (se houver) mantendo a ponte SEMPRE montada.
 
     Chamado do home.py em todo run (fluxo normal, sem rerun da ação de login).
-    Mantém o componente montado até o iframe devolver um valor (!= sentinela),
-    confirmando que a gravação foi processada pelo navegador.
+    O componente fica permanentemente na árvore com a mesma key mexmo sem
+    pendência (comando "ocioso"): montar/desmontar o iframe a cada confirmação
+    deslocava os IDs dos elementos seguintes na árvore de deltas do Streamlit e
+    fazia o frontend deixar elementos "fantasma"/duplicados na página
+    (ex.: expanders repetidos, sombras de formulários). Árvore estável = sem
+    artefatos.
     """
     fila = st.session_state.get(_KEY_FILA)
-    if not fila:
-        return
-    comando, valor = fila
-    ret = _render(comando, _KEY_PONTE, valor=valor)
-    if ret != _SENTINELA:
-        st.session_state.pop(_KEY_FILA, None)
+    if fila:
+        comando, valor = fila
+        ret = _render(comando, _KEY_PONTE, valor=valor)
+        if ret != _SENTINELA:
+            st.session_state.pop(_KEY_FILA, None)
+    else:
+        # Sem pendência: renderiza a ponte em modo inerte, preservando a posição
+        # e a key do componente na árvore do Streamlit entre todos os runs.
+        _render("ocioso", _KEY_PONTE, valor=None)
 
 
 def _ler_cookie_refresh() -> str | None:

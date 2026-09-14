@@ -76,10 +76,17 @@
         if (!event.data || event.data.type !== RENDER) return;
         var args = event.data.args || {};
         var comando = args.comando || "ler";
-        if (comando === "salvar" && args.valor !== undefined) salvar(args.valor);
-        if (comando === "limpar") limpar();
-        if (comando === "info") { notifyHost(lerEnvelope()); }
-        else { notifyHost(lerEnvelope()); }
+        if (comando === "salvar" && args.valor !== undefined) {
+          salvar(args.valor);
+          notifyHost(lerEnvelope());
+        } else if (comando === "limpar") {
+          limpar();
+          notifyHost(lerEnvelope());
+        } else if (comando === "info" || comando === "ler") {
+          notifyHost(lerEnvelope());
+        }
+        // "ocioso": mantém o iframe montado sem tocar em nada nem notificar o
+        // host — a árvore do Streamlit fica estável e sem artefatos.
         setFrameHeight(1);
       });
 
