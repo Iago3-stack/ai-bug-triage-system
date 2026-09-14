@@ -2,8 +2,9 @@
 
 O `ai-bug-triage-system` grava cada triagem como um **snapshot fiel**. Desde a **v2.1**,
 esse histórico pode viver em um **Postgres na nuvem (Supabase)** em vez do disco efêmero
-da Streamlit Cloud — o que faz o histórico **sobreviver a redeploys** e cria a base do
-**multi-tenant (login)** na fase seguinte.
+da Streamlit Cloud — o que faz o histórico **sobreviver a redeploys**. Desde a **v2.6.16**
+esse mesmo Supabase também é usado para o **login multi-tenant (Auth/GoTrue)**, e cada
+registro persistido carrega um `tenant_id` para **isolar o histórico por usuário**.
 
 ## Como funciona (arquitetura)
 
@@ -90,14 +91,16 @@ SUPABASE_ANON_KEY = "eyJhbGciOi..."
 ## Pode resolver/evitar
 
 - **Histórico sumindo a cada redeploy** (disco efêmero da Cloud) — resolvido: agora fica no Postgres.
-- **Visão de "produto SaaS"**: dados persistentes e consultáveis por API = pré-requisito
-  do login multi-tenant e dos dashboards entre sessões.
+- **Visão de "produto SaaS"**: dados persistentes e consultáveis por API + **login multi-tenant**
+  (`auth_supabase.py`, v2.6.16) com `tenant_id` isolando registros por conta.
 
 ## Limitações atuais
 
 - `excluir_antigos()` é **no-op** na nuvem (exclusão em massa via REST exige RPC — fora do
   escopo atual; o JSONL local continua suportando o recorte por idade).
-- As políticas RLS são abertas ao `anon` até a fase de autenticação.
+- As políticas RLS do exemplo continuam abertas ao `anon` na **vitrine pública**; para um
+  produto com contas, troque por políticas `to authenticated` com filtro por `tenant_id`
+  (o app já persiste e filtra pelo tenant atual).
 - **Failover já implementado**: se o Supabase estiver fora do ar, a triagem **não quebra** —
   o snapshot é gravado no JSONL local automaticamente.
 - **Resolução (aprendizado do RAG)**: o campo `resolucao` vive dentro do `payload` (jsonb) —
@@ -107,4 +110,5 @@ SUPABASE_ANON_KEY = "eyJhbGciOi..."
 ---
 
 > ⚙️ Setup documentado em **07/09/2026** como parte da **v2.1 — fundação SaaS**.
-> Próxima etapa da fase A: **autenticação (login)** para separar histórico por usuário.
+> A etapa seguinte (**login multi-tenant**) foi implementada na **v2.6.16**, reutilizando as
+> mesmas credenciais `SUPABASE_URL`/`SUPABASE_ANON_KEY` — sem config nova.

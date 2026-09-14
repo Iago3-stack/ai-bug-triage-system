@@ -48,14 +48,23 @@ O sistema trabalha com **dois motores de análise** que se **reconciliam** pela 
 | `guardrails.py` | Detecta/mascara credenciais e PII no relato (tokens, chaves, e-mails, senhas numéricas, telefones, CPFs) | **stdlib apenas** |
 | `test_triagem.py` | Testes unitários do motor (18) | pytest |
 | `test_jira_client.py` | Testes do cliente Jira (15) | pytest |
-| `test_persistencia.py` | Testes da persistência (8): fuso, append, filtro por data, vínculo Jira | pytest |
-| `test_guardrails.py` | Testes dos guardrails (14): detecção/máscara de PII e falso-positivo | pytest |
+| `test_persistencia.py` | Testes da persistência (11): fuso, append, filtro por data, vínculo Jira | pytest |
+| `test_guardrails.py` | Testes dos guardrails (18): detecção/máscara de PII e falso-positivo | pytest |
 | `dashboard.py` | Dashboard de QA completo: KPIs + saúde da suíte (0–10), gauge de críticas, filtro por funcionalidade, top causas raiz (IA), score médio/dia, taxa + lista de divergências IA vs. léxico, provedor real na tabela (leitura do JSONL/cloud) | streamlit |
 | `test_rag.py` | Testes do RAG (13): tokenização, Jaccard, recuperação top-k, contexto e orquestração sem chave | pytest |
-| `test_dashboard.py` | Testes do dashboard (11): tabela recente (com/sem Jira), funcionalidades, falso-positivo, ordenação, provedor na coluna IA, taxa de divergência, top causas e saúde da suíte | pytest |
+| `test_dashboard.py` | Testes do dashboard (17): tabela recente (com/sem Jira), funcionalidades, falso-positivo, ordenação, provedor na coluna IA, taxa de divergência, top causas e saúde da suíte | pytest |
 | `test_nuvem_supabase.py` | Testes do backend em nuvem (14): config, conversão linha↔doc, HTTP mockado, dispatch do facade e failover | pytest |
 | `test_pix.py` | Testes do Pix (10): payload EMV, CRC-CCITT (`29B1`), precedência PIX_COPIA/link, chave e `chave_copia()` sem `+55` | pytest |
-| `test_ia.py` | Testes da IA (16): dispatch de provedor (auto/Gemini/Groq/modelo próprio OpenAI-compatível e Gemini custom, com retry sem JSON mode), JSON esperado, fallback, `disponivel()` com modelo próprio e orquestração RAG | pytest |
+| `test_ia.py` | Testes da IA (32): dispatch de provedor (auto/Gemini/Groq/modelo próprio OpenAI-compatível e Gemini custom, com retry sem JSON mode), JSON esperado, fallback, mensagens de erro, `disponivel()` com modelo próprio e orquestração RAG | pytest |
+| `auth_supabase.py` | **Autenticação (Supabase Auth/GoTrue via REST, stdlib)**: cadastro com confirmação de e-mail, login e logout — reusa `SUPABASE_URL`/`SUPABASE_ANON_KEY` | **stdlib** (+ requests) |
+| `test_auth_supabase.py` | Testes de auth (29): parser de erros, cadastro/login/logout e isolação por sessão | pytest |
+| `notificacoes.py` | **Alertas CRÍTICA/ALTA** (e-mail SMTP + Discord): override por usuário/sessão, testadores à prova de exceção e status real do envio | **stdlib** |
+| `test_notificacoes.py` | Testes de notificações (30): envio SMTP/Discord (mockado), override por sessão e erros amigáveis | pytest |
+| `plano.py` | **Planos Basic/Premium**: `PLANO=free|pago` liga/desliga recursos e `TENANT_ID` segmenta registros por conta | **stdlib** |
+| `test_plano.py` | Testes do plano (10): gating free×pago e filtro por `tenant_id` | pytest |
+| `sessao_persist.py` | **Persistência de sessão no F5**: enfileira salvar/limpar e grava via ponte persistente (cookie + iframe `localStorage` → confirm) | **stdlib** |
+| `test_sessao_persist.py` | Testes da ponte de escrita e do failover da sessão (5) | pytest |
+| `test_ferramenta.py` | Testes da página ferramenta (3): UI/triagem | pytest |
 | `.streamlit/config.toml` | Tema e configurações visuais | streamlit |
 
 ## 3. Decisões de design
@@ -67,8 +76,9 @@ O sistema trabalha com **dois motores de análise** que se **reconciliam** pela 
 
 ## 4. Fluxo de processamento
 
+0. **Roteamento multi-página** (`st.navigation`): `Início` é público; `Triagem` e `Dashboard` fazem `auth_supabase.requer_login()` quando o Supabase está configurado. O **F5 mantém a sessão** via `sessao_persist.py` (cookie + ponte de escrita persistente); sem confirmação, o login reaparece com mensagem honesta.
 1. Usuário informa a descrição do bug.
-2. `home.py` chama `guardrails.py` → se houver credencial/PII (token, chave, e-mail, senha numérica, telefone, CPF), o relato é **mascarado** e o usuário é avisado — nada sensível segue para os próximos passos.
+2. O app chama `guardrails.py` → se houver credencial/PII (token, chave, e-mail, senha numérica, telefone, CPF), o relato é **mascarado** e o usuário é avisado — nada sensível segue para os próximos passos.
 3. `home.py` chama `triagem.py` → score local (léxico + negação) e sentimento.
 4. Se houver chave `GEMINI_API_KEY`, `ia.py` enriquece com causa raiz/categoria; se falhar, **fallback** para o local. Se houver histórico persistido, **`rag.py`** recupera os top-k registros similares (Jaccard) e `ia.py` responde também se o caso **já aconteceu** e **como foi resolvido**.
 5. O **reconciliador** combina os resultados (maior vence) e marca divergência quando discordam.

@@ -12,7 +12,7 @@ O objetivo deste documento é mostrar que o app não foi apenas "escrito e publi
 |---|---|
 | **Determinismo** | Motor local 100% offline, mesma entrada → mesma saída (RNF-01) |
 | **Controle de falso-positivo** | Palavras de vocabulário de teste (`erro`, `bug`...) não disparam severidade (RF-05) |
-| **Cobertura de testes** | 119 testes `pytest` — motor (18), Jira (15), persistência (8), guardrails (14), dashboard (11), RAG (13), nuvem/Supabase (14), Pix (10) e IA (16) — cobrindo severidade, negação, sentimento, determinismo, exportação, fuso, PII, agregações de QA, recuperação do histórico, persistência em nuvem, registro de resolução (aprendizado do RAG), geração de QR Pix (EMV/CRC), fallback Gemini → Groq (open-weight), seletor de provedor de IA (automático/forçado) e **modelo próprio** (OpenAI-compatível com retry sem JSON mode + Gemini custom com chave específica) |
+| **Cobertura de testes** | **225 testes** `pytest` — motor (18), Jira (15), persistência (11), guardrails (18), dashboard (17), RAG (13), nuvem/Supabase (14), Pix (10), IA (32), Auth/Supabase (29), notificações (30), plano (10), persistência de sessão (5) e ferramenta (3) — cobrindo severidade, negação, sentimento, determinismo, exportação, fuso, PII, agregações de QA, recuperação do histórico, persistência em nuvem, registro de resolução (aprendizado do RAG), geração de QR Pix (EMV/CRC), fallback Gemini → Groq (open-weight), seletor de provedor de IA (automático/forçado), **modelo próprio** (OpenAI-compatível com retry sem JSON mode + Gemini custom com chave específica), **auth/Supabase** (cadastro/login/logout, isolação por sessão), **notificações** (e-mail SMTP + Discord com testadores à prova de exceção), **planos** (Basic/Premium com gating de recursos) e **persistência de sessão** (ponte cookie → iframe) |
 | **Automação (CI)** | GitHub Actions roda os testes a cada push → badge de qualidade |
 | **Transparência** | Relatório informa o motor usado (auditoria) |
 | **Robustez** | Fallback automático para o motor local quando a IA falha |
@@ -34,6 +34,11 @@ O objetivo deste documento é mostrar que o app não foi apenas "escrito e publi
 ## 5. Próximos passos (Roadmap de qualidade)
 
 - ~~Integração direta com a **API do Jira**~~ ✅ — exportação nativa via `jira_client.py` (REST v3, tipo `Tarefa`).
-- ~~**Persistência** do histórico~~ ✅ — snapshot fiel em `data/historico.jsonl` (JSONL local, gitignored): com IA grava o relatório completo; sem IA, só o léxico. Seletor de data + download em Markdown. *Futuro:* migrar para banco quando houver necessidade de consultas/agregações ou página por visitante.
-- ~~**Guardrails de PII/credenciais**~~ ✅ — `guardrails.py` mascara tokens, chaves, e-mails, senhas numéricas, telefones e CPFs antes do envio a IA/Jira/GitHub/histórico (descoberto em teste real e validado com relato contendo os 4 tipos de dados).
-- Ampliar ainda mais a **cobertura de testes** (novos cenários de negação, edge cases e guardrails).
+- ~~**Persistência** do histórico~~ ✅ — snapshot fiel em `data/historico.jsonl` (JSONL local, gitignored): com IA grava o relatório completo; sem IA, só o léxico. Seletor de data + download em Markdown. *Backend Supabase disponível com failover automático.*
+- ~~**Guardrails de PII/credenciais**~~ ✅ — `guardrails.py` mascara tokens, chaves, e-mails, senhas numéricas, telefones e CPFs antes do envio a IA/Jira/GitHub/histórico.
+- ~~**Auth multi-tenant (Supabase)**~~ ✅ — cadastro com confirmação de e-mail, login e isolamento por `tenant_id`; sessão persiste no F5 (cookie + ponte).
+- ~~**Alerta CRÍTICA/ALTA**~~ ✅ — notificação por e-mail (SMTP/Gmail) e Discord, com testadores à prova de exceção e status real do envio no app.
+- ~~**Planos Basic/Premium**~~ ✅ — `PLANO=free|pago` com gating de recursos e `tenant_id` para isolamento por conta.
+- Ampliar ainda mais a **cobertura de testes** (edge cases, integrações).
+- ~~**Dashboard de QA**~~ ✅ — saúde da suíte (0–10), gauge, filtro por funcionalidade, evolução do score/dia, top causas raiz (IA), divergências IA vs. léxico e provedor real — 100% local.
+- ~~**RAG no histórico**~~ ✅ — retrieval Jaccard + geração; resposta "já aconteceu? como resolvemos?" com resolução registrada pelo usuário.

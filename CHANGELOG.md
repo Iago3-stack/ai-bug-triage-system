@@ -4,7 +4,21 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
-## [Não lançado]
+## [v2.6.26] - 2026-09-14
+
+### Adicionado
+- **📄 Download do relatório em PDF** — exportação em PDF nativo (A4) com `fpdf2` e fontes DejaVu embutidas, além do Markdown já existente.
+
+### Corrigido
+- **F5/Ctrl+R deslogava (cauda longa)** — a escrita da sessão agora é uma **pendência enfileirada** (`sessao_persist.salvar/limpar` só marcam o que falta gravar) e uma **ponte persistente** renderizada em todos os runs do `home.py` mantém o componente vivo até o iframe **confirmar** a escrita. Antes, o `salvar()` renderizava dentro da ação de login seguida de `st.rerun()`, e o rerun descartava a árvore antes de o payload chegar ao `localStorage`/cookie — a sessão "apanhava" a pista e vinha vazia no reload.
+- **IA: resposta JSON truncada do Gemini quebrava a análise** — `_reparar_json_truncado()` fecha strings/arrays/chaves cortados e só então propaga o erro; a triagem não perde a causa raiz.
+- **Dashboard: `NaN` em divergente quebrava a máscara** — `convergente/divergente` tolerando NaN; erro de "modelo não encontrado" separado do fluxo.
+- **Recarregar sem sessão agora é honesto** — em vez de deslogar em silêncio, o app mostra "Sua sessão expirou ou foi perdida ao recarregar a página. Faça login novamente."
+
+### Alterado
+- **✏️ Modelo próprio renomeável e editável** — depois de adicionar, dá para renomear o modelo (ex.: "mini2") e ajustar a configuração; a lista de provedores ⭐ reflete o nome novo.
+- **Erros do provedor traduzidos para pt-BR amigável** — 503/429/chave inválida viram mensagens úteis em vez de rastreio.
+- **Rótulo/placeholder da API Key do modelo próprio** — avisa que sem chave usa a `GEMINI_API_KEY` do Sistema, com exemplo `AQ.Ab...`, e reforça que a sua chave fica só na sessão.
 
 ### Corrigido
 - **Erro 429 "email rate limit exceeded" no cadastro (v2.6.25)** — a resposta `over_email_send_rate_limit` do Supabase agora é traduzida corretamente: avisa que o limite de e-mails de confirmação foi atingido (aguardar até 1h ou configurar SMTP próprio), em vez da mensagem genérica de "muitas tentativas".

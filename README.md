@@ -49,8 +49,11 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
   <img src="https://img.shields.io/badge/Hist%C3%B3rico%20de%20sess%C3%A3o-9E9E9E?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Hist%C3%B3rico%20persistido%20%28JSONL%29-25D366?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Guardrails%20de%20PII-E91E63?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Login%20multi-tenant-7C3AED?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/225%20testes%20%2B%20CI-4CAF50?style=for-the-badge" />
   <a href="https://github.com/Iago3-stack/ai-bug-triage-system/actions"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fiago3-stack.github.io%2Fai-bug-triage-system%2Fpytest-badge.json&style=for-the-badge&logo=githubactions&logoColor=white&cacheSeconds=300" /></a>
-  <img src="https://img.shields.io/badge/Sem%20falsos%20positivos-607D8B?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Sess%C3%A3o%20persiste%20no%20F5-0EA5E9?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Plano%20Basic%20%2F%20Premium-F59E0B?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Identidade%20visual-FF4B4B?style=for-the-badge" />
 </div>
 
@@ -66,12 +69,14 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
 - ⚪ **Histórico da sessão** em tabela (`pandas`) com opção de limpar.
 - 📁 **Histórico persistido (JSONL local + ☁️ Supabase)** — cada triagem vira um **snapshot fiel** em `data/historico.jsonl` (local, gitignored); quando o **Supabase** está configurado (URL + anon key nos secrets), o histórico passa a viver na **nuvem** e sobrevive a redeploys (com **failover** automático pra JSONL se a nuvem cair). **Seletor de data + download** do relatório em Markdown + vínculo com a issue criada no Jira. Backend visível no expander do histórico.
 - 🛡️ **Guardrails de entrada/saída (PII)** — detecta e **mascara** token Atlassian, chaves Gemini/Google/OpenAI, tokens GitHub, e-mails, **senhas numéricas, telefones e CPFs** digitados no relato: nada sensível vai para o Gemini, o Jira, o GitHub ou o histórico.
-- 🧪 **119 testes + CI** — suíte `pytest` (motor, Jira, persistência, guardrails, dashboard, RAG, nuvem, Pix e IA) rodando a cada push via GitHub Actions (badge de qualidade em cima).
+- 🧪 **225 testes + CI** — suíte `pytest` (motor, Jira, persistência, guardrails, dashboard, RAG, nuvem, Pix, IA, Auth/Supabase, notificações, plano e persistência de sessão) rodando a cada push via GitHub Actions (badge de qualidade em cima).
 - 📈 **Dashboard de QA completo** — visão geral 100% local do histórico (JSONL/cloud), sem enviar nada: KPIs + **saúde da suíte (0–10)**, **gauge de % de críticas/altas**, **filtro por funcionalidade**, **evolução do score médio por dia**, **top causas raiz da IA**, **taxa + lista das divergências IA vs. léxico** e coluna IA com o **provedor real** que respondeu.
 - 📚 **RAG no histórico** — o Gemini consulta as triagens passadas (retrieval local por similaridade Jaccard) e responde se o problema **já aconteceu** e **como foi resolvido** antes, apontando os registros similares. Depois de resolver o bug, **registre a solução** no app — vira aprendizado para as próximas triagens similares.
 - 🟦 **Rodapé de doação Pix** — card no rodapé do app com o **símbolo oficial do Banco Central** (SVG inline, teal — sem depender de serviço externo), botão **"Pagar com Pix via link"** e **QR Code** com a chave com `+55` (payload EMV/CRC válido) + botão que **copia a chave sem o DDI** (os apps de banco completam sozinhos). Tudo dentro de um **iframe local** do Streamlit (`st.iframe`).
 - 🟫 **Sem falsos positivos técnicos**: palavras como *erro*, *bug* e *falha* são vocabulário normal de teste e **não** disparam severidade sozinhas.
 - 🟥 **Interface com identidade visual própria** (tema Streamlit em `config.toml`).
+- 🔐 **Login real (Supabase Auth, multi-tenant)** — cadastro com confirmação de e-mail e login (e-mail + senha); **Início público**, **Ferramenta e Dashboard exigem login** quando o Supabase está configurado (sem config, o app segue aberto). Sidebar mostra 👤 usuário + "Sair". Cada conta vê só o seu histórico (registros persistidos com `tenant_id`).
+- 🔄 **Sessão persiste no F5** — ao recarregar a página, o usuário continua logado: cookie `_auth_sessao_persist_rf` + "ponte de escrita" persistente (JSON → iframe `localStorage` → confirm), com falha degradando para tela de login com mensagem honesta.
 
 ---
 
@@ -186,13 +191,22 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 | 📁 `persistencia.py` | Histórico em `data/historico.jsonl` (JSONL local, gitignored) — **facade**: com nuvem configurada, grava no Supabase; senão, JSONL puro |
 | ☁️ `nuvem_supabase.py` | Backend de persistência na nuvem (Supabase REST): insert/select/update e vínculo Jira — credenciais só em secrets/.env |
 | 🛡️ `guardrails.py` | Bloqueia vazamento de credenciais/PII: mascara tokens, chaves, e-mails, senhas numéricas, telefones e CPFs antes de IA/Jira/GitHub/histórico |
-| 🧪 `test_persistencia.py` | 8 testes unitários da persistência (rodam no CI) |
-| 🧪 `test_guardrails.py` | 14 testes de detecção/máscara de credenciais e PII (rodam no CI) |
-| 🧪 `test_dashboard.py` | 11 testes do Dashboard de QA: saúde da suíte, gauge, filtro por funcionalidade, top causas, divergências e provedor real (rodam no CI) |
+| 🧪 `test_persistencia.py` | 11 testes unitários da persistência (rodam no CI) |
+| 🧪 `test_guardrails.py` | 18 testes de detecção/máscara de credenciais e PII (rodam no CI) |
+| 🧪 `test_dashboard.py` | 17 testes do Dashboard de QA: saúde da suíte, gauge, filtro por funcionalidade, top causas, divergências e provedor real (rodam no CI) |
 | 🧪 `test_rag.py` | 13 testes do RAG: tokenização, similaridade, recuperação top-k, contexto (com resolução) e orquestração (rodam no CI) |
 | 🧪 `test_nuvem_supabase.py` | 14 testes da persistência em nuvem: config, conversão, HTTP (mockado), resolução, failover e dispatch do facade (rodam no CI) |
 | 🧪 `test_pix.py` | 10 testes do Pix: payload EMV, CRC-CCITT, precedência link/QR e `chave_copia()` sem `+55` (rodam no CI) |
-| 🧪 `test_ia.py` | 16 testes da IA: dispatch de provedor (auto/Gemini/Groq/modelo próprio OpenAI-compatível e Gemini custom), JSON, fallback e orquestração RAG (rodam no CI) |
+| 🧪 `test_ia.py` | 32 testes da IA: dispatch de provedor (auto/Gemini/Groq/modelo próprio OpenAI-compatível e Gemini custom), JSON, fallback, mensagens de erro e orquestração RAG (rodam no CI) |
+| 🔐 `auth_supabase.py` | Autenticação (Supabase Auth/GoTrue via REST, stdlib): cadastro com confirmação, login e logout — credenciais reutilizam `SUPABASE_URL`/`SUPABASE_ANON_KEY` |
+| 🧪 `test_auth_supabase.py` | 29 testes do login: parser de erros, cadastro/login/logout, isolação por sessão e integração com a UI (rodam no CI) |
+| 🔔 `notificacoes.py` | Canais de alerta (e-mail SMTP + Discord) configuráveis por usuário/sessão, com testadores à prova de exceção |
+| 🧪 `test_notificacoes.py` | 30 testes dos alertas: envio SMTP/Discord (mockado), override por sessão e erros amigáveis (rodam no CI) |
+| 💳 `plano.py` | Planos Basic/Premium e isolamento por tenant: `PLANO=free|pago` liga/desliga recursos e `TENANT_ID` segmenta registros |
+| 🧪 `test_plano.py` | 10 testes do plano: gating de recursos free×pago e filtro por `tenant_id` (rodam no CI) |
+| 💾 `sessao_persist.py` | Persistência de sessão no F5: enfileira salvar/limpar e grava via ponte persistente (cookie + iframe `localStorage`) |
+| 🧪 `test_sessao_persist.py` | 5 testes da ponte de escrita e da failover da sessão (rodam no CI) |
+| 🧪 `test_ferramenta.py` | 3 testes da página ferramenta: UI/triagem e integração (rodam no CI) |
 | 📈 `dashboard.py` | Dashboard de QA: KPIs + saúde da suíte (0–10) + gauge de críticas + filtro por funcionalidade + top causas (IA) + score/dia + divergências IA vs. léxico + provedor real (leitura do JSONL/Cloud) |
 | 🟦 `pix.py` | Gerador de pagamento Pix: payload EMV/QR (CRC-CCITT), QR Code PNG (base64), **link de pagamento** com valor fixo e chaves com/sem `+55` (`chave`/`chave_copia`) |
 | 📦 `requirements.txt` | Dependências pinadas |
@@ -206,30 +220,32 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 </div>
 
 <div align="center">
-  <img src="https://img.shields.io/badge/10%20conclu%C3%ADdas-4CAF50?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/12%20conclu%C3%ADdas-4CAF50?style=for-the-badge" />
   <img src="https://img.shields.io/badge/0%20em%20aberto-brightgreen?style=for-the-badge" />
 </div>
 
 - ✅ **Fase 1** — Motor NLP offline (léxico PT + negação, sem TextBlob/Google Translate)
 - ✅ **Fase 2** — Exportação do relatório, histórico de sessão e identidade visual
 - ✅ **Fase 3** — Integração com **LLMs** (Gemini) para análise de causa raiz, categoria e passos — com fallback automático
-- ✅ **Seletor de IA por triagem (checkbox 🔮 + provedor)** — você decide quando a IA entra: desligue para triagem 100% local, ou escolha **Automático (Gemini → Groq)**, **só Gemini** ou **só Groq** — ou **➕ adicione um modelo próprio** com a sua API (OpenAI-compatível ou Gemini pago). O relatório mostra qual provedor/modelo respondeu
-- ✅ **Testes unitários do motor (`pytest`)** — 119 testes (motor + Jira + persistência + guardrails + dashboard + RAG + nuvem + Pix + IA), rodam automaticamente via CI (GitHub Actions)
+- ✅ **Seletor de IA por triagem (checkbox 🔮 + provedor)** — você decide quando a IA entra: desligue para triagem 100% local, ou escolha **Automático (Gemini → Groq)**, **só Gemini** ou **só Groq** — ou **➕ adicione um modelo próprio** com a sua API (OpenAI-compatível ou Gemini pago), **renomeável e editável**, com chave que fica só na sessão. O relatório mostra qual provedor/modelo respondeu
+- ✅ **Testes unitários do motor (`pytest`)** — **225 testes** (motor + Jira + persistência + guardrails + dashboard + RAG + nuvem + Pix + IA + Auth/Supabase + notificações + plano + persistência de sessão), rodam automaticamente via CI (GitHub Actions)
 - ✅ **Exportação via API do Jira** — cria issue do tipo Tarefa no `iagoqa.atlassian.net` (prioridade mapeada automaticamente)
 - ✅ **Persistência do histórico (JSONL)** — cada triagem vira um snapshot fiel em `data/historico.jsonl` (local, gitignored): com IA salva o relatório completo; sem IA, só o léxico. Seletor de data + download do relatório
 - ✅ **Guardrails de entrada/saída (PII/credenciais)** — detecta e mascara tokens Atlassian, chaves Gemini/Google/OpenAI, tokens GitHub, e-mails, senhas numéricas, telefones e CPFs digitados no relato: nada sensível vai para o Gemini, o Jira, o GitHub ou o histórico
 - ✅ **Dashboard de QA completo** — saúde da suíte (0–10), gauge de % de críticas/altas, filtro por funcionalidade, evolução do score médio/dia, top causas raiz (IA), taxa + lista das divergências IA vs. motor local e provedor real na coluna IA (100% local, sem enviar nada)
 - ✅ **RAG no histórico** — o Gemini consulta as triagens passadas (top-k similares, retrieval local por Jaccard) e responde **"isso já aconteceu? como resolvemos?"** com a resolução anterior; se não acha, sinaliza caso novo
-- - ✅ **Roadmap 10/10 🎉** — MVP concluído; próximos passos rumo ao SaaS abaixo
+- ✅ **Alerta CRÍTICA/ALTA (e-mail SMTP + Discord)** — "monitor de QA": canais configuráveis por sessão no modal ⚙️ (nada em disco), com testadores que nunca derrubam o app e status real do envio
+- ✅ **App multi-página + Login multi-tenant** — `Início`/`Triagem`/`Dashboard` via `st.navigation`; cadastro com confirmação de e-mail e login (Supabase Auth); histórico isolado por conta (`tenant_id`); **sessão persiste no F5** (cookie + ponte)
+- ✅ **Roadmap 12/12 🎉** — MVP + SaaS esboçado concluídos; próximos passos rumo a billing/compartilhamento abaixo
 
-**🚀 Rumo a um SaaS de QA** (roadmap futuro):
-> Depois de esgotar o MVP, a visão é evoluir para um **produto tipo SaaS/CRM de triagem**:
-> - ☁️ **Persistência em nuvem** (Supabase/Postgres) — histórico real entre sessões (hoje o disco da nuvem é efêmero)
-> - 🔐 **Autenticação (login)** — cada usuário vê só o seu histórico (multi-tenant)
+**🚀 Rumo a um SaaS de QA** (próximos passos):
+> - 💳 **Assinatura/billing** (Stripe) ligada ao `PLANO` atual + cobrança por plano pago (PASSO 4)
 > - 🧠 **Causa raiz com histórico** (evolução do RAG ✅) → sugerir a correção que resolveu da última vez → *triage agent*
-> - 🔁 **Modelos alternativos** (Groq open-weight) no mesmo `ia.py`, sem depender só do Gemini
-> - 🔔 **Notificações** (Slack/Discord/e-mail) em CRÍTICA · 🌐 **webhook/API** · 📧 **relatório agendado** · 📊 **LLMOps/evals**
-> Roadmap completo acompanhado no brainstorming do projeto (`~/Documentos/roadmap-ia.md`).
+> - 🔁 **Limpeza de warnings** de deprecação do Streamlit (`use_container_width` → `width='stretch'`)
+> - 🌐 **webhook/API** · 📧 **relatório agendado** · 📊 **LLMOps/evals**
+> - Roadmap completo acompanhado no brainstorming do projeto (`~/Documentos/roadmap-ia.md`).
+>
+> *Persistência em nuvem ☁️, login 🔐 e modelo alternativo (Groq) 🔁 já estão feitos (v2.6.x).*
 
 ---
 

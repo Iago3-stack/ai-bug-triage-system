@@ -24,6 +24,11 @@ O app recebe o **relato de um bug** em linguagem natural e o **classifica automa
 | RF-12 | **RAG** no histórico persistido: responder se o bug **já aconteceu** e **como foi resolvido** (retrieval local por Jaccard + geração), aprendendo com a **resolução registrada** pelo usuário | Média |
 | RF-13 | **Dashboard de QA completo**: saúde da suíte (0–10), gauge de % de críticas/altas, filtro por funcionalidade, evolução do score médio/dia, top causas raiz (IA) e taxa + lista de divergências IA vs. motor | Média |
 | RF-14 | **Rodapé de doação Pix**: símbolo oficial do Banco Central, botão "Pagar com Pix via link" e QR Code com a chave com `+55`, com botão que **copia a chave sem o DDI** | Baixa |
+| RF-15 | **App multi-página** (`Início` / `Triagem de Bugs` / `Dashboard QA`) via `st.navigation`, com URLs próprias e menu nativo na sidebar | Alta |
+| RF-16 | **Login multi-tenant (Supabase Auth)**: cadastro com confirmação de e-mail e login (e-mail + senha); **Início público**, Ferramenta e Dashboard exigem login quando o Supabase está configurado; side (👤 + "Sair") | Alta |
+| RF-17 | **Sessão persiste no F5**: recarregar a página mantém o usuário logado (cookie + ponte de escrita persistente), com fallback para tela de login com mensagem honesta | Alta |
+| RF-18 | **Alerta CRÍTICA/ALTA**: e-mail (SMTP/Gmail) e/ou Discord, configuráveis por usuário/sessão no modal ⚙️ (nada em disco) | Média |
+| RF-19 | **Planos Basic/Premium + isolamento por tenant**: `PLANO=free|pago` liga/desliga recursos e todo registro persistido carrega `tenant_id` (filtro por conta) | Média |
 
 ## 3. Requisitos Não-Funcionais (RNF)
 
@@ -34,8 +39,10 @@ O app recebe o **relato de um bug** em linguagem natural e o **classifica automa
 | RNF-03 | **Baixa latência**: triagem instantânea na interface | Performance |
 | RNF-04 | **Fallback automático** para o motor local quando a API de IA falhar | Confiabilidade |
 | RNF-05 | Interface **intuitiva e com identidade visual** própria | Usabilidade |
-| RNF-06 | Código **testado** por `pytest` (113 casos) e validado por **CI** | Qualidade |
+| RNF-06 | Código **testado** por `pytest` (**225 casos**) e validado por **CI** | Qualidade |
 | RNF-07 | **Transparência**: informar qual motor foi usado em cada triagem | Auditoria |
+| RNF-08 | **Privacidade**: chaves/credenciais do visitante ficam só na sessão (nunca em disco/histórico); campos do modal nascem vazios (não expõem secrets do dono) | Segurança |
+| RNF-09 | **Isolamento multi-tenant**: cada conta lê/grava apenas os registros do seu `tenant_id` | Segurança |
 
 ## 4. Limites e decisões de contorno
 
