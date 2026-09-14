@@ -14,6 +14,7 @@
 # fica na origem do app e em conexão HTTPS.
 
 import os
+import time
 
 import streamlit as st
 import streamlit.components.v1 as components
@@ -48,11 +49,13 @@ _KEY_MOTIVO = "_sessao_persist_motivo"
 # tela de login quando a restauração falha: distingue "nunca gravou" de
 # "gravou mas a leitura falhou").
 _KEY_TS = "_sessao_persist_ts"
-# Máximo de reruns esperando o valor do componente no boot. O browser precisa
-# carregar o iframe do componente e devolver o localStorage; se desistíssemos
-# no 1º "vazio", um reload lento nunca restauraria a sessão. Este limite evita
-# loop infinito e nunca bloqueia interações (cliques) depois que o boot conclui.
-_MAX_TENTATIVAS = 30
+# Máximo de segundos esperando o valor do componente no boot. O browser precisa
+# carregar o iframe do componente e devolver o localStorage; uma contagem cega de
+# reruns esgotava em milissegundos (todos os reruns aconteciam antes de o navegador
+# responder), daí o motivo "tempo" em reloads lentos. Agora o orçamento é real
+# (relógio) e _PASSO_S dá um respiro real entre as tentativas.
+_MAX_ESPERA_S = 8.0
+_PASSO_S = 0.3
 
 
 def _render(comando: str, key: str, valor=None):
@@ -121,18 +124,24 @@ def carregar() -> None:
     valor = _render("ler", _KEY_LER, valor=None)
 
     if valor == _SENTINELA:
-        # Componente ainda não respondeu: espera mais um ciclo, com limite.
-        tentativas = st.session_state.get(_KEY_TENTATIVAS, 0) + 1
-        if tentativas > _MAX_TENTATIVAS:
+        # Componente ainda não respondeu: dá um respiro real ao navegador para
+        # montar o iframe e devolver o localStorage, com orçamento de relógio.
+        agora = time.monotonic()
+        inicio = st.session_state.get(_KEY_TENTATIVAS)
+        if inicio is None:
+            inicio = agora
+            st.session_state[_KEY_TENTATIVAS] = inicio
+        if agora - inicio > _MAX_ESPERA_S:
             st.session_state[_KEY_BOOT] = _BOOT_FEITO
             st.session_state[_KEY_MOTIVO] = "tempo"
             return
-        st.session_state[_KEY_TENTATIVAS] = tentativas
+        time.sleep(_PASSO_S)
         st.rerun()
         return
 
     st.session_state[_KEY_BOOT] = _BOOT_FEITO
     st.session_state.pop(_KEY_MOTIVO, None)
+    st.session_state.pop(_KEY_TENTATIVAS, None)
 
     # Envelope novo: {sessao, ts}; valores antigos no localStorage eram o dict
     # cru com "refresh_token". Aceitamos os dois formatos.
