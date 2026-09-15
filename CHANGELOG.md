@@ -4,6 +4,14 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.8.0] - 2026-09-15
+
+### Adicionado
+- **💳 Cobrança própria via Pix ("nosso Stripe" — Passo 4)** — o Premium passa a ser **R$ 19,99/mês** com pagamento 100% Pix, sem gateway nem taxa: o usuário assina, o app gera uma cobrança `aguardando` com **QR Pix + copia-e-cola**, o usuário paga no banco e clica **"✅ Já paguei"**; o **responsável** (e-mail configurado em `ADMIN_EMAIL`) confirma no painel do Meu Plano e o plano vira `pago`. Estorno controlado: o usuário solicita, o responsável devolve o valor via Pix e marca o pedido como `estornado` (o plano volta a Basic). Tudo persistent em `solicitacoes_pagamento` no Supabase (com fallback JSONL local em `data/cobrancas.jsonl`).
+- **🎛️ Painel do responsável no Meu Plano** — fila de pagamentos aguardando confirmação (com botões confirmar/cancelar) e lista de estornos solicitados (com botão "marcar como devolvido"). Dispara avisos por e-mail/Discord (`notificacoes.py`) quando algo exige ação.
+- **💬 Suporte por WhatsApp** — link direto (`wa.me`) configurável por env `WHATSAPP_NUMERO`, zero custo, para dúvidas sobre plano, pagamento e estorno.
+- **Módulo `pixbilling.py`** — preço configurável por env `PLANO_PRECO` (padrão `19.99`), geração de cobrança, confirmação (ativa Premium no banco), cancelamento e ciclo de estorno; 13 testes novos.
+
 ## [v2.7.0] - 2026-09-14
 
 ### Adicionado

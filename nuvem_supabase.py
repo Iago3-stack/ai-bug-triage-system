@@ -31,6 +31,17 @@
 #   create policy "anon select" on planos_usuario for select to anon using (true);
 #   create policy "anon update" on planos_usuario for update to anon using (true);
 #
+# Tabela de cobranças Pix (Passo 4 do caminho SaaS — "nosso Stripe"):
+#   create table if not exists solicitacoes_pagamento (
+#     id         text primary key,
+#     data_hora  timestamptz not null,
+#     payload    jsonb not null default '{}'::jsonb
+#   );
+#   alter table solicitacoes_pagamento enable row level security;
+#   create policy "anon insert" on solicitacoes_pagamento for insert to anon with check (true);
+#   create policy "anon select" on solicitacoes_pagamento for select to anon using (true);
+#   create policy "anon update" on solicitacoes_pagamento for update to anon using (true);
+#
 # A configuração per-tenant usada na Cloud NÃO precisa desta tabela: se ela não
 # existir ou a leitura falhar, o app cai no plano por variável de ambiente.
 
@@ -41,6 +52,7 @@ import requests
 
 _TABELA_PADRAO = "triagens"
 _TABELA_PLANOS = "planos_usuario"
+_TABELA_COBRANCAS = "solicitacoes_pagamento"
 
 
 def _carregar_env():
@@ -304,3 +316,65 @@ def migrar_tenant_global(uid: str) -> int:
             timeout=15,
         )
     return len(legados)
+
+
+# ─── Cobranças Pix ("nosso Stripe", Passo 4 SaaS): solicitacoes_pagamento ─────
+
+def _cobrancas_url() -> str:
+    return f"{_base_url()}/{_TABELA_COBRANCAS}"
+
+
+def carregar_cobrancas() -> list[dict]:
+    """Todas as linhas da tabela, decodificando o payload jsonb (último formato)."""
+    config = _config()
+    if not config:
+        return []
+    resposta = requests.get(_cobrancas_url(), headers=_headers(), params={"select": "*"}, timeout=15)
+    resposta.raise_for_status()
+    docs = resposta.json() or []
+    resultado = []
+    for doc in docs:
+        linha = dict(doc.get("payload") or {})
+        if not linha:
+            # linha vazia (controle) — mantém o essencial com os campos da coluna
+            linha = {"id": doc.get("id")}
+        linha.setdefault("id", doc.get("id"))
+        linha.setdefault("data_hora", doc.get("data_hora"))
+        resultado.append(linha)
+    return resultado
+
+
+def gravar_cobranca(cobranca: dict) -> bool:
+    """Insere uma cobrança na nuvem (payload em jsonb)."""
+    config = _config()
+    if not config:
+        return False
+    linha = {
+        "id": cobranca.get("id"),
+        "data_hora": cobranca.get("criado_em") or cobranca.get("data_hora"),
+        "payload": cobranca,
+    }
+    resposta = requests.post(
+        _cobrancas_url(),
+        headers={**_headers(), "Prefer": "return=minimal"},
+        json=linha,
+        timeout=15,
+    )
+    resposta.raise_for_status()
+    return True
+
+
+def atualizar_cobranca(doc_id: str, cobranca: dict) -> bool:
+    """Atualiza o payload de uma cobrança (status, motivo, etc.)."""
+    config = _config()
+    if not config:
+        return False
+    resposta = requests.patch(
+        _cobrancas_url(),
+        headers=_headers(),
+        params={"id": f"eq.{doc_id}"},
+        json={"payload": cobranca},
+        timeout=15,
+    )
+    resposta.raise_for_status()
+    return True
