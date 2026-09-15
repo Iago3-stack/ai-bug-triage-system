@@ -12,7 +12,10 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 - **Lista de contas** — para cada conta (com nome/perfil e último login): botões **⭐ Ativar Premium**, **🎁 Dar teste 7 dias** e **🔓 Voltar a Basic**. As ações valem de imediato no plano do usuário.
 - **📇 Registro automático de contas** — nova tabela `usuarios` (uid, email, criado_em, ultimo_login): a cada login/renovação a conta é anotada (best-effort, nunca quebra o login). Sem ela, o painel simplesmente não tem contas a listar.
 - **🎁 Teste Premium com validade** — nova coluna `teste_ate` em `planos_usuario`: o teste conta como Premium até a data expirar (então volta a Basic sozinho). O usuário em teste vê "🎁 Teste Premium" no Meu Plano; pagar (ou o dono voltar a Basic) encerra o teste.
-- **Módulos** — `admin.py` (`email_logado`/`eh_dono`), `secoes/painel_dono.py` e helpers em `nuvem_supabase.py`/`plano.py` (`teste_premium_restante`, `definir_trial`, `definir_plano_manual`, `carregar_usuarios`/`carregar_todos_planos`/`carregar_todos_perfis`); 30 testes novos (**328 no total**).
+- **Módulos** — `admin.py` (`email_logado`/`eh_dono`), `secoes/painel_dono.py` e helpers em `nuvem_supabase.py`/`plano.py` (`teste_premium_restante`, `definir_trial`, `definir_plano_manual`, `carregar_usuarios`/`carregar_todos_planos`/`carregar_todos_perfis`); 34 testes novos (**332 no total**).
+
+### Corrigido
+- **Painel não quebra se a coluna/tabela ainda não existe no Supabase** — o 400 do PostgREST ao selecionar `teste_ate` (ALTER TABLE pendente) derrubava a página inteira. Agora o painel carrega **cada fonte isolada** (usuários, planos, perfis, cobranças) — a que falhar vira lista vazia e as demais seguem; `carregar_todos_planos` refaz o select **sem** `teste_ate` quando a coluna não existe, `carregar_teste_banco` vira `None` no erro e o PATCH de limpeza do teste é best-effort (o plano é salvo mesmo se a coluna faltar). O painel funciona já; o eixo de testes só liga depois do SQL rodado.
 
 ### Observações
 - **Ação necessária:** rode no SQL Editor do Supabase as duas instruções do cabeçalho de `nuvem_supabase.py` — criar a tabela `usuarios` (3 policies anon) e `alter table planos_usuario add column if not exists teste_ate timestamptz;`.

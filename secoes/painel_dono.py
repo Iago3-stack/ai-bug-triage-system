@@ -73,15 +73,19 @@ def render():
         )
         return
 
-    try:
-        usuarios = nuvem_supabase.carregar_usuarios()
-        planos = nuvem_supabase.carregar_todos_planos()
-        perfis = nuvem_supabase.carregar_todos_perfis()
-        pendentes = pixbilling.pendentes()
-        estornos = pixbilling.estornos()
-    except Exception as e:
-        st.error(f"Não foi possível carregar os dados (rede/Supabase): {e}")
-        return
+    # Cada fonte é carregada isolada: se uma tabela/coluna ainda não existir no
+    # Supabase (ex.: o ALTER TABLE do teste_aTE pendente), as outras continuam.
+    def _carregar(tarefa, padrao):
+        try:
+            return tarefa() or padrao
+        except Exception:
+            return padrao
+
+    usuarios = _carregar(nuvem_supabase.carregar_usuarios, [])
+    planos = _carregar(nuvem_supabase.carregar_todos_planos, [])
+    perfis = _carregar(nuvem_supabase.carregar_todos_perfis, [])
+    pendentes = _carregar(pixbilling.pendentes, [])
+    estornos = _carregar(pixbilling.estornos, [])
 
     # ─── Mescla todas as fontes por uid ───────────────────────────────────────
     por_uid: dict = {}

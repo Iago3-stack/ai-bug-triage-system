@@ -223,6 +223,65 @@ def test_carregar_todos_planos(monkeypatch):
     assert nuvem_supabase.carregar_todos_planos() == [{"uid": "u1", "plano": "pago", "teste_ate": None}]
 
 
+def test_carregar_todos_planos_cai_sem_teste_quando_coluna_falta(monkeypatch):
+    """ALTER TABLE pendente: select c/ `teste_ate` falha → refaz sem a coluna."""
+    chamadas = []
+
+    class _Erro(_Resp):
+        def raise_for_status(self):
+            raise Exception("400: Bad Request (coluna inexistente)")
+
+    def _get(url, headers=None, params=None, timeout=None):
+        chamadas.append(params["select"])
+        if "teste_ate" in params["select"]:
+            return _Erro()
+        return _Resp([{"uid": "u1", "plano": "pago"}, {"uid": "u2", "plano": "free"}])
+
+    monkeypatch.setattr(nuvem_supabase, "_config", lambda: ("https://supa.supabase.co", "chave"))
+    monkeypatch.setattr(nuvem_supabase.requests, "get", _get)
+    docs = nuvem_supabase.carregar_todos_planos()
+    assert len(chamadas) == 2
+    assert docs[0] == {"uid": "u1", "plano": "pago", "teste_ate": None}
+    assert docs[1] == {"uid": "u2", "plano": "free", "teste_ate": None}
+
+
+def test_carregar_todos_planos_sem_tabela_retorna_vazio(monkeypatch):
+    class _Erro(_Resp):
+        def raise_for_status(self):
+            raise Exception("400/404")
+
+    def _get(*a, **k):
+        return _Erro()
+
+    monkeypatch.setattr(nuvem_supabase, "_config", lambda: ("https://supa.supabase.co", "chave"))
+    monkeypatch.setattr(nuvem_supabase.requests, "get", _get)
+    assert nuvem_supabase.carregar_todos_planos() == []
+
+
+def test_carregar_teste_banco_erro_retorna_none(monkeypatch):
+    class _Erro(_Resp):
+        def raise_for_status(self):
+            raise Exception("400: coluna inexistente")
+
+    monkeypatch.setattr(nuvem_supabase, "_config", lambda: ("https://supa.supabase.co", "chave"))
+    monkeypatch.setattr(nuvem_supabase.requests, "get", lambda *a, **k: _Erro())
+    assert nuvem_supabase.carregar_teste_banco("u1") is None
+
+
+def test_gravar_plano_pago_patch_falha_nao_anula_upsert(monkeypatch):
+    class _Erro(_Resp):
+        def raise_for_status(self):
+            raise Exception("400: coluna inexistente")
+
+    def _patch(*a, **k):
+        return _Erro()
+
+    monkeypatch.setattr(nuvem_supabase, "_config", lambda: ("https://supa.supabase.co", "chave"))
+    monkeypatch.setattr(nuvem_supabase.requests, "post", lambda *a, **k: _Resp())
+    monkeypatch.setattr(nuvem_supabase.requests, "patch", _patch)
+    assert nuvem_supabase.gravar_plano_banco("u1", "pago") is True
+
+
 def test_carregar_todos_perfis(monkeypatch):
     _mock_rest(monkeypatch, [{"uid": "u1", "nome": "Iago", "empresa": "QA", "avatar": ""}])
     assert nuvem_supabase.carregar_todos_perfis() == [{"uid": "u1", "nome": "Iago", "empresa": "QA", "avatar": ""}]

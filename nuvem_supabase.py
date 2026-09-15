@@ -325,13 +325,18 @@ def gravar_plano_banco(uid: str, plano: str, clear_teste: bool = False) -> bool:
     )
     resposta.raise_for_status()
     if clear_teste or plano == "pago":
-        requests.patch(
-            _planos_url(),
-            headers=_headers(),
-            params={"uid": f"eq.{uid}"},
-            json={"teste_ate": None},
-            timeout=15,
-        )
+        # Best-effort: se a coluna `teste_ate` ainda não existir no Supabase
+        # (ALTER TABLE pendente), o plano foi salvo mesmo assim — só não limpa o teste.
+        try:
+            requests.patch(
+                _planos_url(),
+                headers=_headers(),
+                params={"uid": f"eq.{uid}"},
+                json={"teste_ate": None},
+                timeout=15,
+            )
+        except Exception:
+            pass
     return True
 
 
@@ -340,18 +345,21 @@ def carregar_teste_banco(uid: str) -> str | None:
     config = _config()
     if not config:
         return None
-    resposta = requests.get(
-        _planos_url(),
-        headers=_headers(),
-        params={"select": "teste_ate", "uid": f"eq.{uid}", "limit": "1"},
-        timeout=15,
-    )
-    resposta.raise_for_status()
-    docs = resposta.json() or []
-    if not docs:
+    try:
+        resposta = requests.get(
+            _planos_url(),
+            headers=_headers(),
+            params={"select": "teste_ate", "uid": f"eq.{uid}", "limit": "1"},
+            timeout=15,
+        )
+        resposta.raise_for_status()
+        docs = resposta.json() or []
+        if not docs:
+            return None
+        valor = docs[0].get("teste_ate")
+        return valor or None
+    except Exception:
         return None
-    valor = docs[0].get("teste_ate")
-    return valor or None
 
 
 def gravar_teste_banco(uid: str, ate_iso: str) -> bool:
@@ -372,18 +380,40 @@ def gravar_teste_banco(uid: str, ate_iso: str) -> bool:
 
 
 def carregar_todos_planos() -> list[dict]:
-    """Todas as linhas de planos_usuario (uid, plano, teste_ate) — painel do dono."""
+    """Todas as linhas de planos_usuario (uid, plano, teste_ate) — painel do dono.
+
+    Se a coluna `teste_ate` ainda não existir (ALTER TABLE pendente), o PostgREST
+    responde 400 no select — então refaz sem ela e preenche `teste_ate: None`
+    (o painel funciona; o teste só aparece depois do SQL aplicado).
+    """
     config = _config()
     if not config:
         return []
-    resposta = requests.get(
-        _planos_url(),
-        headers=_headers(),
-        params={"select": "uid,plano,teste_ate"},
-        timeout=15,
-    )
-    resposta.raise_for_status()
-    return resposta.json() or []
+    try:
+        resposta = requests.get(
+            _planos_url(),
+            headers=_headers(),
+            params={"select": "uid,plano,teste_ate"},
+            timeout=15,
+        )
+        resposta.raise_for_status()
+        return resposta.json() or []
+    except Exception:
+        pass
+    try:
+        resposta = requests.get(
+            _planos_url(),
+            headers=_headers(),
+            params={"select": "uid,plano"},
+            timeout=15,
+        )
+        resposta.raise_for_status()
+        docs = resposta.json() or []
+        for doc in docs:
+            doc["teste_ate"] = None
+        return docs
+    except Exception:
+        return []
 
 
 def migrar_tenant_global(uid: str) -> int:
