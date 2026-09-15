@@ -200,6 +200,13 @@ def render():
             if st.button("🎁 Dar teste 7 dias", key=f"dono_teste_{idx}", use_container_width=True):
                 if plano.definir_trial(uid, 7):
                     _toast("🎁 Teste Premium de 7 dias iniciado.")
+                elif not nuvem_supabase.teste_disponivel():
+                    st.error(
+                        "🎁 **Trial precisa da coluna `teste_ate` no Supabase.** "
+                        "Pendente: rode `alter table planos_usuario add column if not exists "
+                        "teste_ate timestamptz;` no SQL Editor e depois **Reload schema** "
+                        "(Settings → API → Advanced). Os outros botões seguem funcionando."
+                    )
                 else:
                     st.error("Falha (offline/Supabase).")
         with _ca3:

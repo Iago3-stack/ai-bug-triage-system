@@ -379,6 +379,30 @@ def gravar_teste_banco(uid: str, ate_iso: str) -> bool:
     return True
 
 
+def teste_disponivel() -> bool:
+    """True se a coluna `teste_ate` existe na schema cache do PostgREST.
+
+    O painel do dono usa isso para explicar por que "Dar teste 7 dias" pode
+    falhar mesmo com as demais ações funcionando: o upsert de `teste_ate`
+    devolve 400 (PGRST204) enquanto a coluna estiver pendente no Supabase
+    (ALTER TABLE não rodado ou schema cache desatualizado). Nunca levanta —
+    apenas relata se o PostgREST consegue enxergar a coluna.
+    """
+    config = _config()
+    if not config:
+        return False
+    try:
+        resposta = requests.get(
+            _planos_url(),
+            headers=_headers(),
+            params={"select": "teste_ate", "limit": "1"},
+            timeout=15,
+        )
+        return resposta.status_code == 200
+    except Exception:
+        return False
+
+
 def carregar_todos_planos() -> list[dict]:
     """Todas as linhas de planos_usuario (uid, plano, teste_ate) — painel do dono.
 

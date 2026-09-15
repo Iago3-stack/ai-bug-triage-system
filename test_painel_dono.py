@@ -404,3 +404,38 @@ def test_badges_dos_planos():
     for tipo in ("premium", "teste", "basic"):
         badge = pd._badge(tipo)
         assert tipo in "premium teste basic".split() and badge.startswith("<span")
+
+
+# ─── teste_disponivel: coluna teste_ate na schema cache do PostgREST ────────
+
+def test_teste_disponivel_detecta_coluna_faltando(monkeypatch):
+    chamadas = []
+
+    def _fake_get(url, headers=None, params=None, timeout=None):
+        chamadas.append(params)
+        class R:
+            status_code = 400  # PGRST204: teste_ate fora do schema cache
+
+        return R()
+
+    monkeypatch.setattr(nuvem_supabase.requests, "get", _fake_get)
+    monkeypatch.setattr(nuvem_supabase, "_config", lambda: {"url": "x", "chave": "k"})
+    assert nuvem_supabase.teste_disponivel() is False
+    assert chamadas and "teste_ate" in chamadas[0]["select"]
+
+
+def test_teste_disponivel_true_quando_coluna_existe(monkeypatch):
+    def _fake_get(url, headers=None, params=None, timeout=None):
+        class R:
+            status_code = 200
+
+        return R()
+
+    monkeypatch.setattr(nuvem_supabase.requests, "get", _fake_get)
+    monkeypatch.setattr(nuvem_supabase, "_config", lambda: {"url": "x", "chave": "k"})
+    assert nuvem_supabase.teste_disponivel() is True
+
+
+def test_teste_disponivel_sem_config_false(monkeypatch):
+    monkeypatch.setattr(nuvem_supabase, "_config", lambda: None)
+    assert nuvem_supabase.teste_disponivel() is False
