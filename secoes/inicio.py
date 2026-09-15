@@ -9,6 +9,17 @@ import ui_tema
 
 def render():
     import roteador  # lazy: roteador importa inicio (ciclo) — só dentro de render()
+    # --- HERO: card de destaque com o posicionamento do agente ---
+    st.markdown("""
+    <div style="width:100%;background:linear-gradient(135deg,#0f172a 0%,#1a2740 55%,#7c3aed 180%);border-radius:16px;padding:30px 34px 28px 34px;margin:4px 0 16px;box-shadow:0 8px 22px rgba(15,23,42,.18);border:1px solid rgba(139,92,246,.22)">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <span style="background:rgba(139,92,246,.18);color:#c4b5fd;border:1px solid rgba(139,92,246,.5);border-radius:999px;padding:4px 14px;font-size:12px;font-weight:800;letter-spacing:.04em">🤖 AGENTE DE IA · NLP</span>
+        <span style="color:#94a3b8;font-size:12px;font-weight:700;letter-spacing:.04em">TÉCNICO · EMOCIONAL · PLANO DE AÇÃO</span>
+      </div>
+      <div style="color:#ffffff;font-size:29px;font-weight:800;margin-top:18px;letter-spacing:-.01em;line-height:1.25">🤖 Agente de Triagem e Documentação de Bugs 2026</div>
+      <div style="color:#cbd5e1;font-size:16.5px;line-height:1.7;margin-top:8px;max-width:96%">Triagem automática de bugs com <b style="color:#86efac">NLP + IA</b>: técnico, emocional e com <b style="color:#86efac">plano de ação em segundos</b>.</div>
+    </div>
+    """, unsafe_allow_html=True)
     # --- MASTHEAD ("rodapé superior"): card do plano — fica acima do nome do site ---
     if plano.pago():
         _badge_plano = (
