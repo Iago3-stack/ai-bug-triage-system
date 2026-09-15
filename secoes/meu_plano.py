@@ -59,11 +59,8 @@ def render():
     _lembrete = st.session_state.pop("meu_plano_lembrete", None)
     if _lembrete:
         st.success(_lembrete)
-        st.info(
-            "🔄 Este fluxo depende da confirmação manual do responsável. "
-            "**Atualize a página** (ou clique em qualquer lugar do menu) para "
-            "ver as mudanças refletidas na tela.",
-        )
+
+    _aviso_fixo_atualizar()
 
     st.markdown("""
     <div style="height:3px;width:100%;background:linear-gradient(90deg,transparent,#25D366,#2E7CF6,#7c3aed,transparent);border-radius:999px;margin:8px 0"></div>
@@ -275,6 +272,48 @@ def _avisar_admin(mensagem: str) -> None:
 def _lembrete_refresh(mensagem: str) -> None:
     """Guarda um aviso para exibir logo após o rerun do próximo passo do fluxo."""
     st.session_state["meu_plano_lembrete"] = mensagem
+
+
+def _aviso_fixo_atualizar() -> None:
+    """Barra fixa (sticky) lembrando que o fluxo de pagamento é manual.
+
+    Fica sempre visível no topo da página Meu Plano — usuário e admin
+    lembram de atualizar a tela para ver as mudanças refletidas.
+    """
+    st.markdown(
+        """
+        <style>
+        .aviso-atualizar-fixo {
+            position: sticky !important;
+            top: 0;
+            z-index: 99;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            padding: 9px 14px;
+            margin: 2px 0 14px;
+            border-radius: 12px;
+            background: linear-gradient(90deg, rgba(37,211,102,.14), rgba(37,211,102,.05));
+            border: 1px solid rgba(37,211,102,.4);
+            color: #cff7e3;
+            font-size: 12.5px;
+            font-weight: 600;
+            box-shadow: 0 4px 14px rgba(15,23,42,.25);
+            backdrop-filter: blur(2px);
+        }
+        .aviso-atualizar-fixo b { color: #86efac; }
+        .aviso-atualizar-fixo .icone { font-size: 15px; }
+        </style>
+        <div class="aviso-atualizar-fixo">
+            <span class="icone">🔄</span>
+            <span>Este fluxo depende da confirmação manual do responsável.
+            <b>Atualize a página</b> (ou clique em qualquer lugar do menu)
+            para ver as mudanças refletidas na tela.</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def _icone_whatsapp_inline() -> str:
