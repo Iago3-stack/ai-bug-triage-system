@@ -1,9 +1,5 @@
-"""Página Meu Plano — Passo 3 SaaS: plano por usuário (banco) + migração legado.
-
-Mostra o plano salvo da conta logada (tabela `planos_usuario`), permite
-trocar o plano (auto-atendimento, sem cobrança até o Passo 4/Stripe) e
-reivindicar os registros legados (tenant 'global') para a própria conta.
-"""
+"""Página Meu Plano: plano da conta logada (banco), troca livre e adoção de
+dados antigos sem dono (registros legados) pela própria conta."""
 import streamlit as st
 
 import plano
@@ -14,6 +10,13 @@ import ui_comum
 def render():
     uid = plano.uid_logado()
     atual = plano.plano_atual()
+
+    try:
+        import auth_supabase
+        sessao = auth_supabase.sessao() or {}
+        email_conta = (sessao.get("user") or {}).get("email")
+    except Exception:
+        email_conta = None
 
     st.markdown("""
     <div style="height:3px;width:100%;background:linear-gradient(90deg,transparent,#25D366,#2E7CF6,#7c3aed,transparent);border-radius:999px;margin:8px 0"></div>
@@ -37,13 +40,13 @@ def render():
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           {_badge}
-          <span style="color:#94a3b8;font-size:12px;font-weight:700;letter-spacing:.05em">💼 MEU PLANO · Passo 3 SaaS</span>
+          <span style="color:#94a3b8;font-size:12px;font-weight:700;letter-spacing:.05em">💼 MEU PLANO</span>
         </div>
         <span style="color:#64748b;font-size:12px;font-weight:600">{ui_comum.VERSAO}</span>
       </div>
       <div style="color:#ffffff;font-size:26px;font-weight:800;margin-top:16px;letter-spacing:-.01em">Seu plano nesta conta</div>
       <div style="color:#cbd5e1;font-size:15px;line-height:1.6;margin-top:8px;max-width:94%">{_frase}</div>
-      <div style="color:#94a3b8;font-size:12px;margin-top:14px">Conta: <b style="color:#cbd5e1">{uid or "—"}</b> · tenant <b style="color:#cbd5e1">{plano.tenant_atual()}</b></div>
+      <div style="color:#94a3b8;font-size:12px;margin-top:14px">Conta: <b style="color:#cbd5e1">{email_conta or uid or "—"}</b></div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -51,26 +54,27 @@ def render():
         st.warning("Você não está logado — faça login para gerenciar o plano da sua conta.")
         return
 
-    # ─── Migração dos registros legados (tenant 'global') ────────────────────
+    # ─── Migração dos registros legados (dados antigos sem dono) ─────────────
     st.markdown("### 📦 Dados da sua conta")
     legados = persistencia.contar_legados_globais()
     if legados:
         st.info(
-            f"Há **{legados} triagen(s) legada(s)** gravadas antes do isolamento por usuário "
-            "(tenant 'global'). Elas estão invisíveis para todos até você reivindicá-las."
+            f"Há **{legados} triagen(s)** gravadas antes da separação por usuário. "
+            "Elas estão guardadas no sistema, invisíveis — se você reconhecer que são suas, "
+            "pode trazê-las para a sua conta."
         )
-        if st.button("✨ Reivindicar para minha conta", key="btn_migrar", type="primary"):
+        if st.button("✨ Trazer para a minha conta", key="btn_migrar", type="primary"):
             feitos = persistencia.migrar_tenant_global(uid)
-            st.success(f"{feitos} triagen(s) adotadas pela sua conta.")
+            st.success(f"{feitos} triagen(s) foram adicionadas à sua conta.")
             st.rerun()
     else:
-        st.caption("Nenhum dado legado pendente — seu histórico já está isolado por usuário.")
+        st.caption("Opa, seu histórico já está todo separado por usuário — nenhum dado antigo pendente. 🎉")
 
-    # ─── Troca de plano (auto-atendimento; cobrança real só no Passo 4/Stripe) ─
+    # ─── Troca de plano (auto-atendimento) ───────────────────────────────────
     st.markdown("### 💳 Plano da conta")
     st.caption(
-        "Passo 3: o plano é salvo por usuário no banco. A cobrança real (Stripe) chega no Passo 4 — "
-        "enquanto isso a troca é livre, para você testar os dois planos."
+        "A troca de plano é livre por enquanto — experimente à vontade, sem cobrança. "
+        "Em breve o pagamento integrado chega."
     )
     nova = st.radio(
         "Escolha o plano desta conta:",
@@ -89,7 +93,7 @@ def render():
             )
             st.rerun()
         else:
-            st.error("Não foi possível gravar na nuvem (sem Supabase configurado?). O plano segue pelo ambiente.")
+            st.error("Não foi possível salvar agora. O plano continua valendo neste acesso — tente novamente mais tarde.")
 
     # ─── Comparativo Basic × Premium ─────────────────────────────────────────
     with st.expander("💼 Comparar planos — Basic × Premium", expanded=False):
