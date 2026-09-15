@@ -180,9 +180,10 @@ def render():
     with st.expander("📋 Colar falha bruta: preencher o relato automaticamente"):
         st.markdown('<div class="marca-colar" style="display:none"></div>', unsafe_allow_html=True)
         st.caption(
-            "Cole um stack trace, um log de erro ou a mensagem que o usuário mandou — "
-            "o app extrai **título, categoria, módulo, versão, severidade e passos** "
-            "e preenche o relato abaixo para você revisar. 100% local, funciona até sem internet."
+            "Cole um **stack trace, log, a mensagem do usuário** — ou a saída de um "
+            "**teste Playwright / Postman·newman** — e o app extrai **título, categoria, "
+            "módulo, versão, severidade, erro, passos e até o HTTP esperado × recebido**, "
+            "preenchendo o relato abaixo para você revisar. 100% local, funciona até sem internet."
         )
         evidencia_bruta = st.text_area(
             "Falha bruta (stack trace, log, mensagem de erro):",
@@ -200,7 +201,7 @@ def render():
         if st.button("✨ Preencher relato a partir da falha", key="btn_colar_falha"):
             if evidencia_bruta.strip():
                 try:
-                    estrutura = colar_falha.estruturar(evidencia_bruta)
+                    estrutura = colar_falha.estruturar_automatico(evidencia_bruta)
                     st.session_state["relato_entrada"] = colar_falha.montar_relato(
                         evidencia_bruta, estrutura
                     )
@@ -213,12 +214,14 @@ def render():
 
     _est_colada = st.session_state.pop("colar_falha_ok", None)
     if _est_colada:
-        _det = (
-            f"severidade **{_est_colada['severidade']}**"
-            f" · categoria **{_est_colada['categoria']}**"
-            + (f" · módulo **{_est_colada['modulo']}**" if _est_colada.get("modulo") else "")
-            + (f" · versão **{_est_colada['versao']}**" if _est_colada.get("versao") else "")
-        )
+        _det = f"severidade **{_est_colada['severidade']}**"
+        if _est_colada.get("ferramenta"):
+            _det += f" · origem **{_est_colada['ferramenta']}**"
+        _det += f" · categoria **{_est_colada['categoria']}**"
+        if _est_colada.get("modulo"):
+            _det += f" · módulo **{_est_colada['modulo']}**"
+        if _est_colada.get("versao"):
+            _det += f" · versão **{_est_colada['versao']}**"
         if _est_colada.get("erro"):
             _det += f" · erro **`{_est_colada['erro']}`**"
         st.success(f"✨ Relato preenchido abaixo! Detectei: {_det}. Revise e clique em Executar.")

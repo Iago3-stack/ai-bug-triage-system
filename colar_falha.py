@@ -230,6 +230,22 @@ def estruturar(evidencia: str) -> dict:
     }
 
 
+def estruturar_automatico(evidencia: str) -> dict:
+    """Escolhe o melhor extrator: Playwright/Postman (Pilar 2) → texto livre.
+
+    Se a evidência parecer saída de teste automatizado, usa o adaptador
+    correspondente; senão, usa o parser genérico (Pilar 1).
+    """
+    texto = (evidencia or "").strip()
+    if texto:
+        from adaptadores import estruturar as _estruturar_adaptador
+
+        adaptado = _estruturar_adaptador(texto)
+        if adaptado:
+            return adaptado
+    return estruturar(texto)
+
+
 def montar_relato(evidencia: str, estrutura: dict | None = None) -> str:
     """Gera o texto do relato (markdown) que preenche a caixa de triagem."""
     if estrutura is None:
@@ -248,8 +264,14 @@ def montar_relato(evidencia: str, estrutura: dict | None = None) -> str:
         linhas.append("")
         detalhe = f"`{erro}`" + (f" — em {e['local']}" if e.get("local") else "")
         linhas.append(f"**Erro principal:** {detalhe}")
+    if e.get("ferramenta"):
+        linhas.append("")
+        linhas.append(f"**Ferramenta de origem:** {e['ferramenta']}")
+    if e.get("requisicao"):
+        linhas.append("")
+        linhas.append(f"**Requisição:** {e['requisicao']}")
     ling = e.get("linguagem")
-    if ling:
+    if ling and "Playwright" not in ling and "REST" not in ling:
         linhas.append("")
         linhas.append(f"**Linguagem detectada:** {ling}")
     linhas += ["", "", "**Passos para reproduzir:**"]

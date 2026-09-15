@@ -4,6 +4,14 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.14.0] - 2026-09-15
+
+### Adicionado
+- **📋📮 Pilar 2 de automação — adaptadores Playwright / Postman·newman** (`adaptadores.py`): a mesma caixa "📋 Colar falha bruta" agora **reconhece a saída dessas ferramentas** e extrai o relato com o léxico próprio de cada uma. **Playwright**: nome do teste, erro de asserção (`Error: expect(...)`), **Expected/Received** e arquivo:linha (texto do terminal ou JSON do relator). **Postman/newman**: método + URL, **HTTP status esperado × recebido**, detalhe da asserção e **erro do corpo JSON**. O relato ganha as linhas **"Ferramenta de origem"** e **"Requisição"**. Se a evidência não bater com nenhum formato, o parser genérico (Pilar 1) assume — 100% local e determinístico. 16 testes novos (**379 no total**, todos offline).
+
+### Corrigido
+- **🔍 Alertas agora revelam o motivo real do e-mail falho** — `notificacoes.py` guarda o último erro SMTP (`_ULTIMO_ERRO_EMAIL`/`ultimo_erro_email()`), `_enviar_email` captura `TipoErro: msg`, **"✉️ Testar e-mail"** e o alerta no painel mostram o detalhe exato (ex.: `SMTPAuthenticationError: (535...)`, timeout, porta errada) em vez de só "FALHOU ❌". +1 teste (**33 de notificações**).
+
 ## [v2.13.0] - 2026-09-15
 
 ### Adicionado
