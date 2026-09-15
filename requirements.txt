@@ -17,3 +17,5 @@ requests==2.34.2
 qrcode==8.2
 # V2.7 — exportação de relatório em PDF (fpdf2, fontes DejaVu embutidas em assets/pdf).
 fpdf2==2.8.8
+# V2.9.0 — perfil do usuário (avatar redimensionado via Pillow na UI).
+pillow==12.3.0

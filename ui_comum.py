@@ -12,7 +12,7 @@ import ui_tema
 import sessao_persist
 import roteador
 
-VERSAO = "v2.8.1"
+VERSAO = "v2.9.0"
 
 # Logo do sistema (SVG embutido como data URI para funcionar na Cloud).
 _LOGO_DATA_URI = (
@@ -321,10 +321,137 @@ def menu_top(pg_atual):
                         st.switch_page(roteador.PAGINAS[_chave])
         with _c_user:
             if _usuario:
-                st.markdown(f'<div class="marca-top-user">👤 {_usuario}</div>', unsafe_allow_html=True)
+                _bolinha_perfil(_usuario)
             else:
                 if st.button("🔒 Faça login", key="topnav_login", type="primary", use_container_width=True):
                     st.switch_page(roteador.PAGINAS["triagem"])
+
+
+def _bolinha_perfil(email: str) -> None:
+    """Bolinha do perfil (foto ou iniciais) acima do chip; clique abre o modal.
+
+    A bolinha é um Streamlit button por baixo de um marcador (padrão do app);
+    o <style> injetado a modela como círculo (gradiente com iniciais, ou a foto
+    do usuário via base64) e o click dispara o modal @st.dialog.
+    """
+    import perfil
+
+    uid = None
+    try:
+        import auth_supabase
+
+        sessao = auth_supabase.sessao() or {}
+        uid = (sessao.get("user") or {}).get("id") or email
+    except Exception:
+        uid = email
+
+    dados = perfil.carregar(uid)
+    avatar = dados.get("avatar") or ""
+
+    _c_avatar, _c_chip = st.columns([1, 2.2], vertical_alignment="center", gap="small")
+    with _c_avatar:
+        st.markdown('<div class="marca-perfil-avatar" style="display:none"></div>', unsafe_allow_html=True)
+        _label = perfil.iniciais_para_bolinha(uid) or "?"
+        _fundo = f'url("{avatar}") center/cover no-repeat, ' if avatar else ""
+        st.markdown(
+            f"""
+            <style>
+            [data-testid="stColumn"]:has(.marca-perfil-avatar) [data-testid="stButton"] button {{
+                width:38px; height:38px; border-radius:50%; padding:0; border:none;
+                min-width:38px; min-height:38px; display:flex; align-items:center;
+                justify-content:center; font-size:14px; font-weight:800; color:#ffffff;
+                box-shadow:0 2px 8px rgba(37,211,102,.35);
+                background:{_fundo}linear-gradient(135deg,#25D366,#2E7CF6);
+            }}
+            [data-testid="stColumn"]:has(.marca-perfil-avatar) [data-testid="stButton"] button:hover {{ filter:brightness(1.06); transform:scale(1.04); }}
+            {"[data-testid='stColumn']:has(.marca-perfil-avatar) [data-testid='stButton'] button { color:transparent !important; }" if avatar else ""}
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+        if st.button(_label, key="topnav_perfil", help="Meu perfil"):
+            _modal_perfil(uid, email)
+    with _c_chip:
+        nome = dados.get("nome") or ""
+        if nome:
+            _chip = f"👤 {nome}"
+            _sub = f'<div style="font-size:10px;opacity:.72;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{email}</div>'
+        else:
+            _chip = f"👤 {email}"
+            _sub = ""
+        st.markdown(
+            f'<div class="marca-top-user" style="text-align:left;padding:5px 12px;max-width:100%">'
+            f"{_chip}{_sub}</div>",
+            unsafe_allow_html=True,
+        )
+
+
+@st.dialog("👤 Seu perfil")
+def _modal_perfil(uid: str, email: str) -> None:
+    """Modal do perfil: nome, empresa, fuso e avatar (upload redimensionado)."""
+    import base64
+    import io
+
+    from PIL import Image
+
+    import perfil
+
+    dados = perfil.carregar(uid)
+    avatar = dados.get("avatar") or ""
+
+    st.caption(f"Conta: **{email}**")
+
+    _c1, _c2 = st.columns([1, 2], vertical_alignment="center")
+    with _c1:
+        if avatar:
+            st.image(avatar, width=96)
+        else:
+            st.markdown(
+                f"<div style='display:flex;align-items:center;justify-content:center;"
+                f"width:96px;height:96px;border-radius:50%;background:linear-gradient(135deg,#25D366,#2E7CF6);"
+                f"color:#fff;font-size:34px;font-weight:800'>{perfil.iniciais_para_bolinha(uid) or '?'}</div>",
+                unsafe_allow_html=True,
+            )
+    with _c2:
+        st.markdown("**Foto do perfil**")
+        foto = st.file_uploader(
+            "Envie JPG/PNG/WebP (será redimensionada para 160px)",
+            type=["jpg", "jpeg", "png", "webp"],
+            key="perfil_foto_upload",
+        )
+        if foto:
+            try:
+                img = Image.open(io.BytesIO(foto.getvalue()))
+                img = img.convert("RGB")
+                img.thumbnail((160, 160))
+                buf = io.BytesIO()
+                img.save(buf, format="PNG")
+                avatar = "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
+            except Exception:
+                st.error("Não consegui processar essa imagem. Tente outra.")
+
+    nome = st.text_input("Nome de exibição", value=dados.get("nome") or "", max_chars=120)
+    empresa = st.text_input("Empresa / cargo", value=dados.get("empresa") or "", max_chars=120)
+
+    import zoneinfo
+
+    _fusos_extras = sorted({z.key for z in zoneinfo.available_timezones()})
+    _opcoes_fuso = perfil._FUSOS_PADRAO + [z for z in _fusos_extras if z not in perfil._FUSOS_PADRAO]
+    corrente = perfil.normalizar_fuso(dados.get("fuso") or "")
+    fuso_index = _opcoes_fuso.index(corrente) if corrente in _opcoes_fuso else 0
+    fuso = st.selectbox("Fuso horário", options=_opcoes_fuso, index=fuso_index)
+
+    _marcador_salvar = '<div class="marca-perfil-salvar" style="display:none"></div>'
+    st.markdown(_marcador_salvar, unsafe_allow_html=True)
+    if st.button("💾 Salvar perfil", key="perfil_salvar", type="primary", use_container_width=True):
+        ok = perfil.salvar(uid, {"nome": nome, "empresa": empresa, "fuso": fuso, "avatar": avatar})
+        if ok:
+            st.success("Perfil salvo! Já aparece no topo do app.")
+            st.rerun()
+        else:
+            st.error("Não foi possível salvar (offline). Tente de novo.")
+
+    st.caption("Dica: sem foto, a bolinha mostra suas iniciais automaticamente.")
 
 
 def rodape():

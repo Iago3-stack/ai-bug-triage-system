@@ -4,6 +4,18 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.9.0] - 2026-09-15
+
+### Adicionado
+- **👤 Perfil do usuário (Passo 5 SaaS)** — bolinha no topo (canto superior, acima do chip do e-mail) com **foto** ou **iniciais** em gradiente; clique abre um **modal** (`@st.dialog`) para editar nome de exibição, empresa/cargo, **fuso horário** e **avatar** (upload JPG/PNG/WebP redimensionado para 160px via Pillow). Salvo na nuvem (tabela nova `perfis_usuario`) com fallback JSONL local (`data/perfis.jsonl`).
+- **Chip mostra nome E e-mail** — quando o nome é preenchido, o chip exibe `👤 Nome` com o e-mail logo abaixo; sem nome, mantém apenas o e-mail.
+- **Relatório PDF assinado** — o relatório de triagem agora grava o **nome do perfil** em "Relatório gerado por …" (sem perfil, omite a linha).
+- **Módulo `perfil.py`** — `carregar`/`salvar` (nuvem → JSONL), `nome_exibicao` (nome → empresa → parte do e-mail), validação de fuso (inválido cai em América/São_Paulo) e iniciais da bolinha; `pillow` entrou no `requirements.txt`; 16 testes novos (**280 no total**).
+
+### Observações
+- **Ação necessária:** crie a tabela `perfis_usuario` no SQL Editor do Supabase (script no cabeçalho de `nuvem_supabase.py`) — há 3 policies anon (insert/select/update), igual às demais tabelas.
+- A foto é armazenada como **base64 compacto** na própria tabela (sem bucket do Supabase), então o mesmo perfil vale na Cloud e no app local — sem infra extra.
+
 ## [v2.8.1] - 2026-09-15
 
 ### Corrigido

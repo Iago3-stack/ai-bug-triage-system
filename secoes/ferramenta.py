@@ -90,6 +90,20 @@ def _gerar_pdf_relatorio(dados: dict) -> bytes:
     pdf.cell(0, 8, "Resultado da triagem", ln=True)
     pdf.set_font("DejaVu", "", 11)
     pdf.set_text_color(30, 41, 59)
+
+    try:
+        import perfil as _perfil
+
+        _autor = _perfil.nome_exibicao(plano.uid_logado() or "")
+        if _autor:
+            pdf.set_text_color(*cinza)
+            pdf.set_font("DejaVu", "", 9)
+            pdf.cell(0, 5, f"Relatório gerado por {_autor}", ln=True)
+            pdf.set_text_color(30, 41, 59)
+            pdf.set_font("DejaVu", "", 11)
+    except Exception:
+        pass
+
     linhas = [
         ("Gravidade", dados.get("gravidade", "—")),
         ("Prioridade final", dados.get("prioridade_final", "—")),

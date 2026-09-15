@@ -42,6 +42,20 @@
 #   create policy "anon select" on solicitacoes_pagamento for select to anon using (true);
 #   create policy "anon update" on solicitacoes_pagamento for update to anon using (true);
 #
+# Tabela de perfis (Passo 5 do caminho SaaS — perfil do usuário):
+#   create table if not exists perfis_usuario (
+#     uid          text primary key,
+#     nome         text not null default '',
+#     empresa      text not null default '',
+#     fuso         text not null default 'America/Sao_Paulo',
+#     avatar       text not null default '',
+#     atualizado_em timestamptz not null default now()
+#   );
+#   alter table perfis_usuario enable row level security;
+#   create policy "anon insert" on perfis_usuario for insert to anon with check (true);
+#   create policy "anon select" on perfis_usuario for select to anon using (true);
+#   create policy "anon update" on perfis_usuario for update to anon using (true);
+#
 # A configuração per-tenant usada na Cloud NÃO precisa desta tabela: se ela não
 # existir ou a leitura falhar, o app cai no plano por variável de ambiente.
 
@@ -53,6 +67,7 @@ import requests
 _TABELA_PADRAO = "triagens"
 _TABELA_PLANOS = "planos_usuario"
 _TABELA_COBRANCAS = "solicitacoes_pagamento"
+_TABELA_PERFIS = "perfis_usuario"
 
 
 def _carregar_env():
@@ -374,6 +389,50 @@ def atualizar_cobranca(doc_id: str, cobranca: dict) -> bool:
         headers=_headers(),
         params={"id": f"eq.{doc_id}"},
         json={"payload": cobranca},
+        timeout=15,
+    )
+    resposta.raise_for_status()
+    return True
+
+
+# ─── Perfil do usuário (Passo 5 SaaS): tabela perfis_usuario ──────────────────
+
+def _perfis_url() -> str:
+    return f"{_base_url()}/{_TABELA_PERFIS}"
+
+
+def carregar_perfil_banco(uid: str) -> dict | None:
+    """Perfil ('nome', 'empresa', 'fuso', 'avatar') do usuário ou None (sem linha)."""
+    config = _config()
+    if not config:
+        return None
+    resposta = requests.get(
+        _perfis_url(),
+        headers=_headers(),
+        params={"select": "nome,empresa,fuso,avatar", "uid": f"eq.{uid}", "limit": "1"},
+        timeout=15,
+    )
+    resposta.raise_for_status()
+    docs = resposta.json() or []
+    if not docs:
+        return None
+    perfil = dict(docs[0] or {})
+    return {k: (perfil.get(k) or "") for k in ("nome", "empresa", "fuso", "avatar")}
+
+
+def gravar_perfil_banco(uid: str, perfil: dict) -> bool:
+    """Upsert do perfil de um usuário na nuvem (por uid)."""
+    config = _config()
+    if not config:
+        return False
+    linha = {"uid": uid}
+    for k in ("nome", "empresa", "fuso", "avatar"):
+        linha[k] = (perfil.get(k) or "").strip() if k != "avatar" else (perfil.get(k) or "")
+    resposta = requests.post(
+        _perfis_url(),
+        headers={**_headers(), "Prefer": "resolution=merge-duplicates,return=minimal"},
+        params={"on_conflict": "uid"},
+        json=linha,
         timeout=15,
     )
     resposta.raise_for_status()
