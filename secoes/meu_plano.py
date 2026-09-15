@@ -156,8 +156,12 @@ def render():
     wa = _whatsapp_suporte()
     if wa:
         st.markdown("### 💬 Suporte")
-        st.caption("Dúvidas sobre plano, pagamento ou estorno? Fale direto com a gente pelo WhatsApp 👇")
-        _exibir_botao_whatsapp(wa)
+        _c_txt, _c_wa = st.columns([3.2, 1], vertical_alignment="center")
+        with _c_txt:
+            st.caption("Dúvidas sobre plano, pagamento ou estorno? Fale direto com a gente pelo WhatsApp.")
+        with _c_wa:
+            _exibir_botao_whatsapp(wa)
+        st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
 
     # ─── Comparativo Basic × Premium ─────────────────────────────────────────
     with st.expander("💼 Comparar planos — Basic × Premium", expanded=False):
@@ -274,21 +278,21 @@ def _icone_whatsapp_inline() -> str:
 
 
 def _exibir_botao_whatsapp(link: str) -> None:
-    """Botão compacto do WhatsApp (só o símbolo, centralizado) no verde da marca."""
+    """Botão quadrado do WhatsApp (só o símbolo, centralizado) no verde da marca."""
     st.markdown(
         f"""
         <style>
-        .wa-round {{
+        .wa-quadrado {{
             display:flex; align-items:center; justify-content:center;
-            width:52px; height:52px; border-radius:50%;
+            width:52px; height:52px; border-radius:12px;
             background:#25D366; color:#ffffff; border:none; cursor:pointer;
             box-shadow:0 4px 12px rgba(37,211,102,.35);
             transition:transform .15s ease, filter .15s ease;
         }}
-        .wa-round:hover {{ transform:scale(1.06); filter:brightness(1.06); }}
+        .wa-quadrado:hover {{ transform:scale(1.06); filter:brightness(1.06); }}
         </style>
         <a href="{link}" target="_blank" style="text-decoration:none">
-            <button class="wa-round">{_icone_whatsapp_inline()}</button>
+            <button class="wa-quadrado">{_icone_whatsapp_inline()}</button>
         </a>
         """,
         unsafe_allow_html=True,
