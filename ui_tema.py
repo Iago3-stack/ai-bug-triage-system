@@ -410,8 +410,6 @@ body:has([data-st-tema="escuro"]) [data-testid="stVerticalBlock"]:has(> [data-te
 [data-testid="stElementContainer"]:has(.marca-plano-admin-estorno) + [data-testid="stElementContainer"] [data-testid="stButton"] button:hover { background:#dc2626 !important; color:#ffffff !important; border:none !important; font-weight:700 !important; box-shadow:0 3px 10px rgba(220,38,38,.35) !important; }
 [data-testid="stElementContainer"]:has(.marca-plano-ferramenta) + [data-testid="stElementContainer"] [data-testid="stButton"] button,
 [data-testid="stElementContainer"]:has(.marca-plano-ferramenta) + [data-testid="stElementContainer"] [data-testid="stButton"] button:hover { background:#2563eb !important; color:#ffffff !important; border:none !important; font-weight:700 !important; box-shadow:0 3px 10px rgba(37,99,235,.35) !important; }
-[data-testid="stElementContainer"]:has(.marca-plano-wa) + [data-testid="stElementContainer"] [data-testid="stLinkButton"] a,
-[data-testid="stElementContainer"]:has(.marca-plano-wa) + [data-testid="stElementContainer"] [data-testid="stLinkButton"] a:hover { background:#128C7E !important; color:#ffffff !important; border:none !important; font-weight:700 !important; box-shadow:0 3px 10px rgba(18,140,126,.35) !important; }
 </style>
 """
 
