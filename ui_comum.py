@@ -284,7 +284,7 @@ def sidebar_comum():
         if st.sidebar.button("🚪 Sair", use_container_width=True, key="btn_sair"):
             auth_supabase.sair_da_conta()  # revoga o token no Supabase + limpa a sessão local
             sessao_persist.limpar()  # apaga a sessão do navegador (não reidratar no F5)
-            # Sai para o Início: o Painel do Dono some do menu p/ quem não é admin.
+            # Sai para o Início: o Painel do Administrador some do menu p/ quem não é admin.
             st.switch_page(roteador.PAGINAS["inicio"])
 
     # --- CTA: ESTRELA NO GITHUB ---
@@ -332,7 +332,7 @@ def menu_top(pg_atual):
         ("dashboard", "📈️ Dashboard QA"),
     )
     if admin.eh_dono():
-        _caminhos = _caminhos + (("painel_dono", "🛠️ Painel do Dono"),)
+        _caminhos = _caminhos + (("painel_dono", "🛠️ Painel do Administrador"),)
 
     with st.container():
         st.markdown('<div class="marca-tbn" style="display:none"></div>', unsafe_allow_html=True)

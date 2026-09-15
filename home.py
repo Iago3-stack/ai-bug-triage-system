@@ -65,7 +65,7 @@ sessao_persist.processar_pendente()
 # ?token_hash=...&type=signup -> troca o hash por uma sessão e loga o usuário.
 _processar_confirmacao_email()
 
-# Páginas visíveis: o Painel do Dono só entra quando a conta logada é ADMIN_EMAIL.
+# Páginas visíveis: o Painel do Administrador só entra quando a conta logada é ADMIN_EMAIL.
 pg = st.navigation(roteador.paginas_visiveis(), position="sidebar")
 
 ui_tema.aplicar_css()

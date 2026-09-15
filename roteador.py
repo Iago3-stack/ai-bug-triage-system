@@ -8,12 +8,12 @@ PAGINAS = {
     "triagem": st.Page(ferramenta.render, title="Triagem de Bugs", url_path="triagem", icon="🔍"),
     "meu_plano": st.Page(meu_plano.render, title="Meu Plano", url_path="meu_plano", icon="💼"),
     "dashboard": st.Page(dashboard_pagina.render, title="Dashboard QA", url_path="dashboard", icon="📈️"),
-    "painel_dono": st.Page(painel_dono.render, title="Painel do Dono", url_path="painel_dono", icon="🛠️"),
+    "painel_dono": st.Page(painel_dono.render, title="Painel do Administrador", url_path="painel_dono", icon="🛠️"),
 }
 
 
 def paginas_visiveis() -> list:
-    """Páginas registradas, sem o Painel do Dono para quem não é o dono."""
+    """Páginas registradas, sem o Painel do Administrador para quem não é o dono."""
     try:
         import admin
 

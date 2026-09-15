@@ -1,4 +1,4 @@
-"""🛠️ Painel do Dono (Passo 6 SaaS) — visão do dono sobre todas as contas.
+"""🛠️ Painel do Administrador (Passo 6 SaaS) — visão do dono sobre todas as contas.
 
 Acesso restrito a ADMIN_EMAIL. Mostra métricas, a lista de contas (e-mail,
 perfil, plano, último login) e ações diretas: ativar Premium, voltar a Basic
@@ -65,8 +65,18 @@ def render():
     if _aviso:
         st.success(_aviso)
 
+    st.markdown("""
+    <div style="width:100%;background:linear-gradient(135deg,#0f172a 0%,#1a2740 55%,#7c3aed 180%);border-radius:16px;padding:30px 34px 28px 34px;margin:4px 0 16px;box-shadow:0 8px 22px rgba(15,23,42,.18);border:1px solid rgba(139,92,246,.22)">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <span style="background:rgba(139,92,246,.18);color:#c4b5fd;border:1px solid rgba(139,92,246,.5);border-radius:999px;padding:4px 14px;font-size:12px;font-weight:800;letter-spacing:.04em">🛠️ ACESSO RESTRITO AO ADMIN</span>
+        <span style="color:#94a3b8;font-size:12px;font-weight:700;letter-spacing:.04em">TODAS AS CONTAS · AÇÕES IMEDIATAS</span>
+      </div>
+      <div style="color:#ffffff;font-size:29px;font-weight:800;margin-top:18px;letter-spacing:-.01em;line-height:1.25">🛠️ Painel do Administrador</div>
+      <div style="color:#cbd5e1;font-size:16.5px;line-height:1.7;margin-top:8px;max-width:96%">Visão geral de <b style="color:#86efac">todas as contas</b> registradas no app: Premium, testes, Basic e cobranças. As ações <b style="color:#86efac">refletem imediatamente</b> no plano de cada usuário.</div>
+    </div>
+    """, unsafe_allow_html=True)
+
     if not admin.eh_dono():
-        st.markdown("### 🛠️ Painel do Dono")
         st.warning(
             "Esta página é **restrita ao dono** (e-mail configurado em `ADMIN_EMAIL`). "
             "Se você não é o dono, pode seguir usando o app normalmente."
@@ -104,9 +114,6 @@ def render():
         dados.setdefault("email", "—")
         dados.setdefault("plano", "free")
         dados.setdefault("teste_ate", None)
-
-    st.markdown("### 🛠️ Painel do Dono")
-    st.caption("Visão geral de todas as contas registradas no app. As ações refletem imediatamente no plano de cada usuário.")
 
     # ─── Métricas ──────────────────────────────────────────────────────────────
     qtd_premium = qtd_teste = 0
