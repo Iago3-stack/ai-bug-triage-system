@@ -351,7 +351,7 @@ def _bolinha_perfil(email: str) -> None:
     _c_avatar, _c_chip = st.columns([1, 2.2], vertical_alignment="center", gap="small")
     with _c_avatar:
         st.markdown('<div class="marca-perfil-avatar" style="display:none"></div>', unsafe_allow_html=True)
-        _label = perfil.iniciais_para_bolinha(uid) or "?"
+        _label = "" if avatar else (perfil.iniciais_para_bolinha(uid) or "?")
         _fundo = f'url("{avatar}") center/cover no-repeat, ' if avatar else ""
         st.markdown(
             f"""
@@ -359,12 +359,11 @@ def _bolinha_perfil(email: str) -> None:
             [data-testid="stColumn"]:has(.marca-perfil-avatar) [data-testid="stButton"] button {{
                 width:38px; height:38px; border-radius:50%; padding:0; border:none;
                 min-width:38px; min-height:38px; display:flex; align-items:center;
-                justify-content:center; font-size:14px; font-weight:800; color:#ffffff;
+                justify-content:center; font-size:14px; font-weight:800; color:transparent;
                 box-shadow:0 2px 8px rgba(37,211,102,.35);
                 background:{_fundo}linear-gradient(135deg,#25D366,#2E7CF6);
             }}
             [data-testid="stColumn"]:has(.marca-perfil-avatar) [data-testid="stButton"] button:hover {{ filter:brightness(1.06); transform:scale(1.04); }}
-            {"[data-testid='stColumn']:has(.marca-perfil-avatar) [data-testid='stButton'] button { color:transparent !important; }" if avatar else ""}
             </style>
             """,
             unsafe_allow_html=True,
