@@ -156,7 +156,7 @@ def render():
     wa = _whatsapp_suporte()
     if wa:
         st.markdown("### 💬 Suporte")
-        st.caption("Dúvidas sobre plano, pagamento ou estorno? Fale direto com a gente.")
+        st.caption("Dúvidas sobre plano, pagamento ou estorno? Fale direto com a gente pelo WhatsApp 👇")
         _exibir_botao_whatsapp(wa)
 
     # ─── Comparativo Basic × Premium ─────────────────────────────────────────
@@ -274,14 +274,22 @@ def _icone_whatsapp_inline() -> str:
 
 
 def _exibir_botao_whatsapp(link: str) -> None:
-    """Botão de WhatsApp com o mesmo visual do contato da sidebar (.contact-btn)."""
-    import hero_animado
-
-    st.markdown(hero_animado.CONTATO_CSS, unsafe_allow_html=True)
+    """Botão compacto do WhatsApp (só o símbolo, centralizado) no verde da marca."""
     st.markdown(
-        f'<a href="{link}" target="_blank">'
-        f'<button class="contact-btn" style="background:#25D366;color:#fff">'
-        f'{_icone_whatsapp_inline()}Falar no WhatsApp'
-        f'</button></a>',
+        f"""
+        <style>
+        .wa-round {{
+            display:flex; align-items:center; justify-content:center;
+            width:52px; height:52px; border-radius:50%;
+            background:#25D366; color:#ffffff; border:none; cursor:pointer;
+            box-shadow:0 4px 12px rgba(37,211,102,.35);
+            transition:transform .15s ease, filter .15s ease;
+        }}
+        .wa-round:hover {{ transform:scale(1.06); filter:brightness(1.06); }}
+        </style>
+        <a href="{link}" target="_blank" style="text-decoration:none">
+            <button class="wa-round">{_icone_whatsapp_inline()}</button>
+        </a>
+        """,
         unsafe_allow_html=True,
     )
