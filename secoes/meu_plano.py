@@ -283,6 +283,7 @@ def _aviso_fixo_atualizar() -> None:
     st.markdown(
         """
         <style>
+        /* Barra fixa "atualize a página" — tema padrão (claro) */
         .aviso-atualizar-fixo {
             position: sticky !important;
             top: 0;
@@ -294,16 +295,24 @@ def _aviso_fixo_atualizar() -> None:
             padding: 9px 14px;
             margin: 2px 0 14px;
             border-radius: 12px;
-            background: linear-gradient(90deg, rgba(37,211,102,.14), rgba(37,211,102,.05));
-            border: 1px solid rgba(37,211,102,.4);
-            color: #cff7e3;
+            background: linear-gradient(90deg, rgba(37,211,102,.18), rgba(2,132,199,.08));
+            border: 1px solid rgba(37,211,102,.55);
+            color: #134e34;
             font-size: 12.5px;
             font-weight: 600;
-            box-shadow: 0 4px 14px rgba(15,23,42,.25);
-            backdrop-filter: blur(2px);
+            box-shadow: 0 4px 14px rgba(15,23,42,.14);
         }
-        .aviso-atualizar-fixo b { color: #86efac; }
+        .aviso-atualizar-fixo b { color: #047857; }
         .aviso-atualizar-fixo .icone { font-size: 15px; }
+
+        /* Tema escuro — fundo sólido escuro, texto claro */
+        body:has([data-st-tema="escuro"]) .aviso-atualizar-fixo {
+            background: linear-gradient(90deg, rgba(37,211,102,.16), rgba(37,211,102,.05));
+            border: 1px solid rgba(37,211,102,.4);
+            color: #cff7e3;
+            box-shadow: 0 4px 14px rgba(15,23,42,.25);
+        }
+        body:has([data-st-tema="escuro"]) .aviso-atualizar-fixo b { color: #86efac; }
         </style>
         <div class="aviso-atualizar-fixo">
             <span class="icone">🔄</span>
