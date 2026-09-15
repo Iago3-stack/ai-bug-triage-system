@@ -328,7 +328,7 @@ def menu_top(pg_atual):
 
 
 def _bolinha_perfil(email: str) -> None:
-    """Bolinha do perfil (foto ou iniciais) acima do chip; clique abre o modal.
+    """Bolinha do perfil (foto ou iniciais) SOBRE o chip; clique abre o modal.
 
     A bolinha é um Streamlit button por baixo de um marcador (padrão do app);
     o <style> injetado a modela como círculo (gradiente com iniciais, ou a foto
@@ -348,41 +348,43 @@ def _bolinha_perfil(email: str) -> None:
     dados = perfil.carregar(uid)
     avatar = dados.get("avatar") or ""
 
-    _c_avatar, _c_chip = st.columns([1, 2.2], vertical_alignment="center", gap="small")
-    with _c_avatar:
-        st.markdown('<div class="marca-perfil-avatar" style="display:none"></div>', unsafe_allow_html=True)
-        _label = "" if avatar else (perfil.iniciais_para_bolinha(uid) or "?")
-        _fundo = f'url("{avatar}") center/cover no-repeat, ' if avatar else ""
-        st.markdown(
-            f"""
-            <style>
-            [data-testid="stColumn"]:has(.marca-perfil-avatar) [data-testid="stButton"] button {{
-                width:38px; height:38px; border-radius:50%; padding:0; border:none;
-                min-width:38px; min-height:38px; display:flex; align-items:center;
-                justify-content:center; font-size:14px; font-weight:800; color:transparent;
-                box-shadow:0 2px 8px rgba(37,211,102,.35);
-                background:{_fundo}linear-gradient(135deg,#25D366,#2E7CF6);
-            }}
-            [data-testid="stColumn"]:has(.marca-perfil-avatar) [data-testid="stButton"] button:hover {{ filter:brightness(1.06); transform:scale(1.04); }}
-            </style>
-            """,
-            unsafe_allow_html=True,
-        )
-        if st.button(_label, key="topnav_perfil", help="Meu perfil"):
-            _modal_perfil(uid, email)
-    with _c_chip:
-        nome = dados.get("nome") or ""
-        if nome:
-            _chip = f"👤 {nome}"
-            _sub = f'<div style="font-size:10px;opacity:.72;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{email}</div>'
-        else:
-            _chip = f"👤 {email}"
-            _sub = ""
-        st.markdown(
-            f'<div class="marca-top-user" style="text-align:left;padding:5px 12px;max-width:100%">'
-            f"{_chip}{_sub}</div>",
-            unsafe_allow_html=True,
-        )
+    st.markdown('<div class="marca-perfil-avatar" style="display:none"></div>', unsafe_allow_html=True)
+    _label = "" if avatar else (perfil.iniciais_para_bolinha(uid) or "?")
+    _fundo = f'url("{avatar}") center/cover no-repeat, ' if avatar else ""
+    st.markdown(
+        f"""
+        <style>
+        [data-testid="stMarkdownContainer"]:has(.marca-perfil-avatar) {{ display:none; }}
+        [data-testid="stColumn"]:has(.marca-perfil-avatar) [data-testid="stVerticalBlock"] {{
+            display:flex; flex-direction:column; align-items:center; gap:3px; padding-top:2px;
+        }}
+        [data-testid="stColumn"]:has(.marca-perfil-avatar) [data-testid="stButton"] button {{
+            width:38px; height:38px; border-radius:50%; padding:0; border:none;
+            min-width:38px; min-height:38px; display:flex; align-items:center;
+            justify-content:center; font-size:14px; font-weight:800; color:transparent;
+            box-shadow:0 2px 8px rgba(37,211,102,.35);
+            background:{_fundo}linear-gradient(135deg,#25D366,#2E7CF6);
+        }}
+        [data-testid="stColumn"]:has(.marca-perfil-avatar) [data-testid="stButton"] button:hover {{ filter:brightness(1.06); transform:scale(1.04); }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+    if st.button(_label, key="topnav_perfil", help="Meu perfil"):
+        _modal_perfil(uid, email)
+
+    nome = dados.get("nome") or ""
+    if nome:
+        _chip = f"👤 {nome}"
+        _sub = f'<div style="font-size:10px;opacity:.72;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{email}</div>'
+    else:
+        _chip = f"👤 {email}"
+        _sub = ""
+    st.markdown(
+        f'<div class="marca-top-user" style="text-align:center;padding:5px 12px;max-width:100%">'
+        f"{_chip}{_sub}</div>",
+        unsafe_allow_html=True,
+    )
 
 
 @st.dialog("👤 Seu perfil")
