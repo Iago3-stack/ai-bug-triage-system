@@ -175,8 +175,30 @@ def test_falha_smtp_nao_levanta(monkeypatch):
     monkeypatch.setattr(notificacoes, "_ler", _ler)
     correio = _Correio(None, None, None)
     correio.login = lambda user, senha: (_ for _ in ()).throw(PermissionError("senha errada"))
-    monkeypatch.setattr(notificacoes.smtplib, "SMTP", lambda h, po, t: correio)
+    monkeypatch.setattr(notificacoes.smtplib, "SMTP", lambda host, porta, timeout: correio)
     assert notificacoes.notificar_email("CRÍTICA 🚨", "resumo") is False
+    assert "PermissionError" in notificacoes.ultimo_erro_email()
+
+
+def test_erro_email_limpa_no_sucesso(monkeypatch):
+    def _ler(nome):
+        return {
+            "ALERTA_EMAIL_TO": "qa@empresa.com",
+            "SMTP_USER": "u",
+            "SMTP_PASS": "p",
+        }.get(nome, "")
+
+    monkeypatch.setattr(notificacoes, "_ler", _ler)
+    correio = _Correio(None, None, None)
+    correio.login = lambda user, senha: (_ for _ in ()).throw(PermissionError("senha errada"))
+    monkeypatch.setattr(notificacoes.smtplib, "SMTP", lambda host, porta, timeout: correio)
+    notificacoes.notificar_email("CRÍTICA 🚨", "resumo")
+    assert notificacoes.ultimo_erro_email()
+
+    correio.login = lambda user, senha: None
+    monkeypatch.setattr(notificacoes.smtplib, "SMTP", lambda host, porta, timeout: correio)
+    assert notificacoes.notificar_email("CRÍTICA 🚨", "resumo") is True
+    assert notificacoes.ultimo_erro_email() == ""
 
 
 # --- Detecção de canal configurado (mostra o status no app) ---

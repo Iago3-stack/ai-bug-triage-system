@@ -532,7 +532,10 @@ def render():
                 if "CRÍTICA" in _prio_alerta or "ALTA" in _prio_alerta:
                     _detalhes = []
                     if _email_cfg:
-                        _detalhes.append(f"✉️ e-mail {'enviado ✅' if _email_ok else 'FALHOU ❌'}")
+                        _status_email = "enviado ✅" if _email_ok else "FALHOU ❌"
+                        if not _email_ok and notificacoes.ultimo_erro_email():
+                            _status_email += f" ({notificacoes.ultimo_erro_email()})"
+                        _detalhes.append(f"✉️ e-mail {_status_email}")
                     if _discord_cfg:
                         _detalhes.append(f"🔔 Discord {'enviado ✅' if _discord_ok else 'FALHOU ❌'}")
                     st.session_state["status_alerta"] = (

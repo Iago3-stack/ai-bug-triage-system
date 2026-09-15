@@ -169,8 +169,17 @@ def _smtp_config() -> dict:
     }
 
 
+_ULTIMO_ERRO_EMAIL: str | None = None
+
+
+def ultimo_erro_email() -> str:
+    """Motivo detalhado da última falha de e-mail (para diagnóstico no app)."""
+    return _ULTIMO_ERRO_EMAIL or ""
+
+
 def _enviar_email(cfg: dict, para: str, assunto: str, corpo: str) -> bool:
     """Envia e-mail via SMTP. True se enviou; nunca levanta exceção."""
+    global _ULTIMO_ERRO_EMAIL
     try:
         msg = EmailMessage()
         msg["Subject"] = assunto
@@ -181,8 +190,10 @@ def _enviar_email(cfg: dict, para: str, assunto: str, corpo: str) -> bool:
             smtp.starttls()
             smtp.login(cfg["user"], cfg["senha"])
             smtp.send_message(msg)
+        _ULTIMO_ERRO_EMAIL = None
         return True
-    except Exception:
+    except Exception as e:
+        _ULTIMO_ERRO_EMAIL = f"{type(e).__name__}: {str(e)[:160]}"
         return False
 
 
@@ -222,7 +233,7 @@ def testar_email() -> tuple[bool, str]:
             "Se você recebeu este e-mail, o canal de alertas está funcionando.",
         ):
             return True, "E-mail de teste enviado."
-        return False, "Falha ao enviar o e-mail (SMTP)."
+        return False, f"Falha ao enviar o e-mail (SMTP): {ultimo_erro_email()}"
     except Exception as e:
         return False, f"Falha inesperada ao testar e-mail: {type(e).__name__}"
 
