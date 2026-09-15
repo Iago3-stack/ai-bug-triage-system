@@ -3,6 +3,7 @@ Stripe"), estorno, suporte por WhatsApp e adoção de dados antigos sem dono."""
 import os
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 import auth_supabase
 import notificacoes
@@ -54,6 +55,15 @@ def render():
         email_conta = (sessao.get("user") or {}).get("email")
     except Exception:
         email_conta = None
+
+    _lembrete = st.session_state.pop("meu_plano_lembrete", None)
+    if _lembrete:
+        st.success(_lembrete)
+        st.info(
+            "🔄 Este fluxo depende da confirmação manual do responsável. "
+            "**Atualize a página** (ou clique em qualquer lugar do menu) para "
+            "ver as mudanças refletidas na tela.",
+        )
 
     st.markdown("""
     <div style="height:3px;width:100%;background:linear-gradient(90deg,transparent,#25D366,#2E7CF6,#7c3aed,transparent);border-radius:999px;margin:8px 0"></div>
@@ -131,7 +141,7 @@ def render():
                     f"Estorno solicitado: cobrança {pedido['id']} de {pedido.get('uid')} "
                     f"({pixbilling.preco_texto()})"
                 )
-                st.success("Estorno solicitado! O responsável vai devolver o valor via Pix.")
+                _lembrete_refresh("↩️ Pedido de estorno enviado ao responsável!")
                 st.rerun()
         if estornadas:
             st.caption("Últimos estornos desta conta:")
@@ -207,14 +217,14 @@ def _exibir_checkout_pix(cobranca: dict, uid: str) -> None:
             f"**Status:** {pixbilling.status_rotulo(cobranca.get('status'))}"
         )
         if payload:
-            st.code(payload, language=None)
+            _exibir_copia_e_cola(payload)
         st.caption("Pague no app do seu banco e clique em 'Já paguei' para avisar o responsável.")
         _marcador("marca-plano-paguei")
         if st.button("✅ Já paguei", key=f"btn_paguei_{cobranca['id']}", type="primary"):
             _avisar_admin(
                 f"Pagamento avisado: {pixbilling.preco_texto()} de {uid} (cobrança {cobranca['id']})"
             )
-            st.success("Aviso enviado! O responsável vai confirmar seu pagamento.")
+            _lembrete_refresh("✅ Pagamento avisado! Aguarde a confirmação do responsável.")
             st.rerun()
 
 
@@ -232,12 +242,12 @@ def _exibir_painel_admin() -> None:
                     feito = pixbilling.confirmar_cobranca(c["id"])
                     if feito:
                         _avisar_admin(f"Premium confirmado para {c.get('uid')}")
-                        st.success(f"Premium ativado para {c.get('uid')}.")
+                        _lembrete_refresh(f"✅ Premium confirmado! {c.get('uid')} ganhou acesso.")
                         st.rerun()
                 _marcador("marca-plano-admin-canc")
                 if st.button("✖️ Cancelar cobrança", key=f"admin_cancelar_{c['id']}"):
                     if pixbilling.cancelar_cobranca(c["id"]):
-                        st.success("Cobrança cancelada.")
+                        _lembrete_refresh("✖️ Cobrança cancelada.")
                         st.rerun()
     else:
         st.caption("Nenhum pagamento aguardando confirmação.")
@@ -251,7 +261,7 @@ def _exibir_painel_admin() -> None:
                 _marcador("marca-plano-admin-estorno")
                 if st.button("↩️ Marcar como devolvido", key=f"admin_estornar_{c['id']}", type="primary"):
                     if pixbilling.estornar(c["id"], motivo="Devolvido via Pix pelo responsável"):
-                        st.success("Estorno registrado. O usuário voltou ao Basic.")
+                        _lembrete_refresh("↩️ Estorno registrado — o usuário voltou ao Basic.")
                         st.rerun()
 
 
@@ -262,6 +272,11 @@ def _avisar_admin(mensagem: str) -> None:
     notificacoes.notificar_evento("Ação necessária — pagamento", mensagem)
 
 
+def _lembrete_refresh(mensagem: str) -> None:
+    """Guarda um aviso para exibir logo após o rerun do próximo passo do fluxo."""
+    st.session_state["meu_plano_lembrete"] = mensagem
+
+
 def _icone_whatsapp_inline() -> str:
     """Símbolo do WhatsApp embutido como SVG (mesmo jeito do 'G' do Google no login)."""
     return (
@@ -270,6 +285,78 @@ def _icone_whatsapp_inline() -> str:
         '<path fill="currentColor" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>'
         '</svg>'
     )
+
+
+def _exibir_copia_e_cola(payload: str) -> None:
+    """Cartão 'Pix Copia e Cola' profissional: código mascarado + botão Copiar.
+
+    O código completo fica oculto na tela (e não vaza para o histórico da
+    página); um toque no botão copia o valor para a área de transferência e
+    o usuário só cola no banco. O iframe roda o JS de cópia (a Clipboard API
+    exige contexto seguro — https, ok na Cloud).
+    """
+    import html as _html
+    import json as _json
+
+    final = _html.escape(payload[-4:] if payload else "")
+    js = _json.dumps(payload, ensure_ascii=False)
+    cartao = f"""
+    <style>
+      .pix-card {{
+        font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+        background:#0b1526; border:1px solid #22334f; border-radius:14px;
+        padding:14px 16px 12px; color:#cbd5e1; min-width:280px;
+        box-shadow:0 4px 14px rgba(15,23,42,.28);
+      }}
+      .pix-top {{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }}
+      .pix-rot {{ font-size:10px; letter-spacing:.16em; font-weight:800; color:#94a3b8; }}
+      .pix-seg {{ font-size:11px; color:#4ade80; font-weight:700; }}
+      .pix-masc {{
+        font-family:ui-monospace,'SF Mono',Consolas,monospace; font-size:13px;
+        color:#94a3b8; letter-spacing:.08em; text-align:center; user-select:none;
+        background:#101c31; border:1px dashed #2b3d5c; border-radius:9px; padding:9px 10px;
+        margin-bottom:11px; overflow:hidden; white-space:nowrap;
+      }}
+      .pix-copiar {{
+        width:100%; padding:11px; border:none; border-radius:10px; cursor:pointer;
+        font-weight:800; font-size:14px; letter-spacing:.02em; color:#022c0e;
+        background:#25D366; box-shadow:0 4px 12px rgba(37,211,102,.30);
+        transition:transform .12s ease, filter .12s ease;
+      }}
+      .pix-copiar:hover {{ transform:translateY(-1px); filter:brightness(1.05); }}
+      .pix-aviso {{ display:block; text-align:center; margin-top:9px; font-size:12px;
+        font-weight:700; color:#4ade80; opacity:0; transition:opacity .25s ease; min-height:14px; }}
+    </style>
+    <div class="pix-card">
+      <div class="pix-top">
+        <span class="pix-rot">PIX COPIA E COLA</span>
+        <span class="pix-seg">&#128274; oculto</span>
+      </div>
+      <div class="pix-masc" title="Clique em Copiar para usar o código">•••• •••• •••• •••• <span style="color:#e2e8f0">{final}</span></div>
+      <button class="pix-copiar" onclick="copiar()">&#128203; Copiar código do Pix</button>
+      <span class="pix-aviso" id="pixtoast">Copiado! Cole no app do banco e pague.</span>
+    </div>
+    <script>
+      var _pix = {js};
+      function copiar() {{
+        var avisar = function() {{
+          var a = document.getElementById('pixtoast');
+          if (a) {{ a.style.opacity = 1; setTimeout(function(){{ a.style.opacity = 0; }}, 2600); }}
+        }};
+        var tradicional = function() {{
+          var e = document.createElement('textarea');
+          e.value = _pix; e.style.position = 'fixed'; e.style.opacity = '0';
+          document.body.appendChild(e); e.select(); e.setSelectionRange(0, e.value.length);
+          try {{ document.execCommand('copy'); }} catch (_) {{}}
+          document.body.removeChild(e); avisar();
+        }};
+        if (navigator.clipboard && window.isSecureContext) {{
+          navigator.clipboard.writeText(_pix).then(avisar, tradicional);
+        }} else {{ tradicional(); }}
+      }}
+    </script>
+    """
+    components.html(cartao, height=175)
 
 
 def _exibir_botao_whatsapp(link: str) -> None:
