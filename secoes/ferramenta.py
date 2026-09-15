@@ -831,6 +831,6 @@ def render():
                     st.warning("Nada foi alterado (campo vazio ou registro não encontrado).")
     # --- 6.6 DASHBOARD DE QA (visão geral do histórico persistido) ---
     if registros_totais:
-        with st.expander("📈 Dashboard de QA — visão geral do histórico", key="ex_dashboard"):
+        with st.expander("📈️ Dashboard de QA — visão geral do histórico", key="ex_dashboard"):
             st.markdown('<div class="marca-dashboard" style="display:none"></div>', unsafe_allow_html=True)
             dashboard_qa.render_dashboard(registros_totais)

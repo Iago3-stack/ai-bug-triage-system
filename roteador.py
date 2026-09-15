@@ -7,7 +7,7 @@ PAGINAS = {
     "inicio": st.Page(inicio.render, title="Início", url_path="inicio", icon="🏠", default=True),
     "triagem": st.Page(ferramenta.render, title="Triagem de Bugs", url_path="triagem", icon="🔍"),
     "meu_plano": st.Page(meu_plano.render, title="Meu Plano", url_path="meu_plano", icon="💼"),
-    "dashboard": st.Page(dashboard_pagina.render, title="Dashboard QA", url_path="dashboard", icon="📈"),
+    "dashboard": st.Page(dashboard_pagina.render, title="Dashboard QA", url_path="dashboard", icon="📈️"),
     "painel_dono": st.Page(painel_dono.render, title="Painel do Dono", url_path="painel_dono", icon="🛠️"),
 }
 

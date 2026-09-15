@@ -329,7 +329,7 @@ def menu_top(pg_atual):
         ("inicio", "🏠 Início"),
         ("triagem", "🔍 Triagem de Bugs"),
         ("meu_plano", "💼 Meu Plano"),
-        ("dashboard", "📈 Dashboard QA"),
+        ("dashboard", "📈️ Dashboard QA"),
     )
     if admin.eh_dono():
         _caminhos = _caminhos + (("painel_dono", "🛠️ Painel do Dono"),)
