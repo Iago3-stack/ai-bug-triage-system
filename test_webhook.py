@@ -1,7 +1,11 @@
 import json
 import http.client
 import os
+import socket
+import subprocess
+import sys
 import threading
+import time
 
 import pytest
 
@@ -135,7 +139,60 @@ def test_transporte_json_mal_formado(servidor):
     assert r.status == 400
 
 
-def test_transporte_exige_token(servidor, monkeypatch):
+def test_interpretar_args_defaults():
+    assert webhook._interpretar_args([]) == ("0.0.0.0", 8080)
+
+
+def test_interpretar_args_parseia_porta_host():
+    assert webhook._interpretar_args(["--porta", "8087", "--host", "127.0.0.1"]) == ("127.0.0.1", 8087)
+
+
+def test_interpretar_args_ignora_bandeira_desconhecida():
+    assert webhook._interpretar_args(["--nao-existe", "1"]) == ("0.0.0.0", 8080)
+
+
+def test_cli_inicia_e_responde():
+    s = socket.socket()
+    s.bind(("127.0.0.1", 0))
+    porta = s.getsockname()[1]
+    s.close()
+    proc = subprocess.Popen(
+        [sys.executable, "webhook.py", "--porta", str(porta), "--host", "127.0.0.1"],
+        cwd=os.path.dirname(os.path.abspath(__file__)),
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    try:
+        resp_health = None
+        for _ in range(40):
+            try:
+                conn = http.client.HTTPConnection("127.0.0.1", porta, timeout=2)
+                conn.request("GET", "/health")
+                resp_health = conn.getresponse()
+                conn.close()
+                if resp_health.status == 200:
+                    break
+            except OSError:
+                time.sleep(0.25)
+        assert resp_health is not None and resp_health.status == 200
+        conn = http.client.HTTPConnection("127.0.0.1", porta, timeout=2)
+        conn.request(
+            "POST",
+            "/webhook/falha",
+            json.dumps({"evidencia": "POST /x [502 Bad Gateway, 1B, 1ms]"}).encode(),
+            {"Content-Type": "application/json"},
+        )
+        r = conn.getresponse()
+        dados = json.loads(r.read())
+        conn.close()
+        assert r.status == 200
+        assert dados["tipo"] == "postman"
+    finally:
+        proc.terminate()
+        proc.wait(timeout=5)
+
+
+def test_token_exige_autorizacao_no_transporte(servidor, monkeypatch):
     monkeypatch.setenv("WEBHOOK_TOKEN", "seg")
     conn = http.client.HTTPConnection(servidor.replace("http://", ""))
     conn.request("POST", "/webhook/falha", json.dumps({"evidencia": "x"}).encode(), {"Content-Type": "application/json"})

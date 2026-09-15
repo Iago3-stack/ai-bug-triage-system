@@ -52,7 +52,7 @@ O sistema trabalha com **dois motores de análise** que se **reconciliam** pela 
 | `test_triagem.py` | Testes unitários do motor (18) | pytest |
 | `test_colar_falha.py` | Testes do Colar Falha (13): erro/local do traceback Python e Java, categorias, módulo, versão (ignora datas), severidade prévia, relato montado e robustez (nunca levanta) | pytest |
 | `test_adaptadores.py` | Testes dos adaptadores Playwright/Postman (16): detecção de formato, extração de teste/asserção/Expected/Received/local, método+URL e **esperado × recebido** do Postman, erro do corpo JSON, fallback para o parser genérico, relato com "Ferramenta de origem"/"Requisição" e robustez | pytest |
-| `test_webhook.py` | Testes do webhook de CI (15): payloads Playwright/Postman/livre, payload inválido, teto de 200 KB, token (ausente/ok/errado), IA/persistência por env e transporte HTTP real (servidor na porta 0): `/health`, POST `/webhook/falha`, 401/404/400 | pytest |
+| `test_webhook.py` | Testes do webhook de CI (19): payloads Playwright/Postman/livre, payload inválido, teto de 200 KB, token (ausente/ok/errado), IA/persistência por env e transporte HTTP real (servidor na porta 0): `/health`, POST `/webhook/falha`, 401/404/400 | pytest |
 | `test_jira_client.py` | Testes do cliente Jira (15) | pytest |
 | `test_persistencia.py` | Testes da persistência (14): fuso, append, filtro por data, vínculo Jira, tenant por usuário e **migração dos registros legados "global" → uid** | pytest |
 | `test_guardrails.py` | Testes dos guardrails (18): detecção/máscara de PII e falso-positivo | pytest |

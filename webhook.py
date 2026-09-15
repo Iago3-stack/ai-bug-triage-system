@@ -24,6 +24,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import logging
 import os
+import sys
 
 import colar_falha
 
@@ -171,16 +172,22 @@ def criar_servidor(porta: int = 0):
     return ThreadingHTTPServer(("127.0.0.1", porta), TratadorWebhook)
 
 
-def principal(argv: list[str] | None = None) -> None:
+def _interpretar_args(args: list[str]) -> tuple[str, int]:
+    """--host <H> e --porta <P>; defaults: 0.0.0.0:8080."""
     porta = 8080
     host = "0.0.0.0"
-    args = list(argv or [])
-    while args:
-        arg = args.pop(0)
-        if arg == "--porta" and args:
-            porta = int(args.pop(0))
-        elif arg == "--host" and args:
-            host = args.pop(0)
+    fila = list(args)
+    while fila:
+        arg = fila.pop(0)
+        if arg == "--porta" and fila:
+            porta = int(fila.pop(0))
+        elif arg == "--host" and fila:
+            host = fila.pop(0)
+    return host, porta
+
+
+def principal(argv: list[str] | None = None) -> None:
+    host, porta = _interpretar_args(list(argv or []))
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     servidor = ThreadingHTTPServer((host, porta), TratadorWebhook)
     abertura = "aberto (sem token)" if not token_exigido() else "protegido por WEBHOOK_TOKEN"
@@ -197,4 +204,4 @@ def principal(argv: list[str] | None = None) -> None:
 
 
 if __name__ == "__main__":
-    principal()
+    principal(sys.argv[1:])
