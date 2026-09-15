@@ -222,7 +222,20 @@ def status_rotulo(status: str) -> str:
 
 
 def payload_pix(valor: float | None = None) -> str:
-    """Copia-e-cola Pix da cobrança (payload padrão do pix.py ou com txid)."""
+    """Copia-e-cola Pix DA ASSINATURA (Premium).
+
+    Prioridade:
+      1. PIX_COPIA_PLANO  — código fixo gerado no seu banco (ex.: Itaú/PagSeguro),
+                            já carrega o valor da assinatura embutido;
+      2. PIX_COPIA        — copia-e-cola geral configurado (doação/reusa);
+      3. payload padrão   — montado da PIX_KEY (sem valor embutido).
+    """
+    dedicado = pix._ler("PIX_COPIA_PLANO")
+    if dedicado:
+        return dedicado
+    geral = pix._ler("PIX_COPIA")
+    if geral:
+        return geral
     try:
         return pix.payload_configurado()
     except Exception:

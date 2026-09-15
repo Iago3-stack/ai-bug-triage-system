@@ -115,10 +115,10 @@ def render():
     paga = next((c for c in cobrancas if c.get("status") == "confirmado"), None)
     estornadas = [c for c in cobrancas if c.get("status") == "estornado"]
 
-    if aberta and atual == "free":
+    if aberta:
         st.info(
-            f"Você tem uma cobrança **aguardando pagamento** de **{pixbilling.preco_texto()}/mês**. "
-            "Pague o Pix abaixo para ativar o Premium."
+            "Você tem uma cobrança **aguardando pagamento** para ativar o Premium. "
+            "Pague o Pix abaixo e clique em **✅ Já paguei**."
         )
         _exibir_checkout_pix(aberta, uid)
     elif atual == "pago" and paga:
@@ -256,15 +256,10 @@ def _exibir_painel_admin() -> None:
 
 
 def _avisar_admin(mensagem: str) -> None:
-    """Dispara alerta para o dono (e-mail/Discord) quando algo exige ação."""
+    """Dispara alerta ao dono (e-mail/Discord) quando algo exige ação."""
     if not mensagem:
         return
-    try:
-        # notificacoes só dispara para CRÍTICA/ALTA; usamos "ALTA" para chamar atenção.
-        notificacoes.notificar_discord("ALTA", mensagem)
-        notificacoes.notificar_email("ALTA", mensagem)
-    except Exception:
-        pass
+    notificacoes.notificar_evento("Ação necessária — pagamento", mensagem)
 
 
 def _icone_whatsapp_inline() -> str:

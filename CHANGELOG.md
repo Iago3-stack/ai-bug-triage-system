@@ -4,6 +4,17 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.8.1] - 2026-09-15
+
+### Corrigido
+- **Novo cadastro já nascia Premium** — usuário logado com nuvem ativa e sem linha no banco agora **sempre começa em Basic** (`free`); o env legado `PLANO` só vale offline/sem login. Isso também corrigia o **QR/copia-e-cola nunca aparecer**: o checkout só era mostrado quando o plano era `free`, e como todos "eram" Premium, o fluxo de assinatura ficava inacessível.
+- **Checkout agora aparece sempre que há cobrança aberta** — independentemente do plano atual, se existe um pedido `aguardando` o QR + copia-e-cola + "Já paguei" ficam visíveis.
+- **E-mail de pagamento com template de triagem** — criada `notificar_evento()` (e-mail + Discord **neutros**, sem "Relato:/Motor:"); o aviso ao responsável (nova cobrança, "Já paguei", estorno) usa essa função.
+
+### Adicionado
+- **`PIX_COPIA_PLANO`** — o payload da assinatura agora **prioriza** um copia-e-cola dedicado (ex.: código fixo gerado no seu Itaú, que já carrega o valor R$ 19,99 embutido); depois `PIX_COPIA` (doação geral) e por fim o payload padrão da chave.
+- 9 testes novos (novo usuário = Basic mesmo com env `PLANO=pago`, payload `PIX_COPIA_PLANO`, avisos genéricos de evento) — **264 no total**.
+
 ## [v2.8.0] - 2026-09-15
 
 ### Adicionado

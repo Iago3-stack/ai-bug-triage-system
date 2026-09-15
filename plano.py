@@ -64,12 +64,20 @@ def definir_plano_no_banco(uid: str, plano: str) -> bool:
 
 
 def plano_atual() -> str:
-    """Plano ativo: do banco (se logado) senão da variável de ambiente."""
+    """Plano ativo: do banco (se logado e nuvem ativa) senão da variável de ambiente.
+
+    Usuário logado com nuvem ativa SEMPRE vem do banco — sem linha = 'free'
+    (novo usuário) mesmo que haja PLANO=pago legado no env. O env só vale
+    para quem não está logado ou quando a nuvem está off (testes/offline).
+    """
     uid = uid_logado()
     if uid:
+        nuvem_ativa = bool(getattr(nuvem_supabase, "disponivel", lambda: False)())
         banco = plano_no_banco(uid)
         if banco in _PLANOS:
             return banco
+        if nuvem_ativa:
+            return "free"
     plano = os.environ.get("PLANO", "free").strip().lower()
     if plano in _PLANOS:
         return plano

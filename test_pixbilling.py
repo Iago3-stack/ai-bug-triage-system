@@ -103,6 +103,27 @@ def test_payload_configurado_usa_pix(tmp_path, monkeypatch):
     assert pixbilling.payload_pix() == "00020126360014br.gov.bcb.pix6304BEEF"
 
 
+def test_payload_prioriza_pix_copia_plano(tmp_path, monkeypatch):
+    _caminho_tmp(tmp_path, monkeypatch)
+    monkeypatch.setattr(pix, "_ler", lambda nome: "CODIGO_ASSINATURA_ITAU" if nome == "PIX_COPIA_PLANO" else "")
+    monkeypatch.setattr(pix, "payload_configurado", lambda: "PAYLOAD_PADRAO")
+    assert pixbilling.payload_pix() == "CODIGO_ASSINATURA_ITAU"
+
+
+def test_payload_cai_no_pix_copia_geral(tmp_path, monkeypatch):
+    _caminho_tmp(tmp_path, monkeypatch)
+    monkeypatch.setattr(pix, "_ler", lambda nome: "COPIA_GERAL_DOACAO" if nome == "PIX_COPIA" else "")
+    monkeypatch.setattr(pix, "payload_configurado", lambda: "PAYLOAD_PADRAO")
+    assert pixbilling.payload_pix() == "COPIA_GERAL_DOACAO"
+
+
+def test_payload_configurado_se_nada_especifico(tmp_path, monkeypatch):
+    _caminho_tmp(tmp_path, monkeypatch)
+    monkeypatch.setattr(pix, "_ler", lambda nome: "")
+    monkeypatch.setattr(pix, "payload_configurado", lambda: "PAYLOAD_PADRAO")
+    assert pixbilling.payload_pix() == "PAYLOAD_PADRAO"
+
+
 def test_payload_sem_pix_retorna_vazio(tmp_path, monkeypatch):
     _caminho_tmp(tmp_path, monkeypatch)
     monkeypatch.setattr(pix, "payload_configurado", lambda: "")

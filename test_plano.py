@@ -166,3 +166,42 @@ def test_plano_no_banco_offline_cai_no_env(monkeypatch):
 
     monkeypatch.setattr(plano, "nuvem_supabase", Falso)
     assert plano.plano_atual() == "free"
+
+
+# ─── Passo 4: usuário novo (nuvem ativa, sem linha) começa SEMPRE em free ──
+
+def _mock_nuvem_ativa(monkeypatch, ativa=True):
+    monkeypatch.setattr(plano, "nuvem_supabase", type("NS", (), {
+        "disponivel": lambda: ativa,
+        "carregar_plano_banco": lambda uid: None,
+    }))
+
+
+def test_usuario_novo_sem_linha_comeca_free_mesmo_com_plano_pago_env(monkeypatch):
+    monkeypatch.setenv("PLANO", "pago")
+    _mock_login(monkeypatch)
+    _mock_nuvem_ativa(monkeypatch, ativa=True)
+    assert plano.plano_atual() == "free"
+    assert not plano.pago()
+
+
+def test_usuario_novo_sem_linha_env_free_tambem_free(monkeypatch):
+    monkeypatch.setenv("PLANO", "free")
+    _mock_login(monkeypatch)
+    _mock_nuvem_ativa(monkeypatch, ativa=True)
+    assert plano.plano_atual() == "free"
+
+
+def test_usuario_novo_env_ignorado_mas_plano_do_banco_ganha(monkeypatch):
+    monkeypatch.setenv("PLANO", "free")
+    _mock_login(monkeypatch)
+    monkeypatch.setattr(plano.nuvem_supabase, "disponivel", lambda: True)
+    monkeypatch.setattr(plano.nuvem_supabase, "carregar_plano_banco", lambda uid: "pago")
+    assert plano.plano_atual() == "pago"
+
+
+def test_usuario_com_nuvem_off_mantem_env_legado(monkeypatch):
+    monkeypatch.setenv("PLANO", "pago")
+    _mock_login(monkeypatch)
+    _mock_nuvem_ativa(monkeypatch, ativa=False)
+    assert plano.plano_atual() == "pago"

@@ -1,6 +1,6 @@
 # 02 — Casos de Teste
 
-Casos de teste documentados em **Gherkin** (padrão BDD) para validar o motor de triagem. Estes casos espelham os testes automatizados de `test_triagem.py` (motor: **18 testes**), que rodam no **CI** (GitHub Actions) a cada push junto com os demais (Jira, persistência, guardrails, dashboard completo, RAG, nuvem, Pix, IA, Auth/Supabase, notificações, plano, cobrança Pix e persistência de sessão — **255 no total**).
+Casos de teste documentados em **Gherkin** (padrão BDD) para validar o motor de triagem. Estes casos espelham os testes automatizados de `test_triagem.py` (motor: **18 testes**), que rodam no **CI** (GitHub Actions) a cada push junto com os demais (Jira, persistência, guardrails, dashboard completo, RAG, nuvem, Pix, IA, Auth/Supabase, notificações, plano, cobrança Pix e persistência de sessão — **264 no total**).
 
 ## Matriz de casos de teste
 
@@ -44,7 +44,7 @@ pip install -r requirements-dev.txt
 pytest -v
 ```
 
-Resultado esperado: **255 passed** (18 do motor + 15 do Jira + 14 da persistência + 18 dos guardrails + 17 do dashboard + 13 do RAG + 14 da persistência em nuvem + 10 do Pix + 32 da IA + 29 do Auth/Supabase + 30 das notificações + 21 do plano + **13 da cobrança Pix** + 8 da persistência de sessão + 3 da ferramenta — também validado automaticamente pelo CI).
+Resultado esperado: **264 passed** (18 do motor + 15 do Jira + 14 da persistência + 18 dos guardrails + 17 do dashboard + 13 do RAG + 14 da persistência em nuvem + 10 do Pix + 32 da IA + 29 do Auth/Supabase + **32 das notificações** + **25 do plano** + **16 da cobrança Pix** + 8 da persistência de sessão + 3 da ferramenta — também validado automaticamente pelo CI).
 
 ## Guardrails (casos de teste da camada de segurança)
 

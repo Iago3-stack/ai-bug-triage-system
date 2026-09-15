@@ -227,6 +227,44 @@ def testar_email() -> tuple[bool, str]:
         return False, f"Falha inesperada ao testar e-mail: {type(e).__name__}"
 
 
+def notificar_evento(titulo: str, corpo: str) -> bool:
+    """Envia um aviso GENÉRICO de evento (pagamento, estorno, conta, etc.).
+
+    Diferente de notificar_email (template de triagem com "Relato/Motor"),
+    esta função manda e-mail + Discord com o texto informado, sem formatação
+    de triagem. Nunca levanta exceção. Config SMTP reutilizada.
+    """
+    ok = False
+    corpo = (corpo or "").strip()
+    titulo = (titulo or "Aviso").strip()
+    if not corpo:
+        return False
+    try:
+        cfg = _smtp_config()
+        para = cfg["para"]
+        if para and cfg["user"] and cfg["senha"]:
+            ok = _enviar_email(cfg, para, f"💳 [AI Bug Triage] {titulo}", corpo) or ok
+    except Exception:
+        pass
+    try:
+        url = webhook_discord()
+        if url:
+            payload = {
+                "content": f"💳 **{titulo}**\n{corpo[:800]}",
+            }
+            req = urllib.request.Request(
+                url,
+                data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                ok = (resp.status == 204) or ok
+    except Exception:
+        pass
+    return ok
+
+
 def notificar_email(prioridade_final: str, resumo: str, provedor: str | None = None) -> bool:
     """Envia e-mail (SMTP) quando a prioridade for CRÍTICA/ALTA.
 

@@ -12,7 +12,7 @@ import ui_tema
 import sessao_persist
 import roteador
 
-VERSAO = "v2.8.0"
+VERSAO = "v2.8.1"
 
 # Logo do sistema (SVG embutido como data URI para funcionar na Cloud).
 _LOGO_DATA_URI = (

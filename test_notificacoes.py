@@ -346,3 +346,34 @@ def test_testar_email_porta_invalida_nao_levanta(monkeypatch):
     ok, msg = notificacoes.testar_email()
     assert ok is False
     assert "Falha" in msg
+
+
+# --- Avisos genéricos de evento (pagamento/estorno — "nosso Stripe") ---
+def test_notificar_evento_nome_corpo_neutros(monkeypatch):
+    """Evento NÃO usa template de triagem (não pode citar Relato/Motor)."""
+    def _ler(nome):
+        return {
+            "ALERTA_EMAIL_TO": "qa@empresa.com",
+            "SMTP_USER": "app@email.com",
+            "SMTP_PASS": "app-1234",
+        }.get(nome, "")
+
+    monkeypatch.setattr(notificacoes, "_ler", _ler)
+    correio = _Correio("x", 0, 0)
+    monkeypatch.setattr(notificacoes.smtplib, "SMTP", lambda host, porta, timeout: correio)
+    assert notificacoes.notificar_evento("Premium confirmado", "O usuário abc pagou R$ 19,99.") is True
+    enviado = correio.enviadas[0]
+    corpo = enviado.get_body().get_content()
+    assert "💳 [AI Bug Triage] Premium confirmado" in str(enviado["Subject"])
+    assert "O usuário abc pagou R$ 19,99." in corpo
+    assert "triagem" not in corpo.lower()
+    assert "Relato:" not in corpo
+    assert "Motor:" not in corpo
+
+
+def test_notificar_evento_sem_corpo_fala(monkeypatch):
+    monkeypatch.setattr(notificacoes, "_ler", lambda nome: "x")
+    correio = _Correio("x", 0, 0)
+    monkeypatch.setattr(notificacoes.smtplib, "SMTP", lambda host, porta, timeout: correio)
+    assert notificacoes.notificar_evento("Título", "  ") is False
+    assert notificacoes.notificar_evento("Título", "") is False
