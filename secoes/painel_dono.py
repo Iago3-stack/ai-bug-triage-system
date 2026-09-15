@@ -204,8 +204,9 @@ def render():
                     st.error(
                         "🎁 **Trial precisa da coluna `teste_ate` no Supabase.** "
                         "Pendente: rode `alter table planos_usuario add column if not exists "
-                        "teste_ate timestamptz;` no SQL Editor e depois **Reload schema** "
-                        "(Settings → API → Advanced). Os outros botões seguem funcionando."
+                        "teste_ate timestamptz;` e depois `NOTIFY pgrst, 'reload schema';` "
+                        "no SQL Editor (ou clique em Reload schema em Settings → API). "
+                        "Os outros botões seguem funcionando."
                     )
                 else:
                     st.error("Falha (offline/Supabase).")
