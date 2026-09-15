@@ -40,6 +40,7 @@ O sistema trabalha com **dois motores de análise** que se **reconciliam** pela 
 | `home.py` | Interface web (Streamlit): cabeçalho, ferramenta, export, histórico e **rodapé de doação Pix via `st.iframe`** (components.html removido após 2026-06) | streamlit |
 | `pix.py` | Gerador de pagamento Pix: payload EMV **COPIA-e-Coloca** com CRC-CCITT, QR Code PNG (base64), **link de pagamento** com valor fixo e chave com/sem `+55` (`chave`/`chave_copia`) | **stdlib apenas** + `qrcode` |
 | `triagem.py` | Motor NLP **offline determinístico**: léxico PT + negações | **stdlib apenas** |
+| `colar_falha.py` | **Pilar 1 de automação**: transforma a falha bruta colada (stack trace/log/mensagem) em **relato estruturado** (título, categoria na taxonomia da IA, módulo, versão, severidade prévia via `triagem`, erro principal, local do frame e passos) — 100% local | **stdlib apenas** + `triagem` |
 | `ia.py` | Análise por IA: causa raiz, categoria, passos — **seletor de provedor** (Automático → Gemini com fallback Groq `gpt-oss-120b`, forçado, ou **modelo próprio** via dict: Gemini custom ou OpenAI-compatível), expondo quem respondeu (`ULTIMO_PROVEDOR/MODELO`) | google-genai + groq + requests |
 | `rag.py` | RAG híbrido no histórico: **retrieval BM25 com IDF** (sinônimos técnicos + ponderação por campo/recência/resolução, offline e determinístico) + **rerank vetorial** com embeddings Gemini (`text-embedding-004`) que cai silencioso para o lexical; geração via `PROMPT_RAG` que responde "já aconteceu? como resolvemos?" — aprende com a resolução registrada | google-genai + `ia.py` |
 | `jira_client.py` | Exportação Jira (REST v3): cria issues tipo `Tarefa`, prioridade mapeada | **stdlib apenas** |
@@ -47,6 +48,7 @@ O sistema trabalha com **dois motores de análise** que se **reconciliam** pela 
 | `nuvem_supabase.py` | Backend de persistência na nuvem via Supabase REST (Postgres): insert/select/update + vínculo da issue do Jira + tabelas `planos_usuario` (plano por usuário + `teste_ate`), **`perfis_usuario` (perfil: nome/empresa/fuso/avatar)**, **`solicitacoes_pagamento` (cobranças Pix)** e **`usuarios` (contas: e-mail/último login — painel do dono)** | requests |
 | `guardrails.py` | Detecta/mascara credenciais e PII no relato (tokens, chaves, e-mails, senhas numéricas, telefones, CPFs) | **stdlib apenas** |
 | `test_triagem.py` | Testes unitários do motor (18) | pytest |
+| `test_colar_falha.py` | Testes do Colar Falha (13): erro/local do traceback Python e Java, categorias, módulo, versão (ignora datas), severidade prévia, relato montado e robustez (nunca levanta) | pytest |
 | `test_jira_client.py` | Testes do cliente Jira (15) | pytest |
 | `test_persistencia.py` | Testes da persistência (14): fuso, append, filtro por data, vínculo Jira, tenant por usuário e **migração dos registros legados "global" → uid** | pytest |
 | `test_guardrails.py` | Testes dos guardrails (18): detecção/máscara de PII e falso-positivo | pytest |

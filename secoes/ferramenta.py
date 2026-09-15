@@ -8,9 +8,10 @@ import streamlit as st
 import pandas as pd
 from urllib.parse import quote
 
-from triagem import triar
+import triagem
 import ia
 import rag
+import colar_falha
 from hero_animado import _svg_groq
 import jira_client
 import github_client
@@ -174,8 +175,58 @@ def render():
     <div style="font-size:1em;font-weight:700;background:linear-gradient(90deg,#06b6d4 0%,#3b82f6 45%,#8b5cf6 100%);-webkit-background-clip:text;background-clip:text;color:transparent;display:inline-block;margin:6px 0 2px">Entrada do Usuário (Relato do Bug):</div>
     """, unsafe_allow_html=True)
     st.markdown('<div class="marca-form" style="display:none"></div>', unsafe_allow_html=True)
+
+    # --- Pilar 1: colar falha bruta e preencher o relato automaticamente ---
+    with st.expander("📋 Colar falha bruta: preencher o relato automaticamente"):
+        st.markdown('<div class="marca-colar" style="display:none"></div>', unsafe_allow_html=True)
+        st.caption(
+            "Cole um stack trace, um log de erro ou a mensagem que o usuário mandou — "
+            "o app extrai **título, categoria, módulo, versão, severidade e passos** "
+            "e preenche o relato abaixo para você revisar. 100% local, funciona até sem internet."
+        )
+        evidencia_bruta = st.text_area(
+            "Falha bruta (stack trace, log, mensagem de erro):",
+            height=130,
+            key="colar_falha_bruta",
+            placeholder=(
+                "Traceback (most recent call last):\n"
+                '  File "/app/secoes/ferramenta.py", line 312\n'
+                '    resultado = triar(descricao_bug)\n'
+                "TypeError: 'NoneType' object is not subscriptable (v2.12.0)"
+            ),
+            label_visibility="collapsed",
+        )
+        st.markdown('<div class="marca-colar-btn" style="display:none"></div>', unsafe_allow_html=True)
+        if st.button("✨ Preencher relato a partir da falha", key="btn_colar_falha"):
+            if evidencia_bruta.strip():
+                try:
+                    estrutura = colar_falha.estruturar(evidencia_bruta)
+                    st.session_state["relato_entrada"] = colar_falha.montar_relato(
+                        evidencia_bruta, estrutura
+                    )
+                    st.session_state["colar_falha_ok"] = estrutura
+                    st.rerun()
+                except Exception as exc:
+                    st.warning(f"Não consegui estruturar essa falha: {type(exc).__name__}: {exc}")
+            else:
+                st.warning("Cole a falha bruta primeiro (stack trace, log ou mensagem de erro).")
+
+    _est_colada = st.session_state.pop("colar_falha_ok", None)
+    if _est_colada:
+        _det = (
+            f"severidade **{_est_colada['severidade']}**"
+            f" · categoria **{_est_colada['categoria']}**"
+            + (f" · módulo **{_est_colada['modulo']}**" if _est_colada.get("modulo") else "")
+            + (f" · versão **{_est_colada['versao']}**" if _est_colada.get("versao") else "")
+        )
+        if _est_colada.get("erro"):
+            _det += f" · erro **`{_est_colada['erro']}`**"
+        st.success(f"✨ Relato preenchido abaixo! Detectei: {_det}. Revise e clique em Executar.")
+
+    st.session_state.setdefault("relato_entrada", "")
     descricao_bug = st.text_area("Entrada do Usuário (Relato do Bug):", height=150,
                                  placeholder="Ex: Estou tentando pagar e o botão não responde, estou muito frustrado!",
+                                 key="relato_entrada",
                                  label_visibility="collapsed")
 
     usar_llm = st.checkbox(
@@ -309,7 +360,7 @@ def render():
                 # --- 1. TRIAGEM NLP (MOTOR LOCAL, DETERMINÍSTICO E OFFLINE) ---
                 # O motor triagem.py analisa léxico PT + padrões de negação,
                 # sem depender de internet nem de API de tradução.
-                resultado = triar(descricao_bug)
+                resultado = triagem.triar(descricao_bug)
                 gravidade = resultado["gravidade"]
                 sentimento = resultado["sentimento"]
                 polaridade = resultado["score"]

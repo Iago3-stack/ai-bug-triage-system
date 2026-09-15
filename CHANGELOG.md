@@ -4,6 +4,14 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.13.0] - 2026-09-15
+
+### Adicionado
+- **📋 Pilar 1 de automação — "Colar falha"** (`colar_falha.py`): na página Ferramenta, um expander **"📋 Colar falha bruta: preencher o relato automaticamente"** — cole um **stack trace, log de erro ou a mensagem do usuário** e o app extrai **título, categoria (na mesma taxonomia da IA), módulo, versão, severidade prévia (via motor local), erro principal, local do frame e passos para reproduzir**, preenchendo o relato na caixa de triagem para você revisar. 100% local e determinístico (não gasta token de LLM, funciona sem internet); reconhece traces **Python, Java, JS/TS, C#/.NET, Go e Ruby** e ignora datas ("2026.09") na detecção de versão. 13 testes novos (**362 no total**, todos offline).
+
+### Corrigido
+- **Painel do Administrador explora o 400 PGRST204** — quando "🎁 Dar teste 7 dias" falha por a coluna `teste_ate` não estar no schema cache do PostgREST, o app agora mostra o passo-a-passo exato (rodar o `alter table ... teste_ate timestamptz;` + `NOTIFY pgrst, 'reload schema';` no SQL Editor), em vez de "Falha (offline/Supabase)". Novo probe `nuvem_supabase.teste_disponivel()` confirma se o PostgREST enxerga a coluna (só rodado no caminho de erro, para não adicionar latência). 3 testes novos no painel (**362 no total**). Nenhuma ação manual: já validado contra o projeto real (o teste 7 dias passou a gravar `teste_ate` na nuvem).
+
 ## [v2.12.0] - 2026-09-15
 
 ### Adicionado
