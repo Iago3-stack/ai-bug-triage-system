@@ -1,0 +1,70 @@
+name: CI - Reportar Falha ao Webhook
+
+on:
+  workflow_run:
+    workflows: ["CI - Testes (pytest)"]
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  reportar:
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'failure'
+    steps:
+      - uses: actions/github-script@v7
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+          WEBHOOK_TOKEN: ${{ secrets.WEBHOOK_TOKEN }}
+        with:
+          script: |
+            if (!process.env.WEBHOOK_URL) {
+              core.notice("Secret WEBHOOK_URL não configurado — pulando a notificação de falha.");
+              return;
+            }
+            const { owner, repo } = context.repo;
+            const run = context.payload.workflow_run;
+            const jobs = await github.rest.actions.listJobsForWorkflowRun({
+              owner,
+              repo,
+              run_id: run.id,
+            });
+            const falhas = jobs.data.jobs
+              .filter((j) => j.conclusion === "failure")
+              .map((j) => ({
+                job: j.name,
+                passos: (j.steps || [])
+                  .filter((s) => s.conclusion === "failure")
+                  .map((s) => s.name),
+              }));
+            const evidencia = [
+              `Workflow "${run.name}" FALHOU (run #${run.run_number}, id ${run.id})`,
+              `Commit ${run.head_sha.slice(0, 8)} na branch ${run.head_branch}`,
+              ...falhas.map((f) => `- Job "${f.job}" falhou nos passos: ${f.passos.join(", ") || "?"}`),
+              `Mensagem do commit: ${(run.head_commit?.message || "").slice(0, 400)}`,
+            ].join("\n");
+            const resp = await fetch(process.env.WEBHOOK_URL, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                ...(process.env.WEBHOOK_TOKEN
+                  ? { "X-Webhook-Token": process.env.WEBHOOK_TOKEN }
+                  : {}),
+              },
+              body: JSON.stringify({
+                evidencia,
+                origem: "github-actions",
+                repositorio: `${owner}/${repo}`,
+                run_id: String(run.id),
+                commit: run.head_sha,
+                ia: true,
+              }),
+            });
+            const corpo = await resp.text();
+            if (!resp.ok) {
+              core.setFailed(`Webhook respondeu ${resp.status}: ${corpo.slice(0, 200)}`);
+            } else {
+              core.notice(`Falha reportada ao webhook (${resp.status}). ${corpo.slice(0, 120)}`);
+            }

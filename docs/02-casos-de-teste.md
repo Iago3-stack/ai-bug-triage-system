@@ -1,6 +1,6 @@
 # 02 — Casos de Teste
 
-Casos de teste documentados em **Gherkin** (padrão BDD) para validar o motor de triagem. Estes casos espelham os testes automatizados de `test_triagem.py` (motor: **18 testes**), que rodam no **CI** (GitHub Actions) a cada push junto com os demais (Jira, persistência, guardrails, dashboard completo, RAG híbrido, nuvem, Pix, IA, Auth/Supabase, notificações, plano, cobrança Pix, perfil do usuário, GitHub por usuário, painel do dono, **colar falha + adaptadores Playwright/Postman** e persistência de sessão — **379 no total**).
+Casos de teste documentados em **Gherkin** (padrão BDD) para validar o motor de triagem. Estes casos espelham os testes automatizados de `test_triagem.py` (motor: **18 testes**), que rodam no **CI** (GitHub Actions) a cada push junto com os demais (Jira, persistência, guardrails, dashboard completo, RAG híbrido, nuvem, Pix, IA, Auth/Supabase, notificações, plano, cobrança Pix, perfil do usuário, GitHub por usuário, painel do dono, **colar falha + adaptadores Playwright/Postman + webhook de CI** e persistência de sessão — **394 no total**).
 
 ## Matriz de casos de teste
 
@@ -44,7 +44,7 @@ pip install -r requirements-dev.txt
 pytest -v
 ```
 
-Resultado esperado: **379 passed** (18 do motor + 13 do colar falha + 16 dos adaptadores Playwright/Postman + 15 do Jira + 14 da persistência + 18 dos guardrails + 17 do dashboard + 23 do RAG + 14 da persistência em nuvem + 10 do Pix + 36 da IA + 29 do Auth/Supabase + **33 das notificações** + **25 do plano** + **16 da cobrança Pix** + **16 do perfil** + **18 do GitHub** + **37 do painel do dono** + 8 da persistência de sessão + 3 da ferramenta — também validado automaticamente pelo CI).
+Resultado esperado: **394 passed** (18 do motor + 13 do colar falha + 16 dos adaptadores Playwright/Postman + 15 do Jira + 14 da persistência + 18 dos guardrails + 17 do dashboard + 23 do RAG + 14 da persistência em nuvem + 10 do Pix + 36 da IA + 29 do Auth/Supabase + **33 das notificações** + **25 do plano** + **16 da cobrança Pix** + **16 do perfil** + **18 do GitHub** + **37 do painel do dono** + 8 da persistência de sessão + 3 da ferramenta + **15 do webhook de CI** — também validado automaticamente pelo CI).
 
 ## Guardrails (casos de teste da camada de segurança)
 
