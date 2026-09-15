@@ -4,6 +4,21 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.7.0] - 2026-09-14
+
+### Adicionado
+- **💼 Página "Meu Plano" (SaaS — Passo 3)** — a página mostra o plano **da conta logada** (Basic ou Premium), traz um comparativo Basic × Premium, um bloco de auto-atendimento para escolher o plano (salvo no banco `planos_usuario` no Supabase; sem Stripe ainda, que fica para o Passo 4) e o botão de migração que **reivindica os registros legados "global"** (pré-isolamento) para o seu usuário.
+- **Plano por usuário no banco** — `plano.py` agora resolve o plano na ordem: (1) conta logada → tabela `planos_usuario` no Supabase via upsert; (2) fallback `PLANO` (env), usado offline/em testes. O `tenant_id` dos novos registros passa a ser o **UID da conta logada**, isolando dados entre usuários.
+- **Migração de registros legados** — `migrar_tenant_global(uid)` e `contar_legados_globais()` reetiquetam os registros antigos com tenant `global`/"sem tenant" para o usuário que reivindicar (nuvem primeiro, senão JSONL local).
+
+### Corrigido
+- **"Sombra"/fantasma do login e do expander de histórico** — a ponte de sessão era (des)montada a cada run, causando churn no DOM do Streamlit e artefatos repetidos (ex.: "Histórico persistido" 3× e sombra do formulário na tela de login). A ponte agora é **sempre montada** (comando `ocioso` quando não há pendência) e o JS ignora os runs intermediários.
+- **Sair agora é realmente definitivo** — além de limpar a sessão, o botão Sair **revoga o token no Supabase** (`sair_da_conta`) e o guard impede um re-login automático na mesma sessão; resposta assertiva e instantânea.
+- **Login com layout prioritário** — o formulário (e-mail/senha) sempre fica acima das colunas de informação, mesmo em telas baixas.
+
+### Alterado
+- **Template de "Meu Plano" atualizado no Início** — o aviso de que o plano era por "variável de ambiente no deploy" virou "plano **por usuário** (página 💼 Meu Plano)".
+
 ## [v2.6.26] - 2026-09-14
 
 ### Adicionado

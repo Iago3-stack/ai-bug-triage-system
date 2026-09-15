@@ -1,27 +1,75 @@
-"""Planos SaaS e isolamento por tenant (preparação p/ multi-tenant).
+"""Planos SaaS e isolamento por tenant (multi-tenant por usuário).
 
-Variáveis de ambiente:
+Passo 3 do caminho SaaS: o plano agora é POR USUÁRIO, salvo na nuvem
+(tabela `planos_usuario`, invertida via `nuvem_supabase`), e o `tenant_id`
+dos registros é o UID da conta logada — cada usuário só vê os próprios dados.
+
+Ordem de resolução:
+  1. Usuário logado (Supabase Auth) => plano vem do banco (`planos_usuario`).
+  2. Sem login / sem banco / erro de rede => variável de ambiente PLANO
+     (comportamento antigo, usado em testes e deploys sem nuvem).
+
+Variáveis de ambiente (fallback/depur):
   PLANO     = free | pago        (padrão: free)
-  TENANT_ID = identificador da empresa/tenant (padrão: "global")
+  TENANT_ID = identificador do tenant (padrão: "global")
 
 Regras atuais (gate mínimo, sem billing):
   - free : 1 canal de alerta (prioriza e-mail), histórico/dashboard resumidos
            às últimas N triagens, RAG desligado, deep-analysis do dashboard oculto.
   - pago : multi-canal de alerta, histórico/dashboard completo, RAG ligado.
 
-Numeração de tenants: por enquanto não há login, então tudo cai em "global";
-o campo tenant_id já é gravado e filtrado para o esquema estar pronto quando
-houver contas (cada empresa só vê os próprios dados).
+Antes do login existir, tudo caía em "global" (variável de ambiente); os
+registros legados com tenant 'global' são reivindicados pelo usuário na página
+"Meu Plano" (migração de tenant).
 """
 
 import os
+
+import nuvem_supabase
 
 _PLANOS = ("free", "pago")
 _LIMITE_FREE = 30  # nº máx. de triagens que o plano free enxerga (histórico/dashboard)
 
 
+def uid_logado() -> str | None:
+    """UID (ou e-mail) da conta logada via Supabase Auth, ou None."""
+    try:
+        import auth_supabase
+
+        if not auth_supabase.disponivel():
+            return None
+        sessao = auth_supabase.sessao()
+        if not sessao:
+            return None
+        user = sessao.get("user") or {}
+        return user.get("id") or user.get("email") or None
+    except Exception:
+        return None
+
+
+def plano_no_banco(uid: str) -> str | None:
+    """Plano do usuário salvo na nuvem, ou None se offline/sem linha."""
+    try:
+        return nuvem_supabase.carregar_plano_banco(uid)
+    except Exception:
+        return None
+
+
+def definir_plano_no_banco(uid: str, plano: str) -> bool:
+    """Grava o plano do usuário na nuvem. False se offline (sem efeito)."""
+    try:
+        return nuvem_supabase.gravar_plano_banco(uid, plano if plano in _PLANOS else "free")
+    except Exception:
+        return False
+
+
 def plano_atual() -> str:
-    """Nome do plano ativo ('free' ou 'pago'); qualquer valor diferente de pago = free."""
+    """Plano ativo: do banco (se logado) senão da variável de ambiente."""
+    uid = uid_logado()
+    if uid:
+        banco = plano_no_banco(uid)
+        if banco in _PLANOS:
+            return banco
     plano = os.environ.get("PLANO", "free").strip().lower()
     if plano in _PLANOS:
         return plano
@@ -39,7 +87,10 @@ def limite_historico_free() -> int:
 
 
 def tenant_atual() -> str:
-    """Identificador do tenant corrente (padrão 'global' até haver login)."""
+    """Tenant corrente: UID da conta logada, senão env TENANT_ID/global."""
+    uid = uid_logado()
+    if uid:
+        return uid
     return (os.environ.get("TENANT_ID") or "global").strip() or "global"
 
 

@@ -65,8 +65,8 @@ def render():
     | **Ideal para** | testar / demonstrar | produção contínua |
     """)
         st.markdown(
-            '<div class="marca-aviso-plano" style="font-size:14px;margin-top:4px">O plano é uma '
-            'variável de ambiente no seu deploy: <code>PLANO = &quot;pago&quot;</code>. Sem cobrança '
+            '<div class="marca-aviso-plano" style="font-size:14px;margin-top:4px">O plano é <b>por '
+            'usuário</b>: cada conta tem o seu (página 💼 <b>Meu Plano</b>). Sem cobrança '
             'neste projeto — é a vitrine de um produto real.</div>',
             unsafe_allow_html=True,
         )
@@ -94,7 +94,7 @@ def render():
       <div style="margin:16px 0 0;height:2px;background:linear-gradient(90deg,transparent,#25D366,#7c3aed,transparent);border-radius:999px"></div>
       <div style="font-size:16px;font-weight:800;color:#7aa5ff;margin:14px 0 8px">🎓 Formação &amp; Stack</div>
       <p style="margin:0 0 12px">Atualmente, dedico meus estudos na <b style="color:#7aa5ff">UNIASSELVI</b> para aprofundar conhecimentos em <b style="color:#7aa5ff">Redes Neurais</b> e <b style="color:#7aa5ff">Modelos de Linguagem (LLMs)</b>. No meu dia a dia, utilizo o <b style="color:#7aa5ff">Linux Mint</b> como base para desenvolver scripts em <b style="color:#7aa5ff">Python</b> que integram APIs de inteligência artificial à automação de testes, buscando sempre reduzir o tempo de triagem de bugs e melhorar a precisão dos relatórios técnicos.</p>
-      <p style="margin:0">💼 <b style="color:#94a3b8">SaaS em construção:</b> esse mesmo motor está sendo transformado em um <b style="color:#25D366">produto SaaS de QA</b> — planos <b style="color:#94a3b8">Basic</b> e <b style="color:#fde68a">Premium</b> controlados por variável de ambiente, RAG com "como foi resolvido", comparação IA × motor local e alertas multi-canal. É a prova prática de como transformar engenharia em produto.</p>
+      <p style="margin:0">💼 <b style="color:#94a3b8">SaaS em construção:</b> esse mesmo motor está sendo transformado em um <b style="color:#25D366">produto SaaS de QA</b> — planos <b style="color:#94a3b8">Basic</b> e <b style="color:#fde68a">Premium</b> por usuário (salvos na nuvem), RAG com "como foi resolvido", comparação IA × motor local e alertas multi-canal. É a prova prática de como transformar engenharia em produto.</p>
     </div>
     """, unsafe_allow_html=True)
     # --- CTA: convite para usar a ferramenta / ver o dashboard (card único) ---

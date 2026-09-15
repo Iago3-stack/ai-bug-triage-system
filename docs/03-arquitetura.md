@@ -44,11 +44,11 @@ O sistema trabalha com **dois motores de análise** que se **reconciliam** pela 
 | `rag.py` | RAG leve no histórico: **retrieval local** (similaridade Jaccard, offline) + geração via `PROMPT_RAG` que responde "já aconteceu? como resolvemos?" — aprende com a resolução registrada | google-genai + `ia.py` |
 | `jira_client.py` | Exportação Jira (REST v3): cria issues tipo `Tarefa`, prioridade mapeada | **stdlib apenas** |
 | `persistencia.py` | Histórico persistido em `data/historico.jsonl` (JSONL, fuso Brasil) — **facade**: dispatches para o Supabase quando configurado, senão JSONL | **stdlib** (+ nuvem quando `nuvem_supabase` configura) |
-| `nuvem_supabase.py` | Backend de persistência na nuvem via Supabase REST (Postgres): insert/select/update + vínculo da issue do Jira | requests |
+| `nuvem_supabase.py` | Backend de persistência na nuvem via Supabase REST (Postgres): insert/select/update + vínculo da issue do Jira + tabela `planos_usuario` (plano por usuário) | requests |
 | `guardrails.py` | Detecta/mascara credenciais e PII no relato (tokens, chaves, e-mails, senhas numéricas, telefones, CPFs) | **stdlib apenas** |
 | `test_triagem.py` | Testes unitários do motor (18) | pytest |
 | `test_jira_client.py` | Testes do cliente Jira (15) | pytest |
-| `test_persistencia.py` | Testes da persistência (11): fuso, append, filtro por data, vínculo Jira | pytest |
+| `test_persistencia.py` | Testes da persistência (14): fuso, append, filtro por data, vínculo Jira, tenant por usuário e **migração dos registros legados "global" → uid** | pytest |
 | `test_guardrails.py` | Testes dos guardrails (18): detecção/máscara de PII e falso-positivo | pytest |
 | `dashboard.py` | Dashboard de QA completo: KPIs + saúde da suíte (0–10), gauge de críticas, filtro por funcionalidade, top causas raiz (IA), score médio/dia, taxa + lista de divergências IA vs. léxico, provedor real na tabela (leitura do JSONL/cloud) | streamlit |
 | `test_rag.py` | Testes do RAG (13): tokenização, Jaccard, recuperação top-k, contexto e orquestração sem chave | pytest |
@@ -60,10 +60,11 @@ O sistema trabalha com **dois motores de análise** que se **reconciliam** pela 
 | `test_auth_supabase.py` | Testes de auth (29): parser de erros, cadastro/login/logout e isolação por sessão | pytest |
 | `notificacoes.py` | **Alertas CRÍTICA/ALTA** (e-mail SMTP + Discord): override por usuário/sessão, testadores à prova de exceção e status real do envio | **stdlib** |
 | `test_notificacoes.py` | Testes de notificações (30): envio SMTP/Discord (mockado), override por sessão e erros amigáveis | pytest |
-| `plano.py` | **Planos Basic/Premium**: `PLANO=free|pago` liga/desliga recursos e `TENANT_ID` segmenta registros por conta | **stdlib** |
-| `test_plano.py` | Testes do plano (10): gating free×pago e filtro por `tenant_id` | pytest |
+| `plano.py` | **Planos Basic/Premium POR USUÁRIO**: plano salvo no banco (`planos_usuario`) e `tenant_id` = UID da conta logada (fallback: `PLANO`/`TENANT_ID` env) | **stdlib** |
+| `secoes/meu_plano.py` | **Página Meu Plano (SaaS, Passo 3)**: mostra o plano da conta logada, auto-atendimento Basic/Premium (sem Stripe ainda), comparativo Basic×Premium e migração dos registros legados "global" → seu tenant | streamlit |
+| `test_plano.py` | Testes do plano (21): gating free×pago, filtro por `tenant_id`, plano por usuário (banco ganha do env, fallbacks offline) e upsert do plano | pytest |
 | `sessao_persist.py` | **Persistência de sessão no F5**: enfileira salvar/limpar e grava via ponte persistente (cookie + iframe `localStorage` → confirm) | **stdlib** |
-| `test_sessao_persist.py` | Testes da ponte de escrita e do failover da sessão (5) | pytest |
+| `test_sessao_persist.py` | Testes da ponte de escrita e do failover da sessão (8) | pytest |
 | `test_ferramenta.py` | Testes da página ferramenta (3): UI/triagem | pytest |
 | `.streamlit/config.toml` | Tema e configurações visuais | streamlit |
 
@@ -76,7 +77,7 @@ O sistema trabalha com **dois motores de análise** que se **reconciliam** pela 
 
 ## 4. Fluxo de processamento
 
-0. **Roteamento multi-página** (`st.navigation`): `Início` é público; `Triagem` e `Dashboard` fazem `auth_supabase.requer_login()` quando o Supabase está configurado. O **F5 mantém a sessão** via `sessao_persist.py` (cookie + ponte de escrita persistente); sem confirmação, o login reaparece com mensagem honesta.
+0. **Roteamento multi-página** (`st.navigation`): `Início` é público; `Triagem`, `Meu Plano` e `Dashboard` fazem `auth_supabase.requer_login()` quando o Supabase está configurado. O **F5 mantém a sessão** via `sessao_persist.py` (cookie + ponte de escrita persistente); sem confirmação, o login reaparece com mensagem honesta.
 1. Usuário informa a descrição do bug.
 2. O app chama `guardrails.py` → se houver credencial/PII (token, chave, e-mail, senha numérica, telefone, CPF), o relato é **mascarado** e o usuário é avisado — nada sensível segue para os próximos passos.
 3. `home.py` chama `triagem.py` → score local (léxico + negação) e sentimento.

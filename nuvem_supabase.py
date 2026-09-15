@@ -19,6 +19,20 @@
 #   create policy "anon insert" on triagens for insert to anon with check (true);
 #   create policy "anon select" on triagens for select to anon using (true);
 #   create policy "anon update" on triagens for update to anon using (true);
+#
+# Tabela de planos por usuário (Passo 3 do caminho SaaS):
+#   create table if not exists planos_usuario (
+#     uid         text primary key,
+#     plano       text not null default 'free' check (plano in ('free','pago')),
+#     atualizado_em timestamptz not null default now()
+#   );
+#   alter table planos_usuario enable row level security;
+#   create policy "anon insert" on planos_usuario for insert to anon with check (true);
+#   create policy "anon select" on planos_usuario for select to anon using (true);
+#   create policy "anon update" on planos_usuario for update to anon using (true);
+#
+# A configuração per-tenant usada na Cloud NÃO precisa desta tabela: se ela não
+# existir ou a leitura falhar, o app cai no plano por variável de ambiente.
 
 import json
 import os
@@ -26,6 +40,7 @@ import os
 import requests
 
 _TABELA_PADRAO = "triagens"
+_TABELA_PLANOS = "planos_usuario"
 
 
 def _carregar_env():
@@ -214,3 +229,78 @@ def registrar_resolucao(registro_id: str, texto: str) -> bool:
 def excluir_antigos(dias: int) -> int:
     """Não aplicável por API REST simples — o app não usa exclusão pela nuvem."""
     return 0
+
+
+# ─── Planos por usuário (Passo 3 SaaS): tabela planos_usuario ────────────────
+
+def _planos_url() -> str:
+    return f"{_base_url()}/{_TABELA_PLANOS}"
+
+
+def carregar_plano_banco(uid: str) -> str | None:
+    """Plano do usuário na nuvem ('free'/'pago') ou None (sem linha na tabela)."""
+    config = _config()
+    if not config:
+        return None
+    resposta = requests.get(
+        _planos_url(),
+        headers=_headers(),
+        params={"select": "plano", "uid": f"eq.{uid}", "limit": "1"},
+        timeout=15,
+    )
+    resposta.raise_for_status()
+    docs = resposta.json() or []
+    if not docs:
+        return None
+    plano = docs[0].get("plano")
+    return plano if plano in ("free", "pago") else None
+
+
+def gravar_plano_banco(uid: str, plano: str) -> bool:
+    """Define o plano de um usuário na nuvem (upsert por uid)."""
+    config = _config()
+    if not config:
+        return False
+    plano = plano if plano in ("free", "pago") else "free"
+    linha = {"uid": uid, "plano": plano}
+    # Prefer: resolution=merge-duplicates + on_conflict=uid faz o UPSERT.
+    resposta = requests.post(
+        _planos_url(),
+        headers={
+            **_headers(),
+            "Prefer": "resolution=merge-duplicates,return=minimal",
+        },
+        params={"on_conflict": "uid"},
+        json=linha,
+        timeout=15,
+    )
+    resposta.raise_for_status()
+    return True
+
+
+def migrar_tenant_global(uid: str) -> int:
+    """Re-tag dos registros legados (tenant 'global') para o uid do usuário.
+
+    Depois do Passo 3 o isolamento é por usuário; os registros antigos gravados
+    com tenant 'global' (era o padrão antes do login) ficam invisíveis para
+    todos. Este helper adota esses registros para a conta do usuário que os
+    reivindica. Retorna quantos foram re-tagados.
+    """
+    config = _config()
+    if not config:
+        return 0
+    registros = carregar_registros()
+    legados = [r for r in registros if (r.get("tenant_id") or "global") == "global"]
+    if not legados:
+        return 0
+    for reg in legados:
+        payload = dict(reg or {})
+        payload["tenant_id"] = uid
+        requests.patch(
+            f"{_base_url()}/{_TABELA_PADRAO}",
+            headers=_headers(),
+            params={"id": f"eq.{reg.get('id')}"},
+            json={"payload": payload},
+            timeout=15,
+        )
+    return len(legados)

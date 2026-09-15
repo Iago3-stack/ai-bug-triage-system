@@ -108,3 +108,34 @@ def test_registro_antigo_sem_tenant_vale_como_global(tmp_path, monkeypatch):
     assert len(persistencia.carregar_registros()) == 1
     monkeypatch.setenv("TENANT_ID", "outra")
     assert persistencia.carregar_registros() == []
+
+
+# ─── Passo 3: migração dos registros legados (tenant 'global' → uid) ──────────
+
+def test_contar_legados_globais(tmp_path, monkeypatch):
+    _caminho_tmp(tmp_path, monkeypatch)
+    persistencia._salvar_jsonl({"resumo": "legado", "tenant_id": "global"})
+    persistencia._salvar_jsonl({"resumo": "novo", "tenant_id": "u-user"})
+    persistencia._salvar_jsonl({"resumo": "antigo sem campo"})
+    assert persistencia.contar_legados_globais() == 2
+
+
+def test_migrar_tenant_global_jsonl(tmp_path, monkeypatch):
+    _caminho_tmp(tmp_path, monkeypatch)
+    persistencia._salvar_jsonl({"resumo": "legado a", "tenant_id": "global"})
+    persistencia._salvar_jsonl({"resumo": "legado b"})
+    persistencia._salvar_jsonl({"resumo": "meu", "tenant_id": "u-user"})
+    assert persistencia.migrar_tenant_global("u-user") == 2
+    registros = persistencia.carregar_registros()
+    # sem login, o tenant_atual continua global → esses agora pertencem ao uid e somem
+    assert registros == []
+    monkeypatch.setattr("plano.uid_logado", lambda: "u-user")
+    registros = persistencia.carregar_registros()
+    assert len(registros) == 3
+    assert {r["resumo"] for r in registros} == {"legado a", "legado b", "meu"}
+
+
+def test_migrar_tenant_global_sem_legados(tmp_path, monkeypatch):
+    _caminho_tmp(tmp_path, monkeypatch)
+    persistencia._salvar_jsonl({"resumo": "meu", "tenant_id": "u-user"})
+    assert persistencia.migrar_tenant_global("u-user") == 0

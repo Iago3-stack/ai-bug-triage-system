@@ -72,9 +72,9 @@ with st.sidebar:
 
 ui_comum.menu_top(pg)
 
-# Passo 2 (SaaS): Início é público; Ferramenta e Dashboard exigem login quando o
+# Passo 2 (SaaS): Início é público; as demais páginas exigem login quando o
 # Supabase Auth está configurado. Sem configuração, o app segue integralmente aberto.
-if pg.url_path in ("triagem", "dashboard") and pagina_login.render():
+if pg.url_path in ("triagem", "meu_plano", "dashboard") and pagina_login.render():
     st.stop()
 
 pg.run()

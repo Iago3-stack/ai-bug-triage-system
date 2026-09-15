@@ -12,7 +12,7 @@ import ui_tema
 import sessao_persist
 import roteador
 
-VERSAO = "v2.6.26"
+VERSAO = "v2.7.0"
 
 # Logo do sistema (SVG embutido como data URI para funcionar na Cloud).
 _LOGO_DATA_URI = (
@@ -293,6 +293,7 @@ def menu_top(pg_atual):
     _caminhos = (
         ("inicio", "🏠 Início"),
         ("triagem", "🔍 Triagem de Bugs"),
+        ("meu_plano", "💼 Meu Plano"),
         ("dashboard", "📈 Dashboard QA"),
     )
 

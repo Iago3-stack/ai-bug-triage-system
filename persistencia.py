@@ -80,6 +80,44 @@ def _filtrar_tenant(registros: list[dict]) -> list[dict]:
     return [r for r in registros if plano.dados_do_tenant(r)]
 
 
+def contar_legados_globais() -> int:
+    """Quantos registros ainda têm tenant 'global' (pré-isolamento por usuário)."""
+    if _usar_nuvem():
+        try:
+            registros = nuvem_supabase.carregar_registros()
+        except Exception:
+            registros = []
+    else:
+        registros = _ler_jsonl()
+    return sum(1 for r in registros if (r.get("tenant_id") or "global") == "global")
+
+
+def migrar_tenant_global(uid: str) -> int:
+    """Adota os registros legados (tenant 'global') para a conta do usuário.
+
+    Passo 3: antes do login tudo era gravado com tenant 'global' (variável de
+    ambiente). Depois do isolamento por usuário, esses registros ficam
+    invisíveis para todos — deixamos o usuário reivindicá-los do banco.
+    Retorna quantos foram re-tagados.
+    """
+    if _usar_nuvem():
+        try:
+            return nuvem_supabase.migrar_tenant_global(uid)
+        except Exception:
+            pass
+    registros = _ler_jsonl()
+    mudados = 0
+    para_cada = []
+    for reg in registros:
+        if (reg.get("tenant_id") or "global") == "global":
+            reg["tenant_id"] = uid
+            mudados += 1
+        para_cada.append(reg)
+    if mudados:
+        _reescrever(para_cada)
+    return mudados
+
+
 def carregar_registros() -> list[dict]:
     if _usar_nuvem():
         try:
