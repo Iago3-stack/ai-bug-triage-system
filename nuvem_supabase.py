@@ -56,11 +56,27 @@
 #   create policy "anon select" on perfis_usuario for select to anon using (true);
 #   create policy "anon update" on perfis_usuario for update to anon using (true);
 #
+# Tabela de contas (Passo 6 do caminho SaaS — painel do dono):
+#   create table if not exists usuarios (
+#     uid          text primary key,
+#     email        text not null default '',
+#     criado_em    timestamptz not null default now(),
+#     ultimo_login timestamptz not null default now()
+#   );
+#   alter table usuarios enable row level security;
+#   create policy "anon insert" on usuarios for insert to anon with check (true);
+#   create policy "anon select" on usuarios for select to anon using (true);
+#   create policy "anon update" on usuarios for update to anon using (true);
+#
+# Teste Premium com validade (Passo 6 — expira sozinho):
+#   alter table planos_usuario add column if not exists teste_ate timestamptz;
+#
 # A configuração per-tenant usada na Cloud NÃO precisa desta tabela: se ela não
 # existir ou a leitura falhar, o app cai no plano por variável de ambiente.
 
 import json
 import os
+from datetime import datetime, timezone
 
 import requests
 
@@ -68,6 +84,7 @@ _TABELA_PADRAO = "triagens"
 _TABELA_PLANOS = "planos_usuario"
 _TABELA_COBRANCAS = "solicitacoes_pagamento"
 _TABELA_PERFIS = "perfis_usuario"
+_TABELA_USUARIOS = "usuarios"
 
 
 def _carregar_env():
@@ -283,14 +300,19 @@ def carregar_plano_banco(uid: str) -> str | None:
     return plano if plano in ("free", "pago") else None
 
 
-def gravar_plano_banco(uid: str, plano: str) -> bool:
-    """Define o plano de um usuário na nuvem (upsert por uid)."""
+def gravar_plano_banco(uid: str, plano: str, clear_teste: bool = False) -> bool:
+    """Define o plano de um usuário na nuvem (upsert por uid).
+
+    Pagar ('pago') encerra qualquer Teste Premium ativo automaticamente;
+    `clear_teste=True` faz o mesmo mesmo quando mantendo/voltando a 'free'.
+    """
     config = _config()
     if not config:
         return False
     plano = plano if plano in ("free", "pago") else "free"
     linha = {"uid": uid, "plano": plano}
-    # Prefer: resolution=merge-duplicates + on_conflict=uid faz o UPSERT.
+    # Prefer: resolution=merge-duplicates + on_conflict=uid faz o UPSERT
+    # (null não é aplicado num merge — por isso o teste é limpo via PATCH).
     resposta = requests.post(
         _planos_url(),
         headers={
@@ -302,7 +324,66 @@ def gravar_plano_banco(uid: str, plano: str) -> bool:
         timeout=15,
     )
     resposta.raise_for_status()
+    if clear_teste or plano == "pago":
+        requests.patch(
+            _planos_url(),
+            headers=_headers(),
+            params={"uid": f"eq.{uid}"},
+            json={"teste_ate": None},
+            timeout=15,
+        )
     return True
+
+
+def carregar_teste_banco(uid: str) -> str | None:
+    """teste_ate (ISO) do usuário na nuvem, ou None (sem teste/sem linha)."""
+    config = _config()
+    if not config:
+        return None
+    resposta = requests.get(
+        _planos_url(),
+        headers=_headers(),
+        params={"select": "teste_ate", "uid": f"eq.{uid}", "limit": "1"},
+        timeout=15,
+    )
+    resposta.raise_for_status()
+    docs = resposta.json() or []
+    if not docs:
+        return None
+    valor = docs[0].get("teste_ate")
+    return valor or None
+
+
+def gravar_teste_banco(uid: str, ate_iso: str) -> bool:
+    """Define o fim do Teste Premium de um usuário (upsert por uid)."""
+    config = _config()
+    if not config:
+        return False
+    linha = {"uid": uid, "teste_ate": ate_iso}
+    resposta = requests.post(
+        _planos_url(),
+        headers={**_headers(), "Prefer": "resolution=merge-duplicates,return=minimal"},
+        params={"on_conflict": "uid"},
+        json=linha,
+        timeout=15,
+    )
+    resposta.raise_for_status()
+    return True
+
+
+def carregar_todos_planos() -> list[dict]:
+    """Todas as linhas de planos_usuario (uid, plano, teste_ate) — painel do dono."""
+    config = _config()
+    if not config:
+        return []
+    resposta = requests.get(
+        _planos_url(),
+        headers=_headers(),
+        params={"select": "uid,plano,teste_ate"},
+        timeout=15,
+    )
+    resposta.raise_for_status()
+    return resposta.json() or []
 
 
 def migrar_tenant_global(uid: str) -> int:
@@ -437,3 +518,65 @@ def gravar_perfil_banco(uid: str, perfil: dict) -> bool:
     )
     resposta.raise_for_status()
     return True
+
+
+# ─── Usuários/contas (Passo 6 SaaS — painel do dono): tabela usuarios ─────────
+
+def _usuarios_url() -> str:
+    return f"{_base_url()}/{_TABELA_USUARIOS}"
+
+
+def registrar_usuario_banco(uid: str, email: str) -> bool:
+    """Registra/atualiza o login de uma conta (último acesso + e-mail).
+
+    Best-effort: nunca levanta exceção (login não pode quebrar por causa disso).
+    """
+    config = _config()
+    if not config:
+        return False
+    try:
+        linha = {
+            "uid": uid,
+            "email": (email or "").strip(),
+            "ultimo_login": datetime.now(timezone.utc).isoformat(),
+        }
+        requests.post(
+            _usuarios_url(),
+            headers={**_headers(), "Prefer": "resolution=merge-duplicates,return=minimal"},
+            params={"on_conflict": "uid"},
+            json=linha,
+            timeout=15,
+        )
+        return True
+    except Exception:
+        return False
+
+
+def carregar_usuarios() -> list[dict]:
+    """Todas as contas registradas (uid, email, criado_em, ultimo_login)."""
+    config = _config()
+    if not config:
+        return []
+    resposta = requests.get(
+        _usuarios_url(),
+        headers=_headers(),
+        params={"select": "*", "order": "ultimo_login.desc"},
+        timeout=15,
+    )
+    resposta.raise_for_status()
+    return resposta.json() or []
+
+
+def carregar_todos_perfis() -> list[dict]:
+    """Todos os perfis (uid, nome, empresa, avatar) — painel do dono."""
+    config = _config()
+    if not config:
+        return []
+    resposta = requests.get(
+        _perfis_url(),
+        headers=_headers(),
+        params={"select": "uid,nome,empresa,avatar"},
+        timeout=15,
+    )
+    resposta.raise_for_status()
+    return resposta.json() or []

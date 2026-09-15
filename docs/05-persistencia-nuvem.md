@@ -107,6 +107,21 @@ SUPABASE_ANON_KEY = "eyJhbGciOi..."
   **sem migração de schema**. O `registrar_resolucao()` faz fetch + PATCH por `id` no payload
   e o RAG passa a incluir a resolução no contexto montado.
 
+## Tabelas SaaS (planos, perfis, cobranças e contas)
+
+Além da `triagens`, o app usa outras quatro tabelas (todas com políticas anon abertas,
+igual à vitrine pública):
+
+| Tabela | Papel | Criada desde |
+|---|---|---|
+| `planos_usuario` | Plano por usuário (`free`/`pago`) — agora com a coluna **`teste_ate`** (Teste Premium com validade; expira sozinho) | v2.7 |
+| `solicitacoes_pagamento` | Cobranças Pix ("nosso Stripe"): `aguardando` → `pago`/`cancelado`, estornos | v2.8 |
+| `perfis_usuario` | Perfil (nome, empresa, fuso horário, avatar base64) | v2.9 |
+| `usuarios` | Contas que já entraram (e-mail + último login) — alimenta o **Painel do Dono** | v2.11 |
+
+O SQL de todas elas (inclusive `ALTER TABLE planos_usuario ... teste_ate timestamptz`) está no
+cabeçalho de `nuvem_supabase.py`, pronto para colar no SQL Editor.
+
 ---
 
 > ⚙️ Setup documentado em **07/09/2026** como parte da **v2.1 — fundação SaaS**.

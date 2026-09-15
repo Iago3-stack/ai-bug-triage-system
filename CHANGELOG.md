@@ -4,6 +4,20 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.11.0] - 2026-09-15
+
+### Adicionado
+- **🛠️ Painel do Dono (Passo 6 SaaS)** — página **restrita ao dono** (`ADMIN_EMAIL`): o dono vê o app inteiro no modo "astra", sem precisar cruzar tabelas no Supabase. A página antiga não é listada para mais ninguém e aparece como uma página própria no menu do dono.
+- **Métricas gerais** — cards com total de contas, Premium, em teste e Basic + aviso de pagamentos aguardando e estornos pendentes (tratados no painel do responsável dentro de Meu Plano).
+- **Lista de contas** — para cada conta (com nome/perfil e último login): botões **⭐ Ativar Premium**, **🎁 Dar teste 7 dias** e **🔓 Voltar a Basic**. As ações valem de imediato no plano do usuário.
+- **📇 Registro automático de contas** — nova tabela `usuarios` (uid, email, criado_em, ultimo_login): a cada login/renovação a conta é anotada (best-effort, nunca quebra o login). Sem ela, o painel simplesmente não tem contas a listar.
+- **🎁 Teste Premium com validade** — nova coluna `teste_ate` em `planos_usuario`: o teste conta como Premium até a data expirar (então volta a Basic sozinho). O usuário em teste vê "🎁 Teste Premium" no Meu Plano; pagar (ou o dono voltar a Basic) encerra o teste.
+- **Módulos** — `admin.py` (`email_logado`/`eh_dono`), `secoes/painel_dono.py` e helpers em `nuvem_supabase.py`/`plano.py` (`teste_premium_restante`, `definir_trial`, `definir_plano_manual`, `carregar_usuarios`/`carregar_todos_planos`/`carregar_todos_perfis`); 30 testes novos (**328 no total**).
+
+### Observações
+- **Ação necessária:** rode no SQL Editor do Supabase as duas instruções do cabeçalho de `nuvem_supabase.py` — criar a tabela `usuarios` (3 policies anon) e `alter table planos_usuario add column if not exists teste_ate timestamptz;`.
+- Configure `ADMIN_EMAIL` (secrets da Cloud) para ativar o painel — sem ele, ninguém é dono e o pedido não aparece.
+
 ## [v2.10.0] - 2026-09-15
 
 ### Adicionado

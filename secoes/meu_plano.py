@@ -67,11 +67,20 @@ def render():
     """, unsafe_allow_html=True)
 
     if atual == "pago":
-        _badge = (
-            '<span style="background:rgba(251,191,36,.16);color:#fde68a;border:1px solid rgba(251,191,36,.5);'
-            'border-radius:999px;padding:4px 14px;font-size:12px;font-weight:800;letter-spacing:.03em">⭐ Plano Premium</span>'
-        )
-        _frase = "Você está no <b style='color:#86efac'>plano Premium</b> — histórico completo, RAG \u201ccomo foi resolvido\u201d e múltiplos canais de alerta liberados."
+        _teste = plano.teste_premium_restante(uid)
+        if _teste:
+            _badge = (
+                '<span style="background:rgba(46,124,246,.16);color:#60a5fa;border:1px solid rgba(46,124,246,.5);'
+                'border-radius:999px;padding:4px 14px;font-size:12px;font-weight:800;letter-spacing:.03em">🎁 Teste Premium</span>'
+            )
+            _frase = ("Você está no <b style='color:#60a5fa'>Teste Premium</b> — acesso completo liberado "
+                      "até esta data expirar. Depois disso, a conta volta ao Basic.")
+        else:
+            _badge = (
+                '<span style="background:rgba(251,191,36,.16);color:#fde68a;border:1px solid rgba(251,191,36,.5);'
+                'border-radius:999px;padding:4px 14px;font-size:12px;font-weight:800;letter-spacing:.03em">⭐ Plano Premium</span>'
+            )
+            _frase = "Você está no <b style='color:#86efac'>plano Premium</b> — histórico completo, RAG \u201ccomo foi resolvido\u201d e múltiplos canais de alerta liberados."
     else:
         _badge = (
             '<span style="background:rgba(37,211,102,.16);color:#86efac;border:1px solid rgba(37,211,102,.5);'

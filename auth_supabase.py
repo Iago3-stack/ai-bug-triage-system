@@ -26,6 +26,26 @@ _SESSAO_KEY = "_auth_sessao"
 _ARMARIO: dict = {}
 
 
+def _registrar_usuario(sessao: dict | None) -> None:
+    """Painel do dono (Passo 6): anota o e-mail + último login na tabela `usuarios`.
+
+    Best-effort — se falhar (rede/offline/tabela ausente), o login segue normal.
+    """
+    if not sessao:
+        return
+    user = sessao.get("user") or {}
+    uid = user.get("id") or user.get("email")
+    email = user.get("email") or uid
+    if not uid:
+        return
+    try:
+        import nuvem_supabase
+
+        nuvem_supabase.registrar_usuario_banco(uid, email)
+    except Exception:
+        pass
+
+
 def _armazem():
     """st.session_state em runtime; dict simples fora dele (testes)."""
     try:
@@ -158,6 +178,7 @@ def logar(email: str, senha: str) -> tuple[bool, str, dict | None]:
     if resposta.status_code == 200:
         dados = resposta.json()
         if dados.get("access_token"):
+            _registrar_usuario(dados)
             return True, "ok", dados
         return False, _mensagem_erro(resposta.status_code, resposta.text), None
     return False, _mensagem_erro(resposta.status_code, resposta.text), None
@@ -189,6 +210,7 @@ def renovar_sessao(refresh_token: str) -> tuple[bool, str, dict | None]:
     if resposta.status_code == 200:
         dados = resposta.json()
         if dados.get("access_token"):
+            _registrar_usuario(dados)
             return True, "ok", dados
         return False, _mensagem_erro(resposta.status_code, resposta.text), None
     return False, _mensagem_erro(resposta.status_code, resposta.text), None
@@ -221,6 +243,7 @@ def confirmar_cadastro(token_hash: str) -> tuple[bool, str, dict | None]:
         dados = resposta.json()
         sessao = dict(dados or {})
         if sessao.get("user") or sessao.get("access_token"):
+            _registrar_usuario(sessao)
             return True, "E-mail confirmado! Entrando…", sessao
         return True, "E-mail confirmado! Você já pode entrar.", sessao
     baixo = resposta.text.lower()

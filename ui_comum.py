@@ -12,8 +12,9 @@ import pix
 import ui_tema
 import sessao_persist
 import roteador
+import admin
 
-VERSAO = "v2.10.0"
+VERSAO = "v2.11.0"
 
 # Logo do sistema (SVG embutido como data URI para funcionar na Cloud).
 _LOGO_DATA_URI = (
@@ -283,7 +284,8 @@ def sidebar_comum():
         if st.sidebar.button("🚪 Sair", use_container_width=True, key="btn_sair"):
             auth_supabase.sair_da_conta()  # revoga o token no Supabase + limpa a sessão local
             sessao_persist.limpar()  # apaga a sessão do navegador (não reidratar no F5)
-            st.rerun()
+            # Sai para o Início: o Painel do Dono some do menu p/ quem não é admin.
+            st.switch_page(roteador.PAGINAS["inicio"])
 
     # --- CTA: ESTRELA NO GITHUB ---
     st.sidebar.markdown("### ⭐ Apoie o projeto")
@@ -329,6 +331,8 @@ def menu_top(pg_atual):
         ("meu_plano", "💼 Meu Plano"),
         ("dashboard", "📈 Dashboard QA"),
     )
+    if admin.eh_dono():
+        _caminhos = _caminhos + (("painel_dono", "🛠️ Painel do Dono"),)
 
     with st.container():
         st.markdown('<div class="marca-tbn" style="display:none"></div>', unsafe_allow_html=True)

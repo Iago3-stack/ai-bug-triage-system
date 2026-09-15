@@ -51,12 +51,10 @@ def _processar_confirmacao_email() -> None:
 
 
 ui_tema.config_pagina()
-pg = st.navigation(list(roteador.PAGINAS.values()), position="sidebar")
-
-ui_tema.aplicar_css()
 
 # Reload (F5): restaura a sessão salva no navegador (localStorage) renovando o
-# access_token via refresh_token. Assim o usuário não desloga ao recarregar.
+# access_token via refresh_token. Assim o usuário não desloga ao recarregar e a
+# navegação (abaixo) já sabe se é o dono.
 sessao_persist.carregar()
 
 # Ponte de escrita para o navegador (login/logout enfileirados): mantém o
@@ -67,6 +65,11 @@ sessao_persist.processar_pendente()
 # ?token_hash=...&type=signup -> troca o hash por uma sessão e loga o usuário.
 _processar_confirmacao_email()
 
+# Páginas visíveis: o Painel do Dono só entra quando a conta logada é ADMIN_EMAIL.
+pg = st.navigation(roteador.paginas_visiveis(), position="sidebar")
+
+ui_tema.aplicar_css()
+
 with st.sidebar:
     ui_comum.sidebar_comum()
 
@@ -74,7 +77,7 @@ ui_comum.menu_top(pg)
 
 # Passo 2 (SaaS): Início é público; as demais páginas exigem login quando o
 # Supabase Auth está configurado. Sem configuração, o app segue integralmente aberto.
-if pg.url_path in ("triagem", "meu_plano", "dashboard") and pagina_login.render():
+if pg.url_path in ("triagem", "meu_plano", "dashboard", "painel_dono") and pagina_login.render():
     st.stop()
 
 pg.run()

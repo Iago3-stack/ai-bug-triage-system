@@ -24,11 +24,22 @@ registros legados com tenant 'global' são reivindicados pelo usuário na págin
 """
 
 import os
+from datetime import datetime, timedelta, timezone
 
 import nuvem_supabase
 
 _PLANOS = ("free", "pago")
 _LIMITE_FREE = 30  # nº máx. de triagens que o plano free enxerga (histórico/dashboard)
+
+
+def _datetime_de_iso(iso: str) -> datetime | None:
+    """Converte ISO do Postgres (ex.: 2026-09-20T12:00:00+00:00 ou ...Z) para datetime."""
+    if not iso:
+        return None
+    try:
+        return datetime.fromisoformat(iso.replace("Z", "+00:00"))
+    except Exception:
+        return None
 
 
 def uid_logado() -> str | None:
@@ -69,19 +80,56 @@ def plano_atual() -> str:
     Usuário logado com nuvem ativa SEMPRE vem do banco — sem linha = 'free'
     (novo usuário) mesmo que haja PLANO=pago legado no env. O env só vale
     para quem não está logado ou quando a nuvem está off (testes/offline).
+    O **Teste Premium** (teste_ate no futuro) também conta como 'pago'.
     """
     uid = uid_logado()
     if uid:
         nuvem_ativa = bool(getattr(nuvem_supabase, "disponivel", lambda: False)())
         banco = plano_no_banco(uid)
-        if banco in _PLANOS:
-            return banco
-        if nuvem_ativa:
-            return "free"
+        if banco == "pago":
+            return "pago"
+        if banco == "free":
+            return "pago" if _teste_em_vigor(uid) else "free"
+        if banco is None:
+            if _teste_em_vigor(uid):
+                return "pago"
+            if nuvem_ativa:
+                return "free"
+    # sem login, sem banco ou banco inválido → variável de ambiente
     plano = os.environ.get("PLANO", "free").strip().lower()
     if plano in _PLANOS:
         return plano
     return "free"
+
+
+def teste_premium_restante(uid: str) -> str | None:
+    """teste_ate (ISO) do usuário se houver Teste Premium com validade; senão None."""
+    try:
+        return nuvem_supabase.carregar_teste_banco(uid)
+    except Exception:
+        return None
+
+
+def _teste_em_vigor(uid: str) -> bool:
+    ate = _datetime_de_iso(teste_premium_restante(uid) or "")
+    return bool(ate) and ate > datetime.now(timezone.utc)
+
+
+def definir_trial(uid: str, dias: int) -> bool:
+    """Dá N dias de Teste Premium (conta como pago até expirar)."""
+    try:
+        ate = (datetime.now(timezone.utc) + timedelta(days=int(dias))).isoformat()
+        return nuvem_supabase.gravar_teste_banco(uid, ate)
+    except Exception:
+        return False
+
+
+def definir_plano_manual(uid: str, plano: str) -> bool:
+    """Ação do painel do dono: ativar Premium / voltar a Basic, encerra teste."""
+    try:
+        return nuvem_supabase.gravar_plano_banco(uid, plano if plano in _PLANOS else "free", clear_teste=True)
+    except Exception:
+        return False
 
 
 def pago() -> bool:
