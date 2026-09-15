@@ -4,6 +4,14 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.10.0] - 2026-09-15
+
+### Adicionado
+- **🐙 Issues no repositório do próprio usuário/empresa** — no modal ⚙️ Configurações, cada conta configura um **Personal Access Token** (escopo **Issues: write** — fine-grained ou clássico `repo`/`public_repo`) e um **repositório `dono/repo`**. A partir daí o botão da triagem passa de "link que abre o repo do dev" para **criar a issue de verdade na SUA conta** via `POST https://api.github.com/repos/{dono}/{repo}/issues` (URL correta da API — a página `github.com/.../issues` não cria nada). A issue chega com título, relatório em Markdown e o **link direto** de volta.
+- **Sem labels obrigatórios** — diferente do exemplo inicial (que quebra com 422 quando a label `bug`/`ai-triaged` não existe no repo de destino), a issue é criada sem labels para funcionar em qualquer repositório.
+- **Segurança**: token e repositório ficam **só na sessão** (`st.session_state`), nunca em disco nem no banco — cada visitante tem o seu e não há vazamento entre contas (o banco tem políticas anon permissivas). Sem config, o botão mantém o comportamento antigo (abre o repo da ferramenta) com aviso de como configurar.
+- **Módulo `github_client.py`** — `normalizar_repo` (aceita URL completa, `.git`, espaços), `configurado` (exige token + `dono/repo`) e `criar_issue` com mensagens amigáveis para 401/403/404; 18 testes novos (**298 no total**).
+
 ## [v2.9.0] - 2026-09-15
 
 ### Adicionado

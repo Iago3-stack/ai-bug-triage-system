@@ -5,6 +5,7 @@ from pathlib import Path
 import streamlit as st
 
 import jira_client
+import github_client
 import notificacoes
 import hero_animado
 import pix
@@ -12,7 +13,7 @@ import ui_tema
 import sessao_persist
 import roteador
 
-VERSAO = "v2.9.0"
+VERSAO = "v2.10.0"
 
 # Logo do sistema (SVG embutido como data URI para funcionar na Cloud).
 _LOGO_DATA_URI = (
@@ -128,6 +129,38 @@ def abrir_configuracoes():
                         st.rerun()
                     else:
                         st.error("Cache antigo detectado — clique em 'Manage app' > 'Rebuild' (limpa o cache) e rode a triagem de novo.")
+
+        st.markdown("---")
+
+        # 🐙 GitHub — cada usuário/empresa cria issues no SEU repositório (só nesta sessão)
+        with st.expander("🐙 GitHub — configurar repositório para issues"):
+            st.markdown('<div class="marca-gh" style="display:none"></div>', unsafe_allow_html=True)
+            _gh_config = st.session_state.get("github_config") or {}
+            st.caption("O botão '🐙 Nova Issue no GitHub' da triagem passará a criar a issue "
+                       "**no SEU repositório** (`dono/repo`) com o seu token. Vale **só para a sua sessão** — "
+                       "nada é gravado em disco ou no banco.")
+            _gc1, _gc2 = st.columns(2)
+            gh_repo = _gc1.text_input(
+                "Repositório (dono/repo)", key="gh_repo",
+                placeholder="ex.: sua-empresa/qa-bugs",
+                value=_gh_config.get("repo", ""))
+            gh_token = _gc2.text_input(
+                "Personal Access Token (Issues: write)", type="password", key="gh_token",
+                placeholder="github_pat_... ou ghp_...",
+                value=_gh_config.get("token", ""))
+            if st.button("💾 Salvar GitHub (sessão)", key="cfg_gh_salvar", use_container_width=True):
+                _repo = github_client.normalizar_repo(gh_repo)
+                if _repo and "/" in _repo and gh_token.strip():
+                    st.session_state["github_config"] = {"repo": _repo, "token": gh_token.strip()}
+                    st.success(f"✅ GitHub configurado nesta sessão — issues irão para **{_repo}**.")
+                else:
+                    st.error("Informe o repositório no formato 'dono/repo' e o token.")
+            if st.session_state.get("github_config", {}).get("repo"):
+                _repo = st.session_state["github_config"]["repo"]
+                st.markdown(f"**🐙 GitHub** — issues serão criadas em **{_repo}**.")
+                if st.button("↩️ Limpar minha config do GitHub", key="cfg_gh_limpar", width="stretch"):
+                    st.session_state.pop("github_config", None)
+                    st.rerun()
 
         st.markdown("---")
 

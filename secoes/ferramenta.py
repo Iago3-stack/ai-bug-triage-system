@@ -13,6 +13,7 @@ import ia
 import rag
 from hero_animado import _svg_groq
 import jira_client
+import github_client
 import persistencia
 import guardrails
 import notificacoes
@@ -609,10 +610,32 @@ def render():
         titulo = quote(descricao_limpa[:80])
         corpo = quote(relatorio[:4000])
         colunas[1].markdown('<div class="marca-issue" style="display:none"></div>', unsafe_allow_html=True)
-        colunas[1].link_button(
-            "🐙 Nova Issue no GitHub",
-            f"https://github.com/iago3-stack/ai-bug-triage-system/issues/new?title={titulo}&body={corpo}",
-        )
+        _gh_config = st.session_state.get("github_config") or {}
+        if github_client.configurado(_gh_config):
+            if colunas[1].button("🐙 Criar Issue no GitHub", use_container_width=True, key="btn_github_issue"):
+                with st.spinner("🐙 Criando issue no seu repositório..."):
+                    ok_gh, res_gh, err_gh = github_client.criar_issue(
+                        _gh_config, f"[Bug Triage] {descricao_limpa[:100]}", relatorio[:4000]
+                    )
+                if ok_gh:
+                    st.session_state["github_issue"] = (True, res_gh["html_url"], res_gh["number"])
+                else:
+                    st.session_state["github_issue"] = (False, None, err_gh)
+        else:
+            colunas[1].link_button(
+                "🐙 Nova Issue no GitHub",
+                f"https://github.com/iago3-stack/ai-bug-triage-system/issues/new?title={titulo}&body={corpo}",
+            )
+            colunas[1].caption("Configure seu token/repo em ⚙️ Configurações para criar na **sua** conta.")
+
+        if "github_issue" in st.session_state:
+            ok_gh, url_gh, det_gh = st.session_state["github_issue"]
+            if ok_gh:
+                st.success(f"✅ Issue **#{det_gh}** criada no GitHub!")
+                st.markdown(f"[🔗 Abrir issue no GitHub]({url_gh})")
+            else:
+                st.error(f"❌ Não foi possível criar a issue no GitHub: {det_gh}")
+
         colunas[2].markdown('<div class="marca-jira-expo" style="display:none"></div>', unsafe_allow_html=True)
         if colunas[2].button("Exportar para Jira", use_container_width=True, key="btn_exportar_jira"):
             if jira_client.configurado():
