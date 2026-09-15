@@ -7,6 +7,10 @@ import persistencia
 import ui_comum
 
 
+def _marcador(classe: str) -> None:
+    st.markdown(f'<div class="{classe}" style="display:none"></div>', unsafe_allow_html=True)
+
+
 def render():
     uid = plano.uid_logado()
     atual = plano.plano_atual()
@@ -63,6 +67,7 @@ def render():
             "Elas estão guardadas no sistema, invisíveis — se você reconhecer que são suas, "
             "pode trazê-las para a sua conta."
         )
+        _marcador("marca-plano-migrar")
         if st.button("✨ Trazer para a minha conta", key="btn_migrar", type="primary"):
             feitos = persistencia.migrar_tenant_global(uid)
             st.success(f"{feitos} triagen(s) foram adicionadas à sua conta.")
@@ -84,6 +89,7 @@ def render():
         horizontal=True,
         key="plano_escolha",
     )
+    _marcador("marca-plano-salvar")
     if st.button("💾 Salvar plano desta conta", key="btn_salvar_plano", type="primary"):
         gravado = plano.definir_plano_no_banco(uid, nova)
         if gravado:
@@ -117,6 +123,7 @@ def render():
     st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
     _c1, _c2, _c3 = st.columns([1, 0.7, 1])
     with _c2:
+        _marcador("marca-plano-ferramenta")
         if st.button("🔍 Ir para a Ferramenta", key="meu_plano_ferramenta", use_container_width=True):
             import roteador
 

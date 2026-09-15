@@ -392,6 +392,14 @@ body:has([data-st-tema="escuro"]) .marca-g-google { color:#9aa3af !important; }
 [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"]:has(.marca-voltar)) [data-testid="stButton"] button:hover { color:#2E7CF6 !important; border-color:#2E7CF6 !important; background:rgba(46,124,246,.08) !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"]:has(.marca-voltar)) [data-testid="stButton"] button { border-color:#3a4658 !important; color:#9aa3af !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"]:has(.marca-voltar)) [data-testid="stButton"] button:hover { color:#e5e7eb !important; border-color:#2E7CF6 !important; background:rgba(46,124,246,.16) !important; }
+
+/* Página Meu Plano — os 3 botões (migrar/salvar/ir) com COR SÓLIDA e sem hover */
+[data-testid="stElementContainer"]:has(.marca-plano-migrar) + [data-testid="stElementContainer"] [data-testid="stButton"] button,
+[data-testid="stElementContainer"]:has(.marca-plano-migrar) + [data-testid="stElementContainer"] [data-testid="stButton"] button:hover { background:#7c3aed !important; color:#ffffff !important; border:none !important; font-weight:700 !important; box-shadow:0 3px 10px rgba(124,58,237,.35) !important; }
+[data-testid="stElementContainer"]:has(.marca-plano-salvar) + [data-testid="stElementContainer"] [data-testid="stButton"] button,
+[data-testid="stElementContainer"]:has(.marca-plano-salvar) + [data-testid="stElementContainer"] [data-testid="stButton"] button:hover { background:#059669 !important; color:#ffffff !important; border:none !important; font-weight:700 !important; box-shadow:0 3px 10px rgba(5,150,105,.35) !important; }
+[data-testid="stElementContainer"]:has(.marca-plano-ferramenta) + [data-testid="stElementContainer"] [data-testid="stButton"] button,
+[data-testid="stElementContainer"]:has(.marca-plano-ferramenta) + [data-testid="stElementContainer"] [data-testid="stButton"] button:hover { background:#2563eb !important; color:#ffffff !important; border:none !important; font-weight:700 !important; box-shadow:0 3px 10px rgba(37,99,235,.35) !important; }
 </style>
 """
 
