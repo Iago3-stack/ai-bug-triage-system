@@ -60,8 +60,6 @@ def render():
     if _lembrete:
         st.success(_lembrete)
 
-    _aviso_fixo_atualizar()
-
     st.markdown("""
     <div style="height:3px;width:100%;background:linear-gradient(90deg,transparent,#25D366,#2E7CF6,#7c3aed,transparent);border-radius:999px;margin:8px 0"></div>
     """, unsafe_allow_html=True)
@@ -207,6 +205,8 @@ def render():
 
             st.switch_page(roteador.PAGINAS["triagem"])
 
+    _aviso_fixo_atualizar()
+
 
 def _exibir_checkout_pix(cobranca: dict, uid: str) -> None:
     """Mostra o QR Pix + copia-e-cola da cobrança pendente e o botão 'Já paguei'."""
@@ -326,8 +326,7 @@ def _aviso_fixo_atualizar() -> None:
         <div class="aviso-atualizar-fixo">
             <span class="icone">🔄</span>
             <span>Este fluxo depende da confirmação manual do responsável.
-            <b>Atualize a página</b> (ou clique em qualquer lugar do menu)
-            para ver as mudanças refletidas na tela.</span>
+            <b>Atualize a página</b> para ver as mudanças refletidas na tela.</span>
         </div>
         """,
         unsafe_allow_html=True,
