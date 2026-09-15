@@ -66,6 +66,10 @@ Responda APENAS com JSON válido (sem markdown, sem texto extra), usando exatame
 
 Regras:
 - Se nenhuma triagem anterior for útil, responda "ja_aconteceu": false e "resolucao_anterior": "".
+- Registre em "registros_similar" **apenas** os ids que aparecem na seção TRIAGENS
+  ANTERIORES e que embasaram de verdade a resposta (não invente nem traga todos).
+- Sem nenhum registro parecido, NÃO invente: "ja_aconteceu": false, "registros_similar": [],
+  aponte que parece um caso novo e deixe "resolucao_anterior" vazio.
 - Se a informação for insuficiente, use categoria "outro" e severidade "media".
 - Não invente resolução: se o histórico não mostra como resolveu, deixe vazio.
 
@@ -365,6 +369,44 @@ def analisar_llm(relato, provedor=None):
     dict com chaves: severidade, categoria, causa_raiz, passos_repro, resumo_tecnico
     """
     return _chamar_llm(PROMPT.replace("{relato}", relato[:2000]), provedor=provedor)
+
+
+# Modelo de embedding default do Gemini (dimensões 768). Sobrescrevível via env.
+EMBED_MODELO = "text-embedding-004"
+
+
+def embedding(texto) -> list | None:
+    """Vetor (embedding) de um texto via Gemini — usado no RAG vetorial híbrido.
+
+    Retorna lista de floats **normalizada** (cosseno = produto interno), ou None
+    quando não há chave GEMINI_API_KEY / falha de rede / modelo indisponível
+    (o RAG cai silenciosamente no retrieval lexical — nunca quebra o app).
+    """
+    chave = _chave("GEMINI_API_KEY")
+    if not chave:
+        return None
+    try:
+        valores = _embed_gemini((texto or "")[:2000], chave)
+        if not valores:
+            return None
+        norma = sum(v * v for v in valores) ** 0.5
+        if not norma:
+            return None
+        return [v / norma for v in valores]
+    except Exception:
+        return None
+
+
+def _embed_gemini(texto, chave) -> list | None:
+    """Camada interna (injetável nos testes): pede o vetor cru ao Gemini."""
+    from google import genai
+
+    cliente = genai.Client(api_key=chave)
+    resposta = cliente.models.embed_content(
+        model=os.environ.get("GEMINI_EMBED_MODEL") or EMBED_MODELO,
+        contents=texto,
+    )
+    return resposta.embeddings[0].values
 
 
 def analisar_llm_rag(relato, contexto, provedor=None):

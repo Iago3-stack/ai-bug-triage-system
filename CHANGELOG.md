@@ -4,6 +4,18 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.12.0] - 2026-09-15
+
+### Adicionado
+- **🧠 RAG híbrido (retrieval evoluído — Passo A do plano de IA)** — o histórico consultado pelo Gemini deixa de usar Jaccard simples e passa a usar **BM25 com IDF sobre o corpus**, com o texto de cada registro **ponderado por campo** (resumo tem peso duplo, depois descrição, causa raiz e resolução), **expansão de sinônimos técnicos** em PT-BR (crash/travou/congelou, login/autenticar, página/tela, botão/clicar, pagamento/checkout, download/baixar, erro/falha, lento/performance…) e **ponderação por recência** (`1/(1+0.02×idade_dias)`) e **resolução registrada** (×1.10). Tudo offline e determinístico; os antigos `_tokens`/`_jaccard` foram mantidos.
+- **🔎 Rerank vetorial híbrido (Passo B)** — por padrão fora dos testes (`RAG_VETOR=auto/on/off`), embeddings Gemini (`text-embedding-004`) buscam os candidatos do BM25 e **reordenam** com `0.6×cosseno + 0.4×BM25` (normalizados). Vetores ficam em cache de RAM + `data/embeddings.jsonl` (tabela de visto, sem banco vetorial), com limite de 300 embeddings novos por consulta; se não há chave/rede, o RAG **cai silencioso** para o lexical — nunca quebra o app.
+- **Citações honestas no prompt** — o `PROMPT_RAG` agora manda o Gemini citar **apenas** os ids que aparecem no histórico recuperado e **sinalizar caso novo** (sem nenhum registro parecido, não inventa: `ja_aconteceu=false` e `registros_similar=[]`). O contexto recuperado também inclui a **categoria** do registro quando existe.
+- **UI** — caption do RAG na ferramenta atualizada ("retrieval híbrido local — BM25 + vetores, sinônimos e recência"; nada é enviado além do relato e dos registros similares). 14 testes novos (**346 no total**, todos offline — vetores mockados).
+
+### Observações
+- O RAG continua **Premium** (plano free consulta o LLM direto, sem histórico) — a mudança torna a análise dos assinantes muito mais precisa, não muda o gating.
+- **Nenhuma ação manual necessária** no Supabase. Se quiser vetores desde o 1º dia, deixe `GEMINI_API_KEY` configurada (já usada pelo LLM) e remova/ignore a variável `RAG_VETOR=off`; o cache de vetores é populado automaticamente nas primeiras triagens.
+
 ## [v2.11.0] - 2026-09-15
 
 ### Adicionado

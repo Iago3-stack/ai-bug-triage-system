@@ -2,6 +2,8 @@
 # Roda com: pytest -v
 # 100% offline: chaves, HTTP e dispatcher são mockados — nunca sai da máquina.
 
+import pytest
+
 import ia
 
 
@@ -352,3 +354,34 @@ def test_mensagem_modelo_proprio_nao_quebra_sem_erro():
     assert ia._ajustar_mensagem_modelo_proprio(None) is None
     assert ia._ajustar_mensagem_modelo_proprio("") == ""
     assert ia._ajustar_mensagem_modelo_proprio("A API 503") == "A API 503"
+
+
+# --- Embeddings (RAG vetorial) -----------------------------------------
+def test_embedding_sem_chave_retorna_none(monkeypatch):
+    _sem_chaves(monkeypatch)
+    assert ia.embedding("qualquer coisa") is None
+
+
+def test_embedding_normaliza_vetor(monkeypatch):
+    _sem_chaves(monkeypatch)
+    monkeypatch.setattr(ia, "_chave", lambda nome: "chave-teste")
+    monkeypatch.setattr(ia, "_embed_gemini", lambda texto, chave: [3.0, 4.0])
+    vetor = ia.embedding("erro no login")
+    assert vetor is not None
+    assert vetor == pytest.approx([0.6, 0.8])  # norma unitária (3/5, 4/5)
+
+
+def test_embedding_falha_interna_retorna_none(monkeypatch):
+    _sem_chaves(monkeypatch)
+    monkeypatch.setattr(ia, "_chave", lambda nome: "chave-teste")
+    monkeypatch.setattr(ia, "_embed_gemini", lambda texto, chave: (_ for _ in ()).throw(
+        RuntimeError("rede caiu")
+    ))
+    assert ia.embedding("erro no login") is None
+
+
+def test_embedding_vetor_vazio_retorna_none(monkeypatch):
+    _sem_chaves(monkeypatch)
+    monkeypatch.setattr(ia, "_chave", lambda nome: "chave-teste")
+    monkeypatch.setattr(ia, "_embed_gemini", lambda texto, chave: [0.0, 0.0])
+    assert ia.embedding("erro no login") is None

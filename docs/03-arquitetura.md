@@ -41,7 +41,7 @@ O sistema trabalha com **dois motores de análise** que se **reconciliam** pela 
 | `pix.py` | Gerador de pagamento Pix: payload EMV **COPIA-e-Coloca** com CRC-CCITT, QR Code PNG (base64), **link de pagamento** com valor fixo e chave com/sem `+55` (`chave`/`chave_copia`) | **stdlib apenas** + `qrcode` |
 | `triagem.py` | Motor NLP **offline determinístico**: léxico PT + negações | **stdlib apenas** |
 | `ia.py` | Análise por IA: causa raiz, categoria, passos — **seletor de provedor** (Automático → Gemini com fallback Groq `gpt-oss-120b`, forçado, ou **modelo próprio** via dict: Gemini custom ou OpenAI-compatível), expondo quem respondeu (`ULTIMO_PROVEDOR/MODELO`) | google-genai + groq + requests |
-| `rag.py` | RAG leve no histórico: **retrieval local** (similaridade Jaccard, offline) + geração via `PROMPT_RAG` que responde "já aconteceu? como resolvemos?" — aprende com a resolução registrada | google-genai + `ia.py` |
+| `rag.py` | RAG híbrido no histórico: **retrieval BM25 com IDF** (sinônimos técnicos + ponderação por campo/recência/resolução, offline e determinístico) + **rerank vetorial** com embeddings Gemini (`text-embedding-004`) que cai silencioso para o lexical; geração via `PROMPT_RAG` que responde "já aconteceu? como resolvemos?" — aprende com a resolução registrada | google-genai + `ia.py` |
 | `jira_client.py` | Exportação Jira (REST v3): cria issues tipo `Tarefa`, prioridade mapeada | **stdlib apenas** |
 | `persistencia.py` | Histórico persistido em `data/historico.jsonl` (JSONL, fuso Brasil) — **facade**: dispatches para o Supabase quando configurado, senão JSONL | **stdlib** (+ nuvem quando `nuvem_supabase` configura) |
 | `nuvem_supabase.py` | Backend de persistência na nuvem via Supabase REST (Postgres): insert/select/update + vínculo da issue do Jira + tabelas `planos_usuario` (plano por usuário + `teste_ate`), **`perfis_usuario` (perfil: nome/empresa/fuso/avatar)**, **`solicitacoes_pagamento` (cobranças Pix)** e **`usuarios` (contas: e-mail/último login — painel do dono)** | requests |
@@ -51,11 +51,11 @@ O sistema trabalha com **dois motores de análise** que se **reconciliam** pela 
 | `test_persistencia.py` | Testes da persistência (14): fuso, append, filtro por data, vínculo Jira, tenant por usuário e **migração dos registros legados "global" → uid** | pytest |
 | `test_guardrails.py` | Testes dos guardrails (18): detecção/máscara de PII e falso-positivo | pytest |
 | `dashboard.py` | Dashboard de QA completo: KPIs + saúde da suíte (0–10), gauge de críticas, filtro por funcionalidade, top causas raiz (IA), score médio/dia, taxa + lista de divergências IA vs. léxico, provedor real na tabela (leitura do JSONL/cloud) | streamlit |
-| `test_rag.py` | Testes do RAG (13): tokenização, Jaccard, recuperação top-k, contexto e orquestração sem chave | pytest |
+| `test_rag.py` | Testes do RAG (23): tokenização, Jaccard, BM25, sinônimos, recência/resolução, rerank vetorial híbrido com vetores mockados, contexto e orquestração sem chave | pytest |
 | `test_dashboard.py` | Testes do dashboard (17): tabela recente (com/sem Jira), funcionalidades, falso-positivo, ordenação, provedor na coluna IA, taxa de divergência, top causas e saúde da suíte | pytest |
 | `test_nuvem_supabase.py` | Testes do backend em nuvem (14): config, conversão linha↔doc, HTTP mockado, dispatch do facade e failover | pytest |
 | `test_pix.py` | Testes do Pix (10): payload EMV, CRC-CCITT (`29B1`), precedência PIX_COPIA/link, chave e `chave_copia()` sem `+55` | pytest |
-| `test_ia.py` | Testes da IA (32): dispatch de provedor (auto/Gemini/Groq/modelo próprio OpenAI-compatível e Gemini custom, com retry sem JSON mode), JSON esperado, fallback, mensagens de erro, `disponivel()` com modelo próprio e orquestração RAG | pytest |
+| `test_ia.py` | Testes da IA (36): dispatch de provedor (auto/Gemini/Groq/modelo próprio OpenAI-compatível e Gemini custom, com retry sem JSON mode), JSON esperado, fallback, mensagens de erro, `disponivel()` com modelo próprio, embeddings Gemini (normalização e fallback) e orquestração RAG | pytest |
 | `auth_supabase.py` | **Autenticação (Supabase Auth/GoTrue via REST, stdlib)**: cadastro com confirmação de e-mail, login e logout — reusa `SUPABASE_URL`/`SUPABASE_ANON_KEY` | **stdlib** (+ requests) |
 | `test_auth_supabase.py` | Testes de auth (29): parser de erros, cadastro/login/logout e isolação por sessão | pytest |
 | `notificacoes.py` | **Alertas CRÍTICA/ALTA** (e-mail SMTP + Discord): override por usuário/sessão, testadores à prova de exceção, status real do envio e **`notificar_evento`** para avisos genéricos (pagamento/estorno) com template limpo, sem formato de triagem | **stdlib** |
@@ -90,7 +90,7 @@ O sistema trabalha com **dois motores de análise** que se **reconciliam** pela 
 1. Usuário informa a descrição do bug.
 2. O app chama `guardrails.py` → se houver credencial/PII (token, chave, e-mail, senha numérica, telefone, CPF), o relato é **mascarado** e o usuário é avisado — nada sensível segue para os próximos passos.
 3. `home.py` chama `triagem.py` → score local (léxico + negação) e sentimento.
-4. Se houver chave `GEMINI_API_KEY`, `ia.py` enriquece com causa raiz/categoria; se falhar, **fallback** para o local. Se houver histórico persistido, **`rag.py`** recupera os top-k registros similares (Jaccard) e `ia.py` responde também se o caso **já aconteceu** e **como foi resolvido**.
+4. Se houver chave `GEMINI_API_KEY`, `ia.py` enriquece com causa raiz/categoria; se falhar, **fallback** para o local. Se houver histórico persistido, **`rag.py`** recupera os top-k registros similares (BM25 híbrido + vetores) e `ia.py` responde também se o caso **já aconteceu** e **como foi resolvido**.
 5. O **reconciliador** combina os resultados (maior vence) e marca divergência quando discordam.
 6. Gera o relatório com severidade, fatores e **Gherkin**.
 7. Usuário pode **exportar** (.md), abrir **Issue** no GitHub ou enviar ao **Jira**; histórico fica na tabela da sessão.

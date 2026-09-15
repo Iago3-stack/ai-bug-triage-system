@@ -21,7 +21,7 @@ O app recebe o **relato de um bug** em linguagem natural e o **classifica automa
 | RF-09 | Manter **histórico da sessão** em tabela com opção de limpar | Baixa |
 | RF-10 | Rodar **100% offline** no motor local (sem API externa) | Alta |
 | RF-11 | **Análise por IA** opcional (Gemini com fallback Groq) — severidade sugerida, causa raiz, categoria e passos; **seletor de provedor** (Automático / só Gemini / só Groq / **modelo próprio**) com o modelo real no relatório | Média |
-| RF-12 | **RAG** no histórico persistido: responder se o bug **já aconteceu** e **como foi resolvido** (retrieval local por Jaccard + geração), aprendendo com a **resolução registrada** pelo usuário | Média |
+| RF-12 | **RAG** no histórico persistido: responder se o bug **já aconteceu** e **como foi resolvido** (retrieval **híbrido BM25 + vetores** com sinônimos e recência + geração), aprendendo com a **resolução registrada** pelo usuário | Média |
 | RF-13 | **Dashboard de QA completo**: saúde da suíte (0–10), gauge de % de críticas/altas, filtro por funcionalidade, evolução do score médio/dia, top causas raiz (IA) e taxa + lista de divergências IA vs. motor | Média |
 | RF-14 | **Rodapé de doação Pix**: símbolo oficial do Banco Central, botão "Pagar com Pix via link" e QR Code com a chave com `+55`, com botão que **copia a chave sem o DDI** | Baixa |
 | RF-15 | **App multi-página** (`Início` / `Triagem de Bugs` / `Dashboard QA`) via `st.navigation`, com URLs próprias e menu nativo na sidebar | Alta |

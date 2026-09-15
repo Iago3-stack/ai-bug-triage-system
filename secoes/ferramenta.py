@@ -351,8 +351,8 @@ def render():
                     # o app. Qualquer exceção vira aviso + diagnóstico salvo na sessão.
                     try:
                         with st.spinner("🔮 A IA está analisando sua triagem — pode levar um tempo..."):
-                            # RAG: se há histórico persistido, o Gemini consulta os top-k
-                            # registros similares (retrieval local) para ver se já aconteceu.
+                            # RAG: busca os top-k registros similares via BM25 híbrido
+                            # (lexico + vetorial) para ver se já aconteceu antes.
                             registros_para_rag = persistencia.carregar_registros()
                             if not plano.pago():
                                 # Plano free: RAG desligado (consulta direta do LLM).
@@ -562,7 +562,7 @@ def render():
                         st.caption("Histórico não indicou uma resolução anterior para este caso.")
                 else:
                     st.success("✅ Nenhum registro anterior similar encontrado — possível caso novo.")
-                st.caption("Retrieval local por similaridade de tokens (Jaccard) sobre o histórico persistido — nada é enviado além do relato e dos registros similares.")
+                st.caption("Retrieval híbrido local (BM25 + vetores, com sinônimos e recência) sobre o histórico persistido — nada é enviado além do relato e dos registros similares.")
 
             st.markdown("---")
             if "CRÍTICA" in prioridade_final:
