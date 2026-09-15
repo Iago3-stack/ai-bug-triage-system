@@ -435,7 +435,12 @@ def _modal_perfil(uid: str, email: str) -> None:
 
     import zoneinfo
 
-    _fusos_extras = sorted({z.key for z in zoneinfo.available_timezones()})
+    # available_timezones() já retorna nomes de zona (str); sem tzdata no SO a
+    # lista pode vir vazia — nesse caso caímos só nos fusos principais (nunca quebra).
+    try:
+        _fusos_extras = sorted(zoneinfo.available_timezones())
+    except Exception:
+        _fusos_extras = []
     _opcoes_fuso = perfil._FUSOS_PADRAO + [z for z in _fusos_extras if z not in perfil._FUSOS_PADRAO]
     corrente = perfil.normalizar_fuso(dados.get("fuso") or "")
     fuso_index = _opcoes_fuso.index(corrente) if corrente in _opcoes_fuso else 0
