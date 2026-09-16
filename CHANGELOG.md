@@ -4,6 +4,11 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.15.6] - 2026-09-15
+
+### Corrigido
+- **🔍 Título do card SEO em branco garantido** — cor `#ffffff!important` no `<h2>` (imune ao CSS do Streamlit que estava apagando o texto) + barra em gradiente abaixo do título, deixando a palavra-chave bem visível nos dois temas.
+
 ## [v2.15.5] - 2026-09-15
 
 ### Corrigido

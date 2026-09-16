@@ -54,7 +54,8 @@ def render():
 
     st.markdown("""
     <div style="margin:0 0 18px;width:100%;background:linear-gradient(135deg,#0f172a 0%,#16233c 60%,#7c3aed 190%);border-radius:16px;padding:22px 26px;color:#e2e8f0;border:1px solid rgba(255,255,255,.12)">
-      <h2 style="margin:0 0 10px;font-size:25px;font-weight:900;color:#ffffff;line-height:1.25;text-shadow:0 1px 2px rgba(0,0,0,.35)">Triagem de bugs com IA para QA — classifique a severidade, priorize e gere o relatório em segundos</h2>
+      <h2 style="margin:0 0 12px;font-size:26px;font-weight:900;color:#ffffff!important;line-height:1.25;text-shadow:0 2px 4px rgba(0,0,0,.45)">Triagem de bugs com IA para QA — classifique a severidade, priorize e gere o relatório em segundos</h2>
+      <div style="height:3px;width:100%;background:linear-gradient(90deg,#25D366,#2E7CF6,#7c3aed);border-radius:999px;margin:0 0 12px"></div>
       <p style="margin:0 0 10px;font-size:15px;line-height:1.65"><b style="color:#86efac">AI Bug Triage System</b> é um sistema de <b style="color:#ffffff">triagem de bugs com Inteligência Artificial</b> para times de <b style="color:#ffffff">QA e teste de software</b> — comece de <b style="color:#fde68a">graça no plano Basic</b>. Cole o relato do bug e o motor <b style="color:#ffffff">NLP determinístico (offline, custo zero)</b> calcula a prioridade; a IA <b style="color:#ffffff">Gemini</b> (com fallback automático para <b style="color:#ffffff">Groq</b>) aprofunda com <b style="color:#ffffff">causa raiz</b> e plano de ação; o <b style="color:#ffffff">RAG</b> busca casos similares já resolvidos; e o sistema monta o <b style="color:#ffffff">relatório Gherkin pronto para JIRA e GitHub</b>, com alertas automáticos para bugs <b style="color:#ffffff">críticos ou de alta severidade</b>.</p>
       <p style="margin:0;font-size:14px;color:#94a3b8">Ferramenta ideal para QA, analistas de qualidade e desenvolvedores que automatizam a gestão e a priorização de defeitos de software.</p>
     </div>
