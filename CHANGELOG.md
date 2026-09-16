@@ -4,6 +4,11 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.15.12] - 2026-09-16
+
+### Alterado
+- **🔍 Card SEO da Início menciona Playwright e Postman** — o texto agora deixa claro que o app reconhece a saída de testes **Playwright** e **Postman·newman** (método + URL e HTTP esperado × recebido), reforçando a integração e as palavras-chave de automação de QA.
+
 ## [v2.15.11] - 2026-09-16
 
 ### Corrigido
