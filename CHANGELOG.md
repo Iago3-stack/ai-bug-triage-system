@@ -4,6 +4,11 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.15.17] - 2026-09-16
+
+### Alterado
+- **🔆 Contraste extra na página Integração** — o badge "✨ Extraído automaticamente:" agora tem fundo sólido (verde no Playwright e âmbar no Postman) com texto escuro e maior. A caixa "💡 Não tem Playwright ou Postman instalados?" ficou mais legível: texto e título mais claros e os botões de exemplo em destaque.
+
 ## [v2.15.16] - 2026-09-16
 
 ### Alterado

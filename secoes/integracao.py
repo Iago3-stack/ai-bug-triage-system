@@ -125,9 +125,9 @@ def render() -> None:
                 f"""
                 <div style="background:rgba(34,197,94,0.10);border:1px solid rgba(34,197,94,0.40);
                              border-radius:10px;padding:14px 16px;font-size:14px;line-height:1.75;color:#f8fafc">
-                  <div style="display:inline-block;background:rgba(34,197,94,0.18);color:#bbf7d0;
-                               border:1px solid rgba(34,197,94,0.45);border-radius:999px;padding:2px 12px;
-                               font-size:12px;font-weight:800;margin-bottom:8px">✨ Extraído automaticamente:</div><br>
+                  <div style="display:inline-block;background:#22c55e;color:#052e16;
+                               border:1px solid rgba(34,197,94,0.9);border-radius:999px;padding:5px 15px;
+                               font-size:14px;font-weight:800;letter-spacing:.02em;margin:0 0 10px">✨ Extraído automaticamente:</div><br>
                   <b style="color:#86efac">• Título:</b> <code>{e_pw.get('titulo','')}</code><br>
                   <b style="color:#86efac">• Arquivo:</b> <code>{e_pw.get('local','')}</code> · <b style="color:#86efac">Linguagem:</b> <code>{e_pw.get('linguagem','')}</code><br>
                   <b style="color:#86efac">• Esperado:</b> <code>{e_pw.get('esperado','')}</code> · <b style="color:#86efac">Recebido:</b> <code>{e_pw.get('recebido','')}</code><br>
@@ -150,9 +150,9 @@ def render() -> None:
                 f"""
                 <div style="background:rgba(245,158,11,0.10);border:1px solid rgba(245,158,11,0.40);
                              border-radius:10px;padding:14px 16px;font-size:14px;line-height:1.75;color:#f8fafc">
-                  <div style="display:inline-block;background:rgba(245,158,11,0.18);color:#fde68a;
-                               border:1px solid rgba(245,158,11,0.45);border-radius:999px;padding:2px 12px;
-                               font-size:12px;font-weight:800;margin-bottom:8px">✨ Extraído automaticamente:</div><br>
+                  <div style="display:inline-block;background:#fbbf24;color:#451a03;
+                               border:1px solid rgba(245,158,11,0.9);border-radius:999px;padding:5px 15px;
+                               font-size:14px;font-weight:800;letter-spacing:.02em;margin:0 0 10px">✨ Extraído automaticamente:</div><br>
                   <b style="color:#fbbf24">• Requisição:</b> <code>{e_pm.get('requisicao','')}</code><br>
                   <b style="color:#fbbf24">• Esperado:</b> <code>{e_pm.get('status_esperado','')}</code> · <b style="color:#fbbf24">Recebido:</b> <code>{e_pm.get('status_recebido','')}</code><br>
                   <b style="color:#fbbf24">• Erro:</b> <code>{e_pm.get('erro','')}</code><br>
@@ -170,14 +170,16 @@ def render() -> None:
 
     st.markdown(
         """
-        <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.10);
+        <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.16);
                      border-radius:10px;padding:18px 20px;margin-top:4px">
-          <div style="color:#fff;font-weight:700;font-size:14px;margin-bottom:6px">💡 Não tem Playwright ou Postman instalados?</div>
-          <div style="color:#cbd5e1;font-size:13px;line-height:1.65">
-            Sem problema. Abaixo do campo <b style="color:#fff">Colar falha bruta</b> na
+          <div style="color:#ffffff;font-weight:800;font-size:15px;margin-bottom:8px">💡 Não tem Playwright ou Postman instalados?</div>
+          <div style="color:#f1f5f9;font-size:14px;line-height:1.7">
+            Sem problema. Abaixo do campo <b style="color:#86efac">Colar falha bruta</b> na
             <b style="color:#86efac">Ferramenta</b> já existem botões
-            <code>🎯 Exemplo Playwright</code> e <code>🎯 Exemplo Postman</code> que
-            preenchem o campo automaticamente com um caso real. Clique, revise e execute —
+            <code style="background:rgba(255,255,255,0.14);color:#fff;padding:2px 7px;border-radius:6px;font-weight:700">🎯 Exemplo Playwright</code>
+            e
+            <code style="background:rgba(255,255,255,0.14);color:#fff;padding:2px 7px;border-radius:6px;font-weight:700">🎯 Exemplo Postman</code>
+            que preenchem o campo automaticamente com um caso real. Clique, revise e execute —
             nenhum software extra necessário.
           </div>
         </div>
