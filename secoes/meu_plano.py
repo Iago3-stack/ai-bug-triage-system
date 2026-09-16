@@ -105,77 +105,84 @@ def render():
         st.warning("Você não está logado — faça login para gerenciar o plano da sua conta.")
         return
 
-    # ─── Migração dos registros legados (dados antigos sem dono) ─────────────
-    st.markdown("### 📦 Dados da sua conta")
-    legados = persistencia.contar_legados_globais()
-    if legados:
-        st.info(
-            f"Há **{legados} triagen(s)** gravadas antes da separação por usuário. "
-            "Elas estão guardadas no sistema, invisíveis — se você reconhecer que são suas, "
-            "pode trazê-las para a sua conta."
-        )
-        _marcador("marca-plano-migrar")
-        if st.button("✨ Trazer para a minha conta", key="btn_migrar", type="primary"):
-            feitos = persistencia.migrar_tenant_global(uid)
-            st.success(f"{feitos} triagen(s) foram adicionadas à sua conta.")
-            st.rerun()
-    else:
-        st.caption("Opa, seu histórico já está todo separado por usuário — nenhum dado antigo pendente. 🎉")
-
-    # ─── Troca de plano / cobrança (Passo 4: "nosso Stripe" via Pix) ─────────
-    st.markdown("### 💳 Plano da conta")
-    cobrancas = pixbilling.cobrancas_do_uid(uid)
-    aberta = next((c for c in cobrancas if c.get("status") == "aguardando"), None)
-    paga = next((c for c in cobrancas if c.get("status") == "confirmado"), None)
-    estornadas = [c for c in cobrancas if c.get("status") == "estornado"]
-
-    if aberta:
-        st.info(
-            "Você tem uma cobrança **aguardando pagamento** para ativar o Premium. "
-            "Pague o Pix abaixo e clique em **✅ Já paguei**."
-        )
-        _exibir_checkout_pix(aberta, uid)
-    elif atual == "pago" and paga:
-        st.success(f"Seu **Premium** está ativo — pago em **{pixbilling.preco_texto()}/mês**.")
-        _marcador("marca-plano-estorno")
-        if st.button("↩️ Solicitar estorno", key="btn_solicitar_estorno"):
-            pedido = pixbilling.solicitar_estorno(paga["id"], motivo="Solicitado pelo usuário")
-            if pedido:
-                _avisar_admin(
-                    f"Estorno solicitado: cobrança {pedido['id']} de {pedido.get('uid')} "
-                    f"({pixbilling.preco_texto()})"
-                )
-                _lembrete_refresh("↩️ Pedido de estorno enviado ao responsável!")
+    with st.container(border=True):
+        # ─── Migração dos registros legados (dados antigos sem dono) ─────────────
+        st.markdown("### 📦 Dados da sua conta")
+        legados = persistencia.contar_legados_globais()
+        if legados:
+            st.info(
+                f"Há **{legados} triagen(s)** gravadas antes da separação por usuário. "
+                "Elas estão guardadas no sistema, invisíveis — se você reconhecer que são suas, "
+                "pode trazê-las para a sua conta."
+            )
+            _marcador("marca-plano-migrar")
+            if st.button("✨ Trazer para a minha conta", key="btn_migrar", type="primary"):
+                feitos = persistencia.migrar_tenant_global(uid)
+                st.success(f"{feitos} triagen(s) foram adicionadas à sua conta.")
                 st.rerun()
-        if estornadas:
-            st.caption("Últimos estornos desta conta:")
-            for e in estornadas[:3]:
-                st.caption(f"• {e.get('id')} — {pixbilling.status_rotulo('estornado')} ({e.get('motivo') or '—'})")
-    else:
-        st.caption(
-            f"Adquira o **Premium** por **{pixbilling.preco_texto()}/mês** — pague no Pix, "
-            "sem cartão. O pagamento é confirmado pelo responsável."
-        )
-        _marcador("marca-plano-comprar")
-        if st.button(f"⭐ Assinar Premium — {pixbilling.preco_texto()}/mês", key="btn_assinar", type="primary"):
-            cobranca = pixbilling.gerar_cobranca(uid)
-            if cobranca:
-                st.rerun()
+        else:
+            st.caption("Opa, seu histórico já está todo separado por usuário — nenhum dado antigo pendente. 🎉")
 
-    # Painel do admin (só para o dono): fila de pagamentos + estornos
-    if _eh_admin():
-        _exibir_painel_admin()
+        # ─── Troca de plano / cobrança (Passo 4: "nosso Stripe" via Pix) ─────────
+        st.markdown("### 💳 Plano da conta")
+        cobrancas = pixbilling.cobrancas_do_uid(uid)
+        aberta = next((c for c in cobrancas if c.get("status") == "aguardando"), None)
+        paga = next((c for c in cobrancas if c.get("status") == "confirmado"), None)
+        estornadas = [c for c in cobrancas if c.get("status") == "estornado"]
 
-    # ─── Suporte por WhatsApp ────────────────────────────────────────────────
-    wa = _whatsapp_suporte()
-    if wa:
-        st.markdown("### 💬 Suporte")
-        _c_txt, _c_wa = st.columns([3.2, 1], vertical_alignment="center")
-        with _c_txt:
-            st.caption("Dúvidas sobre plano, pagamento ou estorno? Fale direto com a gente pelo WhatsApp.")
-        with _c_wa:
-            _exibir_botao_whatsapp(wa)
-        st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
+        if aberta:
+            st.info(
+                "Você tem uma cobrança **aguardando pagamento** para ativar o Premium. "
+                "Pague o Pix abaixo e clique em **✅ Já paguei**."
+            )
+            _exibir_checkout_pix(aberta, uid)
+        elif atual == "pago" and paga:
+            st.success(f"Seu **Premium** está ativo — pago em **{pixbilling.preco_texto()}/mês**.")
+            _marcador("marca-plano-estorno")
+            if st.button("↩️ Solicitar estorno", key="btn_solicitar_estorno"):
+                pedido = pixbilling.solicitar_estorno(paga["id"], motivo="Solicitado pelo usuário")
+                if pedido:
+                    _avisar_admin(
+                        f"Estorno solicitado: cobrança {pedido['id']} de {pedido.get('uid')} "
+                        f"({pixbilling.preco_texto()})"
+                    )
+                    _lembrete_refresh("↩️ Pedido de estorno enviado ao responsável!")
+                    st.rerun()
+            if estornadas:
+                st.caption("Últimos estornos desta conta:")
+                for e in estornadas[:3]:
+                    st.caption(f"• {e.get('id')} — {pixbilling.status_rotulo('estornado')} ({e.get('motivo') or '—'})")
+        else:
+            st.caption(
+                f"Adquira o **Premium** por **{pixbilling.preco_texto()}/mês** — pague no Pix, "
+                "sem cartão. O pagamento é confirmado pelo responsável."
+            )
+            _marcador("marca-plano-comprar")
+            if st.button(f"⭐ Assinar Premium — {pixbilling.preco_texto()}/mês", key="btn_assinar", type="primary"):
+                cobranca = pixbilling.gerar_cobranca(uid)
+                if cobranca:
+                    st.rerun()
+
+        # Painel do admin (só para o dono): fila de pagamentos + estornos
+        if _eh_admin():
+            _exibir_painel_admin()
+
+        # ─── Suporte por WhatsApp ────────────────────────────────────────────────
+        wa = _whatsapp_suporte()
+        if wa:
+            st.markdown("### 💬 Suporte")
+            st.markdown(
+                'Dúvidas sobre plano, pagamento ou estorno? Fale direto com a gente '
+                f'pelo WhatsApp. <a href="{wa}" target="_blank" rel="noopener" '
+                'style="text-decoration:none;vertical-align:middle">'
+                '<span style="display:inline-flex;align-items:center;background:#25D366;'
+                'color:#ffffff;padding:7px 14px 7px 10px;border-radius:10px;font-weight:700;'
+                'font-size:13px;box-shadow:0 4px 12px rgba(37,211,102,.35);white-space:nowrap;">'
+                f'{_icone_whatsapp_inline()}<span style="margin-left:-4px">WhatsApp</span>'
+                '</span></a>',
+                unsafe_allow_html=True,
+            )
+            st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
 
     # ─── Comparativo Basic × Premium ─────────────────────────────────────────
     with st.expander("💼 Comparar planos — Basic × Premium", expanded=False):
@@ -415,23 +422,3 @@ def _exibir_copia_e_cola(payload: str) -> None:
     components.html(cartao, height=175)
 
 
-def _exibir_botao_whatsapp(link: str) -> None:
-    """Botão quadrado do WhatsApp (só o símbolo, centralizado) no verde da marca."""
-    st.markdown(
-        f"""
-        <style>
-        .wa-quadrado {{
-            display:flex; align-items:center; justify-content:center;
-            width:52px; height:52px; border-radius:12px;
-            background:#25D366; color:#ffffff; border:none; cursor:pointer;
-            box-shadow:0 4px 12px rgba(37,211,102,.35);
-            transition:transform .15s ease, filter .15s ease;
-        }}
-        .wa-quadrado:hover {{ transform:scale(1.06); filter:brightness(1.06); }}
-        </style>
-        <a href="{link}" target="_blank" style="text-decoration:none">
-            <button class="wa-quadrado">{_icone_whatsapp_inline()}</button>
-        </a>
-        """,
-        unsafe_allow_html=True,
-    )

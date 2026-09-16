@@ -14,7 +14,7 @@ import sessao_persist
 import roteador
 import admin
 
-VERSAO = "v2.15.2"
+VERSAO = "v2.15.3"
 
 # Logo do sistema (SVG embutido como data URI para funcionar na Cloud).
 _LOGO_DATA_URI = (
@@ -424,6 +424,26 @@ def _bolinha_perfil(email: str) -> None:
     )
 
 
+class _ImagemHeicSemSuporte(Exception):
+    """Foto HEIC/HEIF enviada, mas sem decodificador instalado (pillow-heif)."""
+
+
+def _abrir_imagem_enviada(origem) -> "Image.Image":
+    """Abre JPG/PNG/WebP/HEIC do upload ou da câmera (celular incluído)."""
+    import io
+
+    from PIL import Image
+
+    nome = (getattr(origem, "name", "") or "").lower()
+    if nome.endswith((".heic", ".heif")):
+        try:
+            from pillow_heif import register_heif_opener
+        except ImportError as err:
+            raise _ImagemHeicSemSuporte() from err
+        register_heif_opener()
+    return Image.open(io.BytesIO(origem.getvalue()))
+
+
 @st.dialog("👤 Seu perfil")
 def _modal_perfil(uid: str, email: str) -> None:
     """Modal do perfil: nome, empresa, fuso e avatar (upload redimensionado)."""
@@ -454,19 +474,23 @@ def _modal_perfil(uid: str, email: str) -> None:
         st.markdown("**Foto do perfil**")
         foto = st.file_uploader(
             "Envie JPG/PNG/WebP (será redimensionada para 160px)",
-            type=["jpg", "jpeg", "png", "webp"],
+            type=["jpg", "jpeg", "png", "webp", "heic", "heif"],
             key="perfil_foto_upload",
         )
-        if foto:
+        cam = st.camera_input("📸 No celular: bate a foto ou escolhe da galeria pela câmera", key="perfil_foto_camera")
+        origem = foto or cam
+        if origem:
             try:
-                img = Image.open(io.BytesIO(foto.getvalue()))
+                img = _abrir_imagem_enviada(origem)
                 img = img.convert("RGB")
                 img.thumbnail((160, 160))
                 buf = io.BytesIO()
                 img.save(buf, format="PNG")
                 avatar = "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
+            except _ImagemHeicSemSuporte:
+                st.warning("📸 Essa foto é HEIC (iPhone). Tire um print ou escolha JPG/PNG — ou use a câmera acima.")
             except Exception:
-                st.error("Não consegui processar essa imagem. Tente outra.")
+                st.error("Não consegui processar essa imagem. Tente outra (JPG/PNG/WebP).")
 
     nome = st.text_input("Nome de exibição", value=dados.get("nome") or "", max_chars=120)
     empresa = st.text_input("Empresa / cargo", value=dados.get("empresa") or "", max_chars=120)

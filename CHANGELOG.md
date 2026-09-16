@@ -4,6 +4,15 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.15.3] - 2026-09-15
+
+### Adicionado
+- **📸 Foto de perfil no celular** — o upload agora aceita **HEIC/HEIF** (iPhone) com recado amigável se o decodificador não estiver instalado, e ganhou um botão **câmera** (`st.camera_input`) para bater foto ou escolher da galeria direto no aparelho.
+- **📦 Quadrado em "Meu Plano"** — as seções "Dados da sua conta", "Plano da conta", "Painel do responsável" e "Suporte" foram agrupadas dentro de uma caixa (borda arredondada, adapta ao tema claro/escuro).
+
+### Alterado
+- **💬 Botão do WhatsApp colado ao texto** — em "Fale direto com a gente pelo WhatsApp.", o botão (símbolo verde + "WhatsApp") agora aparece logo em seguida à frase, em vez de empurrado para a direita da página.
+
 ## [v2.15.2] - 2026-09-16
 
 ### Corrigido
