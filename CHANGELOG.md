@@ -4,6 +4,11 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.15.15] - 2026-09-16
+
+### Adicionado
+- **🔌 Integração no menu do topo (desktop)** — a navegação do computador usa a barra do topo (a sidebar nativa fica fechada/estática no PC e só abre no celular), e o botão "🔌 Integração" não tinha entrado lá. Agora aparece no topo, logo ao lado de "🔍 Triagem de Bugs", igual ao menu lateral.
+
 ## [v2.15.14] - 2026-09-16
 
 ### Corrigido
