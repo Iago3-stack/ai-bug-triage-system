@@ -4,6 +4,12 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.15.16] - 2026-09-16
+
+### Alterado
+- **🔌 Vitrine da página Integração repagina da** — os 3 passos da ponte ("Rode o teste → Cole a falha aqui → App estrutura e analisa") agora ficam dentro de um card único com borda, títulos em verde/âmbar/roxo e textos mais legíveis. Os cartões "✨ Extraído automaticamente" (Playwright e Postman) ficaram mais visíveis: nome dos campos colorido + valores em branco-forte e maior.
+- **🎨 Botões com gradiente por ferramenta** — "🚀 Testar isso na Ferramenta" do Playwright usa gradiente verde (marca Playwright), o do Postman usa laranja (marca Postman) e o botão "🔍 Ir para a Ferramenta de Triagem" usa azul. Ao passar o mouse, clareiam e sobem levemente.
+
 ## [v2.15.15] - 2026-09-16
 
 ### Adicionado
