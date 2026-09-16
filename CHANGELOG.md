@@ -4,6 +4,11 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.15.10] - 2026-09-16
+
+### Adicionado
+- **📖 Expander "📖 Como ler este Dashboard — Guia Completo" com cor** — mesmo estilo roxo (`marca-dashboard`) dos demais expanders do Dashboard, legível nos dois temas e sem mudança no hover.
+
 ## [v2.15.9] - 2026-09-16
 
 ### Adicionado

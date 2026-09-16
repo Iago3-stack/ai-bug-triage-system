@@ -273,6 +273,7 @@ def render_dashboard(registros: list[dict]) -> None:
 
     # Guia completo: explica TODAS as métricas e como ler um zero (ex.: Falso-positivo evitado).
     with st.expander("📖 Como ler este Dashboard — Guia Completo", expanded=False):
+        st.markdown('<div class="marca-dashboard" style="display:none"></div>', unsafe_allow_html=True)
         st.markdown(GUIA_DASHBOARD)
 
     # --- Filtro global por funcionalidade ---
