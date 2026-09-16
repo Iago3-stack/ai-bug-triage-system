@@ -122,17 +122,20 @@ def render() -> None:
         st.code(_EXEMPLO_PLAYWRIGHT, language="bash")
         e_pw = estruturar(_EXEMPLO_PLAYWRIGHT)
         if e_pw:
+            _sev_pw = e_pw.get("severidade", "")
+            _cor_sev_pw = "#b91c1c" if ("CRÍTICA" in _sev_pw or "ALTA" in _sev_pw) else ("#b45309" if "MÉDIA" in _sev_pw else "#0f172a")
             st.markdown(
                 f"""
-                <div style="background:rgba(34,197,94,0.10);border:1px solid rgba(34,197,94,0.40);
-                             border-radius:10px;padding:14px 16px;font-size:14px;line-height:1.75;color:#f8fafc">
-                  <div style="display:inline-block;background:#22c55e;color:#052e16;
-                               border:1px solid rgba(34,197,94,0.9);border-radius:999px;padding:5px 15px;
+                <div style="background:#ffffff;border:1px solid #16a34a;border-radius:12px;
+                             padding:16px 18px;font-size:14px;line-height:1.9;color:#0f172a;
+                             box-shadow:0 4px 12px rgba(15,23,42,.08)">
+                  <div style="display:inline-block;background:#16a34a;color:#ffffff;
+                               border-radius:999px;padding:5px 15px;
                                font-size:14px;font-weight:800;letter-spacing:.02em;margin:0 0 10px">✨ Extraído automaticamente:</div><br>
-                  <b style="color:#86efac">• Título:</b> <code>{e_pw.get('titulo','')}</code><br>
-                  <b style="color:#86efac">• Arquivo:</b> <code>{e_pw.get('local','')}</code> · <b style="color:#86efac">Linguagem:</b> <code>{e_pw.get('linguagem','')}</code><br>
-                  <b style="color:#86efac">• Esperado:</b> <code>{e_pw.get('esperado','')}</code> · <b style="color:#86efac">Recebido:</b> <code>{e_pw.get('recebido','')}</code><br>
-                  <b style="color:#86efac">• Severidade prévia:</b> <b style="color:#bbf7d0">{e_pw.get('severidade','')}</b>
+                  <b style="color:#15803d">• Título:</b> <code style="background:#f1f5f9;color:#0f172a;padding:1px 7px;border-radius:6px;font-weight:600">{e_pw.get('titulo','')}</code><br>
+                  <b style="color:#15803d">• Arquivo:</b> <code style="background:#f1f5f9;color:#0f172a;padding:1px 7px;border-radius:6px;font-weight:600">{e_pw.get('local','')}</code> · <b style="color:#15803d">Linguagem:</b> <code style="background:#f1f5f9;color:#0f172a;padding:1px 7px;border-radius:6px;font-weight:600">{e_pw.get('linguagem','')}</code><br>
+                  <b style="color:#15803d">• Esperado:</b> <code style="background:#f1f5f9;color:#0f172a;padding:1px 7px;border-radius:6px;font-weight:600">{e_pw.get('esperado','')}</code> · <b style="color:#15803d">Recebido:</b> <code style="background:#f1f5f9;color:#0f172a;padding:1px 7px;border-radius:6px;font-weight:600">{e_pw.get('recebido','')}</code><br>
+                  <b style="color:#15803d">• Severidade prévia:</b> <b style="color:{_cor_sev_pw}">{_sev_pw}</b>
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -147,17 +150,20 @@ def render() -> None:
         st.code(_EXEMPLO_POSTMAN, language="bash")
         e_pm = estruturar(_EXEMPLO_POSTMAN)
         if e_pm:
+            _sev_pm = e_pm.get("severidade", "")
+            _cor_sev_pm = "#b91c1c" if ("CRÍTICA" in _sev_pm or "ALTA" in _sev_pm) else ("#b45309" if "MÉDIA" in _sev_pm else "#0f172a")
             st.markdown(
                 f"""
-                <div style="background:rgba(245,158,11,0.10);border:1px solid rgba(245,158,11,0.40);
-                             border-radius:10px;padding:14px 16px;font-size:14px;line-height:1.75;color:#f8fafc">
-                  <div style="display:inline-block;background:#fbbf24;color:#451a03;
-                               border:1px solid rgba(245,158,11,0.9);border-radius:999px;padding:5px 15px;
+                <div style="background:#ffffff;border:1px solid #d97706;border-radius:12px;
+                             padding:16px 18px;font-size:14px;line-height:1.9;color:#0f172a;
+                             box-shadow:0 4px 12px rgba(15,23,42,.08)">
+                  <div style="display:inline-block;background:#d97706;color:#ffffff;
+                               border-radius:999px;padding:5px 15px;
                                font-size:14px;font-weight:800;letter-spacing:.02em;margin:0 0 10px">✨ Extraído automaticamente:</div><br>
-                  <b style="color:#fbbf24">• Requisição:</b> <code>{e_pm.get('requisicao','')}</code><br>
-                  <b style="color:#fbbf24">• Esperado:</b> <code>{e_pm.get('status_esperado','')}</code> · <b style="color:#fbbf24">Recebido:</b> <code>{e_pm.get('status_recebido','')}</code><br>
-                  <b style="color:#fbbf24">• Erro:</b> <code>{e_pm.get('erro','')}</code><br>
-                  <b style="color:#fbbf24">• Severidade prévia:</b> <b style="color:#fde68a">{e_pm.get('severidade','')}</b>
+                  <b style="color:#b45309">• Requisição:</b> <code style="background:#f1f5f9;color:#0f172a;padding:1px 7px;border-radius:6px;font-weight:600">{e_pm.get('requisicao','')}</code><br>
+                  <b style="color:#b45309">• Esperado:</b> <code style="background:#f1f5f9;color:#0f172a;padding:1px 7px;border-radius:6px;font-weight:600">{e_pm.get('status_esperado','')}</code> · <b style="color:#b45309">Recebido:</b> <code style="background:#f1f5f9;color:#0f172a;padding:1px 7px;border-radius:6px;font-weight:600">{e_pm.get('status_recebido','')}</code><br>
+                  <b style="color:#b45309">• Erro:</b> <code style="background:#f1f5f9;color:#0f172a;padding:1px 7px;border-radius:6px;font-weight:600">{e_pm.get('erro','')}</code><br>
+                  <b style="color:#b45309">• Severidade prévia:</b> <b style="color:{_cor_sev_pm}">{_sev_pm}</b>
                 </div>
                 """,
                 unsafe_allow_html=True,

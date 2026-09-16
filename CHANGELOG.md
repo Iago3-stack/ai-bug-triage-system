@@ -4,6 +4,11 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.15.19] - 2026-09-16
+
+### Alterado
+- **🔍 Cards "Extraído automaticamente:" legíveis na Integração** — os valores extraídos (Título, Arquivo, Esperado, Severidade prévia, etc.) saíram do fundo translúcido claro e agora ficam em **card branco com texto escuro**, borda/cor por ferramenta (verde Playwright, âmbar Postman) e a **severidade colorida** conforme o caso (vermelho p/ CRÍTICA/ALTA, âmbar p/ MÉDIA). Acabou o "efeito luz" que sumia com o texto.
+
 ## [v2.15.18] - 2026-09-16
 
 ### Alterado
