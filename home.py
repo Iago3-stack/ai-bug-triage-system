@@ -1,6 +1,8 @@
 """Entrada do app: rota (st.navigation) + CSS global + sidebar/rodapé comuns."""
 import streamlit as st
 
+from streamlit.errors import StreamlitAPIException
+
 import auth_supabase
 import ui_tema
 import roteador
@@ -80,7 +82,17 @@ ui_comum.menu_top(pg)
 if pg.url_path in ("triagem", "meu_plano", "dashboard", "painel_dono") and pagina_login.render():
     st.stop()
 
-pg.run()
+# Sessão iniciada numa versão anterior (a lista de páginas mudou no deploy) pode
+# deixar a navegação do frontend dessincronizada: o pg devolvido chega
+# "desqualificado" e o pg.run() levanta. Em vez de mostrar a tela de erro, manda
+# para o Início uma vez — a navegação recomeça limpa na próxima execução.
+try:
+    pg.run()
+except StreamlitAPIException as _exc:
+    if "cannot be called directly" in str(_exc):
+        st.switch_page(roteador.PAGINAS["inicio"])
+    else:
+        raise
 ui_comum.rodape()
 
 # Botão interno do dialog usou st.rerun() (ex.: trocar tema), que fecha o modal.

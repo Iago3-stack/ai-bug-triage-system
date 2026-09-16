@@ -4,6 +4,11 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.15.14] - 2026-09-16
+
+### Corrigido
+- **⛑️ App não trava mais com "This page cannot be called directly"** — sessões iniciadas numa versão anterior (a lista de páginas mudou após deploy) deixavam a navegação dessincronizada e o `pg.run()` da `home.py` levantava `StreamlitAPIException`, travando o app numa tela de erro. Agora, quando isso acontece, o app redireciona uma vez para o **Início** e a navegação recomeça limpa — sem tela de erro, sem precisar matar manualmente a sessão.
+
 ## [v2.15.13] - 2026-09-16
 
 ### Adicionado
