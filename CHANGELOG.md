@@ -4,6 +4,11 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.15.18] - 2026-09-16
+
+### Alterado
+- **⚫ Texto escuro sobre card claro na Integração** — os cartões dos 3 passos da ponte e a caixa "💡 Não tem Playwright ou Postman instalados?" passaram a usar fundo branco com letras escuras (slate/preto), títulos coloridos e chips dos botões de exemplo em verde/âmbar — legível de ponta a ponta, sem texto apagado.
+
 ## [v2.15.17] - 2026-09-16
 
 ### Alterado

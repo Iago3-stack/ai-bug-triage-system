@@ -91,20 +91,21 @@ def render() -> None:
     st.markdown("#### Como funciona a ponte")
     with st.container(border=True):
         _ac_cards = [
-            ("🖥️", "1. Rode o teste", "Playwright, Postman Runner ou newman na sua máquina — mesmo fluxo de sempre.", "#22c55e", "#86efac"),
-            ("📋", "2. Cole a falha aqui", "Copie a saída do erro e cole no campo da Ferramenta (ou use um exemplo pronto).", "#f59e0b", "#fde68a"),
-            ("🤖", "3. App estrutura e analisa", "Motor NLP + IA (Gemini/Groq) + RAG → relatório Gherkin pronto para JIRA/GitHub.", "#8b5cf6", "#c4b5fd"),
+            ("🖥️", "1. Rode o teste", "Playwright, Postman Runner ou newman na sua máquina — mesmo fluxo de sempre.", "#15803d"),
+            ("📋", "2. Cole a falha aqui", "Copie a saída do erro e cole no campo da Ferramenta (ou use um exemplo pronto).", "#b45309"),
+            ("🤖", "3. App estrutura e analisa", "Motor NLP + IA (Gemini/Groq) + RAG → relatório Gherkin pronto para JIRA/GitHub.", "#6d28d9"),
         ]
         cols = st.columns(3)
-        for col, (icone, titulo, desc, _cor, _cor_titulo) in zip(cols, _ac_cards):
+        for col, (icone, titulo, desc, cor) in zip(cols, _ac_cards):
             with col:
                 st.markdown(
                     f"""
-                    <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);
-                                 border-radius:12px;padding:18px 16px;text-align:center;min-height:150px">
-                      <div style="font-size:30px;margin-bottom:6px">{icone}</div>
-                      <div style="color:{_cor_titulo};font-weight:800;font-size:14.5px;margin-bottom:6px">{titulo}</div>
-                      <div style="color:#cbd5e1;font-size:13px;line-height:1.6">{desc}</div>
+                    <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;
+                                 padding:18px 16px;text-align:center;min-height:150px;
+                                 box-shadow:0 4px 10px rgba(15,23,42,.10)">
+                      <div style="font-size:32px;margin-bottom:6px">{icone}</div>
+                      <div style="color:{cor};font-weight:800;font-size:15px;margin-bottom:6px">{titulo}</div>
+                      <div style="color:#0f172a;font-size:13.5px;line-height:1.65;font-weight:500">{desc}</div>
                     </div>
                     """,
                     unsafe_allow_html=True,
@@ -170,15 +171,15 @@ def render() -> None:
 
     st.markdown(
         """
-        <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.16);
-                     border-radius:10px;padding:18px 20px;margin-top:4px">
-          <div style="color:#ffffff;font-weight:800;font-size:15px;margin-bottom:8px">💡 Não tem Playwright ou Postman instalados?</div>
-          <div style="color:#f1f5f9;font-size:14px;line-height:1.7">
-            Sem problema. Abaixo do campo <b style="color:#86efac">Colar falha bruta</b> na
-            <b style="color:#86efac">Ferramenta</b> já existem botões
-            <code style="background:rgba(255,255,255,0.14);color:#fff;padding:2px 7px;border-radius:6px;font-weight:700">🎯 Exemplo Playwright</code>
+        <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;
+                     padding:20px 22px;margin-top:4px;box-shadow:0 4px 12px rgba(15,23,42,.10)">
+          <div style="color:#0f172a;font-weight:800;font-size:15.5px;margin-bottom:8px">💡 Não tem Playwright ou Postman instalados?</div>
+          <div style="color:#1e293b;font-size:14.5px;line-height:1.75;font-weight:500">
+            Sem problema. Abaixo do campo <b style="color:#15803d">Colar falha bruta</b> na
+            <b style="color:#15803d">Ferramenta</b> já existem botões
+            <code style="background:#16a34a;color:#ffffff;padding:2px 8px;border-radius:6px;font-weight:700">🎯 Exemplo Playwright</code>
             e
-            <code style="background:rgba(255,255,255,0.14);color:#fff;padding:2px 7px;border-radius:6px;font-weight:700">🎯 Exemplo Postman</code>
+            <code style="background:#d97706;color:#ffffff;padding:2px 8px;border-radius:6px;font-weight:700">🎯 Exemplo Postman</code>
             que preenchem o campo automaticamente com um caso real. Clique, revise e execute —
             nenhum software extra necessário.
           </div>
