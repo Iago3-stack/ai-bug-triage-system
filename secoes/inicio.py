@@ -29,6 +29,8 @@ def render():
     _pill_off = 'background:rgba(255,255,255,.05);border:1px dashed rgba(255,255,255,.20);border-radius:999px;padding:4px 13px;font-size:12px;color:#94a3b8'
     _pill_feat = lambda on: _pill_on if on else _pill_off
 
+    st.markdown('<div style="height:3px;width:100%;background:linear-gradient(90deg,transparent,#25D366,#2E7CF6,#7c3aed,transparent);border-radius:999px;margin:8px 0"></div>', unsafe_allow_html=True)
+
     st.markdown(f"""
     <div class="marca-mastro" style="width:100%;background:linear-gradient(135deg,#0f172a 0%,#16233c 52%,#25D366 175%);border-radius:16px;padding:30px 34px 26px 34px;margin:4px 0 18px;box-shadow:0 8px 22px rgba(15,23,42,.18)">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
@@ -62,6 +64,7 @@ def render():
     """, unsafe_allow_html=True)
 
     with st.expander("💼 Comparar planos — Basic × Premium", expanded=False):
+        st.markdown('<div class="marca-plano" style="display:none"></div>', unsafe_allow_html=True)
         st.markdown(f"""
     | Recurso | 🔓 Basic | ⭐ Premium |
     |---|---|---|

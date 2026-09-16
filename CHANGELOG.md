@@ -4,6 +4,12 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.15.9] - 2026-09-16
+
+### Adicionado
+- **🎨 Expanders "📋 Colar falha bruta" e "💼 Comparar planos — Basic × Premium" agora com cor sólida (sem hover, legível nos dois temas)** — título em verde/Colar falha e dourado/Comparar planos, com borda e fundo suave combinando; no escuro usam tons claros fixos (hover não troca a cor).
+- **🌈 Linha em gradiente acima dos cards** — Painel do Administrador, Dashboard de QA e o masthead da Início agora têm a mesma linha verde→azul→roxo que as demais seções já tinham, unificando a identidade visual da página.
+
 ## [v2.15.8] - 2026-09-16
 
 ### Alterado

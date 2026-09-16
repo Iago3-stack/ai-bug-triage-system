@@ -186,6 +186,7 @@ def render():
 
     # ─── Comparativo Basic × Premium ─────────────────────────────────────────
     with st.expander("💼 Comparar planos — Basic × Premium", expanded=False):
+        st.markdown('<div class="marca-plano" style="display:none"></div>', unsafe_allow_html=True)
         st.markdown(f"""
 | Recurso | 🔓 Basic | ⭐ Premium |
 |---|---|---|
