@@ -4,6 +4,11 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.15.2] - 2026-09-16
+
+### Corrigido
+- **🎨 Cores sólidas nos botões do Painel do Administrador, sem hover, nos dois temas** — cada ação com sua cor fixa: ⭐ **Ativar Premium** verde, 🎁 **Dar teste 7 dias** âmbar, 🔓 **Voltar a Basic** cinza-ardósia. Estilo via marcadores `marca-dono-*`; o hover não muda a cor (padrão já usado nos botões de plano).
+
 ## [v2.15.1] - 2026-09-16
 
 ### Adicionado

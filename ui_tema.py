@@ -410,6 +410,18 @@ body:has([data-st-tema="escuro"]) [data-testid="stVerticalBlock"]:has(> [data-te
 [data-testid="stElementContainer"]:has(.marca-plano-admin-estorno) + [data-testid="stElementContainer"] [data-testid="stButton"] button:hover { background:#dc2626 !important; color:#ffffff !important; border:none !important; font-weight:700 !important; box-shadow:0 3px 10px rgba(220,38,38,.35) !important; }
 [data-testid="stElementContainer"]:has(.marca-plano-ferramenta) + [data-testid="stElementContainer"] [data-testid="stButton"] button,
 [data-testid="stElementContainer"]:has(.marca-plano-ferramenta) + [data-testid="stElementContainer"] [data-testid="stButton"] button:hover { background:#2563eb !important; color:#ffffff !important; border:none !important; font-weight:700 !important; box-shadow:0 3px 10px rgba(37,99,235,.35) !important; }
+[data-testid="stColumn"]:has(.marca-dono-premium) [data-testid="stButton"] button,
+[data-testid="stColumn"]:has(.marca-dono-premium) [data-testid="stButton"] button:hover { background:#059669 !important; color:#ffffff !important; border:none !important; box-shadow:0 3px 10px rgba(5,150,105,.35) !important; }
+[data-testid="stColumn"]:has(.marca-dono-teste) [data-testid="stButton"] button,
+[data-testid="stColumn"]:has(.marca-dono-teste) [data-testid="stButton"] button:hover { background:#d97706 !important; color:#ffffff !important; border:none !important; box-shadow:0 3px 10px rgba(217,119,6,.35) !important; }
+[data-testid="stColumn"]:has(.marca-dono-basic) [data-testid="stButton"] button,
+[data-testid="stColumn"]:has(.marca-dono-basic) [data-testid="stButton"] button:hover { background:#64748b !important; color:#ffffff !important; border:none !important; box-shadow:0 3px 10px rgba(100,116,139,.35) !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stColumn"]:has(.marca-dono-premium) [data-testid="stButton"] button,
+body:has([data-st-tema="escuro"]) [data-testid="stColumn"]:has(.marca-dono-premium) [data-testid="stButton"] button:hover { background:#047857 !important; color:#ffffff !important; border:none !important; box-shadow:0 3px 10px rgba(6,95,70,.45) !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stColumn"]:has(.marca-dono-teste) [data-testid="stButton"] button,
+body:has([data-st-tema="escuro"]) [data-testid="stColumn"]:has(.marca-dono-teste) [data-testid="stButton"] button:hover { background:#b45309 !important; color:#ffffff !important; border:none !important; box-shadow:0 3px 10px rgba(180,83,9,.45) !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stColumn"]:has(.marca-dono-basic) [data-testid="stButton"] button,
+body:has([data-st-tema="escuro"]) [data-testid="stColumn"]:has(.marca-dono-basic) [data-testid="stButton"] button:hover { background:#52525b !important; color:#ffffff !important; border:none !important; box-shadow:0 3px 10px rgba(82,82,91,.45) !important; }
 </style>
 """
 
