@@ -25,7 +25,6 @@ _BASE_CSS = """
     [data-testid="stCaptionContainer"], [data-testid="stSidebar"] caption { color: #64748b !important; }
     [data-testid="stMetricLabel"] { color: #64748b !important; }
     [data-testid="stMetricValue"] { color: #0f172a !important; }
-    [data-testid="stHeader"] { display: none !important; }
 
     /* Sidebar sempre aberta no desktop: o Streamlit pode colapsar sozinho em larguras
        ~768-820px (flutuação entre desktop e modo hambúrguer) — força 300px fixos e
@@ -55,11 +54,8 @@ _BASE_CSS = """
     .marca-mastro { margin-top: 0 !important; }
     body:has([data-st-tema="escuro"]) .marca-mastro { margin-top: 0 !important; }
 
-    /* No mobile (largura < 768px) a barra nativa do Streamlit reaparece para que o
-       botão hambúrguer (abrir sidebar) fique acessível; o masthead desce para logo
-       abaixo dela (sem margem negativa). */
+    /* Mobile (<768px): mantém a barra nativa visível (hambúrguer p/ sidebar). */
     @media (max-width: 767px) {
-        [data-testid="stHeader"] { display: flex !important; }
         .marca-mastro { margin-top: 0 !important; }
         body:has([data-st-tema="escuro"]) .marca-mastro { margin-top: 0 !important; }
     }

@@ -4,6 +4,11 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.15.21] - 2026-09-16
+
+### Alterado
+- **📌 Barra superior nativa do Streamlit de volta no desktop** — antes ela ficava oculta no computador (só aparecia no celular para o hambúrguer). Agora volta a aparecer no notebook/desktop, mantendo a barra de navegação personalizada do topo como navegação principal.
+
 ## [v2.15.20] - 2026-09-16
 
 ### Alterado
