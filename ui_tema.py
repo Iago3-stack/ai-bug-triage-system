@@ -125,6 +125,7 @@ _BASE_CSS = """
     [data-testid="stExpander"]:has(.marca-colar) summary { color: #15803d !important; font-weight: 700 !important; }
     [data-testid="stExpander"]:has(.marca-plano) { border: 2px solid #d97706 !important; border-radius: 12px !important; background: rgba(217, 119, 6, 0.05) !important; }
     [data-testid="stExpander"]:has(.marca-plano) summary { color: #b45309 !important; font-weight: 700 !important; }
+    [data-testid="stExpander"]:has(.marca-plano) [data-testid="stExpanderDetails"] { overflow-x: auto; }
     [data-testid="stElementContainer"]:has(.marca-modelo-btn) + [data-testid="stElementContainer"] [data-testid="stButton"] button { background: #f97316 !important; color: #ffffff !important; }
     [data-testid="stElementContainer"]:has(.marca-modelo-btn) + [data-testid="stElementContainer"] [data-testid="stButton"] button:hover { background: #ea580c !important; }
 

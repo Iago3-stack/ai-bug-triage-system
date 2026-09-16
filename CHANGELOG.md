@@ -4,6 +4,11 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.15.11] - 2026-09-16
+
+### Corrigido
+- **📱 Tabela do "Comparar planos" no celular** — o conteúdo passava da borda do expander; agora o corpo do expander rola horizontalmente quando a tela é estreita, mantendo a borda e os dois temas intactos.
+
 ## [v2.15.10] - 2026-09-16
 
 ### Adicionado
