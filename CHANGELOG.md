@@ -4,6 +4,21 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.16.0] - 2026-09-16
+
+### Adicionado
+- **⚙️ Checkout automático de Pix via PagBank** (`pagbank.py`) — a assinatura do Premium agora pode criar um pedido com **QR Code dinâmico** na API de Pedidos (Orders): valor, expiração e URL de notificação. Cobra apenas **Pix entre chaves (0%)** passa a valer como gateway próprio, sem confirmação manual.
+- **🔔 Webhook `/webhook/pagamento`** (Render) — recebe a notificação do PagBank, **consulta o estado real do pedido na API** (não confia no corpo do webhook) e, confirmando o status `PAID`, ativa o Premium **automaticamente** e de forma idempotente.
+- **📊 Meu Plano** — campo de CPF/nome do titular (opcional) ao assinar, exibição do copia-e-cola dinâmico do PagBank e avisos de confirmação automática na página.
+
+### Alterado
+- `pixbilling.gerar_cobranca` ganhou o fluxo PagBank com **fallback**: se o PagBank não estiver configurado (ou a API falhar), a cobrança cai no caminho manual atual (Pix estático + "Já paguei"), sem derrubar o app.
+
+### Configuração (secrets da Cloud + env da Render, jamais no repositório)
+- `PAGBANK_TOKEN` — token de integração (Integrações → Gerar Token, chegou no e-mail).
+- `PAGBANK_WEBHOOK_URL` — ex.: `https://ai-bug-triage-system-webhook.onrender.com/webhook/pagamento`.
+- Opcionais: `PAGBANK_API` (sandbox `https://sandbox.api.pagseguro.com`), `PAGBANK_VALIDADE_HORAS` (padrão 24h).
+
 ## [v2.15.21] - 2026-09-16
 
 ### Alterado

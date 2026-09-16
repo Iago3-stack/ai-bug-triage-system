@@ -1,0 +1,176 @@
+"""Testes do módulo PagBank (cobrança Pix automática via Orders API).
+
+Nunca tocam a rede: requests.post/get são mockados. As envs de configuração
+(PAGBANK_*) também são isoladas por monkeypatch.
+"""
+import pytest
+
+import pagbank
+
+
+def _configurar(monkeypatch):
+    monkeypatch.setenv("PAGBANK_TOKEN", "tok-teste")
+    monkeypatch.delenv("PAGBANK_API", raising=False)
+    monkeypatch.delenv("PAGBANK_WEBHOOK_URL", raising=False)
+    monkeypatch.delenv("PAGBANK_VALIDADE_HORAS", raising=False)
+
+
+def test_sem_token_nao_configurado(monkeypatch):
+    monkeypatch.delenv("PAGBANK_TOKEN", raising=False)
+    assert pagbank.configurado() is False
+
+
+def test_configurado_com_token(monkeypatch):
+    _configurar(monkeypatch)
+    assert pagbank.configurado() is True
+    assert pagbank.token() == "tok-teste"
+
+
+def test_base_url_padrao_producao(monkeypatch):
+    _configurar(monkeypatch)
+    assert pagbank.base_url() == "https://api.pagseguro.com"
+
+
+def test_base_url_sandbox(monkeypatch):
+    _configurar(monkeypatch)
+    monkeypatch.setenv("PAGBANK_API", "https://sandbox.api.pagseguro.com/")
+    assert pagbank.base_url() == "https://sandbox.api.pagseguro.com"
+
+
+def test_validade_padrao_24(monkeypatch):
+    _configurar(monkeypatch)
+    assert pagbank.validade_horas() == 24
+
+
+def test_validade_custom(monkeypatch):
+    _configurar(monkeypatch)
+    monkeypatch.setenv("PAGBANK_VALIDADE_HORAS", "48")
+    assert pagbank.validade_horas() == 48
+
+
+def test_webhook_url_configurada(monkeypatch):
+    _configurar(monkeypatch)
+    monkeypatch.setenv("PAGBANK_WEBHOOK_URL", "https://x.onrender.com/webhook/pagamento")
+    assert pagbank.webhook_url() == "https://x.onrender.com/webhook/pagamento"
+
+
+class _Resposta:
+    def __init__(self, status_code, dados):
+        self.status_code = status_code
+        self._dados = dados
+
+    def json(self):
+        return self._dados
+
+
+def test_centavos():
+    assert pagbank._centavos(19.99) == 1999
+    assert pagbank._centavos(19) == 1900
+    assert pagbank._centavos(0.5) == 50
+
+
+def test_digitos():
+    assert pagbank._digitos("123.456.789-09") == "12345678909"
+    assert pagbank._digitos("") == ""
+
+
+def test_criar_cobranca_monta_pedido_correto(monkeypatch):
+    _configurar(monkeypatch)
+    monkeypatch.setenv("PAGBANK_WEBHOOK_URL", "https://x.onrender.com/webhook/pagamento")
+    chamadas = {}
+
+    def fake_post(url, headers, json, timeout):
+        chamadas.update(url=url, headers=headers, json=json, timeout=timeout)
+        return _Resposta(200, {
+            "id": "ORDE_ABC",
+            "reference_id": "cob-123",
+            "qr_codes": [{"id": "QRCO_XYZ", "text": "0002010..."}],
+        })
+
+    monkeypatch.setattr(pagbank.requests, "post", fake_post)
+    resultado = pagbank.criar_cobranca(
+        19.99, "cob-123", cpf="12345678909", nome="Jose da Silva", email="jose@test.com"
+    )
+    assert resultado == {"order_id": "ORDE_ABC", "qr_id": "QRCO_XYZ", "pix_copia": "0002010..."}
+    assert chamadas["url"] == "https://api.pagseguro.com/orders"
+    assert chamadas["headers"]["Authorization"] == "Bearer tok-teste"
+    corpo = chamadas["json"]
+    assert corpo["reference_id"] == "cob-123"
+    assert corpo["customer"]["tax_id"] == "12345678909"
+    assert "PAGBANK_WEBHOOK_URL" not in corpo["notification_urls"][0]  # usa a URL real
+    assert corpo["notification_urls"] == ["https://x.onrender.com/webhook/pagamento"]
+    assert corpo["qr_codes"][0]["amount"]["value"] == 1999
+    assert corpo["items"][0]["unit_amount"] == 1999
+
+
+def test_criar_cobranca_sem_token_falha(monkeypatch):
+    monkeypatch.delenv("PAGBANK_TOKEN", raising=False)
+    with pytest.raises(pagbank.PagbankErro):
+        pagbank.criar_cobranca(19.99, "cob-123")
+
+
+def test_criar_cobranca_sem_notification_url_falha(monkeypatch):
+    _configurar(monkeypatch)
+    with pytest.raises(pagbank.PagbankErro):
+        pagbank.criar_cobranca(19.99, "cob-123")
+
+
+def test_criar_cobranca_erro_http(monkeypatch):
+    _configurar(monkeypatch)
+    monkeypatch.setenv("PAGBANK_WEBHOOK_URL", "https://x.onrender.com/webhook/pagamento")
+
+    def fake_post(url, headers, json, timeout):
+        return _Resposta(401, {"message": "unauthorized"})
+
+    monkeypatch.setattr(pagbank.requests, "post", fake_post)
+    with pytest.raises(pagbank.PagbankErro, match="unauthorized"):
+        pagbank.criar_cobranca(19.99, "cob-123")
+
+
+def test_criar_cobranca_erro_rede(monkeypatch):
+    _configurar(monkeypatch)
+    monkeypatch.setenv("PAGBANK_WEBHOOK_URL", "https://x.onrender.com/webhook/pagamento")
+
+    def fake_post(url, headers, json, timeout):
+        raise OSError("sem rede")
+
+    monkeypatch.setattr(pagbank.requests, "post", fake_post)
+    with pytest.raises(pagbank.PagbankErro):
+        pagbank.criar_cobranca(19.99, "cob-123")
+
+
+def test_consultar_pedido_ok(monkeypatch):
+    _configurar(monkeypatch)
+    chamadas = {}
+
+    def fake_get(url, headers, timeout):
+        chamadas.update(url=url, headers=headers)
+        return _Resposta(200, {"id": "ORDE_ABC", "charges": []})
+
+    monkeypatch.setattr(pagbank.requests, "get", fake_get)
+    dados = pagbank.consultar_pedido("ORDE_ABC")
+    assert dados["id"] == "ORDE_ABC"
+    assert chamadas["url"] == "https://api.pagseguro.com/orders/ORDE_ABC"
+    assert chamadas["headers"]["Authorization"] == "Bearer tok-teste"
+
+
+def test_consultar_pedido_erro(monkeypatch):
+    _configurar(monkeypatch)
+
+    def fake_get(url, headers, timeout):
+        return _Resposta(404, {"error_messages": [{"code": "40010", "description": "order not found"}]})
+
+    monkeypatch.setattr(pagbank.requests, "get", fake_get)
+    with pytest.raises(pagbank.PagbankErro, match="order not found"):
+        pagbank.consultar_pedido("ORDE_NAO_EXISTE")
+
+
+def test_pagamento_confirmado_detecta_paid():
+    pedido = {"charges": [{"id": "CHAR_1", "status": "WAITING"}, {"id": "CHAR_2", "status": "PAID"}]}
+    assert pagbank.pagamento_confirmado(pedido) is True
+
+
+def test_pagamento_nao_confirmado():
+    pedido = {"charges": [{"id": "CHAR_1", "status": "WAITING"}]}
+    assert pagbank.pagamento_confirmado(pedido) is False
+    assert pagbank.pagamento_confirmado({}) is False

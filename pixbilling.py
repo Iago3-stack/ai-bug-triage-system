@@ -25,6 +25,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 import nuvem_supabase
+import pagbank
 import pix
 import plano
 
@@ -119,8 +120,15 @@ def _atualizar_local(nova: dict) -> None:
     _escrever_jsonl(docs)
 
 
-def gerar_cobranca(uid: str) -> dict:
-    """Cria uma cobrança 'aguardando' para o usuário. Retorna o documento."""
+def gerar_cobranca(uid: str, cpf: str = "", nome: str = "", email: str = "") -> dict:
+    """Cria uma cobrança 'aguardando' para o usuário. Retorna o documento.
+
+    Quando o PagBank está configurado (PAGBANK_TOKEN), a cobrança ganha um
+    QR Code **dinâmico** na hora (pedido na API de Pedidos) e o pagamento é
+    confirmado automaticamente pelo webhook; senão, mantém o fluxo manual
+    atual (Pix estático + "Já paguei"). A falha do PagBank nunca derruba a
+    geração — cai no fluxo manual como fallback.
+    """
     doc = {
         "id": "cob-" + uuid.uuid4().hex[:10],
         "uid": uid,
@@ -129,6 +137,16 @@ def gerar_cobranca(uid: str) -> dict:
         "criado_em": _agora(),
         "atualizado_em": _agora(),
     }
+    if pagbank.configurado():
+        try:
+            pago = pagbank.criar_cobranca(
+                doc["valor"], doc["id"], cpf=cpf, nome=nome, email=email
+            )
+            doc["pagbank_order_id"] = pago["order_id"]
+            doc["pagbank_qr_id"] = pago["qr_id"]
+            doc["pix_copia_pagbank"] = pago["pix_copia"]
+        except pagbank.PagbankErro as ex:
+            doc["pagbank_erro"] = str(ex)
     if _usar_nuvem():
         return doc if _persistir_nuvem(doc) else doc
     return _salvar_jsonl(doc)
@@ -160,6 +178,11 @@ def _buscar(doc_id: str) -> dict | None:
         if d.get("id") == doc_id:
             return d
     return None
+
+
+def buscar_cobranca(doc_id: str) -> dict | None:
+    """Busca pública de uma cobrança pelo id (usada pelo webhook de pagamento)."""
+    return _buscar(doc_id)
 
 
 def _transicao(doc: dict, novo_status: str, extra: dict | None = None) -> dict:
@@ -240,3 +263,12 @@ def payload_pix(valor: float | None = None) -> str:
         return pix.payload_configurado()
     except Exception:
         return ""
+
+
+def pix_da_cobranca(cobranca: dict) -> str:
+    """Copia-e-cola a exibir para a cobrança: o QR dinâmico do PagBank, se
+    existir; senão cai no Pix estático/manual da assinatura."""
+    dinâmico = (cobranca or {}).get("pix_copia_pagbank")
+    if dinâmico:
+        return dinâmico
+    return payload_pix((cobranca or {}).get("valor"))

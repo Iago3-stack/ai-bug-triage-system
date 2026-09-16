@@ -9,6 +9,8 @@ import time
 
 import pytest
 
+import pagbank
+import pixbilling
 import webhook
 
 PW = "1) chromium › login.spec.ts:18 › teste de login\n\n Error: expect(locator).toHaveText(expected)\n\n Expected: Bem-vindo\n Received: Erro"
@@ -227,3 +229,113 @@ def test_token_exige_autorizacao_no_transporte(servidor, monkeypatch):
     status, resp = _postar(servidor, "/webhook/falha", {"evidencia": PW}, token="seg")
     assert status == 200
     assert resp["tipo"] == "playwright"
+
+
+# ─── Webhook de pagamento (PagBank) ─────────────────────────────────────────
+
+
+def test_analisar_pagamento_ignora_sem_referencia(monkeypatch):
+    status, resp = webhook.analisar_pagamento({})
+    assert status == 200
+    assert resp["acao"] == "ignorada"
+
+
+def test_analisar_pagamento_confirma_quando_paid(tmp_path, monkeypatch):
+    arquivo = tmp_path / "cobrancas.jsonl"
+    monkeypatch.setenv("PIXBILLING_ARQUIVO", str(arquivo))
+    import pixbilling
+
+    cobranca = pixbilling.gerar_cobranca("u-um")
+    # simula cobrança criada já com o pedido do PagBank gravado (sem chamar rede)
+    cobranca["pagbank_order_id"] = "ORDE_ABC"
+    pixbilling._atualizar_local(cobranca)
+
+    confirmado = {}
+    monkeypatch.setattr(
+        "pixbilling.plano.definir_plano_no_banco", lambda uid, p: confirmado.update(uid=uid, p=p) or True
+    )
+    pedido_pago = {"charges": [{"id": "CHAR_1", "status": "PAID"}]}
+    monkeypatch.setattr(pagbank, "consultar_pedido", lambda oid: pedido_pago)
+    monkeypatch.setattr(pagbank, "pagamento_confirmado", lambda p: True)
+
+    status, resp = webhook.analisar_pagamento({"reference_id": cobranca["id"], "id": "ORDE_ABC"})
+    assert status == 200
+    assert resp["acao"] == "confirmado"
+    assert confirmado == {"uid": "u-um", "p": "pago"}
+    assert pixbilling.buscar_cobranca(cobranca["id"])["status"] == "confirmado"
+
+
+def test_analisar_pagamento_nao_confirma_aguardando(tmp_path, monkeypatch):
+    arquivo = tmp_path / "cobrancas.jsonl"
+    monkeypatch.setenv("PIXBILLING_ARQUIVO", str(arquivo))
+    import pixbilling
+
+    cobranca = pixbilling.gerar_cobranca("u-um")
+    cobranca["pagbank_order_id"] = "ORDE_ABC"
+    pixbilling._atualizar_local(cobranca)
+
+    chamou_confirmar = []
+    monkeypatch.setattr(
+        pixbilling, "confirmar_cobranca", lambda doc_id: chamou_confirmar.append(doc_id) or {}
+    )
+    monkeypatch.setattr(pagbank, "consultar_pedido", lambda oid: {"charges": [{"status": "WAITING"}]})
+    monkeypatch.setattr(pagbank, "pagamento_confirmado", lambda p: False)
+
+    status, resp = webhook.analisar_pagamento({"reference_id": cobranca["id"]})
+    assert status == 200
+    assert resp["acao"] == "aguardando"
+    assert chamou_confirmar == []
+
+
+def test_analisar_pagamento_ja_resolvida_confirma_de_novo(tmp_path, monkeypatch):
+    arquivo = tmp_path / "cobrancas.jsonl"
+    monkeypatch.setenv("PIXBILLING_ARQUIVO", str(arquivo))
+    import pixbilling
+
+    cobranca = pixbilling.gerar_cobranca("u-um")
+    cobranca["pagbank_order_id"] = "ORDE_ABC"
+    pixbilling._atualizar_local(cobranca)
+    pixbilling.confirmar_cobranca(cobranca["id"])  # vira confirmado
+
+    monkeypatch.setattr(pagbank, "consultar_pedido", lambda oid: {"charges": [{"status": "PAID"}]})
+    monkeypatch.setattr(pagbank, "pagamento_confirmado", lambda p: True)
+
+    status, resp = webhook.analisar_pagamento({"reference_id": cobranca["id"]})
+    assert status == 200
+    assert resp["acao"] == "ja_resolvida"
+
+
+def test_analisar_pagamento_sem_order_id_ignora(tmp_path, monkeypatch):
+    arquivo = tmp_path / "cobrancas.jsonl"
+    monkeypatch.setenv("PIXBILLING_ARQUIVO", str(arquivo))
+    import pixbilling
+
+    cobranca = pixbilling.gerar_cobranca("u-um")
+    status, resp = webhook.analisar_pagamento({"reference_id": cobranca["id"]})
+    assert status == 200
+    assert resp["acao"] == "ignorada"
+
+
+def test_analisar_pagamento_sem_cobranca_ignora():
+    status, resp = webhook.analisar_pagamento({"reference_id": "cob-nao-existe"})
+    assert status == 200
+    assert resp["acao"] == "ignorada"
+
+
+def test_analisar_pagamento_falha_consulta_nao_confirma(tmp_path, monkeypatch):
+    arquivo = tmp_path / "cobrancas.jsonl"
+    monkeypatch.setenv("PIXBILLING_ARQUIVO", str(arquivo))
+    import pixbilling
+
+    cobranca = pixbilling.gerar_cobranca("u-um")
+    cobranca["pagbank_order_id"] = "ORDE_ABC"
+    pixbilling._atualizar_local(cobranca)
+
+    def erro(oid):
+        raise OSError("sem rede")
+
+    monkeypatch.setattr(pagbank, "consultar_pedido", erro)
+    status, resp = webhook.analisar_pagamento({"reference_id": cobranca["id"], "id": "ORDE_ABC"})
+    assert status == 200
+    assert resp["acao"] == "nao_verificado"
+    assert pixbilling.buscar_cobranca(cobranca["id"])["status"] == "aguardando"

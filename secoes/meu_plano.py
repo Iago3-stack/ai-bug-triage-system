@@ -7,6 +7,7 @@ import streamlit.components.v1 as components
 
 import auth_supabase
 import notificacoes
+import pagbank
 import pix
 import pixbilling
 import plano
@@ -131,10 +132,16 @@ def render():
         estornadas = [c for c in cobrancas if c.get("status") == "estornado"]
 
         if aberta:
-            st.info(
-                "Você tem uma cobrança **aguardando pagamento** para ativar o Premium. "
-                "Pague o Pix abaixo e clique em **✅ Já paguei**."
-            )
+            if aberta.get("pix_copia_pagbank"):
+                st.info(
+                    "Você tem uma cobrança **aguardando pagamento** para ativar o Premium. "
+                    "Pague o Pix abaixo — a confirmação é automática."
+                )
+            else:
+                st.info(
+                    "Você tem uma cobrança **aguardando pagamento** para ativar o Premium. "
+                    "Pague o Pix abaixo e clique em **✅ Já paguei**."
+                )
             _exibir_checkout_pix(aberta, uid)
         elif atual == "pago" and paga:
             st.success(f"Seu **Premium** está ativo — pago em **{pixbilling.preco_texto()}/mês**.")
@@ -155,12 +162,37 @@ def render():
         else:
             st.caption(
                 f"Adquira o **Premium** por **{pixbilling.preco_texto()}/mês** — pague no Pix, "
-                "sem cartão. O pagamento é confirmado pelo responsável."
+                "sem cartão."
             )
+            if pagbank.configurado():
+                st.caption(
+                    "Pagamento com **confirmação automática**: pague o QR Code abaixo e o "
+                    "Premium libera sozinho (webhook PagBank)."
+                )
+                _cpf = st.text_input(
+                    "CPF do titular (para o Pix)",
+                    key="cpf_premium",
+                    placeholder="000.000.000-00",
+                    help="O CPF identifica o pagador no Pix do PagBank. Campo opcional.",
+                )
+                _nome_premium = st.text_input(
+                    "Nome do titular (opcional)", key="nome_premium",
+                    placeholder="Como aparece na sua conta",
+                )
             _marcador("marca-plano-comprar")
             if st.button(f"⭐ Assinar Premium — {pixbilling.preco_texto()}/mês", key="btn_assinar", type="primary"):
-                cobranca = pixbilling.gerar_cobranca(uid)
+                _nome = ""
+                _email = ""
+                if pagbank.configurado():
+                    _nome = _nome_premium
+                    _email = _email_logado() or ""
+                cobranca = pixbilling.gerar_cobranca(uid, cpf=_cpf if pagbank.configurado() else "", nome=_nome, email=_email)
                 if cobranca:
+                    _lembrete_refresh(
+                        "⭐ Cobrança criada! Pague o Pix e aguarde a confirmação."
+                        if not cobranca.get("pix_copia_pagbank")
+                        else "⭐ Cobrança criada! O Premium é liberado automaticamente após o pagamento."
+                    )
                     st.rerun()
 
         # Painel do admin (só para o dono): fila de pagamentos + estornos
@@ -213,14 +245,15 @@ def render():
 
             st.switch_page(roteador.PAGINAS["triagem"])
 
-    _aviso_fixo_atualizar()
+    _aviso_fixo_atualizar(automatico=pagbank.configurado())
 
 
 def _exibir_checkout_pix(cobranca: dict, uid: str) -> None:
     """Mostra o QR Pix + copia-e-cola da cobrança pendente e o botão 'Já paguei'."""
+    automatico = bool(cobranca.get("pix_copia_pagbank"))
     _c1, _c2 = st.columns([1, 1.4])
     with _c1:
-        payload = pixbilling.payload_pix(cobranca.get("valor"))
+        payload = pixbilling.pix_da_cobranca(cobranca)
         if payload:
             st.image(pix.qrcode_png_base64(payload), width=210, caption="Pix QR Code")
         else:
@@ -232,7 +265,13 @@ def _exibir_checkout_pix(cobranca: dict, uid: str) -> None:
         )
         if payload:
             _exibir_copia_e_cola(payload)
-        st.caption("Pague no app do seu banco e clique em 'Já paguei' para avisar o responsável.")
+        if automatico:
+            st.caption(
+                "🔔 **Responsável é avisado e o Premium libera automaticamente** assim que o "
+                "PagBank confirmar o pagamento (webhook). O botão abaixo é só um reforço manual."
+            )
+        else:
+            st.caption("Pague no app do seu banco e clique em 'Já paguei' para avisar o responsável.")
         _marcador("marca-plano-paguei")
         if st.button("✅ Já paguei", key=f"btn_paguei_{cobranca['id']}", type="primary"):
             _avisar_admin(
@@ -291,17 +330,24 @@ def _lembrete_refresh(mensagem: str) -> None:
     st.session_state["meu_plano_lembrete"] = mensagem
 
 
-def _aviso_fixo_atualizar() -> None:
-    """Barra fixa (sticky) lembrando que o fluxo de pagamento é manual.
+def _aviso_fixo_atualizar(automatico: bool = False) -> None:
+    """Barra fixa (sticky) lembrando como o pagamento é confirmado.
 
     Fica sempre visível no topo da página Meu Plano — usuário e admin
     lembram de atualizar a tela para ver as mudanças refletidas.
     """
+    _texto = (
+        "A confirmação do Pix é automática após o pagamento. "
+        "<b>Atualize a página</b> para ver o Premium ativo na tela."
+        if automatico
+        else "Este fluxo depende da confirmação manual do responsável. "
+        "<b>Atualize a página</b> para ver as mudanças refletidas na tela."
+    )
     st.markdown(
-        """
+        f"""
         <style>
         /* Barra fixa "atualize a página" — tema padrão (claro) */
-        .aviso-atualizar-fixo {
+        .aviso-atualizar-fixo {{
             position: sticky !important;
             top: 0;
             z-index: 99;
@@ -318,23 +364,22 @@ def _aviso_fixo_atualizar() -> None:
             font-size: 12.5px;
             font-weight: 600;
             box-shadow: 0 4px 14px rgba(15,23,42,.14);
-        }
-        .aviso-atualizar-fixo b { color: #047857; }
-        .aviso-atualizar-fixo .icone { font-size: 15px; }
+        }}
+        .aviso-atualizar-fixo b {{ color: #047857; }}
+        .aviso-atualizar-fixo .icone {{ font-size: 15px; }}
 
         /* Tema escuro — fundo sólido escuro, texto claro */
-        body:has([data-st-tema="escuro"]) .aviso-atualizar-fixo {
+        body:has([data-st-tema="escuro"]) .aviso-atualizar-fixo {{
             background: linear-gradient(90deg, rgba(37,211,102,.16), rgba(37,211,102,.05));
             border: 1px solid rgba(37,211,102,.4);
             color: #cff7e3;
             box-shadow: 0 4px 14px rgba(15,23,42,.25);
-        }
-        body:has([data-st-tema="escuro"]) .aviso-atualizar-fixo b { color: #86efac; }
+        }}
+        body:has([data-st-tema="escuro"]) .aviso-atualizar-fixo b {{ color: #86efac; }}
         </style>
         <div class="aviso-atualizar-fixo">
             <span class="icone">🔄</span>
-            <span>Este fluxo depende da confirmação manual do responsável.
-            <b>Atualize a página</b> para ver as mudanças refletidas na tela.</span>
+            <span>{_texto}</span>
         </div>
         """,
         unsafe_allow_html=True,

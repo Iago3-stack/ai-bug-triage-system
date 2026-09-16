@@ -112,6 +112,53 @@ def analisar_payload(dados: dict) -> tuple[int, dict]:
     return 200, resposta
 
 
+def analisar_pagamento(dados: dict) -> tuple[int, dict]:
+    """Confirma uma cobrança a partir da notificação de status do PagBank.
+
+    A notificação é só o gatilho: o estado real do pedido é consultado na API
+    de Pedidos (pelo order_id gravado na cobrança) e a confirmação só acontece
+    quando uma charge está com status PAID. A chamada a
+    ``pixbilling.confirmar_cobranca`` é idempotente (não estoura se já
+    confirmada) e sempre respondemos 200 para o PagBank parar de reenviar.
+    """
+    try:
+        import pagbank
+        import pixbilling
+    except Exception as ex:  # webhook nunca deve derrubar o servidor
+        return 500, {"status": "erro", "erro": f"{type(ex).__name__}: {ex}"[:200]}
+
+    if not isinstance(dados, dict):
+        return 200, {"status": "ok", "acao": "ignorada"}
+    referencia = str(dados.get("reference_id") or "").strip()
+    if not referencia:
+        return 200, {"status": "ok", "acao": "ignorada"}
+
+    cobranca = pixbilling.buscar_cobranca(referencia)
+    if not cobranca:
+        return 200, {"status": "ok", "acao": "ignorada"}
+    if cobranca.get("status") != "aguardando":
+        return 200, {"status": "ok", "acao": "ja_resolvida"}
+
+    order_id = str(cobranca.get("pagbank_order_id") or "").strip() or str(
+        dados.get("id") or ""
+    ).strip()
+    if not order_id:
+        return 200, {"status": "ok", "acao": "ignorada"}
+
+    try:
+        pedido = pagbank.consultar_pedido(order_id)
+        pago = pagbank.pagamento_confirmado(pedido)
+    except Exception as ex:
+        LOGGER.warning("Falha ao verificar pedido %s: %s", order_id, ex)
+        return 200, {"status": "ok", "acao": "nao_verificado"}
+
+    if not pago:
+        return 200, {"status": "ok", "acao": "aguardando"}
+
+    confirmado = pixbilling.confirmar_cobranca(referencia)
+    return 200, {"status": "ok", "acao": "confirmado" if confirmado else "ja_resolvida"}
+
+
 class TratadorWebhook(BaseHTTPRequestHandler):
     server_version = "AI-BugTriage-Webhook/1.0"
     protocol_version = "HTTP/1.1"
@@ -144,7 +191,13 @@ class TratadorWebhook(BaseHTTPRequestHandler):
         self._responder(404, {"status": "erro", "erro": "rota desconhecida"})
 
     def do_POST(self) -> None:
-        if not self.path.rstrip("/").startswith("/webhook/falha"):
+        caminho = self.path.rstrip("/")
+        if caminho.startswith("/webhook/falha"):
+            pass
+        elif caminho.startswith("/webhook/pagamento"):
+            self._do_post_pagamento()
+            return
+        else:
             self._responder(404, {"status": "erro", "erro": "rota desconhecida"})
             return
         if token_exigido() and not token_valido(
@@ -175,6 +228,36 @@ class TratadorWebhook(BaseHTTPRequestHandler):
             self._responder(400, {"status": "erro", "erro": "corpo não é JSON válido"})
             return
         status, resposta = analisar_payload(dados)
+        self._responder(status, resposta)
+
+    def _do_post_pagamento(self) -> None:
+        """Recebe a notificação de status do PagBank (POST em /webhook/pagamento).
+
+        O PagBank envia a mudança de status de um pedido. Nós NÃO confiamos no
+        corpo da notificação: confirmamos a cobrança apenas se a consulta na API
+        de Pedidos (server-side) mostrar o charge com status PAID. Resposta 200
+        sempre que a notificação foi recebida (o PagBank para de reenviar) e a
+        confirmação é idempotente.
+        """
+        tamanho = self.headers.get("Content-Length")
+        try:
+            n = int(tamanho) if tamanho else 0
+        except ValueError:
+            self._responder(400, {"status": "erro", "erro": "Content-Length inválida"})
+            return
+        if n <= 0:
+            self._responder(200, {"status": "ok", "acao": "ignorada"})
+            return
+        corpo = self.rfile.read(n)
+        if not corpo:
+            self._responder(200, {"status": "ok", "acao": "ignorada"})
+            return
+        try:
+            dados = json.loads(corpo.decode("utf-8"))
+        except (ValueError, UnicodeDecodeError):
+            self._responder(200, {"status": "ok", "acao": "ignorada"})
+            return
+        status, resposta = analisar_pagamento(dados)
         self._responder(status, resposta)
 
     def log_message(self, formato, *args) -> None:
