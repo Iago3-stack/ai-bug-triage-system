@@ -28,6 +28,22 @@ except Exception as _e:  # pragma: no cover — só falha em ambiente sem a depe
     FPDF = None
     _FPDF_ERRO = repr(_e)
 
+_EXEMPLO_PLAYWRIGHT = """1) chromium › login.spec.ts:18 › teste de login com sucesso
+
+        Error: expect(locator).toHaveText(expected)
+
+        Expected: Bem-vindo
+        Received: Erro
+
+        at /app/tests/login.spec.ts:20:7"""
+
+_EXEMPLO_POSTMAN = """❌ POST https://api.exemplo.com/v1/pagamento [500 Internal Server Error, 412B, 150ms]
+→ status code is 200
+AssertionError: expected response to have status code 200, but got 500
+response body: {"error": "database timeout"}
+
+• GET /health [200 OK, 24B, 5ms]"""
+
 _FONTE_REGULAR = str(Path(__file__).parent.parent / "assets" / "pdf" / "DejaVuSans.ttf")
 _FONTE_NEGRITO = str(Path(__file__).parent.parent / "assets" / "pdf" / "DejaVuSans-Bold.ttf")
 
@@ -183,8 +199,22 @@ def render():
             "Cole um **stack trace, log, a mensagem do usuário** — ou a saída de um "
             "**teste Playwright / Postman·newman** — e o app extrai **título, categoria, "
             "módulo, versão, severidade, erro, passos e até o HTTP esperado × recebido**, "
-            "preenchendo o relato abaixo para você revisar. 100% local, funciona até sem internet."
+            "preenchendo o relato abaixo para você revisar. 100% local, funciona até sem internet.\n\n"
+            "Sem as ferramentas instaladas? Use um **exemplo pronto** abaixo para ver o fluxo."
         )
+        _c_pw, _c_pm, _c_limpar = st.columns(3)
+        with _c_pw:
+            if st.button("🎯 Exemplo Playwright", key="btn_amostra_pw", use_container_width=True):
+                st.session_state["colar_falha_bruta"] = _EXEMPLO_PLAYWRIGHT
+                st.toast("Exemplo do Playwright colado no campo. Agora preencha o relato.", icon="🎯")
+        with _c_pm:
+            if st.button("🎯 Exemplo Postman", key="btn_amostra_pm", use_container_width=True):
+                st.session_state["colar_falha_bruta"] = _EXEMPLO_POSTMAN
+                st.toast("Exemplo do Postman colado no campo. Agora preencha o relato.", icon="🎯")
+        with _c_limpar:
+            if st.button("🧹 Limpar", key="btn_amostra_limpar", use_container_width=True):
+                st.session_state["colar_falha_bruta"] = ""
+                st.toast("Campo limpo.", icon="🧹")
         evidencia_bruta = st.text_area(
             "Falha bruta (stack trace, log, mensagem de erro):",
             height=130,

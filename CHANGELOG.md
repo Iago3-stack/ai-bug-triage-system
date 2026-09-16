@@ -4,6 +4,14 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.15.13] - 2026-09-16
+
+### Adicionado
+- **🔌 Nova página "Integração" (Playwright & Postman)** — vitrine/tutorial que explica a ponte entre as ferramentas e o app: como funciona, o que é extraído de cada saída (com exemplo real de cada uma e o resultado da extração ao vivo) e botões que levam direto à Ferramenta já com o campo preenchido. Disponível no menu da sidebar; o Painel do Administrador continua só para o dono.
+
+### Evoluído
+- **📋 Expander "Colar falha bruta"** agora tem os botões **🎯 Exemplo Playwright**, **🎯 Exemplo Postman** (preenchem o campo com uma falha realista — sem precisar ter as ferramentas instaladas) e **🧹 Limpar**. Depois é só clicar em "✨ Preencher relato a partir da falha" e executar a triagem, como antes.
+
 ## [v2.15.12] - 2026-09-16
 
 ### Alterado
