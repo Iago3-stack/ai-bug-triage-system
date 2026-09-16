@@ -69,9 +69,9 @@ def render():
         if _teste:
             _badge = (
                 '<span style="background:rgba(46,124,246,.16);color:#60a5fa;border:1px solid rgba(46,124,246,.5);'
-                'border-radius:999px;padding:4px 14px;font-size:12px;font-weight:800;letter-spacing:.03em">🎁 Teste Premium</span>'
+                'border-radius:999px;padding:4px 14px;font-size:12px;font-weight:800;letter-spacing:.03em">🎁 Teste Premium 7 dias</span>'
             )
-            _frase = ("Você está no <b style='color:#60a5fa'>Teste Premium</b> — acesso completo liberado "
+            _frase = ("Você está no <b style='color:#60a5fa'>Teste Premium 7 dias</b> — acesso completo liberado "
                       "até esta data expirar. Depois disso, a conta volta ao Basic.")
         else:
             _badge = (

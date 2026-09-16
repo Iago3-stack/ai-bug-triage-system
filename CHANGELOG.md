@@ -4,6 +4,11 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.15.8] - 2026-09-16
+
+### Alterado
+- **🎁 Texto do Teste Premium (página Meu Plano)** — badge e frase agora dizem **"Teste Premium 7 dias"**: *"Você está no Teste Premium 7 dias — acesso completo liberado até esta data expirar. Depois disso, a conta volta ao Basic."*
+
 ## [v2.15.7] - 2026-09-15
 
 ### Corrigido
