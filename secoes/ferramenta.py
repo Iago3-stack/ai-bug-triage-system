@@ -195,23 +195,63 @@ def render():
     # --- Pilar 1: colar falha bruta e preencher o relato automaticamente ---
     with st.expander("📋 Colar falha bruta: preencher o relato automaticamente"):
         st.markdown('<div class="marca-colar" style="display:none"></div>', unsafe_allow_html=True)
-        st.caption(
-            "Cole um **stack trace, log, a mensagem do usuário** — ou a saída de um "
-            "**teste Playwright / Postman·newman** — e o app extrai **título, categoria, "
-            "módulo, versão, severidade, erro, passos e até o HTTP esperado × recebido**, "
-            "preenchendo o relato abaixo para você revisar. 100% local, funciona até sem internet.\n\n"
-            "Sem as ferramentas instaladas? Use um **exemplo pronto** abaixo para ver o fluxo."
+        st.markdown(
+            """
+            <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;
+                         padding:14px 18px;color:#0f172a;font-size:14.5px;line-height:1.7">
+              <div style="margin-bottom:8px">
+                <b style="color:#15803d">Cole um stack trace, log, a mensagem do usuário</b> — ou a saída de um
+                <b style="color:#15803d">teste Playwright / Postman·newman</b> — e o app extrai
+                <b>título, categoria, módulo, versão, severidade, erro, passos e até o
+                HTTP esperado × recebido</b>, preenchendo o relato abaixo para você revisar.
+                <b>100% local, funciona até sem internet.</b>
+              </div>
+              <div style="color:#334155">Sem as ferramentas instaladas? Use um <b style="color:#15803d">exemplo pronto</b> abaixo para ver o fluxo.</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            """
+            <style>
+            [data-testid="stElementContainer"]:has(.marca-amostra-pw) + [data-testid="stElementContainer"] [data-testid="stButton"] button,
+            [data-testid="stElementContainer"]:has(.marca-amostra-pw) + [data-testid="stElementContainer"] [data-testid="stButton"] button:hover,
+            [data-testid="stElementContainer"]:has(.marca-amostra-pw) + [data-testid="stElementContainer"] [data-testid="stButton"] button:active,
+            [data-testid="stElementContainer"]:has(.marca-amostra-pw) + [data-testid="stElementContainer"] [data-testid="stButton"] button:focus {
+              background: #16a34a !important; color: #ffffff !important; border: none !important;
+              font-weight: 800 !important; box-shadow: none !important;
+            }
+            [data-testid="stElementContainer"]:has(.marca-amostra-pm) + [data-testid="stElementContainer"] [data-testid="stButton"] button,
+            [data-testid="stElementContainer"]:has(.marca-amostra-pm) + [data-testid="stElementContainer"] [data-testid="stButton"] button:hover,
+            [data-testid="stElementContainer"]:has(.marca-amostra-pm) + [data-testid="stElementContainer"] [data-testid="stButton"] button:active,
+            [data-testid="stElementContainer"]:has(.marca-amostra-pm) + [data-testid="stElementContainer"] [data-testid="stButton"] button:focus {
+              background: #ea580c !important; color: #ffffff !important; border: none !important;
+              font-weight: 800 !important; box-shadow: none !important;
+            }
+            [data-testid="stElementContainer"]:has(.marca-amostra-limpar) + [data-testid="stElementContainer"] [data-testid="stButton"] button,
+            [data-testid="stElementContainer"]:has(.marca-amostra-limpar) + [data-testid="stElementContainer"] [data-testid="stButton"] button:hover,
+            [data-testid="stElementContainer"]:has(.marca-amostra-limpar) + [data-testid="stElementContainer"] [data-testid="stButton"] button:active,
+            [data-testid="stElementContainer"]:has(.marca-amostra-limpar) + [data-testid="stElementContainer"] [data-testid="stButton"] button:focus {
+              background: #64748b !important; color: #ffffff !important; border: none !important;
+              font-weight: 800 !important; box-shadow: none !important;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True,
         )
         _c_pw, _c_pm, _c_limpar = st.columns(3)
         with _c_pw:
+            st.markdown('<div class="marca-amostra-pw" style="display:none"></div>', unsafe_allow_html=True)
             if st.button("🎯 Exemplo Playwright", key="btn_amostra_pw", use_container_width=True):
                 st.session_state["colar_falha_bruta"] = _EXEMPLO_PLAYWRIGHT
                 st.toast("Exemplo do Playwright colado no campo. Agora preencha o relato.", icon="🎯")
         with _c_pm:
+            st.markdown('<div class="marca-amostra-pm" style="display:none"></div>', unsafe_allow_html=True)
             if st.button("🎯 Exemplo Postman", key="btn_amostra_pm", use_container_width=True):
                 st.session_state["colar_falha_bruta"] = _EXEMPLO_POSTMAN
                 st.toast("Exemplo do Postman colado no campo. Agora preencha o relato.", icon="🎯")
         with _c_limpar:
+            st.markdown('<div class="marca-amostra-limpar" style="display:none"></div>', unsafe_allow_html=True)
             if st.button("🧹 Limpar", key="btn_amostra_limpar", use_container_width=True):
                 st.session_state["colar_falha_bruta"] = ""
                 st.toast("Campo limpo.", icon="🧹")

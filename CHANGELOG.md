@@ -4,6 +4,12 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.15.20] - 2026-09-16
+
+### Alterado
+- **📋 Ferramenta — texto do "Colar falha bruta" legível** — a explicação ("Cole um stack trace, log, a mensagem do usuário…") saiu do texto de legenda apagado e virou um **card branco com letras escuras**, com destaques em verde-escuro.
+- **🎯 Botões de exemplo em cor sólida** — "🎯 Exemplo Playwright" verde (#16a34a), "🎯 Exemplo Postman" laranja (#ea580c) e "🧹 Limpar" cinza (#64748b), sem mudança de cor no hover (mantém a mesma cor sólida).
+
 ## [v2.15.19] - 2026-09-16
 
 ### Alterado
