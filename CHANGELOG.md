@@ -4,6 +4,11 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.15.1] - 2026-09-16
+
+### Adicionado
+- **🎁 6º badge na página Início — "Teste Premium 7 dias grátis"**: a fileira de recursos (Triagem NLP, Causas raiz, RAG, Alertas, Histórico) agora destaca também o **teste de 7 dias do Premium**, iluminado para qualquer plano. Cosmético (sem mudança de lógica).
+
 ## [v2.15.0] - 2026-09-15
 
 ### Adicionado

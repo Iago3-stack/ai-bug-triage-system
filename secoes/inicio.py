@@ -46,6 +46,7 @@ def render():
         <span style="{_pill_feat(plano.pago())}">📚 RAG · \u201ccomo foi resolvido\u201d</span>
         <span style="{_pill_feat(plano.pago())}">🔔 Alertas multi-canal (e-mail + Discord)</span>
         <span style="{_pill_feat(plano.pago())}">🧺 Histórico completo (Dashboard)</span>
+        <span style="{_pill_feat(True)}">🎁 Teste Premium 7 dias grátis</span>
       </div>
       <div style="color:#94a3b8;font-size:13px;margin-top:18px">🔽 Abra a tabela <b>💼 Comparar planos — Basic × Premium</b> logo abaixo para ver tudo que cada um libera.</div>
     </div>
