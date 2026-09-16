@@ -4,6 +4,11 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.15.7] - 2026-09-15
+
+### Corrigido
+- **🔍 Título do card SEO agora é `<div>` em vez de `<h2>`** — o Streamlit sobrescreve/sanitiza a cor de `<h2>`, e foi por isso que o branco nunca pegava; o masthead ("Conheça o plano") usa `<div>` e funciona. O título passou a `<div role="heading">` branco (mesmo mecanismo que já dá certo).
+
 ## [v2.15.6] - 2026-09-15
 
 ### Corrigido
