@@ -124,8 +124,21 @@ class TratadorWebhook(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(corpo)
 
+    def _responder_sem_corpo(self, status: int, payload: dict) -> None:
+        corpo = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(corpo)))
+        self.end_headers()
+
+    def do_HEAD(self) -> None:
+        if self.path.rstrip("/") in ("", "/health"):
+            self._responder_sem_corpo(200, {"status": "ok"})
+            return
+        self._responder_sem_corpo(404, {"status": "erro", "erro": "rota desconhecida"})
+
     def do_GET(self) -> None:
-        if self.path.rstrip("/") == "/health":
+        if self.path.rstrip("/") in ("", "/health"):
             self._responder(200, {"status": "ok"})
             return
         self._responder(404, {"status": "erro", "erro": "rota desconhecida"})

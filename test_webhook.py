@@ -120,6 +120,31 @@ def test_transporte_health(servidor):
     assert json.loads(r.read())["status"] == "ok"
 
 
+def test_transporte_raiz_e_health_head(servidor):
+    conn = http.client.HTTPConnection(servidor.replace("http://", ""))
+    conn.request("HEAD", "/")
+    r = conn.getresponse()
+    corpo = r.read()
+    assert r.status == 200
+    assert corpo == b""
+    assert int(r.getheader("Content-Length")) > 0
+    conn.close()
+    conn = http.client.HTTPConnection(servidor.replace("http://", ""))
+    conn.request("HEAD", "/health")
+    r = conn.getresponse()
+    assert r.status == 200
+    conn.close()
+
+
+def test_transporte_get_raiz(servidor):
+    conn = http.client.HTTPConnection(servidor.replace("http://", ""))
+    conn.request("GET", "/")
+    r = conn.getresponse()
+    assert r.status == 200
+    assert json.loads(r.read())["status"] == "ok"
+    conn.close()
+
+
 def test_transporte_sem_evidencia(servidor):
     status, resp = _postar(servidor, "/webhook/falha", {})
     assert status == 400
