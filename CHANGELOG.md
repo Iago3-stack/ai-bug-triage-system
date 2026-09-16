@@ -4,6 +4,11 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.15.5] - 2026-09-15
+
+### Corrigido
+- **🔍 Card SEO da Início mais visível e honesto** — título maior (25px, peso 900, com borda e sombra de texto para destacar no card) e a frase "sistema gratuito" corrigida: agora diz que o **Basic é grátis para começar** (o sistema tem plano Premium), sem prometer que tudo é gratuito.
+
 ## [v2.15.4] - 2026-09-15
 
 ### Adicionado
