@@ -4,6 +4,11 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.15.4] - 2026-09-15
+
+### Adicionado
+- **🔍 SEO na página Início** — bloco fixo no topo do conteúdo com título e descrição ricos em palavras-chave ("triagem de bugs com IA", "QA", "teste de software", "Gherkin", "JIRA/GitHub", "Gemini/Groq"). O Google indexa Streamlit apps via renderização server-side, então esse texto em `<h2>`/`<p>` passa a ser o que os buscadores capturam; aumenta as chances de aparecer em buscas como **"triagem de bug IA"** e **"QA"**.
+
 ## [v2.15.3] - 2026-09-15
 
 ### Adicionado
