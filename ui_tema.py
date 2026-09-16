@@ -451,7 +451,7 @@ _PROVID_CSS = """
 
 
 def config_pagina():
-    st.set_page_config(page_title="Iago Nunes | IA & QA Portfolio", page_icon="assets/logos/logo7_robo.png", layout="wide")
+    st.set_page_config(page_title="Triagem de bugs com IA para QA | Iago Nunes - AI Bug Triage System", page_icon="assets/logos/logo7_robo.png", layout="wide")
 
 
 def tema_atual() -> str:

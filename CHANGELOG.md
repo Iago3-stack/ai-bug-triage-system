@@ -9,6 +9,9 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 ### Adicionado
 - **🔍 SEO na página Início** — bloco fixo no topo do conteúdo com título e descrição ricos em palavras-chave ("triagem de bugs com IA", "QA", "teste de software", "Gherkin", "JIRA/GitHub", "Gemini/Groq"). O Google indexa Streamlit apps via renderização server-side, então esse texto em `<h2>`/`<p>` passa a ser o que os buscadores capturam; aumenta as chances de aparecer em buscas como **"triagem de bug IA"** e **"QA"**.
 
+### Alterado
+- **🔎 Título da página (aba) com palavra-chave na frente** — `set_page_config` agora usa **"Triagem de bugs com IA para QA | Iago Nunes - AI Bug Triage System"** (ex-metabrado "Iago Nunes | IA & QA Portfolio"), que é o `<title>` que o Google mostra e lê primeiro.
+
 ## [v2.15.3] - 2026-09-15
 
 ### Adicionado
