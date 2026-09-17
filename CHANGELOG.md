@@ -4,6 +4,15 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.16.2] - 2026-09-16
+
+### Adicionado
+- **⚖️ Página Legal** (nova aba no menu: "Termos & Privacidade") — **Termos de Uso** e **Política de Privacidade (LGPD)** em linguagem simples, com transparência de que o projeto é de **pessoa física (sem CNPJ e sem emissão de nota fiscal/NFS-e)**, quais dados são coletados (e-mail, CPF/nome só na assinatura, conteúdo da triagem), o papel dos guardrails que **mascaram CPF/e-mail/token antes de qualquer envio**, compartilhamento restrito à infraestrutura (Streamlit Cloud, Supabase, Render, PagBank) e os **direitos do titular** (art. 18 da LGPD) com canal de contato (WhatsApp/e-mail).
+
+### Alterado
+- **📜 Rodapé** — o link solto de "LGPD · Proteção de Dados" (que só apontava para o site da ANPD) saiu do iframe; em seu lugar, uma linha **"⚖️ Legal"** com botões reais **"📜 Termos de Uso"** e **"🛡️ Privacidade / LGPD"** que abrem as páginas internas (a referência à ANPD continua, mas dentro da página de Privacidade).
+- Página Legal é **pública** (acessível sem login), como Início e Integração.
+
 ## [v2.16.1] - 2026-09-16
 
 ### Corrigido

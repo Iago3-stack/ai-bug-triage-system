@@ -376,14 +376,14 @@ def test_rotas_sem_dono_nao_incluem_painel(monkeypatch):
     import roteador
 
     monkeypatch.setattr(admin, "eh_dono", lambda: False)
-    assert len(roteador.paginas_visiveis()) == 5
+    assert len(roteador.paginas_visiveis()) == 6
 
 
 def test_rotas_do_dono_incluem_painel(monkeypatch):
     import roteador
 
     monkeypatch.setattr(admin, "eh_dono", lambda: True)
-    assert len(roteador.paginas_visiveis()) == 6
+    assert len(roteador.paginas_visiveis()) == 7
 
 
 # ─── formatadores da página do dono ──────────────────────────────────────────

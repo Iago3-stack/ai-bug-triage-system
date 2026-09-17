@@ -14,7 +14,7 @@ import sessao_persist
 import roteador
 import admin
 
-VERSAO = "v2.16.1"
+VERSAO = "v2.16.2"
 
 # Logo do sistema (SVG embutido como data URI para funcionar na Cloud).
 _LOGO_DATA_URI = (
@@ -610,9 +610,6 @@ def rodape():
         <a href="{repo_url}blob/main/LICENSE" target="_blank" style="color:#cbd5e1;text-decoration:none;display:inline-flex;align-items:center;gap:6px">
           ⚖️ Licença MIT
         </a>
-        <a href="https://www.gov.br/anpd/pt-br" target="_blank" rel="noopener" style="color:#cbd5e1;text-decoration:none;display:inline-flex;align-items:center;gap:6px">
-          🛡️ LGPD · Proteção de Dados
-        </a>
       </div>
       <div style="padding:12px 16px;text-align:center;font-size:12px;color:#64748b;border-top:1px solid rgba(255,255,255,.08)">
         © {VERSAO} <b style="color:#94a3b8">Iago Nunes de Araújo</b> · 🚀 QA Automation Engineer · Estudante de IA &amp; ML (UNIASSELVI)<br/>
@@ -621,4 +618,40 @@ def rodape():
     </div>
     """
     st.iframe(_footer_html, height=560)
+    _menu_legal()
+
+
+def _menu_legal() -> None:
+    """Linha de acesso às páginas legais (Termos de Uso e Privacidade/LGPD).
+
+    O rodapé visual é um iframe (não navega dentro do app), então a navegação
+    real para as páginas internas fica aqui, fora do iframe. A versão não fica
+    neste menu: ela continua no crédito do rodapé.
+    """
+    rotulo = '<div style="font-size:12px;font-weight:800;letter-spacing:.06em;color:#64748b;margin:10px 0 4px;text-align:center">⚖️ LEGAL</div>'
+    st.markdown(rotulo, unsafe_allow_html=True)
+    _c1, _c2, _c3 = st.columns([1.2, 1, 1])
+    with _c1:
+        st.markdown(
+            '<div style="font-size:12px;color:#94a3b8;text-align:right;height:100%;'
+            'display:flex;align-items:center;justify-content:flex-end">Leia antes de usar:</div>',
+            unsafe_allow_html=True,
+        )
+    with _c2:
+        if st.button("📜 Termos de Uso", key="rodape_termos", use_container_width=True):
+            _ir_para_legal("termos")
+    with _c3:
+        if st.button("🛡️ Privacidade / LGPD", key="rodape_privacidade", use_container_width=True):
+            _ir_para_legal("privacidade")
+
+
+def _ir_para_legal(aba: str) -> None:
+    """Navega para a página Legal, já na aba pedida (via query param ?aba=)."""
+    try:
+        st.query_params["aba"] = aba
+    except Exception:
+        pass
+    if st.session_state.get("_url_atual") == "legal":
+        st.rerun()
+    st.switch_page(roteador.PAGINAS["legal"])
 

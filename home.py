@@ -69,6 +69,7 @@ _processar_confirmacao_email()
 
 # Páginas visíveis: o Painel do Administrador só entra quando a conta logada é ADMIN_EMAIL.
 pg = st.navigation(roteador.paginas_visiveis(), position="sidebar")
+st.session_state["_url_atual"] = pg.url_path
 
 ui_tema.aplicar_css()
 
