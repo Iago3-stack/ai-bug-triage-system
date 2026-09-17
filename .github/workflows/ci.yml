@@ -59,7 +59,11 @@ jobs:
           PY
 
       - name: Publicar badge como artefato de Pages
-        uses: actions/upload-pages-artifact@v3
+        run: |
+          cp web/landing/index.html badge/
+          ls -la badge
+          echo "Site de Pages: https://iago3-stack.github.io/ai-bug-triage-system/ (landing) + pytest-badge.json"
+      - uses: actions/upload-pages-artifact@v3
         with:
           path: badge
 

@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Bug Triage System — Triage de bugs de software com IA</title>
+  <meta name="description" content="Cole o relato de um bug e receba em segundos a severidade, o componente suspeito e uma proposta de correção em um relatório PDF. Dashboard de QA, histórico em nuvem e plano Premium por R$ 19,99/mês via PIX." />
+  <meta name="keywords" content="triage de bugs, QA, teste de software, relatório de bug, inteligência artificial, dashboard de qualidade, análise de defeitos" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://iago3-stack.github.io/ai-bug-triage-system/" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="pt_BR" />
+  <meta property="og:site_name" content="AI Bug Triage System" />
+  <meta property="og:title" content="AI Bug Triage System — Triage de bugs de software com IA" />
+  <meta property="og:description" content="Trie relatos de bugs em segundos: severidade, componente suspeito e proposta de correção em um relatório PDF. Comece grátis." />
+  <meta property="og:url" content="https://iago3-stack.github.io/ai-bug-triage-system/" />
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="AI Bug Triage System — Triage de bugs de software com IA" />
+  <meta name="twitter:description" content="Triagem automática de bugs: severidade, componente suspeito e proposta de correção em PDF. Premium por R$ 19,99/mês via PIX." />
+
+  <meta name="theme-color" content="#0F172A" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "AI Bug Triage System",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Web",
+    "url": "https://iago3-stack.github.io/ai-bug-triage-system/",
+    "description": "Triagem automática de relatos de bugs de software com IA: severidade, componente suspeito, proposta de correção e relatório em PDF.",
+    "offers": {
+      "@type": "Offer",
+      "price": "19.99",
+      "priceCurrency": "BRL",
+      "description": "Plano Premium (mensal) — pagamento por PIX"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5",
+      "bestRating": "5",
+      "ratingCount": "1"
+    }
+  }
+  </script>
+
+  <style>
+    :root {
+      --verde: #25D366;
+      --verde-escuro: #022C0E;
+      --azul: #2E7CF6;
+      --fundo: #0F172A;
+      --fundo-2: #16233C;
+      --superficie: #1E293B;
+      --texto: #E2E8F0;
+      --texto-suave: #94A3B8;
+      --borda: rgba(255, 255, 255, 0.08);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--fundo);
+      color: var(--texto);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--verde); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .container { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+
+    /* Cabeçalho */
+    header.nav {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--borda);
+    }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+    .brand { font-weight: 800; font-size: 1.05rem; color: #fff; display: flex; align-items: center; gap: 8px; }
+    .brand .mark {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; border-radius: 8px;
+      background: var(--verde); color: var(--verde-escuro); font-weight: 900;
+    }
+    nav.links { display: flex; align-items: center; gap: 20px; }
+    nav.links a { color: var(--texto-suave); font-size: 0.92rem; }
+    nav.links a:hover { color: #fff; text-decoration: none; }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 10px 18px; border-radius: 10px; font-weight: 700; font-size: 0.95rem;
+      border: 0; cursor: pointer; transition: transform 0.12s ease, box-shadow 0.12s ease;
+    }
+    .btn:hover { text-decoration: none; transform: translateY(-1px); }
+    .btn-verde { background: var(--verde); color: var(--verde-escuro) !important; }
+    .btn-verde:hover { box-shadow: 0 6px 20px rgba(37, 211, 102, 0.35); }
+    .btn-azul { background: var(--azul); color: #fff !important; }
+    .btn-azul:hover { box-shadow: 0 6px 20px rgba(46, 124, 246, 0.35); }
+    .btn-ghost { background: transparent; color: var(--texto) !important; border: 1px solid var(--borda); }
+
+    /* Hero */
+    .hero {
+      text-align: center;
+      padding: 84px 20px 70px;
+      background: linear-gradient(135deg, #0F172A 0%, #16233C 55%, var(--verde) 185%);
+    }
+    .hero h1 { font-size: clamp(1.9rem, 4.5vw, 3.1rem); line-height: 1.2; font-weight: 800; }
+    .hero h1 .destaque { color: var(--verde); }
+    .hero p.sub { max-width: 720px; margin: 20px auto 0; color: var(--texto-suave); font-size: clamp(1rem, 2vw, 1.18rem); }
+    .hero .acoes { margin-top: 32px; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .hero .prova { margin-top: 18px; color: var(--texto-suave); font-size: 0.9rem; }
+
+    /* Seções */
+    section { padding: 64px 20px; }
+    section.alt { background: var(--fundo-2); }
+    .titulo-secao { text-align: center; max-width: 680px; margin: 0 auto 40px; }
+    .titulo-secao h2 { font-size: clamp(1.5rem, 3.2vw, 2.1rem); font-weight: 800; }
+    .titulo-secao p { margin-top: 10px; color: var(--texto-suave); }
+
+    /* Como funciona */
+    .passos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .passo {
+      background: var(--superficie); border: 1px solid var(--borda); border-radius: 16px;
+      padding: 24px;
+    }
+    .passo .numero {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 34px; height: 34px; border-radius: 10px;
+      background: var(--verde); color: var(--verde-escuro); font-weight: 800; margin-bottom: 12px;
+    }
+    .passo h3 { font-size: 1.05rem; margin-bottom: 6px; }
+    .passo p { color: var(--texto-suave); font-size: 0.95rem; }
+
+    /* Recursos */
+    .grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; }
+    .card {
+      background: var(--superficie); border: 1px solid var(--borda); border-radius: 16px; padding: 22px;
+    }
+    .card h3 { font-size: 1rem; margin-bottom: 6px; }
+    .card p { color: var(--texto-suave); font-size: 0.93rem; }
+    .card .icone-linha {
+      width: 38px; height: 38px; border-radius: 10px; margin-bottom: 12px;
+      background: var(--fundo-2); display: flex; align-items: center; justify-content: center; font-weight: 800;
+    }
+    .verde-l { color: var(--verde); }
+    .azul-l { color: var(--azul); }
+
+    /* Preços */
+    .preco-card {
+      max-width: 460px; margin: 0 auto;
+      background: linear-gradient(135deg, var(--superficie), var(--fundo-2));
+      border: 1px solid rgba(37, 211, 102, 0.4); border-radius: 20px; padding: 32px; text-align: center;
+    }
+    .preco-card .plano { font-size: 1.1rem; font-weight: 700; color: var(--verde); text-transform: uppercase; letter-spacing: 0.06em; }
+    .preco-card .valor { font-size: 3rem; font-weight: 800; margin: 14px 0 4px; }
+    .preco-card .periodo { color: var(--texto-suave); margin-bottom: 22px; }
+    .preco-card ul { list-style: none; text-align: left; margin: 0 auto 26px; max-width: 320px; }
+    .preco-card li { padding: 6px 0; color: var(--texto-suave); font-size: 0.95rem; display: flex; gap: 10px; }
+    .preco-card li .check { color: var(--verde); font-weight: 800; }
+    .preco-card .nota { margin-top: 18px; font-size: 0.85rem; color: var(--texto-suave); }
+
+    /* FAQ */
+    details.faq {
+      background: var(--superficie); border: 1px solid var(--borda); border-radius: 12px;
+      padding: 4px 18px; margin-bottom: 10px;
+    }
+    details.faq summary { cursor: pointer; padding: 12px 0; font-weight: 600; list-style: none; display: flex; justify-content: space-between; }
+    details.faq summary::after { content: "+"; font-weight: 800; color: var(--verde); font-size: 1.2rem; }
+    details.faq[open] summary::after { content: "\2212"; }
+    details.faq p { color: var(--texto-suave); font-size: 0.95rem; padding-bottom: 14px; }
+
+    /* CTA final */
+    .cta-final { text-align: center; background: linear-gradient(135deg, #0F172A 0%, #16233C 55%, #25D366 185%); }
+
+    /* Rodapé */
+    footer { border-top: 1px solid var(--borda); padding: 32px 20px; text-align: center; color: var(--texto-suave); font-size: 0.9rem; }
+    footer .links { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; margin-bottom: 14px; }
+    footer p { margin-top: 6px; }
+    footer a { color: var(--texto-suave); }
+    footer a:hover { color: #fff; text-decoration: none; }
+
+    @media (max-width: 760px) {
+      .passos { grid-template-columns: 1fr; }
+      nav.links .oculto-mobile { display: none; }
+      section { padding: 48px 16px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="nav">
+    <div class="container nav-inner">
+      <span class="brand"><span class="mark">A</span> AI Bug Triage System</span>
+      <nav class="links">
+        <a href="#como-funciona" class="oculto-mobile">Como funciona</a>
+        <a href="#recursos" class="oculto-mobile">Recursos</a>
+        <a href="#precos">Preços</a>
+        <a href="#faq" class="oculto-mobile">FAQ</a>
+        <a class="btn btn-verde" href="https://ai-bug-triage-system-d6vigycbjt4qxez2wrvsxf.streamlit.app/" target="_blank" rel="noopener">Abrir o app</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container">
+      <h1>Trie relatos de bugs em segundos, <span class="destaque">antes que virem crise</span></h1>
+      <p class="sub">
+        Cole o relato do cliente ou do time e receba na hora a <strong>severidade</strong>,
+        o <strong>componente suspeito</strong> e uma <strong>proposta de correção</strong> em um
+        relatório PDF estruturado — alimentado por IA.
+      </p>
+      <div class="acoes">
+        <a class="btn btn-verde" href="https://ai-bug-triage-system-d6vigycbjt4qxez2wrvsxf.streamlit.app/" target="_blank" rel="noopener">Começar grátis</a>
+        <a class="btn btn-ghost" href="#precos">Ver preços</a>
+      </div>
+      <p class="prova">Cadastro grátis com e-mail · Sem instalação · Funciona direto no navegador</p>
+    </div>
+  </section>
+
+  <section id="como-funciona">
+    <div class="container">
+      <div class="titulo-secao">
+        <h2>Como funciona</h2>
+        <p>Três passos do relato cru ao plano de ação — sem planilha, sem dor de cabeça.</p>
+      </div>
+      <div class="passos">
+        <article class="passo">
+          <span class="numero">1</span>
+          <h3>Cole o relato do bug</h3>
+          <p>Descreva com suas palavras o que aconteceu, em que tela, com qual passo a passo. Naturalmente, como você fala.</p>
+        </article>
+        <article class="passo">
+          <span class="numero">2</span>
+          <h3>A IA faz a triagem</h3>
+          <p>O sistema classifica a severidade, aponta o componente suspeito, avalia o impacto e sugere uma correção.</p>
+        </article>
+        <article class="passo">
+          <span class="numero">3</span>
+          <h3>Receba o relatório em PDF</h3>
+          <p>Um relatório estruturado, pronto para compartilhar com o time ou anexar no seu Gestor de tarefas.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="recursos" class="alt">
+    <div class="container">
+      <div class="titulo-secao">
+        <h2>Tudo que um QA precisa</h2>
+        <p>Ferramentas que transformam bug em tarefa acionável — com histórico e visão de qualidade.</p>
+      </div>
+      <div class="grade">
+        <article class="card">
+          <span class="icone-linha verde-l">S</span>
+          <h3>Severidade e componente</h3>
+          <p>Classificação automática da gravidade e apontamento do módulo mais provavelmente afetado.</p>
+        </article>
+        <article class="card">
+          <span class="icone-linha azul-l">R</span>
+          <h3>Relatório em PDF</h3>
+          <p>Cada triagem gera um relatório estruturado para compartilhar, arquivar ou imprimir.</p>
+        </article>
+        <article class="card">
+          <span class="icone-linha verde-l">D</span>
+          <h3>Dashboard de qualidade</h3>
+          <p>Volume por dia, severidade e tendências dos bugs relatados, com visão executiva do produto.</p>
+        </article>
+        <article class="card">
+          <span class="icone-linha azul-l">N</span>
+          <h3>Histórico em nuvem</h3>
+          <p>Seus relatos e triagens ficam salvos com segurança e disponíveis de qualquer dispositivo.</p>
+        </article>
+        <article class="card">
+          <span class="icone-linha verde-l">I</span>
+          <h3>Integração com dev</h3>
+          <p>Leve a triagem para o fluxo do time, saindo direto do relatório para a sua esteira de trabalho.</p>
+        </article>
+        <article class="card">
+          <span class="icone-linha azul-l">P</span>
+          <h3>PIX automático</h3>
+          <p>Plano Premium pago na hora via PIX, com confirmação automática — sem burocracia de boleto.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="precos">
+    <div class="container">
+      <div class="titulo-secao">
+        <h2>Preços simples</h2>
+        <p>Comece grátis e assine o Premium quando quiser. Sem fidelidade.</p>
+      </div>
+      <div class="preco-card">
+        <p class="plano">Premium</p>
+        <p class="valor">R$ 19,99</p>
+        <p class="periodo">por mês · pago via PIX no próprio app</p>
+        <ul>
+          <li><span class="check">✓</span> Triagens de bugs com IA sem limite de uso</li>
+          <li><span class="check">✓</span> Relatórios em PDF de todas as triagens</li>
+          <li><span class="check">✓</span> Dashboard de qualidade completo</li>
+          <li><span class="check">✓</span> Histórico salvo em nuvem</li>
+          <li><span class="check">✓</span> Ativação imediata após o pagamento</li>
+        </ul>
+        <a class="btn btn-verde" href="https://ai-bug-triage-system-d6vigycbjt4qxez2wrvsxf.streamlit.app/" target="_blank" rel="noopener">Assinar Premium</a>
+        <p class="nota">O pagamento é confirmado automaticamente assim que o PIX é quitado.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq" class="alt">
+    <div class="container">
+      <div class="titulo-secao">
+        <h2>Perguntas frequentes</h2>
+      </div>
+
+      <details class="faq">
+        <summary>Preciso criar uma conta?</summary>
+        <p>Sim. O cadastro é grátis e basta um e-mail e senha — você confirma o acesso por um link enviado no seu e-mail.</p>
+      </details>
+      <details class="faq">
+        <summary>Como funciona a triagem com IA?</summary>
+        <p>Você cola o relato do bug como foi descrito. A IA classifica a severidade, aponta o componente mais suspeito, avalia o impacto e sugere uma proposta de correção em um relatório estruturado.</p>
+      </details>
+      <details class="faq">
+        <summary>Como pago o Premium?</summary>
+        <p>Direto no app, gerando um PIX de R$ 19,99. Assim que o pagamento é confirmado, o Premium é ativado automaticamente — sem precisar falar com ninguém.</p>
+      </details>
+      <details class="faq">
+        <summary>Onde ficam os meus dados?</summary>
+        <p>Seu histórico de relatos e triagens fica salvo com segurança na nuvem e acessível de qualquer dispositivo conectado à sua conta.</p>
+      </details>
+      <details class="faq">
+        <summary>O que vem no relatório em PDF?</summary>
+        <p>O relatório traz o relato original, a severidade atribuída, o componente suspeito, o impacto e a proposta de correção — pronto para compartilhar com o time.</p>
+      </details>
+      <details class="faq">
+        <summary>Posso cancelar quando quiser?</summary>
+        <p>Sim. O Premium é mensal e não há fidelidade. Cada mês, você gera um novo PIX quando quiser renovar; é só não renovar para não ser cobrado.</p>
+      </details>
+    </div>
+  </section>
+
+  <section class="cta-final">
+    <div class="container">
+      <h2>Pronto para triar melhor hoje?</h2>
+      <p style="margin-top:12px; color: var(--texto-suave);">Leva menos de um minuto para começar.</p>
+      <div class="acoes" style="margin-top: 24px;">
+        <a class="btn btn-verde" href="https://ai-bug-triage-system-d6vigycbjt4qxez2wrvsxf.streamlit.app/" target="_blank" rel="noopener">Abrir o app agora</a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <div class="links">
+        <a href="https://ai-bug-triage-system-d6vigycbjt4qxez2wrvsxf.streamlit.app/legal?aba=termos" target="_blank" rel="noopener">Termos de Uso</a>
+        <a href="https://ai-bug-triage-system-d6vigycbjt4qxez2wrvsxf.streamlit.app/legal?aba=privacidade" target="_blank" rel="noopener">Privacidade</a>
+        <a href="https://github.com/iago3-stack/ai-bug-triage-system" target="_blank" rel="noopener">Código aberto</a>
+      </div>
+      <p>
+        <img alt="Testes: X passed" src="https://img.shields.io/endpoint?url=https%3A%2F%2Fiago3-stack.github.io%2Fai-bug-triage-system%2Fpytest-badge.json&cacheSeconds=300"
+             style="max-width: 260px;" loading="lazy" />
+      </p>
+      <p>AI Bug Triage System · Triage de bugs de software com IA</p>
+    </div>
+  </footer>
+</body>
+</html>

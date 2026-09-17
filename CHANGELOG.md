@@ -4,6 +4,11 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.16.9] - 2026-09-17
+
+### Adicionado
+- **Landing de marketing standalone (desacoplada do app)** — página estática `web/landing/index.html` publicada no GitHub Pages (`https://iago3-stack.github.io/ai-bug-triage-system/`) junto do badge de testes, no deploy já existente do `ci.yml`. É um HTML único e autocontido (SEO + JSON-LD `SoftwareApplication` + CSS/JS embutidos) com: hero + CTA para o app, "Como funciona" (3 passos), recursos, card de preços (Premium R$ 19,99/mês via PIX), FAQ e rodapé com Termos/Privacidade/badge dinâmico de testes. Todo CTA aponta para o app real (`streamlit.app`), mantendo o produto sem marketing dentro dele. Testes de sanidade: `test_landing.py`.
+
 ## [v2.16.8] - 2026-09-17
 
 ### Alterado
