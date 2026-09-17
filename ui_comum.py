@@ -15,7 +15,7 @@ import sessao_persist
 import roteador
 import admin
 
-VERSAO = "v2.16.11"
+VERSAO = "v2.16.12"
 
 # Logo do sistema (SVG embutido como data URI para funcionar na Cloud).
 _LOGO_DATA_URI = (
@@ -623,17 +623,19 @@ def rodape():
 
 
 def _menu_legal() -> None:
-    """Card de acesso às páginas legais (Termos de Uso e Privacidade/LGPD).
+    """Card de acesso às páginas legais (Termos & Privacidade/LGPD).
 
     Usa o MESMO leiaute/organização do card "🤖 Pronto para triar bugs?" do
-    Início: `st.container(border=True)` + colunas com o título à esquerda e os
-    botões à direita. Assim os botões ficam DENTRO do card (no mobile eles
-    empilham sozinhos, sem estourar a borda) e a navegação usa `st.button` +
-    `st.switch_page` (mesmo caminho do CTA). Como o `st.switch_page` preserva
-    a rolagem, a página Legal chama `_rolar_topo()` ao chegar por aqui.
+    Início: `st.container(border=True)` + colunas com o título à esquerda e o
+    botão à direita. Assim o botão fica DENTRO do card (no mobile as colunas
+    empilham sozinhas, sem estourar a borda) e a navegação usa `st.button` +
+    `st.switch_page` (mesmo caminho do CTA). Um único botão leva para a página
+    Legal (Termos e Privacidade são abas da MESMA página). Como o
+    `st.switch_page` preserva a rolagem, a página Legal chama `_rolar_topo()`
+    ao chegar por aqui.
     """
     with st.container(border=True):
-        _c_tit, _c_termos, _c_priv = st.columns([1.6, 1, 1], vertical_alignment="center")
+        _c_tit, _c_btn = st.columns([1.6, 1], vertical_alignment="center")
         with _c_tit:
             st.markdown(
                 '<div class="marca-legal">'
@@ -642,12 +644,9 @@ def _menu_legal() -> None:
                 '</div>',
                 unsafe_allow_html=True,
             )
-        with _c_termos:
-            if st.button("📜 Termos de Uso", key="rodape_termos", use_container_width=True):
+        with _c_btn:
+            if st.button("⚖️ Termos & Privacidade", key="rodape_legal", use_container_width=True):
                 _ir_para_legal("termos")
-        with _c_priv:
-            if st.button("🛡️ Privacidade / LGPD", key="rodape_privacidade", use_container_width=True):
-                _ir_para_legal("privacidade")
 
 
 def _rolar_topo() -> None:

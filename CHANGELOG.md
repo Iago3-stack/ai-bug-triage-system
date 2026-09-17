@@ -4,6 +4,12 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.16.12] - 2026-09-17
+
+### Alterado
+- **Card "⚖️ Legal" unificado** — os botões "📜 Termos de Uso" e "🛡️ Privacidade / LGPD" viraram um único botão **"⚖️ Termos & Privacidade"** (verde `#25D366`), já que ambos levavam à MESMA página `/legal` (Termos e Privacidade são abas da mesma página; a aba aberta é a escolhida por padrão = Termos). Colunas passaram de `[1.6,1,1]` para `[1.6,1]` e o CSS `.marca-legal` agora pinta 1 botão (removida a regra do `nth-child(3)` azul). No mobile fica mais enxuto.
+- **Landing: footer unificado** — os dois links "Termos de Uso" e "Privacidade" viraram **"Termos & Privacidade"** (apontando para a mesma página com a aba Termos).
+
 ## [v2.16.11] - 2026-09-17
 
 ### Alterado

@@ -57,7 +57,9 @@ def test_preco_exibido():
 
 def test_links_legais():
     assert f"{APP_URL}legal?aba=termos" in _HTML
-    assert f"{APP_URL}legal?aba=privacidade" in _HTML
+    assert "Termos &amp; Privacidade" in _HTML
+    # Links de Termos e Privacidade unificados em um só (a página tem as abas).
+    assert '<a href="https://ai-bug-triage-system-d6vigycbjt4qxez2wrvsxf.streamlit.app/legal?aba=privacidade"' not in _HTML
 
 
 def test_badge_de_testes_do_pages():

@@ -93,8 +93,8 @@ _BASE_CSS = """
         opacity: .92 !important; box-shadow: 0 6px 18px rgba(255,255,255,.12) !important;
     }
 
-    /* Card Legal do rodapé: mesmo leiaute do CTA do Início (título + 2 botões).
-       Mantém os botões DENTRO do card — no mobile as colunas empilham sozinhas. */
+    /* Card Legal do rodapé: mesmo leiaute do CTA do Início (título + 1 botão).
+       Mantém o botão DENTRO do card — no mobile as colunas empilham sozinhas. */
     [data-testid="stVerticalBlock"]:has(.marca-legal):has(> [data-testid="stLayoutWrapper"]):not(:has(> :not([data-testid="stLayoutWrapper"]))) {
         background: linear-gradient(135deg,#0f172a 0%,#16233c 55%,#25D366 175%) !important;
         border-radius: 14px !important;
@@ -106,11 +106,6 @@ _BASE_CSS = """
     [data-testid="stVerticalBlock"]:has(.marca-legal):has(> [data-testid="stLayoutWrapper"]):not(:has(> :not([data-testid="stLayoutWrapper"]))) [data-testid="stColumn"]:nth-child(2) [data-testid="stButton"] button {
         background: #25D366 !important;
         color: #022c0e !important; font-weight: 800 !important; font-size: 14px !important;
-        border: 1px solid rgba(255,255,255,.22) !important; border-radius: 10px !important; padding: 12px 16px !important;
-    }
-    [data-testid="stVerticalBlock"]:has(.marca-legal):has(> [data-testid="stLayoutWrapper"]):not(:has(> :not([data-testid="stLayoutWrapper"]))) [data-testid="stColumn"]:nth-child(3) [data-testid="stButton"] button {
-        background: #2E7CF6 !important;
-        color: #ffffff !important; font-weight: 800 !important; font-size: 14px !important;
         border: 1px solid rgba(255,255,255,.22) !important; border-radius: 10px !important; padding: 12px 16px !important;
     }
     [data-testid="stVerticalBlock"]:has(.marca-legal):has(> [data-testid="stLayoutWrapper"]):not(:has(> :not([data-testid="stLayoutWrapper"]))) [data-testid="stButton"] button:hover {
