@@ -100,6 +100,47 @@ def render() -> bool:
                 else:
                     st.error(msg)
 
+        _modo = st.session_state.get("_auth_modo")
+        col_rec, col_reenv = st.columns(2)
+        with col_rec:
+            if st.button("🔑 Esqueceu a senha?", key="_auth_btn_recuperar", use_container_width=True):
+                st.session_state["_auth_modo"] = "recuperar"
+                st.rerun()
+        with col_reenv:
+            if st.button("📧 Reenviar confirmação", key="_auth_btn_reenviar", use_container_width=True):
+                st.session_state["_auth_modo"] = "reenviar"
+                st.rerun()
+
+        if _modo in ("recuperar", "reenviar"):
+            if _modo == "recuperar":
+                rotulo = "Enviar link de recuperação"
+                funcao = auth_supabase.recuperar_senha
+                msg_ok = (
+                    "Se este e-mail estiver cadastrado, enviamos um link de "
+                    "recuperação. Verifique sua caixa de entrada (e o spam)."
+                )
+            else:
+                rotulo = "Reenviar link de confirmação"
+                funcao = auth_supabase.reenviar_confirmacao
+                msg_ok = (
+                    "Se a conta ainda não foi confirmada, reenviamos o link. "
+                    "Verifique sua caixa de entrada (e o spam)."
+                )
+            with st.form(f"form_{_modo}", clear_on_submit=True):
+                st.text_input("Seu e-mail", key=f"_auth_{_modo}_email")
+                enviar = st.form_submit_button(rotulo)
+                if enviar:
+                    ok, msg = funcao(st.session_state[f"_auth_{_modo}_email"])
+                    if ok:
+                        st.success(msg_ok)
+                        st.session_state.pop("_auth_modo", None)
+                        st.rerun()
+                    else:
+                        st.error(msg)
+            if st.button("Voltar", key="_auth_voltar"):
+                st.session_state.pop("_auth_modo", None)
+                st.rerun()
+
     esquerda, direita = st.columns([1.25, 1], gap="medium")
     with esquerda:
         st.caption("")

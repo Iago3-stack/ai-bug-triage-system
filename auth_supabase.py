@@ -8,6 +8,8 @@
 # Endpoints usados (https://<projeto>.supabase.co/auth/v1):
 #   POST /signup                     -> cria conta (+ e-mail de confirmação)
 #   POST /token (grant_type=password)-> login (access_token + refresh_token + user)
+#   POST /recover                    -> e-mail de recuperação de senha
+#   POST /resend (type=signup)       -> reenvia e-mail de confirmação
 #   POST /logout                     -> invalida a sessão
 #
 # Nenhum dado sensível vai para o repositório; chaves ficam em secrets/.env.
@@ -125,6 +127,13 @@ def _valida_email_senha(email: str, senha: str) -> tuple[bool, str]:
         return False, "Informe um e-mail válido."
     if len(senha or "") < 8:
         return False, "A senha precisa ter pelo menos 8 caracteres."
+    return True, ""
+
+
+def _valida_email(email: str) -> tuple[bool, str]:
+    email = (email or "").strip()
+    if not email or "@" not in email or "." not in email.split("@")[-1]:
+        return False, "Informe um e-mail válido."
     return True, ""
 
 
@@ -250,6 +259,60 @@ def confirmar_cadastro(token_hash: str) -> tuple[bool, str, dict | None]:
     if "expired" in baixo or "invalid" in baixo or "token" in baixo:
         return False, "Link de confirmação expirado ou inválido. Peça um novo cadastro.", None
     return False, _mensagem_erro(resposta.status_code, resposta.text), None
+
+
+def recuperar_senha(email: str) -> tuple[bool, str]:
+    """Dispara o e-mail de recuperação de senha (GoTrue POST /recover).
+
+    Anti-enumeração: a resposta é a mesma existindo ou não a conta, então não
+    revela se o e-mail está cadastrado. Retorna (ok, mensagem).
+    """
+    if not disponivel():
+        return False, "Supabase não configurado neste ambiente (sem SUPABASE_URL/ANON_KEY)."
+    ok, msg = _valida_email(email)
+    if not ok:
+        return False, msg
+    try:
+        resposta = requests.post(
+            f"{_base_auth_url()}/recover",
+            json={"email": email.strip().lower()},
+            headers=_headers_anon(),
+            timeout=15,
+        )
+    except requests.RequestException:
+        return False, "Falha de rede ao enviar o link. Tente de novo."
+    if resposta.status_code in (200, 201):
+        return True, "ok"
+    if resposta.status_code == 429:
+        return False, _mensagem_erro(resposta.status_code, resposta.text)
+    return False, "Não foi possível enviar o link de recuperação. Tente de novo."
+
+
+def reenviar_confirmacao(email: str) -> tuple[bool, str]:
+    """Reenvia o e-mail de confirmação de cadastro (GoTrue POST /resend, type=signup).
+
+    Só faz sentido para contas ainda não confirmadas; e-mails já confirmados
+    recebem mensagem amigável. Retorna (ok, mensagem).
+    """
+    if not disponivel():
+        return False, "Supabase não configurado neste ambiente (sem SUPABASE_URL/ANON_KEY)."
+    ok, msg = _valida_email(email)
+    if not ok:
+        return False, msg
+    try:
+        resposta = requests.post(
+            f"{_base_auth_url()}/resend",
+            json={"type": "signup", "email": email.strip().lower()},
+            headers=_headers_anon(),
+            timeout=15,
+        )
+    except requests.RequestException:
+        return False, "Falha de rede ao reenviar o e-mail. Tente de novo."
+    if resposta.status_code in (200, 201):
+        return True, "ok"
+    if resposta.status_code in (400, 422) and "confirm" in resposta.text.lower():
+        return False, "Este e-mail já foi confirmado — pode entrar normalmente."
+    return False, _mensagem_erro(resposta.status_code, resposta.text)
 
 
 def sair(token: str | None) -> None:

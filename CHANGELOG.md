@@ -4,6 +4,19 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.16.13] - 2026-09-17
+
+### Adicionado
+- **"Esqueceu a senha?"** na tela de login — botão abaixo do formulário abre um mini-formulário de e-mail e dispara o e-mail de recuperação via `POST /auth/v1/recover` (Supabase/GoTrue). Anti-enumeração: a resposta é a mesma existindo ou não a conta.
+- **"Reenviar confirmação"** na tela de login — reenvia o e-mail de confirmação de cadastro via `POST /auth/v1/resend` (type=signup) para quem não confirmou o 1º e-mail; conta já confirmada recebe aviso amigável.
+- E-mails transacionais agora cobrem recuperação de senha + confirmação reenviável (a confirmação inicial já existia).
+
+### Detalhes técnicos
+- `auth_supabase.py`: novas funções `recuperar_senha(email)` e `reenviar_confirmacao(email)` (retornam `(ok, msg)`); validador de e-mail isolado `_valida_email`.
+- `secoes/login.py`: botões "🔑 Esqueceu a senha?" / "📧 Reenviar confirmação" abaixo do formulário, com formulário de e-mail condicional (modo salvo em `st.session_state["_auth_modo"]`) e botão "Voltar".
+- `test_auth_supabase.py`: +7 testes (recover/resend ok, e-mail inválido, sem credenciais, rate limit de e-mail, já confirmado).
+- Requisito no painel do Supabase: ja vem.
+
 ## [v2.16.12] - 2026-09-17
 
 ### Alterado

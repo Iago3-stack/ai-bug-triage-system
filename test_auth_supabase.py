@@ -265,3 +265,78 @@ def test_disponivel_true_e_false(monkeypatch):
     assert auth_supabase.disponivel()
     monkeypatch.setattr(auth_supabase, "_config", lambda: None)
     assert not auth_supabase.disponivel()
+
+
+# ── Recuperação de senha e reenvio de confirmação ─────────────────────────
+
+def test_recuperar_senha_ok(monkeypatch):
+    monkeypatch.setattr(auth_supabase, "_config", lambda: ("https://x.supabase.co", "key"))
+    chamadas = []
+
+    def _post(url, **kw):
+        chamadas.append((url, kw.get("json")))
+        return _Resp(200)
+
+    monkeypatch.setattr(auth_supabase.requests, "post", _post)
+    ok, msg = auth_supabase.recuperar_senha("  Usuario@Exemplo.com ")
+    assert ok
+    assert chamadas[0][0].endswith("/recover")
+    assert chamadas[0][1]["email"] == "usuario@exemplo.com"
+
+
+def test_recuperar_senha_email_invalido():
+    ok, msg = auth_supabase.recuperar_senha("sem-arroba")
+    assert not ok
+    assert "e-mail" in msg
+
+
+def test_recuperar_senha_sem_credenciais(monkeypatch):
+    monkeypatch.setattr(auth_supabase, "_config", lambda: None)
+    ok, msg = auth_supabase.recuperar_senha("a@b.com")
+    assert not ok
+    assert "configurado" in msg
+
+
+def test_recuperar_senha_rate_limit(monkeypatch):
+    monkeypatch.setattr(auth_supabase, "_config", lambda: ("https://x.supabase.co", "key"))
+    monkeypatch.setattr(
+        auth_supabase.requests, "post",
+        lambda *a, **k: _Resp(
+            429, {"code": 429, "error_code": "over_email_send_rate_limit", "msg": "email rate limit exceeded"}
+        ),
+    )
+    ok, msg = auth_supabase.recuperar_senha("a@b.com")
+    assert not ok
+    assert "Limite" in msg
+
+
+def test_reenviar_confirmacao_ok(monkeypatch):
+    monkeypatch.setattr(auth_supabase, "_config", lambda: ("https://x.supabase.co", "key"))
+    chamadas = []
+
+    def _post(url, **kw):
+        chamadas.append((url, kw.get("json")))
+        return _Resp(200)
+
+    monkeypatch.setattr(auth_supabase.requests, "post", _post)
+    ok, msg = auth_supabase.reenviar_confirmacao("usuario@exemplo.com")
+    assert ok
+    assert chamadas[0][0].endswith("/resend")
+    assert chamadas[0][1] == {"type": "signup", "email": "usuario@exemplo.com"}
+
+
+def test_reenviar_confirmacao_ja_confirmado(monkeypatch):
+    monkeypatch.setattr(auth_supabase, "_config", lambda: ("https://x.supabase.co", "key"))
+    monkeypatch.setattr(
+        auth_supabase.requests, "post",
+        lambda *a, **k: _Resp(422, {"error": "email_confirmed", "message": "Email already confirmed"}),
+    )
+    ok, msg = auth_supabase.reenviar_confirmacao("a@b.com")
+    assert not ok
+    assert "confirmado" in msg
+
+
+def test_reenviar_confirmacao_email_invalido():
+    ok, msg = auth_supabase.reenviar_confirmacao("invalido")
+    assert not ok
+    assert "e-mail" in msg
