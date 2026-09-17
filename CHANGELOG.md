@@ -4,6 +4,15 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.16.1] - 2026-09-16
+
+### Corrigido
+- **💳 Pix PagBank usando o formato atual da API de Pedidos** — a criação da cobrança usava o antigo `qr_codes` (depreciado) e deixava o `customer` sem CPF; agora envia `charges[].payment_method.type = "PIX"` com `payment_method.pix.expiration_date` e lê o copia-e-cola de `charges[].qr_code.text` (com fallback para o formato antigo). Esse era o motivo de a cobrança cair no fluxo manual em produção.
+- **🧾 CPF obrigatório e validado** — a API exige `customer.tax_id`; o campo "CPF do titular" virou obrigatório no "Assinar Premium" (com validação dos 11 dígitos e dígitos verificadores via `pagbank.cpf_valido`), evitando a chamada fadada ao erro.
+
+### Adicionado
+- **🔄 Nova tentativa do Pix PagBank** — quando a cobrança pendente falhou no PagBank, o Meu Plano mostra a **mensagem real do erro** (`pagbank_erro`) e um botão "Gerar Pix PagBank de novo" que regenera o QR dinâmico na **mesma cobrança** (`pixbilling.regenerar_pagamento`), sem duplicar.
+
 ## [v2.16.0] - 2026-09-16
 
 ### Adicionado

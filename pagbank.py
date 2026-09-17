@@ -87,6 +87,21 @@ def _digitos(texto: str) -> str:
     return "".join(c for c in (texto or "") if c.isdigit())
 
 
+def cpf_valido(cpf: str) -> bool:
+    """True para um CPF com 11 dígitos e dígitos verificadores válidos."""
+    d = _digitos(cpf)
+    if len(d) != 11 or d == d[0] * 11:
+        return False
+    for posicao in (9, 10):
+        soma = sum(int(d[i]) * (posicao + 1 - i) for i in range(posicao))
+        resto = (soma * 10) % 11
+        if resto == 10:
+            resto = 0
+        if resto != int(d[posicao]):
+            return False
+    return True
+
+
 def _expiracao_iso() -> str:
     """ISO-8601 UTC com offset (ex.: 2099-09-17T18:00:00-03:00) — válido por N horas."""
     d = datetime.now(_FUSO) + timedelta(hours=validade_horas())
@@ -119,8 +134,9 @@ def criar_cobranca(
     """Cria um pedido com QR Code Pix e devolve o copia-e-cola + metadados.
 
     Retorna dict: {"order_id", "qr_id", "pix_copia"}. Levanta ``PagbankErro``
-    em qualquer falha (token ausente, URL ausente, HTTP/validação, timeout).
-    O ``reference_id`` deve ser o id da cobrança interna (vira a nossa referência).
+    em qualquer falha (token ausente, URL ausente, CPF inválido, HTTP
+    de validação, timeout). O ``reference_id`` deve ser o id da cobrança
+    interna (vira a nossa referência).
     """
     if not configurado():
         raise PagbankErro("PAGBANK_TOKEN não configurado")
@@ -129,18 +145,22 @@ def criar_cobranca(
         raise PagbankErro(
             "URL de notificação ausente — configure PAGBANK_WEBHOOK_URL"
         )
+    taxid = _digitos(cpf)
+    if not cpf_valido(cpf):
+        raise PagbankErro(
+            "CPF obrigatório e inválido — informe os 11 números do titular "
+            "(a API de Pedidos exige o customer.tax_id)."
+        )
 
-    cliente = {}
+    cliente = {"tax_id": taxid}
     if nome:
         cliente["name"] = str(nome).strip()[:80]
     if email:
         cliente["email"] = str(email).strip()[:80]
-    taxid = _digitos(cpf)[:14]
-    if taxid:
-        cliente["tax_id"] = taxid
 
     pedido = {
         "reference_id": reference_id,
+        "customer": cliente,
         "items": [
             {
                 "reference_id": "premium",
@@ -149,16 +169,19 @@ def criar_cobranca(
                 "unit_amount": _centavos(valor),
             }
         ],
-        "qr_codes": [
+        "charges": [
             {
-                "amount": {"value": _centavos(valor)},
-                "expiration_date": _expiracao_iso(),
+                "reference_id": "premium",
+                "description": "AI Bug Triage System — Assinatura Premium (mensal)",
+                "amount": {"value": _centavos(valor), "currency": "BRL"},
+                "payment_method": {
+                    "type": "PIX",
+                    "pix": {"expiration_date": _expiracao_iso()},
+                },
             }
         ],
         "notification_urls": [alvo],
     }
-    if cliente:
-        pedido["customer"] = cliente
 
     try:
         resposta = requests.post(
@@ -177,14 +200,18 @@ def criar_cobranca(
     if resposta.status_code >= 400:
         raise PagbankErro(f"{_erro_mensagem(dados, resposta.status_code)}")
 
-    qrs = dados.get("qr_codes") or dados.get("qr_code") or []
-    if not qrs:
+    primeira_charge = ((dados.get("charges") or []) or [None])[0]
+    qr = primeira_charge.get("qr_code") if isinstance(primeira_charge, dict) else None
+    if not (qr and qr.get("text")):
+        qrs = dados.get("qr_codes") or dados.get("qr_code") or []
+        primeiro = qrs[0] if isinstance(qrs, list) else qrs
+        qr = primeiro
+    if not qr or not qr.get("text"):
         raise PagbankErro("Pedido criado sem QR Code na resposta")
-    primeiro = qrs[0] if isinstance(qrs, list) else qrs
     return {
         "order_id": dados.get("id"),
-        "qr_id": primeiro.get("id"),
-        "pix_copia": primeiro.get("text"),
+        "qr_id": qr.get("id"),
+        "pix_copia": qr.get("text"),
     }
 
 

@@ -170,10 +170,11 @@ def render():
                     "Premium libera sozinho (webhook PagBank)."
                 )
                 _cpf = st.text_input(
-                    "CPF do titular (para o Pix)",
+                    "CPF do titular *",
                     key="cpf_premium",
                     placeholder="000.000.000-00",
-                    help="O CPF identifica o pagador no Pix do PagBank. Campo opcional.",
+                    help="Campo **obrigatório** para o Pix do PagBank — a API de Pedidos "
+                    "exige o CPF (customer.tax_id) do pagador.",
                 )
                 _nome_premium = st.text_input(
                     "Nome do titular (opcional)", key="nome_premium",
@@ -186,6 +187,12 @@ def render():
                 if pagbank.configurado():
                     _nome = _nome_premium
                     _email = _email_logado() or ""
+                    if not pagbank.cpf_valido(_cpf or ""):
+                        st.error(
+                            "Para gerar o Pix PagBank é preciso um **CPF válido** do titular "
+                            "(11 dígitos). Informe o número e tente de novo."
+                        )
+                        st.stop()
                 cobranca = pixbilling.gerar_cobranca(uid, cpf=_cpf if pagbank.configurado() else "", nome=_nome, email=_email)
                 if cobranca:
                     _lembrete_refresh(
@@ -279,6 +286,54 @@ def _exibir_checkout_pix(cobranca: dict, uid: str) -> None:
             )
             _lembrete_refresh("✅ Pagamento avisado! Aguarde a confirmação do responsável.")
             st.rerun()
+
+        if not automatico and pagbank.configurado():
+            _exibir_tentar_pagbank(cobranca, uid)
+
+
+def _exibir_tentar_pagbank(cobranca: dict, uid: str) -> None:
+    """Cobrança pendente sem QR PagBank: explica o erro e oferece nova tentativa.
+
+    A primeira tentativa de gerar o Pix automático falhou (CPF ausente/inválido,
+    erro da API etc.) e a cobrança caiu no fallback manual. Aqui o usuário
+    preenche o CPF/nome corretos e re-tenta — sem criar cobrança nova.
+    """
+    erro = cobranca.get("pagbank_erro")
+    st.markdown("---")
+    st.warning(
+        "O **Pix automático do PagBank** não pôde ser gerado"
+        + (f": **{erro}**" if erro else " — tente novamente.")
+        + " Preencha os dados do titular abaixo e gere de novo. "
+        "Enquanto isso, o Pix manual continua disponível.",
+    )
+    _cpf = st.text_input(
+        "CPF do titular *",
+        key=f"cpf_pagbank_{cobranca['id']}",
+        placeholder="000.000.000-00",
+        help="Campo **obrigatório** para o Pix do PagBank (customer.tax_id).",
+    )
+    _nome = st.text_input(
+        "Nome do titular (opcional)",
+        key=f"nome_pagbank_{cobranca['id']}",
+        placeholder="Como aparece na sua conta",
+    )
+    if st.button("🔄 Gerar Pix PagBank de novo", key=f"btn_retry_pagbank_{cobranca['id']}", type="primary"):
+        if not pagbank.cpf_valido(_cpf or ""):
+            st.error("Informe um **CPF válido** (11 dígitos) do titular antes de tentar de novo.")
+            return
+        atualizada = pixbilling.regenerar_pagamento(
+            cobranca, cpf=_cpf, nome=_nome, email=_email_logado() or ""
+        )
+        if atualizada.get("pix_copia_pagbank"):
+            _lembrete_refresh(
+                "✅ Pix PagBank gerado! Pague o QR Code abaixo — a confirmação é automática."
+            )
+        else:
+            _lembrete_refresh(
+                "⚠️ Ainda não deu para gerar o Pix PagBank — veja o aviso abaixo ou pague "
+                "o Pix manual e avise pelo 'Já paguei'."
+            )
+        st.rerun()
 
 
 def _exibir_painel_admin() -> None:

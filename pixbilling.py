@@ -152,6 +152,36 @@ def gerar_cobranca(uid: str, cpf: str = "", nome: str = "", email: str = "") -> 
     return _salvar_jsonl(doc)
 
 
+def regenerar_pagamento(doc: dict, cpf: str = "", nome: str = "", email: str = "") -> dict:
+    """Tenta de novo gerar o QR dinâmico do PagBank NUMA cobrança já aberta.
+
+    Não cria cobrança nova: reescreve no próprio documento os metadados do
+    pedido (`pagbank_order_id`/`pagbank_qr_id`/`pix_copia_pagbank`) ou, em
+    falha, o `pagbank_erro`. Usado no botão "tentar de novo" quando a primeira
+    tentativa caiu no fallback manual (ex.: CPF faltando/erro da API).
+    """
+    nova = dict(doc)
+    if pagbank.configurado():
+        try:
+            pago = pagbank.criar_cobranca(
+                nova["valor"], nova["id"], cpf=cpf, nome=nome, email=email
+            )
+            nova["pagbank_order_id"] = pago["order_id"]
+            nova["pagbank_qr_id"] = pago["qr_id"]
+            nova["pix_copia_pagbank"] = pago["pix_copia"]
+            nova.pop("pagbank_erro", None)
+        except pagbank.PagbankErro as ex:
+            nova["pagbank_erro"] = str(ex)
+            nova.pop("pix_copia_pagbank", None)
+            nova.pop("pagbank_order_id", None)
+            nova.pop("pagbank_qr_id", None)
+    if _usar_nuvem():
+        nuvem_supabase.atualizar_cobranca(nova["id"], nova)
+    else:
+        _atualizar_local(nova)
+    return nova
+
+
 def cobrancas_do_uid(uid: str) -> list[dict]:
     """Cobranças do usuário, mais recentes primeiro."""
     docs = _todas_nuvem() if _usar_nuvem() else _todas_local()

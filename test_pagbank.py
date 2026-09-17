@@ -74,6 +74,15 @@ def test_digitos():
     assert pagbank._digitos("") == ""
 
 
+def test_cpf_valido():
+    assert pagbank.cpf_valido("529.982.247-25") is True
+    assert pagbank.cpf_valido("52998224725") is True
+    assert pagbank.cpf_valido("12345678900") is False  # dígitos verificadores errados
+    assert pagbank.cpf_valido("11111111111") is False  # dígitos repetidos
+    assert pagbank.cpf_valido("123") is False
+    assert pagbank.cpf_valido("") is False
+
+
 def test_criar_cobranca_monta_pedido_correto(monkeypatch):
     _configurar(monkeypatch)
     monkeypatch.setenv("PAGBANK_WEBHOOK_URL", "https://x.onrender.com/webhook/pagamento")
@@ -84,23 +93,61 @@ def test_criar_cobranca_monta_pedido_correto(monkeypatch):
         return _Resposta(200, {
             "id": "ORDE_ABC",
             "reference_id": "cob-123",
-            "qr_codes": [{"id": "QRCO_XYZ", "text": "0002010..."}],
+            "charges": [{
+                "id": "CHAR_1",
+                "status": "WAITING",
+                "qr_code": {"id": "QRCO_XYZ", "text": "0002010..."},
+            }],
         })
 
     monkeypatch.setattr(pagbank.requests, "post", fake_post)
     resultado = pagbank.criar_cobranca(
-        19.99, "cob-123", cpf="12345678909", nome="Jose da Silva", email="jose@test.com"
+        19.99, "cob-123", cpf="52998224725", nome="Jose da Silva", email="jose@test.com"
     )
     assert resultado == {"order_id": "ORDE_ABC", "qr_id": "QRCO_XYZ", "pix_copia": "0002010..."}
     assert chamadas["url"] == "https://api.pagseguro.com/orders"
     assert chamadas["headers"]["Authorization"] == "Bearer tok-teste"
     corpo = chamadas["json"]
     assert corpo["reference_id"] == "cob-123"
-    assert corpo["customer"]["tax_id"] == "12345678909"
+    assert corpo["customer"]["tax_id"] == "52998224725"
+    assert "qr_codes" not in corpo  # formato atual usa charges[].payment_method.type = PIX
+    charge = corpo["charges"][0]
+    assert charge["amount"] == {"value": 1999, "currency": "BRL"}
+    assert charge["payment_method"]["type"] == "PIX"
+    assert charge["payment_method"]["pix"]["expiration_date"]
     assert "PAGBANK_WEBHOOK_URL" not in corpo["notification_urls"][0]  # usa a URL real
     assert corpo["notification_urls"] == ["https://x.onrender.com/webhook/pagamento"]
-    assert corpo["qr_codes"][0]["amount"]["value"] == 1999
     assert corpo["items"][0]["unit_amount"] == 1999
+
+
+def test_criar_cobranca_sem_cpf_falha(monkeypatch):
+    _configurar(monkeypatch)
+    monkeypatch.setenv("PAGBANK_WEBHOOK_URL", "https://x.onrender.com/webhook/pagamento")
+    with pytest.raises(pagbank.PagbankErro, match="CPF"):
+        pagbank.criar_cobranca(19.99, "cob-123")
+
+
+def test_criar_cobranca_cpf_invalido_falha(monkeypatch):
+    _configurar(monkeypatch)
+    monkeypatch.setenv("PAGBANK_WEBHOOK_URL", "https://x.onrender.com/webhook/pagamento")
+    with pytest.raises(pagbank.PagbankErro, match="CPF"):
+        pagbank.criar_cobranca(19.99, "cob-123", cpf="11111111111")
+
+
+def test_criar_cobranca_lê_qr_top_level_como_fallback(monkeypatch):
+    """Respostas que ainda trazem o campo antigo qr_codes seguem funcionando."""
+    _configurar(monkeypatch)
+    monkeypatch.setenv("PAGBANK_WEBHOOK_URL", "https://x.onrender.com/webhook/pagamento")
+
+    def fake_post(url, headers, json, timeout):
+        return _Resposta(200, {
+            "id": "ORDE_ABC",
+            "qr_codes": [{"id": "QRCO_LEGADO", "text": "0002010..."}],
+        })
+
+    monkeypatch.setattr(pagbank.requests, "post", fake_post)
+    resultado = pagbank.criar_cobranca(19.99, "cob-123", cpf="52998224725")
+    assert resultado == {"order_id": "ORDE_ABC", "qr_id": "QRCO_LEGADO", "pix_copia": "0002010..."}
 
 
 def test_criar_cobranca_sem_token_falha(monkeypatch):
@@ -124,7 +171,7 @@ def test_criar_cobranca_erro_http(monkeypatch):
 
     monkeypatch.setattr(pagbank.requests, "post", fake_post)
     with pytest.raises(pagbank.PagbankErro, match="unauthorized"):
-        pagbank.criar_cobranca(19.99, "cob-123")
+        pagbank.criar_cobranca(19.99, "cob-123", cpf="52998224725")
 
 
 def test_criar_cobranca_erro_rede(monkeypatch):
@@ -136,7 +183,7 @@ def test_criar_cobranca_erro_rede(monkeypatch):
 
     monkeypatch.setattr(pagbank.requests, "post", fake_post)
     with pytest.raises(pagbank.PagbankErro):
-        pagbank.criar_cobranca(19.99, "cob-123")
+        pagbank.criar_cobranca(19.99, "cob-123", cpf="52998224725")
 
 
 def test_consultar_pedido_ok(monkeypatch):

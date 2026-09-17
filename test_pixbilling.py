@@ -43,6 +43,36 @@ def test_gerar_cobranca_aguardando(tmp_path, monkeypatch):
     assert pixbilling.pendentes()[0]["id"] == doc["id"]
 
 
+def test_regenerar_pagamento_atualiza_mesmo_doc(tmp_path, monkeypatch):
+    _caminho_tmp(tmp_path, monkeypatch)
+    monkeypatch.delenv("PAGBANK_TOKEN", raising=False)
+    doc = pixbilling.gerar_cobranca("u-um")
+    assert "pagbank_erro" not in doc
+
+    import pagbank
+    monkeypatch.setenv("PAGBANK_TOKEN", "tok")
+    monkeypatch.setenv("PAGBANK_WEBHOOK_URL", "https://x.onrender.com/webhook/pagamento")
+
+    def fake_ok(valor, reference_id, cpf, nome, email):
+        return {"order_id": "ORDE_NOVA", "qr_id": "QRCO_NOVA", "pix_copia": "0002010NOVO"}
+
+    monkeypatch.setattr(pagbank, "criar_cobranca", fake_ok)
+    nova = pixbilling.regenerar_pagamento(doc, cpf="52998224725", nome="Titular")
+    assert nova["id"] == doc["id"]  # mesma cobrança, sem duplicar
+    assert nova["pix_copia_pagbank"] == "0002010NOVO"
+    assert nova["pagbank_order_id"] == "ORDE_NOVA"
+    assert "pagbank_erro" not in nova
+
+    # erro na tentativa é gravado (e não estoura)
+    def fake_erro(valor, reference_id, cpf, nome, email):
+        raise pagbank.PagbankErro("CPF inválido")
+
+    monkeypatch.setattr(pagbank, "criar_cobranca", fake_erro)
+    falhou = pixbilling.regenerar_pagamento(nova, cpf="11111111111")
+    assert falhou["pagbank_erro"] == "CPF inválido"
+    assert "pix_copia_pagbank" not in falhou
+
+
 def test_cobrancas_do_uid_filtra(tmp_path, monkeypatch):
     _caminho_tmp(tmp_path, monkeypatch)
     pixbilling.gerar_cobranca("u-um")
