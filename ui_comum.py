@@ -14,7 +14,7 @@ import sessao_persist
 import roteador
 import admin
 
-VERSAO = "v2.16.4"
+VERSAO = "v2.16.5"
 
 # Logo do sistema (SVG embutido como data URI para funcionar na Cloud).
 _LOGO_DATA_URI = (
@@ -662,29 +662,32 @@ def _menu_legal() -> None:
         + ' transition:none !important; transform:none !important; }',
     ])
 
-    st.markdown(f"""
-    <style>
-      /* Painel que continua o rodapé (mesmo gradiente, cantos inferiores). */
-      .rodape-legal-bg {{
-        height: 132px;
-        margin: 0;
-        margin-bottom: -58px;
-        background: linear-gradient(135deg,#0f172a 0%,#16233c 55%,#25D366 170%);
-        border-radius: 0 0 18px 18px;
-        padding: 18px 22px 0;
-        box-sizing: border-box;
-      }}
-      .rodape-legal-rotulo {{
-        font-size: 12px; font-weight: 800; letter-spacing: .06em;
-        color: #94a3b8; text-align: center; margin: 0 0 10px;
-      }}
-      /* Botões do rodapé legal: cores sólidas, sem hover, nos dois temas. */
-      {_css_rodape}
-    </style>
-    <div class="rodape-legal-bg">
-      <div class="rodape-legal-rotulo">⚖️ LEGAL</div>
-    </div>
-    """, unsafe_allow_html=True)
+    # Montado em Python com todas as linhas na coluna 0: qualquer indentação de
+    # 4+ espaços faz o Streamlit renderizar como bloco de código (o HTML cru
+    # com o botão de copiar aparecia no app).
+    _css_legal = (
+        "<style>\n"
+        ".rodape-legal-bg {\n"
+        "  height: 132px;\n"
+        "  margin: 0;\n"
+        "  margin-bottom: -58px;\n"
+        "  background: linear-gradient(135deg,#0f172a 0%,#16233c 55%,#25D366 170%);\n"
+        "  border-radius: 0 0 18px 18px;\n"
+        "  padding: 18px 22px 0;\n"
+        "  box-sizing: border-box;\n"
+        "}\n"
+        ".rodape-legal-rotulo {\n"
+        "  font-size: 12px; font-weight: 800; letter-spacing: .06em;\n"
+        "  color: #94a3b8; text-align: center; margin: 0 0 10px;\n"
+        "}\n"
+        + _css_rodape
+        + "\n"
+        + "</style>\n"
+        + '<div class="rodape-legal-bg">\n'
+        + '  <div class="rodape-legal-rotulo">⚖️ LEGAL</div>\n'
+        + "</div>"
+    )
+    st.markdown(_css_legal, unsafe_allow_html=True)
     _c1, _c2 = st.columns([1, 1])
     with _c1:
         if st.button("📜 Termos de Uso", key="rodape_termos", use_container_width=True):

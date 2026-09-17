@@ -4,6 +4,11 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.16.5] - 2026-09-17
+
+### Corrigido
+- **📜 Rodapé "⚖️ Legal": o app exibia o HTML cru como bloco de código (com o botão de copiar) e a faixa escura sumia na v2.16.4** — ao interpolar o CSS gerado (regras quebradas em várias linhas no nível de indentação 0), o bloco misturava linhas com indentação e quebrava o reconhecimento de HTML do markdown, virando "code block". Agora `_menu_legal()` monta o `<style>`/`<div>` em Python com **todas as linhas na coluna 0** (comprovado: zero linhas ≥4 espaços), então sempre renderiza como HTML. O painel escuro com os botões verdes/azuis sólidos e sem hover volta a aparecer nos dois temas.
+
 ## [v2.16.4] - 2026-09-17
 
 ### Corrigido
