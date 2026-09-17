@@ -10,8 +10,11 @@ import re
 
 _RAIZ = pathlib.Path(__file__).resolve().parent
 _HTML = (_RAIZ / "web" / "landing" / "index.html").read_text(encoding="utf-8")
+_SITEMAP = (_RAIZ / "web" / "landing" / "sitemap.xml").read_text(encoding="utf-8")
+_ROBOTS = (_RAIZ / "web" / "landing" / "robots.txt").read_text(encoding="utf-8")
 
 APP_URL = "https://ai-bug-triage-system-d6vigycbjt4qxez2wrvsxf.streamlit.app/"
+PAGES_URL = "https://iago3-stack.github.io/ai-bug-triage-system/"
 
 
 def _bloco_json_ld() -> dict:
@@ -74,3 +77,15 @@ def test_sem_erros_clssicos_de_css():
     # Evita regressões tipo "let(--x)" que quebram o gradiente.
     assert "let(--" not in _HTML
     assert "var(--verde)" in _HTML
+
+
+def test_robots_txt_aponta_sitemap():
+    assert "User-agent: *" in _ROBOTS
+    assert "Allow: /" in _ROBOTS
+    assert f"Sitemap: {PAGES_URL}sitemap.xml" in _ROBOTS
+
+
+def test_sitemap_xml_valido_e_com_url_principal():
+    assert '<?xml version="1.0" encoding="UTF-8"?>' in _SITEMAP
+    assert "http://www.sitemaps.org/schemas/sitemap/0.9" in _SITEMAP
+    assert f"<loc>{PAGES_URL}</loc>" in _SITEMAP

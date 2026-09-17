@@ -4,6 +4,11 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.16.10] - 2026-09-17
+
+### Adicionado
+- **SEO da landing: `sitemap.xml` + `robots.txt`** — novos arquivos em `web/landing/` publicados no GitHub Pages junto da landing (ci.yml copia a pasta inteira agora). `robots.txt` permite a indexação e aponta o `sitemap.xml`, que lista a URL principal — acelera a descoberta da página pelo Google e facilita o envio via Search Console.
+
 ## [v2.16.9] - 2026-09-17
 
 ### Adicionado
