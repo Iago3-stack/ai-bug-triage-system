@@ -14,7 +14,7 @@ import sessao_persist
 import roteador
 import admin
 
-VERSAO = "v2.16.3"
+VERSAO = "v2.16.4"
 
 # Logo do sistema (SVG embutido como data URI para funcionar na Cloud).
 _LOGO_DATA_URI = (
@@ -629,10 +629,43 @@ def _menu_legal() -> None:
     atrás dos botões (div com margem negativa) para parecer uma continuação do
     bloco; os botões recebem cor sólida SEM hover, idêntica nos dois temas.
     """
-    st.markdown("""
+    # Âncora usada pelo padrão do app (ferramenta/integracao): o marcador fica
+    # num stElementContainer e a linha das colunas é o IRMÃO seguinte. Cobrimos
+    # as duas formas de o Streamlit montar as colunas (direto em stHorizontalBlock
+    # ou enrolado num stElementContainer) para o seletor nunca falhar.
+    _anc_legal = '[data-testid="stElementContainer"]:has(div.rodape-legal-bg)'
+    _linhas_ancoras = (
+        f'{_anc_legal} ~ [data-testid="stHorizontalBlock"]',
+        f'{_anc_legal} ~ [data-testid="stElementContainer"] [data-testid="stHorizontalBlock"]',
+    )
+    _estados_btn = ("", ":hover", ":active", ":focus")
+
+    def _sel_rodape(seletor_botao: str) -> str:
+        return ",\n".join(
+            f"{a}{e} {seletor_botao}"
+            for a in _linhas_ancoras
+            for e in _estados_btn
+        )
+
+    # Regra única para cada botão cobrindo TODOS os estados com a MESMA cor
+    # sólida (hover/active/focus não mudam nada, em tema claro ou escuro).
+    _css_rodape = "\n".join([
+        _sel_rodape('[data-testid="stButton"] button')
+        + ' { background:#25D366 !important; color:#022c0e !important;'
+        + ' border:1px solid rgba(255,255,255,.22) !important; border-radius:10px !important;'
+        + ' font-weight:700 !important; box-shadow:none !important;'
+        + ' transition:none !important; transform:none !important; }',
+        _sel_rodape('[data-testid="stColumn"]:nth-child(2) [data-testid="stButton"] button')
+        + ' { background:#2E7CF6 !important; color:#ffffff !important;'
+        + ' border:1px solid rgba(255,255,255,.22) !important; border-radius:10px !important;'
+        + ' font-weight:700 !important; box-shadow:none !important;'
+        + ' transition:none !important; transform:none !important; }',
+    ])
+
+    st.markdown(f"""
     <style>
-      /* Painel que continuam o rodapé (mesmo gradiente, cantos inferiores). */
-      .rodape-legal-bg {
+      /* Painel que continua o rodapé (mesmo gradiente, cantos inferiores). */
+      .rodape-legal-bg {{
         height: 132px;
         margin: 0;
         margin-bottom: -58px;
@@ -640,57 +673,13 @@ def _menu_legal() -> None:
         border-radius: 0 0 18px 18px;
         padding: 18px 22px 0;
         box-sizing: border-box;
-      }
-      .rodape-legal-rotulo {
+      }}
+      .rodape-legal-rotulo {{
         font-size: 12px; font-weight: 800; letter-spacing: .06em;
         color: #94a3b8; text-align: center; margin: 0 0 10px;
-      }
+      }}
       /* Botões do rodapé legal: cores sólidas, sem hover, nos dois temas. */
-      [data-testid="stMarkdownContainer"]:has(div.rodape-legal-bg)
-        ~ [data-testid="stHorizontalBlock"]
-        [data-testid="stButton"] button {
-        background: #25D366 !important;
-        color: #022c0e !important;
-        border: 1px solid rgba(255,255,255,.22) !important;
-        border-radius: 10px !important;
-        font-weight: 700 !important;
-        box-shadow: none !important;
-        transition: none !important;
-      }
-      [data-testid="stMarkdownContainer"]:has(div.rodape-legal-bg)
-        ~ [data-testid="stHorizontalBlock"]
-        [data-testid="stButton"] button:hover,
-      [data-testid="stMarkdownContainer"]:has(div.rodape-legal-bg)
-        ~ [data-testid="stHorizontalBlock"]
-        [data-testid="stButton"] button:active,
-      [data-testid="stMarkdownContainer"]:has(div.rodape-legal-bg)
-        ~ [data-testid="stHorizontalBlock"]
-        [data-testid="stButton"] button:focus {
-        background: #25D366 !important;
-        color: #022c0e !important;
-        box-shadow: none !important;
-        transform: none !important;
-      }
-      /* Segundo botão (Privacidade) em azul sólido, também sem hover. */
-      [data-testid="stMarkdownContainer"]:has(div.rodape-legal-bg)
-        ~ [data-testid="stHorizontalBlock"]
-        [data-testid="stColumn"]:nth-child(2)
-        [data-testid="stButton"] button,
-      [data-testid="stMarkdownContainer"]:has(div.rodape-legal-bg)
-        ~ [data-testid="stHorizontalBlock"]
-        [data-testid="stColumn"]:nth-child(2)
-        [data-testid="stButton"] button:hover,
-      [data-testid="stMarkdownContainer"]:has(div.rodape-legal-bg)
-        ~ [data-testid="stHorizontalBlock"]
-        [data-testid="stColumn"]:nth-child(2)
-        [data-testid="stButton"] button:active,
-      [data-testid="stMarkdownContainer"]:has(div.rodape-legal-bg)
-        ~ [data-testid="stHorizontalBlock"]
-        [data-testid="stColumn"]:nth-child(2)
-        [data-testid="stButton"] button:focus {
-        background: #2E7CF6 !important;
-        color: #ffffff !important;
-      }
+      {_css_rodape}
     </style>
     <div class="rodape-legal-bg">
       <div class="rodape-legal-rotulo">⚖️ LEGAL</div>

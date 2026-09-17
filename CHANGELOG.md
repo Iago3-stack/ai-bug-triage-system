@@ -4,6 +4,11 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.16.4] - 2026-09-17
+
+### Corrigido
+- **📜 Rodapé "⚖️ Legal": hover branco nas versões v2.16.2/v2.16.3** — o seletor CSS estava ancorado em `stMarkdownContainer`, mas no DOM o marcador fica dentro de um `stElementContainer`, então as regras nunca eram aplicadas (o visual sólido sumia e o hover padrão do tema aparecia). Agora a âncora usa `[data-testid="stElementContainer"]:has(...)` como os outros botões do app (ferramenta/integração) e cobre as duas formas de o Streamlit montar a linha de colunas. Cores **sólidas** verdes/azuis e **sem hover** em ambos os temas.
+
 ## [v2.16.3] - 2026-09-16
 
 ### Alterado
