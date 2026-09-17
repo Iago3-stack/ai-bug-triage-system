@@ -14,7 +14,7 @@ import sessao_persist
 import roteador
 import admin
 
-VERSAO = "v2.16.5"
+VERSAO = "v2.16.6"
 
 # Logo do sistema (SVG embutido como data URI para funcionar na Cloud).
 _LOGO_DATA_URI = (
@@ -629,37 +629,31 @@ def _menu_legal() -> None:
     atrás dos botões (div com margem negativa) para parecer uma continuação do
     bloco; os botões recebem cor sólida SEM hover, idêntica nos dois temas.
     """
-    # Âncora usada pelo padrão do app (ferramenta/integracao): o marcador fica
-    # num stElementContainer e a linha das colunas é o IRMÃO seguinte. Cobrimos
-    # as duas formas de o Streamlit montar as colunas (direto em stHorizontalBlock
-    # ou enrolado num stElementContainer) para o seletor nunca falhar.
-    _anc_legal = '[data-testid="stElementContainer"]:has(div.rodape-legal-bg)'
-    _linhas_ancoras = (
-        f'{_anc_legal} ~ [data-testid="stHorizontalBlock"]',
-        f'{_anc_legal} ~ [data-testid="stElementContainer"] [data-testid="stHorizontalBlock"]',
-    )
-    _estados_btn = ("", ":hover", ":active", ":focus")
+    # Em Streamlit, o `key` de cada widget vira uma classe `st-key-<key>` no
+    # `stElementContainer` que o envolve — alvo direto e estável (confirmado no
+    # DOM real: st-key-rodape_termos / st-key-rodape_privacidade). Assim não
+    # dependemos de relação de irmãos no DOM (a linha de colunas é envolvida por
+    # stLayoutWrapper, o que derrubava os seletores anteriores).
+    _btn_termos = '[data-testid="stElementContainer"].st-key-rodape_termos [data-testid="stButton"] button'
+    _btn_privac = '[data-testid="stElementContainer"].st-key-rodape_privacidade [data-testid="stButton"] button'
 
-    def _sel_rodape(seletor_botao: str) -> str:
-        return ",\n".join(
-            f"{a}{e} {seletor_botao}"
-            for a in _linhas_ancoras
-            for e in _estados_btn
+    def _css_botao_rodape(seletor_base: str, cor_fundo: str, cor_texto: str) -> str:
+        # Um bloco para CADA estado, todos com a MESMA cor sólida — assim o
+        # hover/active/focus nativo do tema nunca vence (ambos os temas).
+        sel_estados = ",\n".join(
+            f"{seletor_base}{estado}" for estado in ("", ":hover", ":active", ":focus")
+        )
+        return (
+            sel_estados
+            + ' { background:' + cor_fundo + ' !important; color:' + cor_texto + ' !important;'
+            + ' border:1px solid rgba(255,255,255,.22) !important; border-radius:10px !important;'
+            + ' font-weight:700 !important; box-shadow:none !important;'
+            + ' transition:none !important; transform:none !important; }'
         )
 
-    # Regra única para cada botão cobrindo TODOS os estados com a MESMA cor
-    # sólida (hover/active/focus não mudam nada, em tema claro ou escuro).
     _css_rodape = "\n".join([
-        _sel_rodape('[data-testid="stButton"] button')
-        + ' { background:#25D366 !important; color:#022c0e !important;'
-        + ' border:1px solid rgba(255,255,255,.22) !important; border-radius:10px !important;'
-        + ' font-weight:700 !important; box-shadow:none !important;'
-        + ' transition:none !important; transform:none !important; }',
-        _sel_rodape('[data-testid="stColumn"]:nth-child(2) [data-testid="stButton"] button')
-        + ' { background:#2E7CF6 !important; color:#ffffff !important;'
-        + ' border:1px solid rgba(255,255,255,.22) !important; border-radius:10px !important;'
-        + ' font-weight:700 !important; box-shadow:none !important;'
-        + ' transition:none !important; transform:none !important; }',
+        _css_botao_rodape(_btn_termos, "#25D366", "#022c0e"),
+        _css_botao_rodape(_btn_privac, "#2E7CF6", "#ffffff"),
     ])
 
     # Montado em Python com todas as linhas na coluna 0: qualquer indentação de

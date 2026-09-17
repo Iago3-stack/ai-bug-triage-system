@@ -4,6 +4,11 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.16.6] - 2026-09-17
+
+### Corrigido
+- **📜 Rodapé "⚖️ Legal": cores sólidas não aplicavam nos botões** — os seletores dependiam do marcador `.rodape-legal-bg` ser irmão da linha de colunas, mas o Streamlit envolve as colunas num `stLayoutWrapper` (confirmado no DOM real com Playwright), então nenhum `~` casava e valia o estilo padrão. Agora o styling mira direto a classe que o `key` do widget gera no `stElementContainer`: `.st-key-rodape_termos` (verde `#25D366`/texto `#022c0e`) e `.st-key-rodape_privacidade` (azul `#2E7CF6`/branco), com `:hover`/`:active`/`:focus` fixados na MESMA cor (ambos os temas). Validado no navegador: a regra vence o hover nativo e nada muda ao passar o mouse.
+
 ## [v2.16.5] - 2026-09-17
 
 ### Corrigido
