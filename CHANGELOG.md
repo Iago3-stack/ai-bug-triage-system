@@ -4,6 +4,11 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.16.3] - 2026-09-16
+
+### Alterado
+- **📜 Rodapé "⚖️ Legal" integrado ao card** — os botões "Termos de Uso" e "Privacidade / LGPD" agora ficam sobre um painel escuro com o mesmo gradiente do rodapé (parecem parte do bloco). Cores **sólidas** (verde #25D366 / azul #2E7CF6) e **sem hover**, idênticas no tema claro e escuro.
+
 ## [v2.16.2] - 2026-09-16
 
 ### Adicionado

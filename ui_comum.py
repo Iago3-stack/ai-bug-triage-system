@@ -14,7 +14,7 @@ import sessao_persist
 import roteador
 import admin
 
-VERSAO = "v2.16.2"
+VERSAO = "v2.16.3"
 
 # Logo do sistema (SVG embutido como data URI para funcionar na Cloud).
 _LOGO_DATA_URI = (
@@ -625,22 +625,82 @@ def _menu_legal() -> None:
     """Linha de acesso às páginas legais (Termos de Uso e Privacidade/LGPD).
 
     O rodapé visual é um iframe (não navega dentro do app), então a navegação
-    real para as páginas internas fica aqui, fora do iframe. A versão não fica
-    neste menu: ela continua no crédito do rodapé.
+    real fica fora dele. O painel escuro (mesmo gradiente do card) é "pintado"
+    atrás dos botões (div com margem negativa) para parecer uma continuação do
+    bloco; os botões recebem cor sólida SEM hover, idêntica nos dois temas.
     """
-    rotulo = '<div style="font-size:12px;font-weight:800;letter-spacing:.06em;color:#64748b;margin:10px 0 4px;text-align:center">⚖️ LEGAL</div>'
-    st.markdown(rotulo, unsafe_allow_html=True)
-    _c1, _c2, _c3 = st.columns([1.2, 1, 1])
+    st.markdown("""
+    <style>
+      /* Painel que continuam o rodapé (mesmo gradiente, cantos inferiores). */
+      .rodape-legal-bg {
+        height: 132px;
+        margin: 0;
+        margin-bottom: -58px;
+        background: linear-gradient(135deg,#0f172a 0%,#16233c 55%,#25D366 170%);
+        border-radius: 0 0 18px 18px;
+        padding: 18px 22px 0;
+        box-sizing: border-box;
+      }
+      .rodape-legal-rotulo {
+        font-size: 12px; font-weight: 800; letter-spacing: .06em;
+        color: #94a3b8; text-align: center; margin: 0 0 10px;
+      }
+      /* Botões do rodapé legal: cores sólidas, sem hover, nos dois temas. */
+      [data-testid="stMarkdownContainer"]:has(div.rodape-legal-bg)
+        ~ [data-testid="stHorizontalBlock"]
+        [data-testid="stButton"] button {
+        background: #25D366 !important;
+        color: #022c0e !important;
+        border: 1px solid rgba(255,255,255,.22) !important;
+        border-radius: 10px !important;
+        font-weight: 700 !important;
+        box-shadow: none !important;
+        transition: none !important;
+      }
+      [data-testid="stMarkdownContainer"]:has(div.rodape-legal-bg)
+        ~ [data-testid="stHorizontalBlock"]
+        [data-testid="stButton"] button:hover,
+      [data-testid="stMarkdownContainer"]:has(div.rodape-legal-bg)
+        ~ [data-testid="stHorizontalBlock"]
+        [data-testid="stButton"] button:active,
+      [data-testid="stMarkdownContainer"]:has(div.rodape-legal-bg)
+        ~ [data-testid="stHorizontalBlock"]
+        [data-testid="stButton"] button:focus {
+        background: #25D366 !important;
+        color: #022c0e !important;
+        box-shadow: none !important;
+        transform: none !important;
+      }
+      /* Segundo botão (Privacidade) em azul sólido, também sem hover. */
+      [data-testid="stMarkdownContainer"]:has(div.rodape-legal-bg)
+        ~ [data-testid="stHorizontalBlock"]
+        [data-testid="stColumn"]:nth-child(2)
+        [data-testid="stButton"] button,
+      [data-testid="stMarkdownContainer"]:has(div.rodape-legal-bg)
+        ~ [data-testid="stHorizontalBlock"]
+        [data-testid="stColumn"]:nth-child(2)
+        [data-testid="stButton"] button:hover,
+      [data-testid="stMarkdownContainer"]:has(div.rodape-legal-bg)
+        ~ [data-testid="stHorizontalBlock"]
+        [data-testid="stColumn"]:nth-child(2)
+        [data-testid="stButton"] button:active,
+      [data-testid="stMarkdownContainer"]:has(div.rodape-legal-bg)
+        ~ [data-testid="stHorizontalBlock"]
+        [data-testid="stColumn"]:nth-child(2)
+        [data-testid="stButton"] button:focus {
+        background: #2E7CF6 !important;
+        color: #ffffff !important;
+      }
+    </style>
+    <div class="rodape-legal-bg">
+      <div class="rodape-legal-rotulo">⚖️ LEGAL</div>
+    </div>
+    """, unsafe_allow_html=True)
+    _c1, _c2 = st.columns([1, 1])
     with _c1:
-        st.markdown(
-            '<div style="font-size:12px;color:#94a3b8;text-align:right;height:100%;'
-            'display:flex;align-items:center;justify-content:flex-end">Leia antes de usar:</div>',
-            unsafe_allow_html=True,
-        )
-    with _c2:
         if st.button("📜 Termos de Uso", key="rodape_termos", use_container_width=True):
             _ir_para_legal("termos")
-    with _c3:
+    with _c2:
         if st.button("🛡️ Privacidade / LGPD", key="rodape_privacidade", use_container_width=True):
             _ir_para_legal("privacidade")
 
