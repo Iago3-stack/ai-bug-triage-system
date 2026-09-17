@@ -4,6 +4,11 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.16.11] - 2026-09-17
+
+### Alterado
+- **Logo oficial na navegação da landing** — o quadrado verde com "A" no cabeçalho virou a logo do app (`logo7_robo.svg`, a mesma usada no app via data URI), publicada em `web/landing/` junto da página. Teste novo garante a presença do arquivo e do `<img>`.
+
 ## [v2.16.10] - 2026-09-17
 
 ### Adicionado

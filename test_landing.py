@@ -89,3 +89,9 @@ def test_sitemap_xml_valido_e_com_url_principal():
     assert '<?xml version="1.0" encoding="UTF-8"?>' in _SITEMAP
     assert "http://www.sitemaps.org/schemas/sitemap/0.9" in _SITEMAP
     assert f"<loc>{PAGES_URL}</loc>" in _SITEMAP
+
+
+def test_logo_do_app_na_navegacao():
+    assert (_RAIZ / "web" / "landing" / "logo7_robo.svg").exists()
+    assert 'src="logo7_robo.svg"' in _HTML
+    assert 'alt="Logo do AI Bug Triage System"' in _HTML

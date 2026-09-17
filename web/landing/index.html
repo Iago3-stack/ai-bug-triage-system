@@ -79,11 +79,10 @@
       border-bottom: 1px solid var(--borda);
     }
     .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 64px; }
-    .brand { font-weight: 800; font-size: 1.05rem; color: #fff; display: flex; align-items: center; gap: 8px; }
-    .brand .mark {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 28px; height: 28px; border-radius: 8px;
-      background: var(--verde); color: var(--verde-escuro); font-weight: 900;
+    .brand { font-weight: 800; font-size: 1.05rem; color: #fff; display: flex; align-items: center; gap: 10px; }
+    .brand img {
+      width: 34px; height: 34px; border-radius: 9px;
+      -webkit-user-drag: none; user-select: none;
     }
     nav.links { display: flex; align-items: center; gap: 20px; }
     nav.links a { color: var(--texto-suave); font-size: 0.92rem; }
@@ -192,7 +191,7 @@
 <body>
   <header class="nav">
     <div class="container nav-inner">
-      <span class="brand"><span class="mark">A</span> AI Bug Triage System</span>
+      <span class="brand"><img src="logo7_robo.svg" alt="Logo do AI Bug Triage System" width="34" height="34" /> AI Bug Triage System</span>
       <nav class="links">
         <a href="#como-funciona" class="oculto-mobile">Como funciona</a>
         <a href="#recursos" class="oculto-mobile">Recursos</a>
