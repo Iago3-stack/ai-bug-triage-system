@@ -3,6 +3,7 @@ import base64
 from pathlib import Path
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 import jira_client
 import github_client
@@ -14,7 +15,7 @@ import sessao_persist
 import roteador
 import admin
 
-VERSAO = "v2.16.7"
+VERSAO = "v2.16.8"
 
 # Logo do sistema (SVG embutido como data URI para funcionar na Cloud).
 _LOGO_DATA_URI = (
@@ -622,113 +623,80 @@ def rodape():
 
 
 def _menu_legal() -> None:
-    """Linha de acesso às páginas legais (Termos de Uso e Privacidade/LGPD).
+    """Card de acesso às páginas legais (Termos de Uso e Privacidade/LGPD).
 
-    O rodapé visual é um iframe (não navega dentro do app), então a navegação
-    real fica fora dele. O painel escuro (mesmo gradiente do card) é "pintado"
-    atrás dos botões (div com margem negativa) para parecer uma continuação do
-    bloco; os botões recebem cor sólida SEM hover, idêntica nos dois temas.
+    Usa o MESMO leiaute/organização do card "🤖 Pronto para triar bugs?" do
+    Início: `st.container(border=True)` + colunas com o título à esquerda e os
+    botões à direita. Assim os botões ficam DENTRO do card (no mobile eles
+    empilham sozinhos, sem estourar a borda) e a navegação usa `st.button` +
+    `st.switch_page` (mesmo caminho do CTA). Como o `st.switch_page` preserva
+    a rolagem, a página Legal chama `_rolar_topo()` ao chegar por aqui.
     """
-    # Em Streamlit, o `key` de cada widget vira uma classe `st-key-<key>` no
-    # `stElementContainer` que o envolve — alvo direto e estável (confirmado no
-    # DOM real: st-key-rodape_termos / st-key-rodape_privacidade). Assim não
-    # dependemos de relação de irmãos no DOM (a linha de colunas é envolvida por
-    # stLayoutWrapper, o que derrubava os seletores anteriores).
-    _btn_termos = '[data-testid="stElementContainer"].st-key-rodape_termos [data-testid="stButton"] button'
-    _btn_privac = '[data-testid="stElementContainer"].st-key-rodape_privacidade [data-testid="stButton"] button'
-
-    def _css_botao_rodape(seletor_base: str, cor_fundo: str, cor_texto: str,
-                          extra_props: str = "") -> str:
-        # Um bloco para CADA estado, todos com a MESMA cor sólida — assim o
-        # hover/active/focus nativo do tema nunca vence (ambos os temas).
-        sel_estados = ",\n".join(
-            f"{seletor_base}{estado}" for estado in ("", ":hover", ":active", ":focus")
-        )
-        return (
-            sel_estados
-            + ' { background:' + cor_fundo + ' !important; color:' + cor_texto + ' !important;'
-            + ' border:1px solid rgba(255,255,255,.22) !important; border-radius:10px !important;'
-            + ' font-weight:700 !important; box-shadow:none !important;'
-            + ' transition:none !important; transform:none !important;'
-            + extra_props + ' }'
-        )
-
-    _css_rodape = "\n".join([
-        _css_botao_rodape(_btn_termos, "#25D366", "#022c0e"),
-        _css_botao_rodape(_btn_privac, "#2E7CF6", "#ffffff"),
-    ])
-
-    # No celular os botões ficam mais altos (texto quebra) e estouravam o canto
-    # arredondado do card (o overlap fixo de -58px ficava menor que o botão):
-    # reduzimos fonte/padding e aprofundamos o overlap dentro do media query.
-    _css_mobile = (
-        "\n@media (max-width: 760px) {\n"
-        ".rodape-legal-bg {\n"
-        "  height: 152px;\n"
-        "  margin-bottom: -72px;\n"
-        "  padding: 16px 14px 0;\n"
-        "}\n"
-        + _css_botao_rodape(_btn_termos, "#25D366", "#022c0e",
-                            " font-size:13px !important; padding:9px 10px !important;")
-        + "\n"
-        + _css_botao_rodape(_btn_privac, "#2E7CF6", "#ffffff",
-                            " font-size:13px !important; padding:9px 10px !important;")
-        + "\n}"
-    )
-
-    # Montado em Python com todas as linhas na coluna 0: qualquer indentação de
-    # 4+ espaços faz o Streamlit renderizar como bloco de código (o HTML cru
-    # com o botão de copiar aparecia no app).
-    _css_legal = (
-        "<style>\n"
-        ".rodape-legal-bg {\n"
-        "  height: 132px;\n"
-        "  margin: 0;\n"
-        "  margin-bottom: -58px;\n"
-        "  background: linear-gradient(135deg,#0f172a 0%,#16233c 55%,#25D366 170%);\n"
-        "  border-radius: 0 0 18px 18px;\n"
-        "  padding: 18px 22px 0;\n"
-        "  box-sizing: border-box;\n"
-        "}\n"
-        ".rodape-legal-rotulo {\n"
-        "  font-size: 12px; font-weight: 800; letter-spacing: .06em;\n"
-        "  color: #94a3b8; text-align: center; margin: 0 0 10px;\n"
-        "}\n"
-        + _css_rodape
-        + _css_mobile
-        + "\n"
-        + "</style>\n"
-        + '<div class="rodape-legal-bg">\n'
-        + '  <div class="rodape-legal-rotulo">⚖️ LEGAL</div>\n'
-        + "</div>"
-    )
-    st.markdown(_css_legal, unsafe_allow_html=True)
-    _c1, _c2 = st.columns([1, 1])
-    with _c1:
-        if st.button("📜 Termos de Uso", key="rodape_termos", use_container_width=True):
-            _ir_para_legal("termos")
-    with _c2:
-        if st.button("🛡️ Privacidade / LGPD", key="rodape_privacidade", use_container_width=True):
-            _ir_para_legal("privacidade")
+    with st.container(border=True):
+        _c_tit, _c_termos, _c_priv = st.columns([1.6, 1, 1], vertical_alignment="center")
+        with _c_tit:
+            st.markdown(
+                '<div class="marca-legal">'
+                '<div class="marca-legal-titulo">⚖️ Legal</div>'
+                '<div class="marca-legal-sub">Transparência · Termos de Uso · Privacidade (LGPD)</div>'
+                '</div>',
+                unsafe_allow_html=True,
+            )
+        with _c_termos:
+            if st.button("📜 Termos de Uso", key="rodape_termos", use_container_width=True):
+                _ir_para_legal("termos")
+        with _c_priv:
+            if st.button("🛡️ Privacidade / LGPD", key="rodape_privacidade", use_container_width=True):
+                _ir_para_legal("privacidade")
 
 
 def _rolar_topo() -> None:
-    """Rola a janela para o topo na página recém-carregada.
+    """Força o container de rolagem do app (`[data-testid="stMain"]`) ao topo.
 
-    `st.switch_page` preserva a posição de rolagem do navegador, então ao
-    chegar pela página de origem (rolando embaixo, no rodapé) o app abria já
-    descido. Este iframe invisível roda JS igual-origem que sobe o scroll.
+    O `st.switch_page` preserva a posição de scroll (comportamento nativo do
+    Streamlit), então quem clica num botão do rodapé cairia no FIM da página
+    nova. Um componente HTML (same-origin) roda JS no contexto da página e zera
+    o `scrollTop`; um loop curto garante o reset mesmo se o Streamlit reaplicar
+    a rolagem logo após a montagem.
+
+    IMPORTANTE: NÃO usar `st.iframe` aqui — `height=0` é inválido
+    (StreamlitInvalidHeightError) e o `except` engolia o erro, então o script
+    nunca executava. `components.html` aceita height=0 e tem acesso ao parent.
     """
     try:
-        st.iframe('<script>window.parent.scrollTo(0,0)</script>', height=0)
+        components.html(
+            "<script>"
+            "(function(){var d=window.parent.document;"
+            "function sobe(){try{var m=d.querySelector('[data-testid=\"stMain\"]');"
+            "if(m){m.scrollTop=0;}else{window.parent.scrollTo(0,0);}}catch(e){}}"
+            "sobe();"
+            "var n=0;var id=setInterval(function(){sobe();if(++n>12){clearInterval(id);}},400);"
+            "})();"
+            "</script>",
+            height=0,
+        )
     except Exception:
         pass
 
 
 def _ir_para_legal(aba: str) -> None:
-    """Navega para a página Legal, já na aba pedida (via query param ?aba=)."""
+    """Navega para a página Legal já na aba pedida.
+
+    Guarda a aba em `session_state` (em vez de mexer no `?aba=`) e chama
+    `st.switch_page` puro — o mesmo caminho dos botões do CTA do Início. A
+    página Legal lê essa escolha para definir a aba inicial e sobe ao topo
+    (o `st.switch_page` sozinho preserva a rolagem).
+    """
     try:
-        st.query_params["aba"] = aba
+        st.session_state["_aba_legal"] = (
+            "privacidade" if str(aba).strip().lower() == "privacidade" else "termos"
+        )
+        # Muda a chave do widget de abas na página Legal: força o Streamlit a
+        # recriá-lo já na aba escolhida (o `default` do st.tabs só vale na
+        # criação; sem isso, clicar no rodapé estando na Legal não trocaria).
+        st.session_state["_legal_nonce"] = st.session_state.get("_legal_nonce", 0) + 1
+        # Sinaliza para a página Legal rodar o scroll-to-top só nesta navegação.
+        st.session_state["_legal_topo"] = True
     except Exception:
         pass
     if st.session_state.get("_url_atual") == "legal":

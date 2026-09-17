@@ -15,6 +15,14 @@ _ROTULO_PRIV = "🛡️ Privacidade · LGPD"
 
 
 def _aba_da_url() -> str:
+    # Preferência: escolha feita no rodapé (button → st.switch_page guarda em
+    # session_state). Depois, o link direto `?aba=...`. Por fim, "termos".
+    try:
+        escolha = st.session_state.get("_aba_legal")
+    except Exception:
+        escolha = None
+    if escolha in ("termos", "privacidade"):
+        return escolha
     try:
         aba = st.query_params.get("aba", "termos")
         if isinstance(aba, list):
@@ -62,10 +70,6 @@ def _contatos() -> str:
 def render():
     import ui_comum  # lazy: ui_comum importa roteador, que importa secoes.legal (ciclo)
 
-    # Rola ao topo: `st.switch_page` preserva a posição do scroll do navegador
-    # (o rodapé ficava embaixo), e este iframe invisível resolve com JS.
-    ui_comum._rolar_topo()
-
     aba = _aba_da_url()
 
     st.markdown("""
@@ -91,6 +95,7 @@ def render():
     tab_termos, tab_priv = st.tabs(
         [_ROTULO_TERMOS, _ROTULO_PRIV],
         default=_ROTULO_PRIV if aba == "privacidade" else _ROTULO_TERMOS,
+        key=f"legal_abas_{st.session_state.get('_legal_nonce', 0)}",
     )
 
     with tab_termos:
@@ -141,6 +146,7 @@ def _privacidade() -> None:
             f'uma pessoa, então respondemos normalmente em até 2 dias úteis.</div>{_contatos_html}</div>',
             unsafe_allow_html=True,
         )
+
     st.markdown(
         "Referência legal: [ANPD — Autoridade Nacional de Proteção de Dados](https://www.gov.br/anpd/pt-br) "
         "(abre em nova guia)."

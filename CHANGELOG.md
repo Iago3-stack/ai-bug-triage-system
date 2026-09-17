@@ -4,6 +4,15 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.16.8] - 2026-09-17
+
+### Alterado
+- **Rodapé "⚖️ Legal" reorganizado no mesmo leiaute do card "🤖 Pronto para triar bugs?"** — agora é um `st.container(border=True)` com colunas: título à esquerda e os dois botões à direita (`st.button` + `st.switch_page`), com CSS próprio (`.marca-legal`) no mesmo gradiente escuro e cores sólidas (verde `#25D366` / azul `#2E7CF6`). No mobile as colunas empilham sozinhas, então os botões ficam DENTRO do card (fim do vazamento) — validado no Playwright (390×844): `overflow-x = 0` e ambos os botões contidos.
+
+### Corrigido
+- **Página Legal agora abre no TOPO de verdade** — o scroll-to-top anterior usava `st.iframe(..., height=0)`, mas `height=0` é inválido no Streamlit 1.62 (`StreamlitInvalidHeightError`) e o `except` engolia a exceção: o script nunca rodava. Trocado por `streamlit.components.v1.html(height=0)`, que executa e tem acesso same-origin ao `window.parent`; o script zera o `scrollTop` do `[data-testid="stMain"]` (com loop curto de reforço). Validado: 2328 → 0 ao navegar do rodapé.
+- **Troca de aba pelo rodapé** — a aba escolhida passa por `session_state` + um nonce na `key` do `st.tabs` (o `default` só vale na criação do widget). Validado: "Termos" abre a aba Termos e "Privacidade" abre a aba Privacidade, ambas no topo.
+
 ## [v2.16.7] - 2026-09-17
 
 ### Alterado
