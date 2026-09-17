@@ -11,13 +11,13 @@ import sessao_persist
 from secoes import login as pagina_login
 
 
-def _processar_confirmacao_email() -> None:
-    """Confirma o cadastro quando a URL traz o token_hash vindo do e-mail.
+def _processar_link_email() -> None:
+    """Processa o link do e-mail (query param token_hash) que o usuário abriu.
 
-    O template de e-mail do Supabase aponta o link para
-    `SiteURL?token_hash=...&type=signup` (query param). O Streamlit lê a query
-    string, mas ignora o fragmento (#) que o fluxo padrão usa — por isso o
-    template usa token_hash. Aqui trocamos o hash por uma sessão real.
+    Dois fluxos, dependendo do `?type=`:
+    - `signup`  : confirma o cadastro e loga.
+    - `recovery`: valida o link de "Esqueceu a senha?" e abre o formulário para
+      definir uma nova senha (flag `_definir_nova_senha` renderizada no fim).
     """
     try:
         parametros = st.query_params
@@ -25,7 +25,7 @@ def _processar_confirmacao_email() -> None:
         parametros = {}
     if not parametros or not parametros.get("token_hash"):
         return
-    if parametros.get("type") not in ("signup", None):
+    if parametros.get("type") not in ("signup", "recovery", None):
         return
 
     token_hash = parametros.get("token_hash")
@@ -34,15 +34,27 @@ def _processar_confirmacao_email() -> None:
     if not token_hash:
         return
 
-    ok, msg, sessao = auth_supabase.confirmar_cadastro(token_hash)
-    if ok and sessao and sessao.get("user"):
-        auth_supabase.guardar_sessao(sessao)
-        sessao_persist.salvar(sessao)
-        st.success("E-mail confirmado! Bem-vindo(a).")
-    elif ok:
-        st.success("E-mail confirmado! Agora é só entrar com e-mail e senha.")
+    if parametros.get("type") == "recovery":
+        ok, msg, sessao = auth_supabase.recuperar_via_link(token_hash)
+        if ok and sessao and sessao.get("access_token"):
+            auth_supabase.guardar_sessao(sessao)
+            sessao_persist.salvar(sessao)
+            st.session_state["_definir_nova_senha"] = True
+            st.success("Link de recuperação válido! Defina sua nova senha abaixo.")
+        elif ok:
+            st.error(msg)
+        else:
+            st.error(msg)
     else:
-        st.error(msg)
+        ok, msg, sessao = auth_supabase.confirmar_cadastro(token_hash)
+        if ok and sessao and sessao.get("user"):
+            auth_supabase.guardar_sessao(sessao)
+            sessao_persist.salvar(sessao)
+            st.success("E-mail confirmado! Bem-vindo(a).")
+        elif ok:
+            st.success("E-mail confirmado! Agora é só entrar com e-mail e senha.")
+        else:
+            st.error(msg)
 
     # Limpa o link (senão todo rerun reprocessaria o token_hash já consumido).
     try:
@@ -63,9 +75,9 @@ sessao_persist.carregar()
 # componente montado até o iframe confirmar a gravação.
 sessao_persist.processar_pendente()
 
-# Confirmação de cadastro vinda do link do e-mail (query param, não fragmento):
-# ?token_hash=...&type=signup -> troca o hash por uma sessão e loga o usuário.
-_processar_confirmacao_email()
+# Confirmação/recuperação vinda do link do e-mail (query param, não fragmento):
+# ?token_hash=...&type=signup / type=recovery -> troca o hash por sessão.
+_processar_link_email()
 
 # Páginas visíveis: o Painel do Administrador só entra quando a conta logada é ADMIN_EMAIL.
 pg = st.navigation(roteador.paginas_visiveis(), position="sidebar")
@@ -94,6 +106,29 @@ except StreamlitAPIException as _exc:
         st.switch_page(roteador.PAGINAS["inicio"])
     else:
         raise
+
+# Fim do fluxo "Esqueceu a senha?": depois que a página renderizou, oferece o
+# formulário para definir a nova senha (acionado pelo link type=recovery).
+if st.session_state.get("_definir_nova_senha"):
+    with st.container(border=True):
+        st.markdown("#### 🔑 Defina sua nova senha")
+        with st.form("form_nova_senha"):
+            senha1 = st.text_input("Nova senha", type="password", placeholder="mínimo 8 caracteres", key="_auth_nova_senha_1")
+            senha2 = st.text_input("Confirme a nova senha", type="password", key="_auth_nova_senha_2")
+            trocar = st.form_submit_button("Salvar nova senha", use_container_width=True)
+        if trocar:
+            if not senha1 or senha1 != senha2:
+                st.error("As senhas não conferem ou estão vazias.")
+            else:
+                dados = auth_supabase.sessao() or {}
+                ok, msg = auth_supabase.definir_senha(senha1, dados.get("access_token"))
+                if ok:
+                    st.session_state.pop("_definir_nova_senha", None)
+                    st.success(msg)
+                    st.rerun()
+                else:
+                    st.error(msg)
+
 ui_comum.rodape()
 
 # Navegação pelo rodapé (Termos/Privacidade): o `st.switch_page` preserva a

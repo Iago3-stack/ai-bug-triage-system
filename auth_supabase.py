@@ -315,6 +315,65 @@ def reenviar_confirmacao(email: str) -> tuple[bool, str]:
     return False, _mensagem_erro(resposta.status_code, resposta.text)
 
 
+def recuperar_via_link(token_hash: str) -> tuple[bool, str, dict | None]:
+    """Troca o token_hash do e-mail de recuperação (`?type=recovery`) por uma sessão.
+
+    Mesmo padrão do `confirmar_cadastro`, mas para o fluxo "Esqueceu a senha?":
+    o link do e-mail chega com `?token_hash=...&type=recovery` e aqui trocamos
+    o hash por uma sessão real via POST /auth/v1/verify. Retorna (ok, msg, sessão).
+    """
+    if not token_hash:
+        return False, "Link de recuperação inválido ou incompleto.", None
+    if not disponivel():
+        return False, "Supabase não configurado neste ambiente (sem SUPABASE_URL/ANON_KEY).", None
+    try:
+        resposta = requests.post(
+            f"{_base_auth_url()}/verify",
+            json={"type": "recovery", "token_hash": token_hash},
+            headers=_headers_anon(),
+            timeout=15,
+        )
+    except requests.RequestException:
+        return False, "Falha de rede ao validar o link de recuperação. Tente de novo.", None
+
+    if resposta.status_code == 200:
+        dados = dict(resposta.json() or {})
+        if dados.get("access_token"):
+            _registrar_usuario(dados)
+            return True, "ok", dados
+        return False, "Link de recuperação inválido. Peça um novo.", dados
+    baixo = resposta.text.lower()
+    if "expired" in baixo or "invalid" in baixo or "token" in baixo:
+        return False, "Link de recuperação expirado ou inválido. Peça um novo.", None
+    return False, _mensagem_erro(resposta.status_code, resposta.text), None
+
+
+def definir_senha(nova_senha: str, access_token: str) -> tuple[bool, str]:
+    """Troca a senha do usuário logado (POST /user com password novo)."""
+    if not disponivel():
+        return False, "Supabase não configurado neste ambiente (sem SUPABASE_URL/ANON_KEY)."
+    if len(nova_senha or "") < 8:
+        return False, "A nova senha precisa ter pelo menos 8 caracteres."
+    if not access_token:
+        return False, "Sessão não encontrada para trocar a senha."
+    try:
+        resposta = requests.post(
+            f"{_base_auth_url()}/user",
+            json={"password": nova_senha},
+            headers=_headers_auth(access_token),
+            timeout=15,
+        )
+    except requests.RequestException:
+        return False, "Falha de rede ao trocar a senha. Tente de novo."
+
+    if resposta.status_code in (200, 201):
+        return True, "Senha alterada com sucesso! Use a nova senha da próxima vez."
+    baixo = resposta.text.lower()
+    if "weak" in baixo or "password" in baixo:
+        return False, "Senha fraca — use pelo menos 8 caracteres."
+    return False, _mensagem_erro(resposta.status_code, resposta.text)
+
+
 def sair(token: str | None) -> None:
     """Encerra a sessão no servidor (best-effort) e limpa localmente.
 

@@ -340,3 +340,65 @@ def test_reenviar_confirmacao_email_invalido():
     ok, msg = auth_supabase.reenviar_confirmacao("invalido")
     assert not ok
     assert "e-mail" in msg
+
+
+# ── Recuperação pelo link do e-mail (type=recovery) e troca de senha ──────
+
+def test_recuperar_via_link_ok(monkeypatch):
+    monkeypatch.setattr(auth_supabase, "_config", lambda: ("https://x.supabase.co", "key"))
+    sessao = {"access_token": "novo", "user": {"email": "u@e.com"}}
+
+    def _post(url, **kw):
+        assert url.endswith("/verify")
+        assert kw["json"] == {"type": "recovery", "token_hash": "hash123"}
+        return _Resp(200, sessao)
+
+    monkeypatch.setattr(auth_supabase.requests, "post", _post)
+    ok, msg, dados = auth_supabase.recuperar_via_link("hash123")
+    assert ok
+    assert dados["access_token"] == "novo"
+
+
+def test_recuperar_via_link_token_invalido(monkeypatch):
+    monkeypatch.setattr(auth_supabase, "_config", lambda: ("https://x.supabase.co", "key"))
+    monkeypatch.setattr(
+        auth_supabase.requests, "post",
+        lambda *a, **k: _Resp(400, {"error_description": "Email link is invalid or has expired"}),
+    )
+    ok, msg, _ = auth_supabase.recuperar_via_link("hash-velho")
+    assert not ok
+    assert "expirado" in msg or "inválido" in msg
+
+
+def test_recuperar_via_link_sem_hash():
+    ok, msg, _ = auth_supabase.recuperar_via_link("")
+    assert not ok
+    assert "inválido" in msg
+
+
+def test_definir_senha_ok(monkeypatch):
+    monkeypatch.setattr(auth_supabase, "_config", lambda: ("https://x.supabase.co", "key"))
+    chamadas = []
+
+    def _post(url, **kw):
+        chamadas.append((url, kw.get("json")))
+        return _Resp(200, {"user": {"email": "u@e.com"}})
+
+    monkeypatch.setattr(auth_supabase.requests, "post", _post)
+    ok, msg = auth_supabase.definir_senha("novaSenha123", "tok1")
+    assert ok
+    assert chamadas[0][0].endswith("/user")
+    assert chamadas[0][1] == {"password": "novaSenha123"}
+
+
+def test_definir_senha_curta():
+    ok, msg = auth_supabase.definir_senha("123", "tok1")
+    assert not ok
+    assert "8 caracteres" in msg
+
+
+def test_definir_senha_sem_sessao(monkeypatch):
+    monkeypatch.setattr(auth_supabase, "_config", lambda: ("https://x.supabase.co", "key"))
+    ok, msg = auth_supabase.definir_senha("novaSenha123", "")
+    assert not ok
+    assert "Sessão" in msg
