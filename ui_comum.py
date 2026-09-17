@@ -14,7 +14,7 @@ import sessao_persist
 import roteador
 import admin
 
-VERSAO = "v2.16.6"
+VERSAO = "v2.16.7"
 
 # Logo do sistema (SVG embutido como data URI para funcionar na Cloud).
 _LOGO_DATA_URI = (
@@ -637,7 +637,8 @@ def _menu_legal() -> None:
     _btn_termos = '[data-testid="stElementContainer"].st-key-rodape_termos [data-testid="stButton"] button'
     _btn_privac = '[data-testid="stElementContainer"].st-key-rodape_privacidade [data-testid="stButton"] button'
 
-    def _css_botao_rodape(seletor_base: str, cor_fundo: str, cor_texto: str) -> str:
+    def _css_botao_rodape(seletor_base: str, cor_fundo: str, cor_texto: str,
+                          extra_props: str = "") -> str:
         # Um bloco para CADA estado, todos com a MESMA cor sólida — assim o
         # hover/active/focus nativo do tema nunca vence (ambos os temas).
         sel_estados = ",\n".join(
@@ -648,13 +649,32 @@ def _menu_legal() -> None:
             + ' { background:' + cor_fundo + ' !important; color:' + cor_texto + ' !important;'
             + ' border:1px solid rgba(255,255,255,.22) !important; border-radius:10px !important;'
             + ' font-weight:700 !important; box-shadow:none !important;'
-            + ' transition:none !important; transform:none !important; }'
+            + ' transition:none !important; transform:none !important;'
+            + extra_props + ' }'
         )
 
     _css_rodape = "\n".join([
         _css_botao_rodape(_btn_termos, "#25D366", "#022c0e"),
         _css_botao_rodape(_btn_privac, "#2E7CF6", "#ffffff"),
     ])
+
+    # No celular os botões ficam mais altos (texto quebra) e estouravam o canto
+    # arredondado do card (o overlap fixo de -58px ficava menor que o botão):
+    # reduzimos fonte/padding e aprofundamos o overlap dentro do media query.
+    _css_mobile = (
+        "\n@media (max-width: 760px) {\n"
+        ".rodape-legal-bg {\n"
+        "  height: 152px;\n"
+        "  margin-bottom: -72px;\n"
+        "  padding: 16px 14px 0;\n"
+        "}\n"
+        + _css_botao_rodape(_btn_termos, "#25D366", "#022c0e",
+                            " font-size:13px !important; padding:9px 10px !important;")
+        + "\n"
+        + _css_botao_rodape(_btn_privac, "#2E7CF6", "#ffffff",
+                            " font-size:13px !important; padding:9px 10px !important;")
+        + "\n}"
+    )
 
     # Montado em Python com todas as linhas na coluna 0: qualquer indentação de
     # 4+ espaços faz o Streamlit renderizar como bloco de código (o HTML cru
@@ -675,6 +695,7 @@ def _menu_legal() -> None:
         "  color: #94a3b8; text-align: center; margin: 0 0 10px;\n"
         "}\n"
         + _css_rodape
+        + _css_mobile
         + "\n"
         + "</style>\n"
         + '<div class="rodape-legal-bg">\n'
@@ -689,6 +710,19 @@ def _menu_legal() -> None:
     with _c2:
         if st.button("🛡️ Privacidade / LGPD", key="rodape_privacidade", use_container_width=True):
             _ir_para_legal("privacidade")
+
+
+def _rolar_topo() -> None:
+    """Rola a janela para o topo na página recém-carregada.
+
+    `st.switch_page` preserva a posição de rolagem do navegador, então ao
+    chegar pela página de origem (rolando embaixo, no rodapé) o app abria já
+    descido. Este iframe invisível roda JS igual-origem que sobe o scroll.
+    """
+    try:
+        st.iframe('<script>window.parent.scrollTo(0,0)</script>', height=0)
+    except Exception:
+        pass
 
 
 def _ir_para_legal(aba: str) -> None:

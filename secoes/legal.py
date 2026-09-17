@@ -62,6 +62,10 @@ def _contatos() -> str:
 def render():
     import ui_comum  # lazy: ui_comum importa roteador, que importa secoes.legal (ciclo)
 
+    # Rola ao topo: `st.switch_page` preserva a posição do scroll do navegador
+    # (o rodapé ficava embaixo), e este iframe invisível resolve com JS.
+    ui_comum._rolar_topo()
+
     aba = _aba_da_url()
 
     st.markdown("""

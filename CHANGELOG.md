@@ -4,6 +4,14 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.16.7] - 2026-09-17
+
+### Alterado
+- **Responsivo mobile no rodapé "⚖️ Legal"** — o botão "Privacidade / LGPD" vaza pra fora do card em telas estreitas (texto quebra em duas linhas). Media query `@media (max-width:760px)`: aumenta a margem negativa e reduz padding/fonte dos botões; validado no Playwright (420×800): os dois botões ficam dentro do painel arredondado.
+
+### Adicionado
+- **Página Legal sempre abre no topo** — `st.switch_page` preservava a posição do scroll do navegador (aparecia já embaixo no rodapé). Um iframe invisível (st.iframe, JS igual-origem) roda `window.parent.scrollTo(0,0)` ao renderizar a página.
+
 ## [v2.16.6] - 2026-09-17
 
 ### Corrigido
