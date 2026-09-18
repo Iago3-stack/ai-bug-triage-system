@@ -371,7 +371,14 @@ def recuperar_via_link(token_hash: str) -> tuple[bool, str, dict | None]:
 
 
 def definir_senha(nova_senha: str, access_token: str) -> tuple[bool, str]:
-    """Troca a senha do usuário logado (POST /user com password novo)."""
+    """Troca a senha do usuário logado (PUT /user com password novo).
+
+    O GoTrue altera o usuário via PUT /user (GET /user e PUT /user). Já
+    testamos com POST /user e a senha nunca era gravada (rota inexistente
+    -> 405); a troca SÓ funciona com PUT. Como a sessão usada aqui vem do
+    fluxo de recuperação (session.IsRecovery()), o GoTrue não exige
+    current_password nem reautenticação.
+    """
     if not disponivel():
         return False, "Supabase não configurado neste ambiente (sem SUPABASE_URL/ANON_KEY)."
     if len(nova_senha or "") < 8:
@@ -379,7 +386,7 @@ def definir_senha(nova_senha: str, access_token: str) -> tuple[bool, str]:
     if not access_token:
         return False, "Sessão não encontrada para trocar a senha."
     try:
-        resposta = requests.post(
+        resposta = requests.put(
             f"{_base_auth_url()}/user",
             json={"password": nova_senha},
             headers=_headers_auth(access_token),

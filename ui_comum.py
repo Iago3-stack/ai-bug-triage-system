@@ -15,7 +15,7 @@ import sessao_persist
 import roteador
 import admin
 
-VERSAO = "v2.16.18"
+VERSAO = "v2.16.19"
 
 # Logo do sistema (SVG embutido como data URI para funcionar na Cloud).
 _LOGO_DATA_URI = (

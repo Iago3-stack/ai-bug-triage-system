@@ -44,6 +44,20 @@ def _ponte_fragmento() -> None:
         pass
 
 
+def _link_ja_usado(identificador: str, msg: str) -> None:
+    """Link de uso único já consumido/expirado.
+
+    Típico: o usuário conclui o reset e recarrega a página (F5). O session_state
+    zera, a sessão é restaurada do localStorage e a URL ainda traz o token -> o
+    re-processamento falha. Com sessão ativa não assusta com erro vermelho:
+    marca como consumido e segue quieto. Sem sessão, mostra o erro normal.
+    """
+    if auth_supabase.usuario_logado():
+        st.session_state["_link_email_consumido"] = identificador
+        return
+    st.error(msg)
+
+
 def _processar_link_email() -> None:
     """Processa o link do e-mail (query param token_hash/access_token) que o usuário abriu.
 
@@ -88,7 +102,7 @@ def _processar_link_email() -> None:
                 st.session_state["_definir_nova_senha"] = True
                 st.success("Link de recuperação válido! Defina sua nova senha abaixo.")
             else:
-                st.error(msg)
+                _link_ja_usado(token_hash, msg)
         else:
             ok, msg, sessao = auth_supabase.confirmar_cadastro(token_hash)
             if ok and sessao and sessao.get("user"):
@@ -100,7 +114,7 @@ def _processar_link_email() -> None:
                 st.session_state["_link_email_consumido"] = token_hash
                 st.success("E-mail confirmado! Agora é só entrar com e-mail e senha.")
             else:
-                st.error(msg)
+                _link_ja_usado(token_hash, msg)
     else:
         # Fluxo implícito (#access_token=... convertido para query pelo bridge):
         # o token já é uma sessão real — monta a sessão e decide pelo type.

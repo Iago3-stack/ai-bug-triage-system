@@ -380,11 +380,11 @@ def test_definir_senha_ok(monkeypatch):
     monkeypatch.setattr(auth_supabase, "_config", lambda: ("https://x.supabase.co", "key"))
     chamadas = []
 
-    def _post(url, **kw):
+    def _put(url, **kw):
         chamadas.append((url, kw.get("json")))
         return _Resp(200, {"user": {"email": "u@e.com"}})
 
-    monkeypatch.setattr(auth_supabase.requests, "post", _post)
+    monkeypatch.setattr(auth_supabase.requests, "put", _put)
     ok, msg = auth_supabase.definir_senha("novaSenha123", "tok1")
     assert ok
     assert chamadas[0][0].endswith("/user")

@@ -4,6 +4,12 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.16.19] - 2026-09-18
+
+### Corrigido
+- **"Defina sua nova senha" não gravava a senha** (a senha antiga continuava valendo): a troca usava `POST /user`, mas o GoTrue altera o usuário via **`PUT /user`** (`POST` não existe → 405 e a senha nunca era salva). `auth_supabase.definir_senha` agora usa `PUT`. Como a sessão vem do fluxo de recuperação, não são exigidos `current_password` nem reautenticação.
+- **Erro vermelho "link expirado/inválido" ao recarregar a página (F5) após concluir o reset:** o link de uso único re-processado gritava erro mesmo com o usuário já logado (sessão restaurada). Agora, **sessão ativa ⇒ link marcado como consumido e tratamento silencioso** (`_link_ja_usado`).
+
 ## [v2.16.17] - 2026-09-17
 
 ### Adicionado
