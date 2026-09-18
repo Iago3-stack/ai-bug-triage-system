@@ -11,19 +11,47 @@ import sessao_persist
 from secoes import login as pagina_login
 
 
+def _ponte_fragmento() -> None:
+    """Converte link do e-mail no formato fragmento (#...) para query (?).
+
+    Dependendo do "Flow Type" no Supabase (Implicit), o link de recuperação/
+    confirmação chega como `#access_token=...`, que o Streamlit ignora (só lê a
+    query string). Este componente roda um script que reescreve a URL e
+    recarrega, devolvendo os parâmetros para o Python processar.
+    """
+    js = r"""
+<script>
+(function(){
+  try {
+    var hash = (window.top.location.hash || "").replace(/^#/, "");
+    if (hash.indexOf("access_token") === -1 && hash.indexOf("token_hash") === -1) return;
+    var sep = window.top.location.search ? "&" : "?";
+    window.top.location.replace(window.top.location.pathname + window.top.location.search + sep + hash);
+  } catch (e) { /* mesma origem impedida: ignora (fluxo query continua funcionando) */ }
+})();
+</script>
+"""
+    try:
+        import streamlit.components.v1 as componentes
+
+        componentes.html(js, height=0)
+    except Exception:
+        pass
+
+
 def _processar_link_email() -> None:
-    """Processa o link do e-mail (query param token_hash) que o usuário abriu.
+    """Processa o link do e-mail (query param token_hash/access_token) que o usuário abriu.
 
     Dois fluxos, dependendo do `?type=`:
     - `signup`  : confirma o cadastro e loga.
     - `recovery`: valida o link de "Esqueceu a senha?" e abre o formulário para
-      definir uma nova senha (flag `_definir_nova_senha` renderizada no fim).
+      definir uma nova senha (flag `_definir_nova_senha` renderizada no topo).
     """
     try:
         parametros = st.query_params
     except Exception:
         parametros = {}
-    if not parametros or not parametros.get("token_hash"):
+    if not parametros or not (parametros.get("token_hash") or parametros.get("access_token")):
         return
     tipo = parametros.get("type")
     if isinstance(tipo, list):
@@ -34,37 +62,58 @@ def _processar_link_email() -> None:
     token_hash = parametros.get("token_hash")
     if isinstance(token_hash, list):
         token_hash = token_hash[0]
-    if not token_hash:
-        return
 
-    if tipo == "recovery":
-        ok, msg, sessao = auth_supabase.recuperar_via_link(token_hash)
-        if ok and sessao and sessao.get("access_token"):
-            auth_supabase.guardar_sessao(sessao)
-            sessao_persist.salvar(sessao)
+    if token_hash:
+        if tipo == "recovery":
+            ok, msg, sessao = auth_supabase.recuperar_via_link(token_hash)
+            if ok and sessao and sessao.get("access_token"):
+                auth_supabase.guardar_sessao(sessao)
+                sessao_persist.salvar(sessao)
+                st.session_state["_definir_nova_senha"] = True
+                st.success("Link de recuperação válido! Defina sua nova senha abaixo.")
+            else:
+                st.error(msg)
+        else:
+            ok, msg, sessao = auth_supabase.confirmar_cadastro(token_hash)
+            if ok and sessao and sessao.get("user"):
+                auth_supabase.guardar_sessao(sessao)
+                sessao_persist.salvar(sessao)
+                st.success("E-mail confirmado! Bem-vindo(a).")
+            elif ok:
+                st.success("E-mail confirmado! Agora é só entrar com e-mail e senha.")
+            else:
+                st.error(msg)
+    else:
+        # Fluxo implícito (#access_token=... convertido para query pelo bridge):
+        # o token já é uma sessão real — monta a sessão e decide pelo type.
+        access_token = parametros.get("access_token")
+        if isinstance(access_token, list):
+            access_token = access_token[0]
+        refresh_token = parametros.get("refresh_token")
+        if isinstance(refresh_token, list):
+            refresh_token = refresh_token[0]
+        user = auth_supabase.usuario_por_token(access_token)
+        sessao = {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "user": user or {"email": None},
+        }
+        auth_supabase.guardar_sessao(sessao)
+        sessao_persist.salvar(sessao)
+        if tipo == "recovery":
             st.session_state["_definir_nova_senha"] = True
             st.success("Link de recuperação válido! Defina sua nova senha abaixo.")
-        elif ok:
-            st.error(msg)
         else:
-            st.error(msg)
-    else:
-        ok, msg, sessao = auth_supabase.confirmar_cadastro(token_hash)
-        if ok and sessao and sessao.get("user"):
-            auth_supabase.guardar_sessao(sessao)
-            sessao_persist.salvar(sessao)
-            st.success("E-mail confirmado! Bem-vindo(a).")
-        elif ok:
-            st.success("E-mail confirmado! Agora é só entrar com e-mail e senha.")
-        else:
-            st.error(msg)
+            email = (user or {}).get("email")
+            quem = f"({email})" if email else ""
+            st.success(f"E-mail confirmado via link! Logado {quem}.")
 
-    # Limpa o link (senão todo rerun reprocessaria o token_hash já consumido).
-    try:
-        del parametros["token_hash"]
-        del parametros["type"]
-    except Exception:
-        pass
+    # Limpa o link (senão todo rerun reprocessaria o token já consumido).
+    for chave in ("token_hash", "type", "access_token", "refresh_token"):
+        try:
+            del parametros[chave]
+        except Exception:
+            pass
 
 
 ui_tema.config_pagina()
@@ -77,6 +126,9 @@ sessao_persist.carregar()
 # Ponte de escrita para o navegador (login/logout enfileirados): mantém o
 # componente montado até o iframe confirmar a gravação.
 sessao_persist.processar_pendente()
+
+# Bridge do link do e-mail no formato fragmento (#access_token...) -> query (?).
+_ponte_fragmento()
 
 # Confirmação/recuperação vinda do link do e-mail (query param, não fragmento):
 # ?token_hash=...&type=signup / type=recovery -> troca o hash por sessão.

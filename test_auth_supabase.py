@@ -402,3 +402,24 @@ def test_definir_senha_sem_sessao(monkeypatch):
     ok, msg = auth_supabase.definir_senha("novaSenha123", "")
     assert not ok
     assert "Sessão" in msg
+
+
+def test_usuario_por_token_ok(monkeypatch):
+    monkeypatch.setattr(auth_supabase, "_config", lambda: ("https://x.supabase.co", "key"))
+    chamadas = []
+
+    def _get(url, **kw):
+        chamadas.append((url, kw.get("headers")))
+        return _Resp(200, {"id": "u1", "email": "u@e.com"})
+
+    monkeypatch.setattr(auth_supabase.requests, "get", _get)
+    user = auth_supabase.usuario_por_token("tok1")
+    assert user["email"] == "u@e.com"
+    assert chamadas[0][0].endswith("/user")
+    assert chamadas[0][1]["Authorization"] == "Bearer tok1"
+
+
+def test_usuario_por_token_falha(monkeypatch):
+    monkeypatch.setattr(auth_supabase, "_config", lambda: ("https://x.supabase.co", "key"))
+    monkeypatch.setattr(auth_supabase.requests, "get", lambda *a, **k: _Resp(401, {"error": "bad"}))
+    assert auth_supabase.usuario_por_token("tok-ruim") is None

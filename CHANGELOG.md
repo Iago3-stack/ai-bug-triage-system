@@ -4,6 +4,14 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.16.15] - 2026-09-17
+
+### Adicionado
+- **Ponte para link no formato fragmento (`#access_token=...`):** quando o projeto Supabase usa "Flow Type" implícito, o link do e-mail de recuperação/confirmação traz o token no fragmento (`#`), que o Streamlit não lê. Um componente JS reescreve a URL (fragmento → query) e recarrega; o Python monta a sessão via `GET /auth/v1/user` (`auth_supabase.usuario_por_token`) e segue o fluxo normal (signup = logar, recovery = formulário de nova senha).
+
+### Corrigido
+- Link de recuperação continuava abrindo só o Início mesmo com query=token_hash: agora o app também processa quando o `access_token` vem explícito na URL.
+
 ## [v2.16.14] - 2026-09-17
 
 ### Corrigido

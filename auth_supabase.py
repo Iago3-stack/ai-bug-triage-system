@@ -121,6 +121,28 @@ def _headers_auth(token: str) -> dict:
     return headers
 
 
+def usuario_por_token(access_token: str) -> dict | None:
+    """Busca os dados do usuário (GET /user) usando o access_token.
+
+    Usado pelo fluxo de link no formato fragmento (#access_token=...), que
+    chega sem sessão montada. Retorna dict do usuário ou None.
+    """
+    if not disponivel() or not access_token:
+        return None
+    try:
+        resposta = requests.get(
+            f"{_base_auth_url()}/user",
+            headers=_headers_auth(access_token),
+            timeout=15,
+        )
+    except requests.RequestException:
+        return None
+    if resposta.status_code == 200:
+        dados = resposta.json() or {}
+        return dados.get("user") if isinstance(dados.get("user"), dict) else dados
+    return None
+
+
 def _valida_email_senha(email: str, senha: str) -> tuple[bool, str]:
     email = (email or "").strip()
     if not email or "@" not in email or "." not in email.split("@")[-1]:
