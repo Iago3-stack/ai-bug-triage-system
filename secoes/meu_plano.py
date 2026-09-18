@@ -167,7 +167,7 @@ def render():
             if pagbank.configurado():
                 st.caption(
                     "Pagamento com **confirmação automática**: pague o QR Code abaixo e o "
-                    "Premium libera sozinho (webhook PagBank)."
+                    "Premium libera sozinho, sem precisar me avisar."
                 )
                 _cpf = st.text_input(
                     "CPF do titular *",
@@ -274,8 +274,9 @@ def _exibir_checkout_pix(cobranca: dict, uid: str) -> None:
             _exibir_copia_e_cola(payload)
         if automatico:
             st.caption(
-                "🔔 **Responsável é avisado e o Premium libera automaticamente** assim que o "
-                "PagBank confirmar o pagamento (webhook). O botão abaixo é só um reforço manual."
+                "🔔 **O Premium libera sozinho** assim que o **PagBank confirmar o "
+                "pagamento**. O botão abaixo é só um reforço manual (ex.: se a "
+                "confirmação demorar)."
             )
         else:
             st.caption("Pague no app do seu banco e clique em 'Já paguei' para avisar o responsável.")
