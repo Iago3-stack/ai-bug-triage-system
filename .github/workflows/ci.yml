@@ -36,41 +36,52 @@ jobs:
       - name: Rodar testes unitários
         run: pytest -v --junitxml=junit.xml
 
+      # if: always() — o badge reflete o resultado REAL: se este job falhar,
+      # ainda geramos o badge vermelho a partir do junit.xml. Assim a falha
+      # não fica "escondida" num badge verde do último push bom.
       - name: Gerar badge JSON com a contagem real de testes
+        if: always()
         run: |
           mkdir -p badge
           python3 - <<'PY'
           import json
+          import os
           import xml.etree.ElementTree as ET
-          root = ET.parse("junit.xml").getroot()
-          suite = root.find("testsuite") if root.tag == "testsuites" else root
-          total = int(suite.get("tests", "0"))
-          falhas = int(suite.get("failures", "0")) + int(suite.get("errors", "0")) + int(suite.get("skipped", "0"))
-          aprovados = total - falhas
-          payload = {
-              "schemaVersion": 1,
-              "label": "Testes",
-              "message": f"{aprovados} passed",
-              "color": "4CAF50" if falhas == 0 else "E91E63",
-          }
+          payload = {"schemaVersion": 1, "label": "Testes", "message": "erro no CI", "color": "E91E63"}
+          if os.path.exists("junit.xml"):
+              root = ET.parse("junit.xml").getroot()
+              suite = root.find("testsuite") if root.tag == "testsuites" else root
+              total = int(suite.get("tests", "0"))
+              falhas = int(suite.get("failures", "0")) + int(suite.get("errors", "0")) + int(suite.get("skipped", "0"))
+              aprovados = total - falhas
+              payload = {
+                  "schemaVersion": 1,
+                  "label": "Testes",
+                  "message": f"{aprovados} passed",
+                  "color": "4CAF50" if falhas == 0 else "E91E63",
+              }
           with open("badge/pytest-badge.json", "w", encoding="utf-8") as f:
               json.dump(payload, f)
-          print(f"Badge gerado: {aprovados} passed (total={total}, falhas={falhas})")
+          print(f"Badge: {payload['message']}")
           PY
 
-      - name: Publicar badge como artefato de Pages
+      - name: Publicar landing + badge como artefato de Pages
+        if: always()
         run: |
           cp -r web/landing/. badge/
           ls -la badge
-          echo "Site de Pages: https://iago3-stack.github.io/ai-bug-triage-system/ (landing) + pytest-badge.json"
+          echo "Landing + badge em https://ai-bug-triage.com.br/ (+ pytest-badge.json)"
       - uses: actions/upload-pages-artifact@v3
+        if: always()
         with:
           path: badge
 
   badge:
     runs-on: ubuntu-latest
     needs: test
-    if: github.ref == 'refs/heads/main'
+    # always(): deploy do badge acontece mesmo quando os testes falham
+    # (badge atualiza para a cor real); só na branch main.
+    if: ${{ always() && github.ref == 'refs/heads/main' }}
     permissions:
       pages: write
       id-token: write
@@ -82,6 +93,7 @@ jobs:
 
 #
 # Este workflow roda automaticamente a cada push/PR na branch main.
-# Fim: publica https://iago3-stack.github.io/ai-bug-triage-system/pytest-badge.json
-# usado no badge dinâmico de testes (img.shields.io/endpoint) do README e do perfil —
-# o número de testes atualiza sozinho a cada push, sem editar README.
+# Fim: publica https://ai-bug-triage.com.br/ (landing, domínio próprio via CNAME)
+# + pytest-badge.json, usado no badge dinâmico de testes (img.shields.io/endpoint)
+# do README — o número de testes e a cor (verde/vermelho) atualizam sozinhos a
+# cada push, sem editar README.

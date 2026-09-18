@@ -3,11 +3,12 @@
 O **Pilar 3** fecha o ciclo de automação: além de **colar** a falha na página
 (Pilar 1) e de reconhecer a saída de **Playwright/Postman** (Pilar 2), o app agora
 **recebe as falhas direto do CI** por um webhook HTTP e devolve o **relato já estruturado**.
+O mesmo servidor também **recebe a notificação de pagamento do PagBank** e ativa o
+Premium automaticamente (`POST /webhook/pagamento`).
 
 ## Como funciona
 
-`webhook.py` é um micro-servidor HTTP (100% stdlib, sem novos requisitos) que escuta
-`POST /webhook/falha` e responde JSON:
+`webhook.py` é um micro-servidor HTTP (100% stdlib, sem novos requisitos) que escuta:
 
 ```http
 POST /webhook/falha
@@ -40,6 +41,14 @@ Resposta `200`:
 Erros: `400` payload inválido, `401` token incorreto (se `WEBHOOK_TOKEN` setado),
 `413` evidência acima de **200 KB**, `404` rota desconhecida. O webhook **nunca cai**:
 IA e persistência são opcionais e qualquer exceção vira campo de `aviso_*`.
+
+## Confirmação automática de pagamento (`POST /webhook/pagamento`)
+
+Quando o cliente paga o QR dinâmico do PagBank, o banco notifica a
+`PAGBANK_WEBHOOK_URL` cadastrada no pedido. O webhook **não confia no corpo**:
+consulta o estado real do pedido na API do PagBank (`/orders/{id}`) e, se `PAID`,
+chama `pixbilling.confirmar_cobranca` — operação **idempotente** que vira o plano
+em `pago`. Ex.: `https://seu-host/webhook/pagamento`.
 
 ## Rodar
 

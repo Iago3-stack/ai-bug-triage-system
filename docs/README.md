@@ -7,7 +7,7 @@ Processo de engenharia e qualidade do **AI Bug Triage System**, documentado de f
 | Doc | Conteúdo |
 |---|---|
 | [01 — Requisitos](01-requisitos.md) | Requisitos funcionais e não-funcionais, prioridades e decisões de contorno |
-| [02 — Casos de Teste](02-casos-de-teste.md) | Matriz de casos em Gherkin + os testes automatizados (400 no total, incluindo Dashboard de QA completo, RAG híbrido BM25+vetores, nuvem/Supabase, Pix, IA com fallback Groq e modelo próprio, Auth/Supabase, notificações, plano por usuário, cobrança Pix, perfil do usuário, GitHub por usuário, painel do dono, **colar falha + adaptadores Playwright/Postman + webhook de CI** e persistência de sessão no F5) |
+| [02 — Casos de Teste](02-casos-de-teste.md) | Matriz de casos em Gherkin + os testes automatizados (**475 no total**, incluindo Dashboard de QA completo, RAG híbrido BM25+vetores, nuvem/Supabase, Pix, IA com fallback Groq e modelo próprio, Auth/Supabase, notificações, plano por usuário, cobrança Pix ("nosso Stripe") + automática via PagBank, perfil do usuário, GitHub por usuário, painel do dono, **colar falha + adaptadores Playwright/Postman + webhook de CI**, persistência de sessão no F5 e landing/Pages com domínio próprio) |
 | [03 — Arquitetura e Fluxo](03-arquitetura.md) | Componentes, decisões de design e fluxo de processamento |
 | [04 — Estratégia de Qualidade](04-estrategia-de-qualidade.md) | Pilares de QA, redução de risco e ciclo de melhoria |
 | [05 — Persistência em Nuvem](05-persistencia-nuvem.md) | Supabase como backend opcional (secrets → `.env` → JSONL), passo a passo de ativação e limitações |
