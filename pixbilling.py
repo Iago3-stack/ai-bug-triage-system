@@ -24,6 +24,8 @@ import uuid
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
+import notificacoes  # envio do comprovante (best-effort)
+
 import nuvem_supabase
 import pagbank
 import pix
@@ -134,6 +136,9 @@ def gerar_cobranca(uid: str, cpf: str = "", nome: str = "", email: str = "") -> 
         "uid": uid,
         "valor": preco(),
         "status": _STATUS_ABERTO,
+        "nome": (nome or "").strip(),
+        "email": (email or "").strip(),
+        "cpf": (cpf or "").strip(),
         "criado_em": _agora(),
         "atualizado_em": _agora(),
     }
@@ -229,13 +234,86 @@ def _transicao(doc: dict, novo_status: str, extra: dict | None = None) -> dict:
 
 
 def confirmar_cobranca(doc_id: str) -> dict | None:
-    """Admin confirma o pagamento -> plano vira pago no banco."""
+    """Admin confirma o pagamento -> plano vira pago no banco (+ comprovante).
+
+    Este é o ÚNICO ponto por onde o pagamento vira "pago": tanto o webhook do
+    PagBank (charge PAID) quanto a confirmação manual do dono passam por aqui.
+    Por isso o comprovante é enviado aqui — garante que o assinante recebe o
+    e-mail nos DOI situações, mesmo se a API do PagBank cair e a confirmação
+    e-mail nos dois casos, mesmo se a API do PagBank cair e a confirmação
+    for manual. O envio é best-effort e nunca quebra a confirmação.
+    """
     doc = _buscar(doc_id)
     if not doc or doc.get("status") != _STATUS_ABERTO:
         return None
     atualizado = _transicao(doc, _STATUS_CONFIRMADO)
     plano.definir_plano_no_banco(doc["uid"], "pago")
+    _enviar_comprovante(atualizado or doc)
     return atualizado
+
+
+def _comprovante_html(nome: str, valor: str, data: str, pedido: str) -> str:
+    """Corpo HTML do comprovante de pagamento (padrão visual simples)."""
+    return f"""
+<div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#111">
+  <div style="background:#139c49;color:#fff;padding:18px 22px;border-radius:8px 8px 0 0">
+    <div style="font-size:18px;font-weight:bold">✓ Comprovante de pagamento</div>
+    <div style="opacity:.85;font-size:13px">Plano Premium — AI Bug Triage System</div>
+  </div>
+  <div style="border:1px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;padding:22px">
+    <p style="margin-top:0">Olá, <b>{nome}</b>,</p>
+    <p>Recebemos a confirmação do seu pagamento. Seu acesso <b>Premium</b> já está liberado. 🎉</p>
+    <table style="width:100%;border-collapse:collapse;margin:14px 0;font-size:14px">
+      <tr><td style="padding:8px 10px;color:#555">Assinatura</td><td style="padding:8px 10px"><b>Premium</b></td></tr>
+      <tr><td style="padding:8px 10px;color:#555;background:#f8fafc">Valor</td><td style="padding:8px 10px;background:#f8fafc"><b>{valor}</b>/mês</td></tr>
+      <tr><td style="padding:8px 10px;color:#555">Forma de pagamento</td><td style="padding:8px 10px">PIX</td></tr>
+      <tr><td style="padding:8px 10px;color:#555;background:#f8fafc">Data do pagamento</td><td style="padding:8px 10px;background:#f8fafc">{data}</td></tr>
+      <tr><td style="padding:8px 10px;color:#555">Código do pedido</td><td style="padding:8px 10px">{pedido}</td></tr>
+    </table>
+    <p style="font-size:12px;color:#777;border-top:1px solid #e2e8f0;padding-top:12px">
+      Este e-mail é um comprovante de pagamento e <b>não</b> é nota fiscal.<br>
+      Para dúvidas, responda este e-mail ou fale com a gente pelo app.
+    </p>
+  </div>
+</div>
+"""
+
+
+def _enviar_comprovante(doc: dict) -> bool:
+    """Envia o comprovante de pagamento Premium ao assinante (best-effort).
+
+    Usa o e-mail/nome gravados na cobrança. Se faltar e-mail ou o SMTP falhar,
+    apenas retorna False — nunca interrompe a confirmação da cobrança.
+    """
+    email = (doc or {}).get("email") or ""
+    if not email:
+        return False
+    try:
+        nome = (doc.get("nome") or "").strip() or "assinante"
+        valor = preco_texto()
+        data = doc.get("atualizado_em") or doc.get("criado_em") or "—"
+        pedido = (
+            str(doc.get("pagbank_order_id") or "").strip()
+            or f"cobrança {doc.get('id') or ''}"
+        ).strip()
+        assunto = "Comprovante de pagamento — Premium (AI Bug Triage)"
+        corpo = (
+            f"Olá, {nome},\n\n"
+            "Recebemos a confirmação do seu pagamento do plano Premium. "
+            "Seu acesso Premium já está liberado.\n\n"
+            f"• Assinatura: Premium\n"
+            f"• Valor: {valor}/mês\n"
+            f"• Forma de pagamento: PIX\n"
+            f"• Data do pagamento: {data}\n"
+            f"• Código do pedido: {pedido}\n\n"
+            "Este e-mail é um comprovante de pagamento e não é nota fiscal.\n"
+            "Para dúvidas, responda este e-mail."
+        )
+        return bool(
+            notificacoes.enviar_email(email, assunto, corpo, corpo_html=_comprovante_html(nome, valor, data, pedido))
+        )
+    except Exception:
+        return False
 
 
 def cancelar_cobranca(doc_id: str) -> dict | None:

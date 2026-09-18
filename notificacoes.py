@@ -177,7 +177,7 @@ def ultimo_erro_email() -> str:
     return _ULTIMO_ERRO_EMAIL or ""
 
 
-def _enviar_email(cfg: dict, para: str, assunto: str, corpo: str) -> bool:
+def _enviar_email(cfg: dict, para: str, assunto: str, corpo: str, corpo_html: str | None = None) -> bool:
     """Envia e-mail via SMTP. True se enviou; nunca levanta exceção."""
     global _ULTIMO_ERRO_EMAIL
     try:
@@ -186,6 +186,8 @@ def _enviar_email(cfg: dict, para: str, assunto: str, corpo: str) -> bool:
         msg["From"] = cfg["user"]
         msg["To"] = para
         msg.set_content(corpo)
+        if corpo_html:
+            msg.add_alternative(corpo_html, subtype="html")
         with smtplib.SMTP(cfg["host"], cfg["porta"], timeout=10) as smtp:
             smtp.starttls()
             smtp.login(cfg["user"], cfg["senha"])
@@ -194,6 +196,24 @@ def _enviar_email(cfg: dict, para: str, assunto: str, corpo: str) -> bool:
         return True
     except Exception as e:
         _ULTIMO_ERRO_EMAIL = f"{type(e).__name__}: {str(e)[:160]}"
+        return False
+
+
+def enviar_email(para: str, assunto: str, corpo: str, corpo_html: str | None = None) -> bool:
+    """Envia um e-mail transacional a QUALQUER destinatário (ex.: comprovante).
+
+    Reutiliza a config SMTP dos secrets (.env/Streamlit Secrets). Diferente do
+    `notificar_email`/`notificar_evento` (que sempre mandam para ALERTA_EMAIL_TO),
+    aqui o destino é o próprio usuário. Nunca levanta exceção.
+    """
+    if not (para or "").strip() or not (assunto or "").strip() or not (corpo or "").strip():
+        return False
+    try:
+        cfg = _smtp_config()
+        if not cfg["user"] or not cfg["senha"]:
+            return False
+        return _enviar_email(cfg, para.strip(), assunto.strip(), corpo, corpo_html=corpo_html)
+    except Exception:
         return False
 
 

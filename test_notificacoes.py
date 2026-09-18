@@ -201,7 +201,6 @@ def test_erro_email_limpa_no_sucesso(monkeypatch):
     assert notificacoes.ultimo_erro_email() == ""
 
 
-# --- Detecção de canal configurado (mostra o status no app) ---
 def test_email_configurado_detecta_quando_tem_tudo(monkeypatch):
     def _ler(nome):
         return {
@@ -217,6 +216,58 @@ def test_email_configurado_detecta_quando_tem_tudo(monkeypatch):
 def test_email_configurado_falso_sem_destino(monkeypatch):
     monkeypatch.setattr(notificacoes, "_ler", lambda nome: "")
     assert notificacoes.email_configurado() is False
+
+
+# --- E-mail transacional (enviar_email -> destinatário arbitrário) ---
+def test_enviar_email_para_destinatario_arbitrario(monkeypatch):
+    def _ler(nome):
+        return {
+            "SMTP_USER": "app@email.com",
+            "SMTP_PASS": "app-1234",
+        }.get(nome, "")
+
+    monkeypatch.setattr(notificacoes, "_ler", _ler)
+    correio = _Correio("x", 0, 0)
+    monkeypatch.setattr(notificacoes.smtplib, "SMTP", lambda host, porta, timeout: correio)
+    ok = notificacoes.enviar_email("cliente@exemplo.com", "Comprovante", "corpo texto", "<html><b>ok</b></html>")
+    assert ok is True
+    msg = correio.enviadas[0]
+    assert msg["To"] == "cliente@exemplo.com"
+    assert msg["Subject"] == "Comprovante"
+    assert msg.get_body(preferencelist=["plain"]).get_content() == "corpo texto\n"
+    assert "ok" in msg.get_body(preferencelist=["html"]).get_content()
+
+
+def test_enviar_email_sem_config_retorna_falso(monkeypatch):
+    monkeypatch.setattr(notificacoes, "_ler", lambda nome: "")
+    assert notificacoes.enviar_email("cliente@exemplo.com", "X", "corpo") is False
+
+
+def test_enviar_email_campos_vazios_retorna_falso(monkeypatch):
+    def _ler(nome):
+        return {
+            "SMTP_USER": "app@email.com",
+            "SMTP_PASS": "app-1234",
+        }.get(nome, "")
+
+    monkeypatch.setattr(notificacoes, "_ler", _ler)
+    assert notificacoes.enviar_email("", "X", "corpo") is False
+    assert notificacoes.enviar_email("cliente@exemplo.com", "", "corpo") is False
+    assert notificacoes.enviar_email("cliente@exemplo.com", "X", "") is False
+
+
+def test_enviar_email_falha_smtp_nao_levanta(monkeypatch):
+    def _ler(nome):
+        return {
+            "SMTP_USER": "app@email.com",
+            "SMTP_PASS": "app-1234",
+        }.get(nome, "")
+
+    monkeypatch.setattr(notificacoes, "_ler", _ler)
+    correio = _Correio(None, None, None)
+    correio.login = lambda user, senha: (_ for _ in ()).throw(PermissionError("sem acesso"))
+    monkeypatch.setattr(notificacoes.smtplib, "SMTP", lambda host, porta, timeout: correio)
+    assert notificacoes.enviar_email("c@x.com", "X", "corpo") is False
 
 
 def test_discord_configurado_reflete_webhook(monkeypatch):

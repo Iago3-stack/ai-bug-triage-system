@@ -4,6 +4,15 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.16.17] - 2026-09-17
+
+### Adicionado
+- **Comprovante de pagamento Premium por e-mail.** Ao confirmar o pagamento, o assinante recebe no e-mail um comprovante padrão (nome, valor, PIX, data, código do pedido + aviso de que não é nota fiscal).
+  - O envio acontece dentro de `confirmar_cobranca` — **o único ponto onde o plano vira "pago"** — então vale tanto para o webhook automático do PagBank (charge PAID) quanto para a **confirmação manual** do dono (ex.: quando a API cai).
+  - Reutiliza o SMTP já configurado (secrets); é **best-effort** (falha no envio nunca quebra a confirmação).
+  - A cobrança agora guarda `nome`/`email`/`cpf` do assinante (usados no comprovante).
+  - Nova função pública `notificacoes.enviar_email(para, assunto, corpo, corpo_html)` para e-mails transacionais a qualquer destinatário.
+
 ## [v2.16.15] - 2026-09-17
 
 ### Adicionado

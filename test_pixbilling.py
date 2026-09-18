@@ -98,6 +98,59 @@ def test_confirmar_ativa_plano_pago(tmp_path, monkeypatch):
     assert pixbilling.confirmar_cobranca(doc["id"]) is None  # já confirmada
 
 
+def test_gerar_cobranca_guarda_nome_email_cpf(tmp_path, monkeypatch):
+    _caminho_tmp(tmp_path, monkeypatch)
+    doc = pixbilling.gerar_cobranca("u-um", cpf="52998224725", nome="Titular Teste", email="titular@exemplo.com")
+    assert doc["nome"] == "Titular Teste"
+    assert doc["email"] == "titular@exemplo.com"
+    assert doc["cpf"] == "52998224725"
+
+
+def test_comprovante_enviado_na_confirmacao(tmp_path, monkeypatch):
+    """Webhook OU confirmação manual: confirmar_cobranca sempre envia o comprovante."""
+    _caminho_tmp(tmp_path, monkeypatch)
+    doc = pixbilling.gerar_cobranca("u-um", nome="Titular", email="titular@exemplo.com")
+    monkeypatch.setattr("pixbilling.plano.definir_plano_no_banco", lambda uid, p: True)
+    enviados = []
+
+    def _fake_envia(para, assunto, corpo, corpo_html=None):
+        enviados.append((para, assunto, corpo, corpo_html))
+        return True
+
+    monkeypatch.setattr("pixbilling.notificacoes.enviar_email", _fake_envia)
+    pixbilling.confirmar_cobranca(doc["id"])
+    assert len(enviados) == 1
+    para, assunto, _, html = enviados[0]
+    assert para == "titular@exemplo.com"
+    assert "Comprovante" in assunto
+    assert "19,99" in html
+    assert "Titular" in html
+
+
+def test_comprovante_sem_email_nao_quebra_confirmacao(tmp_path, monkeypatch):
+    _caminho_tmp(tmp_path, monkeypatch)
+    doc = pixbilling.gerar_cobranca("u-um")
+    monkeypatch.setattr("pixbilling.plano.definir_plano_no_banco", lambda uid, p: True)
+    monkeypatch.setattr(
+        "pixbilling.notificacoes.enviar_email",
+        lambda *a, **k: (_ for _ in ()).throw(AssertionError("não deveria enviar")),
+    )
+    novo = pixbilling.confirmar_cobranca(doc["id"])
+    assert novo and novo["status"] == "confirmado"
+
+
+def test_falha_no_envio_nao_quebra_confirmacao(tmp_path, monkeypatch):
+    _caminho_tmp(tmp_path, monkeypatch)
+    doc = pixbilling.gerar_cobranca("u-um", email="titular@exemplo.com")
+    monkeypatch.setattr("pixbilling.plano.definir_plano_no_banco", lambda uid, p: True)
+    monkeypatch.setattr(
+        "pixbilling.notificacoes.enviar_email",
+        lambda *a, **k: (_ for _ in ()).throw(RuntimeError("SMTP fora do ar")),
+    )
+    novo = pixbilling.confirmar_cobranca(doc["id"])
+    assert novo and novo["status"] == "confirmado"
+
+
 def test_cancelar_nao_ativa_plano(tmp_path, monkeypatch):
     _caminho_tmp(tmp_path, monkeypatch)
     doc = pixbilling.gerar_cobranca("u-um")
