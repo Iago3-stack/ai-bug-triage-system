@@ -31,10 +31,15 @@ def _ponte_fragmento() -> None:
 })();
 </script>
 """
+    # Injeta o componente UMA vez por sessão: re-renderizá-lo a cada rerun só
+    # aumenta o churn de iframe e agrava o "removeChild" do frontend do React.
+    if st.session_state.get("_ponte_fragmento_injetada"):
+        return
     try:
         import streamlit.components.v1 as componentes
 
         componentes.html(js, height=0)
+        st.session_state["_ponte_fragmento_injetada"] = True
     except Exception:
         pass
 
