@@ -14,7 +14,8 @@ _SITEMAP = (_RAIZ / "web" / "landing" / "sitemap.xml").read_text(encoding="utf-8
 _ROBOTS = (_RAIZ / "web" / "landing" / "robots.txt").read_text(encoding="utf-8")
 
 APP_URL = "https://ai-bug-triage-system-d6vigycbjt4qxez2wrvsxf.streamlit.app/"
-PAGES_URL = "https://iago3-stack.github.io/ai-bug-triage-system/"
+DOMINIO = "https://ai-bug-triage.com.br/"
+PAGES_URL = DOMINIO
 
 
 def _bloco_json_ld() -> dict:
@@ -33,7 +34,7 @@ def test_arquivo_existe_e_tem_title():
 def test_meta_de_seo():
     assert 'name="description"' in _HTML
     assert 'name="robots" content="index, follow"' in _HTML
-    assert 'rel="canonical" href="https://iago3-stack.github.io/ai-bug-triage-system/"' in _HTML
+    assert f'rel="canonical" href="{DOMINIO}"' in _HTML
     assert 'property="og:title"' in _HTML and 'name="twitter:card"' in _HTML
 
 

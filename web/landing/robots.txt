@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://iago3-stack.github.io/ai-bug-triage-system/sitemap.xml
+Sitemap: https://ai-bug-triage.com.br/sitemap.xml
