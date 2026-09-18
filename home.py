@@ -25,7 +25,10 @@ def _processar_link_email() -> None:
         parametros = {}
     if not parametros or not parametros.get("token_hash"):
         return
-    if parametros.get("type") not in ("signup", "recovery", None):
+    tipo = parametros.get("type")
+    if isinstance(tipo, list):
+        tipo = tipo[0] if tipo else None
+    if tipo not in ("signup", "recovery", None):
         return
 
     token_hash = parametros.get("token_hash")
@@ -34,7 +37,7 @@ def _processar_link_email() -> None:
     if not token_hash:
         return
 
-    if parametros.get("type") == "recovery":
+    if tipo == "recovery":
         ok, msg, sessao = auth_supabase.recuperar_via_link(token_hash)
         if ok and sessao and sessao.get("access_token"):
             auth_supabase.guardar_sessao(sessao)
@@ -79,6 +82,30 @@ sessao_persist.processar_pendente()
 # ?token_hash=...&type=signup / type=recovery -> troca o hash por sessão.
 _processar_link_email()
 
+# Fim do fluxo "Esqueceu a senha?": logo ao abrir o link type=recovery, oferece o
+# formulário para definir a nova senha (topo da página, acima do conteúdo).
+if st.session_state.get("_definir_nova_senha"):
+    with st.container(border=True):
+        st.markdown("#### 🔑 Defina sua nova senha")
+        with st.form("form_nova_senha"):
+            senha1 = st.text_input(
+                "Nova senha", type="password", placeholder="mínimo 8 caracteres", key="_auth_nova_senha_1"
+            )
+            senha2 = st.text_input("Confirme a nova senha", type="password", key="_auth_nova_senha_2")
+            trocar = st.form_submit_button("Salvar nova senha", use_container_width=True)
+        if trocar:
+            if not senha1 or senha1 != senha2:
+                st.error("As senhas não conferem ou estão vazias.")
+            else:
+                dados = auth_supabase.sessao() or {}
+                ok, msg = auth_supabase.definir_senha(senha1, dados.get("access_token"))
+                if ok:
+                    st.session_state.pop("_definir_nova_senha", None)
+                    st.success(msg)
+                    st.rerun()
+                else:
+                    st.error(msg)
+
 # Páginas visíveis: o Painel do Administrador só entra quando a conta logada é ADMIN_EMAIL.
 pg = st.navigation(roteador.paginas_visiveis(), position="sidebar")
 st.session_state["_url_atual"] = pg.url_path
@@ -106,29 +133,6 @@ except StreamlitAPIException as _exc:
         st.switch_page(roteador.PAGINAS["inicio"])
     else:
         raise
-
-# Fim do fluxo "Esqueceu a senha?": depois que a página renderizou, oferece o
-# formulário para definir a nova senha (acionado pelo link type=recovery).
-if st.session_state.get("_definir_nova_senha"):
-    with st.container(border=True):
-        st.markdown("#### 🔑 Defina sua nova senha")
-        with st.form("form_nova_senha"):
-            senha1 = st.text_input("Nova senha", type="password", placeholder="mínimo 8 caracteres", key="_auth_nova_senha_1")
-            senha2 = st.text_input("Confirme a nova senha", type="password", key="_auth_nova_senha_2")
-            trocar = st.form_submit_button("Salvar nova senha", use_container_width=True)
-        if trocar:
-            if not senha1 or senha1 != senha2:
-                st.error("As senhas não conferem ou estão vazias.")
-            else:
-                dados = auth_supabase.sessao() or {}
-                ok, msg = auth_supabase.definir_senha(senha1, dados.get("access_token"))
-                if ok:
-                    st.session_state.pop("_definir_nova_senha", None)
-                    st.success(msg)
-                    st.rerun()
-                else:
-                    st.error(msg)
-
 ui_comum.rodape()
 
 # Navegação pelo rodapé (Termos/Privacidade): o `st.switch_page` preserva a

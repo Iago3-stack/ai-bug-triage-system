@@ -4,6 +4,12 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v2.16.14] - 2026-09-17
+
+### Corrigido
+- **Link de recuperação/confirmação abrindo só o Início (sem agir):** o `st.query_params.get("type")` retorna **lista** em Streamlit novo; o filtro anterior rejeitava a lista e o app ignorava o link. Extração agora aceita lista/valor único.
+- **Formulário "Defina sua nova senha" levado para o TOPO da página** — antes ficava abaixo de todo o conteúdo do Início (era fácil achar que "só abriu a home").
+
 ## [v2.16.13] - 2026-09-17
 
 ### Adicionado
