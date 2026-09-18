@@ -63,10 +63,21 @@ def _processar_link_email() -> None:
     if isinstance(token_hash, list):
         token_hash = token_hash[0]
 
+    access_token = parametros.get("access_token")
+    if isinstance(access_token, list):
+        access_token = access_token[0]
+
+    # Um único link por sessão: se a query ainda estiver na URL após usar o
+    # token (a limpeza de query_params pode não refletir na barra), não reprocessa.
+    identificador = token_hash or access_token
+    if identificador and st.session_state.get("_link_email_consumido") == identificador:
+        return
+
     if token_hash:
         if tipo == "recovery":
             ok, msg, sessao = auth_supabase.recuperar_via_link(token_hash)
             if ok and sessao and sessao.get("access_token"):
+                st.session_state["_link_email_consumido"] = token_hash
                 auth_supabase.guardar_sessao(sessao)
                 sessao_persist.salvar(sessao)
                 st.session_state["_definir_nova_senha"] = True
@@ -76,19 +87,19 @@ def _processar_link_email() -> None:
         else:
             ok, msg, sessao = auth_supabase.confirmar_cadastro(token_hash)
             if ok and sessao and sessao.get("user"):
+                st.session_state["_link_email_consumido"] = token_hash
                 auth_supabase.guardar_sessao(sessao)
                 sessao_persist.salvar(sessao)
                 st.success("E-mail confirmado! Bem-vindo(a).")
             elif ok:
+                st.session_state["_link_email_consumido"] = token_hash
                 st.success("E-mail confirmado! Agora é só entrar com e-mail e senha.")
             else:
                 st.error(msg)
     else:
         # Fluxo implícito (#access_token=... convertido para query pelo bridge):
         # o token já é uma sessão real — monta a sessão e decide pelo type.
-        access_token = parametros.get("access_token")
-        if isinstance(access_token, list):
-            access_token = access_token[0]
+        user = auth_supabase.usuario_por_token(access_token)
         refresh_token = parametros.get("refresh_token")
         if isinstance(refresh_token, list):
             refresh_token = refresh_token[0]
@@ -101,6 +112,7 @@ def _processar_link_email() -> None:
         auth_supabase.guardar_sessao(sessao)
         sessao_persist.salvar(sessao)
         if tipo == "recovery":
+            st.session_state["_link_email_consumido"] = access_token
             st.session_state["_definir_nova_senha"] = True
             st.success("Link de recuperação válido! Defina sua nova senha abaixo.")
         else:
@@ -136,6 +148,9 @@ _processar_link_email()
 
 # Fim do fluxo "Esqueceu a senha?": logo ao abrir o link type=recovery, oferece o
 # formulário para definir a nova senha (topo da página, acima do conteúdo).
+if st.session_state.pop("_senha_alterada_ok", False):
+    st.success("Senha alterada com sucesso! Use a nova senha da próxima vez.")
+
 if st.session_state.get("_definir_nova_senha"):
     with st.container(border=True):
         st.markdown("#### 🔑 Defina sua nova senha")
@@ -152,9 +167,14 @@ if st.session_state.get("_definir_nova_senha"):
                 dados = auth_supabase.sessao() or {}
                 ok, msg = auth_supabase.definir_senha(senha1, dados.get("access_token"))
                 if ok:
+                    # Recarrega a página limpa: garante que o quadrado do
+                    # formulário desapareça na hora (st.rerun sozinho não bastava).
+                    st.session_state["_senha_alterada_ok"] = True
                     st.session_state.pop("_definir_nova_senha", None)
-                    st.success(msg)
-                    st.rerun()
+                    try:
+                        st.switch_page(roteador.PAGINAS["inicio"])
+                    except Exception:
+                        st.rerun()
                 else:
                     st.error(msg)
 
