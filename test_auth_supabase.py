@@ -397,6 +397,28 @@ def test_definir_senha_curta():
     assert "8 caracteres" in msg
 
 
+def test_definir_senha_igual_a_antiga(monkeypatch):
+    monkeypatch.setattr(auth_supabase, "_config", lambda: ("https://x.supabase.co", "key"))
+    monkeypatch.setattr(
+        auth_supabase.requests, "put",
+        lambda *a, **k: _Resp(422, {"error_code": "same_password", "msg": "New password should be different from the old password"}),
+    )
+    ok, msg = auth_supabase.definir_senha("senhaAntiga123", "tok1")
+    assert not ok
+    assert "diferente" in msg
+
+
+def test_definir_senha_fraca(monkeypatch):
+    monkeypatch.setattr(auth_supabase, "_config", lambda: ("https://x.supabase.co", "key"))
+    monkeypatch.setattr(
+        auth_supabase.requests, "put",
+        lambda *a, **k: _Resp(422, {"error_code": "weak_password", "msg": "Password should be at least 6 characters"}),
+    )
+    ok, msg = auth_supabase.definir_senha("abcdefgh", "tok1")
+    assert not ok
+    assert "fraca" in msg
+
+
 def test_definir_senha_sem_sessao(monkeypatch):
     monkeypatch.setattr(auth_supabase, "_config", lambda: ("https://x.supabase.co", "key"))
     ok, msg = auth_supabase.definir_senha("novaSenha123", "")

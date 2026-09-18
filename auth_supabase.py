@@ -398,8 +398,12 @@ def definir_senha(nova_senha: str, access_token: str) -> tuple[bool, str]:
     if resposta.status_code in (200, 201):
         return True, "Senha alterada com sucesso! Use a nova senha da próxima vez."
     baixo = resposta.text.lower()
-    if "weak" in baixo or "password" in baixo:
-        return False, "Senha fraca — use pelo menos 8 caracteres."
+    if "weak" in baixo or "pwned" in baixo or "breached" in baixo:
+        return False, "Senha fraca ou conhecida — use uma senha mais forte e original."
+    if "different" in baixo or "same" in baixo or "igual" in baixo:
+        return False, "A nova senha precisa ser diferente da senha atual."
+    if "password" in baixo:
+        return False, "Não foi possível trocar a senha — revise os requisitos (mínimo 8 caracteres)."
     return False, _mensagem_erro(resposta.status_code, resposta.text)
 
 
