@@ -284,7 +284,8 @@ def test_recuperar_senha_ok(monkeypatch):
     assert chamadas[0][1]["email"] == "usuario@exemplo.com"
 
 
-def test_recuperar_senha_email_invalido():
+def test_recuperar_senha_email_invalido(monkeypatch):
+    monkeypatch.setattr(auth_supabase, "_config", lambda: ("https://x.supabase.co", "key"))
     ok, msg = auth_supabase.recuperar_senha("sem-arroba")
     assert not ok
     assert "e-mail" in msg
@@ -336,7 +337,8 @@ def test_reenviar_confirmacao_ja_confirmado(monkeypatch):
     assert "confirmado" in msg
 
 
-def test_reenviar_confirmacao_email_invalido():
+def test_reenviar_confirmacao_email_invalido(monkeypatch):
+    monkeypatch.setattr(auth_supabase, "_config", lambda: ("https://x.supabase.co", "key"))
     ok, msg = auth_supabase.reenviar_confirmacao("invalido")
     assert not ok
     assert "e-mail" in msg
@@ -391,7 +393,8 @@ def test_definir_senha_ok(monkeypatch):
     assert chamadas[0][1] == {"password": "novaSenha123"}
 
 
-def test_definir_senha_curta():
+def test_definir_senha_curta(monkeypatch):
+    monkeypatch.setattr(auth_supabase, "_config", lambda: ("https://x.supabase.co", "key"))
     ok, msg = auth_supabase.definir_senha("123", "tok1")
     assert not ok
     assert "8 caracteres" in msg
