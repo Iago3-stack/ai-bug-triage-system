@@ -10,6 +10,8 @@ from urllib.parse import quote
 
 import streamlit as st
 
+import hero_animado
+
 _ROTULO_TERMOS = "⚖️ Termos de Uso"
 _ROTULO_PRIV = "🛡️ Privacidade · LGPD"
 
@@ -46,6 +48,7 @@ def _contatos() -> str:
         "de dados pessoais (LGPD): "
     )
     wa = _contato_whatsapp(mensagem)
+    _icone_wa = f'<img src="data:image/svg+xml;base64,{hero_animado._B64["whatsapp"]}" width="17" height="17" style="vertical-align:middle;margin-right:8px" alt="WhatsApp"/>'
     blocos = []
     if wa:
         blocos.append(
@@ -53,15 +56,23 @@ def _contatos() -> str:
             'style="text-decoration:none">'
             '<span style="display:inline-flex;align-items:center;background:#25D366;'
             'color:#ffffff;padding:9px 16px;border-radius:10px;font-weight:700;'
-            'font-size:13px;box-shadow:0 4px 12px rgba(37,211,102,.35)">💬 Falar no WhatsApp</span></a>'
+            'font-size:13px;box-shadow:0 4px 12px rgba(37,211,102,.35)">'
+            f'{_icone_wa}Falar no WhatsApp</span></a>'
         )
     email = os.environ.get("ADMIN_EMAIL", "").strip()
     if email:
+        _icone_gmail = (
+            '<span style="display:inline-block;background:#ffffff;border-radius:4px;'
+            'padding:1px 2px;vertical-align:middle;margin-right:8px;line-height:0">'
+            + hero_animado._svg_gmail()
+            + "</span>"
+        )
         blocos.append(
             f'<a href="mailto:{email}" style="text-decoration:none">'
             f'<span style="display:inline-flex;align-items:center;background:#2E7CF6;'
             'color:#ffffff;padding:9px 16px;border-radius:10px;font-weight:700;'
-            f'font-size:13px;box-shadow:0 4px 12px rgba(46,124,246,.35)">📧 {email}</span></a>'
+            f'font-size:13px;box-shadow:0 4px 12px rgba(46,124,246,.35)">'
+            f'{_icone_gmail}{email}</span></a>'
         )
     se = "\n".join(blocos)
     return f'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">{se}</div>' if se else ""
@@ -140,7 +151,7 @@ def _privacidade() -> None:
         st.markdown(
             f'<div style="background:#ffffff;color:#0f172a;border:1px solid #e2e8f0;'
             f'border-radius:14px;padding:16px 18px;margin:0 0 14px;box-shadow:0 2px 8px rgba(15,23,42,.06)">'
-            f'<div style="font-weight:800;font-size:15px;margin-bottom:6px">✉️ Para exercer seus direitos</div>'
+            f'<div style="font-weight:800;font-size:15px;margin-bottom:6px">⚖️ Para exercer seus direitos</div>'
             f'<div style="font-size:14px;line-height:1.6;color:#334155">Envie uma mensagem dizendo que deseja '
             f'exercer seus direitos LGPD (ex.: “quero apagar meus dados”). O atendimento é feito por '
             f'uma pessoa, então respondemos normalmente em até 2 dias úteis.</div>{_contatos_html}</div>',
