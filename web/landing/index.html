@@ -181,6 +181,92 @@
     footer a { color: var(--texto-suave); }
     footer a:hover { color: #fff; text-decoration: none; }
 
+    /* ---------------------------------------------------------------
+       Animações (adicionadas para dar vida aos pontos estratégicos)
+       --------------------------------------------------------------- */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(26px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes brilhoTexto {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    @keyframes pulseBotao {
+      0%   { box-shadow: 0 6px 20px rgba(37, 211, 102, 0.35), 0 0 0 0 rgba(37, 211, 102, 0.45); }
+      70%  { box-shadow: 0 6px 20px rgba(37, 211, 102, 0.35), 0 0 0 12px rgba(37, 211, 102, 0); }
+      100% { box-shadow: 0 6px 20px rgba(37, 211, 102, 0.35), 0 0 0 0 rgba(37, 211, 102, 0); }
+    }
+    @keyframes orbitaBorda {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    @keyframes flutuar {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-8px); }
+    }
+
+    .animar {
+      opacity: 0;
+      transform: translateY(26px);
+      transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: opacity, transform;
+    }
+    .animar.visivel { opacity: 1; transform: translateY(0); }
+
+    .hero .animar { animation: fadeUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    .hero .animar.a1 { animation-delay: 0.05s; }
+    .hero .animar.a2 { animation-delay: 0.18s; }
+    .hero .animar.a3 { animation-delay: 0.32s; }
+    .hero .animar.a4 { animation-delay: 0.46s; }
+
+    .hero h1 .destaque {
+      background: linear-gradient(90deg, #25D366, #4FD1A0, #25D366);
+      background-size: 220% auto;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: brilhoTexto 4s linear infinite;
+    }
+
+    .btn-pulsar { animation: pulseBotao 2.6s ease-out infinite; }
+
+    .passo, .card { transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease; }
+    .passo:hover, .card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(37, 211, 102, 0.5);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35);
+    }
+    .animar.passo:hover, .animar.card:hover, .animar.passo.visivel:hover, .animar.card.visivel:hover { transform: translateY(-4px); }
+
+    .preco-card { position: relative; overflow: hidden; }
+    .preco-card::before {
+      content: "";
+      position: absolute; inset: 0; border-radius: 20px; padding: 2px;
+      background: linear-gradient(90deg, #25D366, #2E7CF6, #25D366);
+      background-size: 220% auto;
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+      animation: orbitaBorda 5s linear infinite;
+    }
+
+    .flutuar { animation: flutuar 5s ease-in-out infinite; }
+
+    .atraso-1 { transition-delay: 0.08s; }
+    .atraso-2 { transition-delay: 0.16s; }
+    .atraso-3 { transition-delay: 0.24s; }
+    .atraso-4 { transition-delay: 0.32s; }
+    .atraso-5 { transition-delay: 0.40s; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .animar { opacity: 1; transform: none; transition: none; animation: none; }
+      .hero .animar, .hero h1 .destaque, .btn-pulsar, .preco-card::before, .flutuar { animation: none; }
+    }
+
     @media (max-width: 760px) {
       .passos { grid-template-columns: 1fr; }
       nav.links .oculto-mobile { display: none; }
@@ -204,17 +290,17 @@
 
   <section class="hero">
     <div class="container">
-      <h1>Trie relatos de bugs em segundos, <span class="destaque">antes que virem crise</span></h1>
-      <p class="sub">
+      <h1 class="animar a1">Trie relatos de bugs em segundos, <span class="destaque">antes que virem crise</span></h1>
+      <p class="sub animar a2">
         Cole o relato do cliente ou do time e receba na hora a <strong>severidade</strong>,
         o <strong>componente suspeito</strong> e uma <strong>proposta de correção</strong> em um
         relatório PDF estruturado — alimentado por IA.
       </p>
-      <div class="acoes">
-        <a class="btn btn-verde" href="https://ai-bug-triage-system-d6vigycbjt4qxez2wrvsxf.streamlit.app/" target="_blank" rel="noopener">Começar grátis</a>
+      <div class="acoes animar a3">
+        <a class="btn btn-verde btn-pulsar" href="https://ai-bug-triage-system-d6vigycbjt4qxez2wrvsxf.streamlit.app/" target="_blank" rel="noopener">Começar grátis</a>
         <a class="btn btn-ghost" href="#precos">Ver preços</a>
       </div>
-      <p class="prova">Cadastro grátis com e-mail · Sem instalação · Funciona direto no navegador</p>
+      <p class="prova animar a4">Cadastro grátis com e-mail · Sem instalação · Funciona direto no navegador</p>
     </div>
   </section>
 
@@ -225,17 +311,17 @@
         <p>Três passos do relato cru ao plano de ação — sem planilha, sem dor de cabeça.</p>
       </div>
       <div class="passos">
-        <article class="passo">
+        <article class="passo animar">
           <span class="numero">1</span>
           <h3>Cole o relato do bug</h3>
           <p>Descreva com suas palavras o que aconteceu, em que tela, com qual passo a passo. Naturalmente, como você fala.</p>
         </article>
-        <article class="passo">
+        <article class="passo animar atraso-1">
           <span class="numero">2</span>
           <h3>A IA faz a triagem</h3>
           <p>O sistema classifica a severidade, aponta o componente suspeito, avalia o impacto e sugere uma correção.</p>
         </article>
-        <article class="passo">
+        <article class="passo animar atraso-2">
           <span class="numero">3</span>
           <h3>Receba o relatório em PDF</h3>
           <p>Um relatório estruturado, pronto para compartilhar com o time ou anexar no seu Gestor de tarefas.</p>
@@ -251,32 +337,32 @@
         <p>Ferramentas que transformam bug em tarefa acionável — com histórico e visão de qualidade.</p>
       </div>
       <div class="grade">
-        <article class="card">
+        <article class="card animar">
           <span class="icone-linha verde-l">S</span>
           <h3>Severidade e componente</h3>
           <p>Classificação automática da gravidade e apontamento do módulo mais provavelmente afetado.</p>
         </article>
-        <article class="card">
+        <article class="card animar atraso-1">
           <span class="icone-linha azul-l">R</span>
           <h3>Relatório em PDF</h3>
           <p>Cada triagem gera um relatório estruturado para compartilhar, arquivar ou imprimir.</p>
         </article>
-        <article class="card">
+        <article class="card animar atraso-2">
           <span class="icone-linha verde-l">D</span>
           <h3>Dashboard de qualidade</h3>
           <p>Volume por dia, severidade e tendências dos bugs relatados, com visão executiva do produto.</p>
         </article>
-        <article class="card">
+        <article class="card animar">
           <span class="icone-linha azul-l">N</span>
           <h3>Histórico em nuvem</h3>
           <p>Seus relatos e triagens ficam salvos com segurança e disponíveis de qualquer dispositivo.</p>
         </article>
-        <article class="card">
+        <article class="card animar atraso-1">
           <span class="icone-linha verde-l">I</span>
           <h3>Integração com dev</h3>
           <p>Leve a triagem para o fluxo do time, saindo direto do relatório para a sua esteira de trabalho.</p>
         </article>
-        <article class="card">
+        <article class="card animar atraso-2">
           <span class="icone-linha azul-l">P</span>
           <h3>PIX automático</h3>
           <p>Plano Premium pago na hora via PIX, com confirmação automática — sem burocracia de boleto.</p>
@@ -291,7 +377,7 @@
         <h2>Preços simples</h2>
         <p>Comece grátis e assine o Premium quando quiser. Sem fidelidade.</p>
       </div>
-      <div class="preco-card">
+      <div class="preco-card animar">
         <p class="plano">Premium</p>
         <p class="valor">R$ 19,99</p>
         <p class="periodo">por mês · pago via PIX no próprio app</p>
@@ -302,7 +388,7 @@
           <li><span class="check">✓</span> Histórico salvo em nuvem</li>
           <li><span class="check">✓</span> Ativação imediata após o pagamento</li>
         </ul>
-        <a class="btn btn-verde" href="https://ai-bug-triage-system-d6vigycbjt4qxez2wrvsxf.streamlit.app/" target="_blank" rel="noopener">Assinar Premium</a>
+        <a class="btn btn-verde btn-pulsar" href="https://ai-bug-triage-system-d6vigycbjt4qxez2wrvsxf.streamlit.app/" target="_blank" rel="noopener">Assinar Premium</a>
         <p class="nota">O pagamento é confirmado automaticamente assim que o PIX é quitado.</p>
       </div>
     </div>
@@ -364,5 +450,27 @@
       <p>AI Bug Triage System · Triage de bugs de software com IA</p>
     </div>
   </footer>
+
+  <script>
+    // Revelar elementos .animar conforme o usuário rola a página
+    (function () {
+      // Elementos dentro do hero já entram com animação via CSS; o restante
+      // depende do observer abaixo para ganhar a classe .visivel ao rolar.
+      var alvos = document.querySelectorAll('.animar');
+      if (!('IntersectionObserver' in window)) {
+        for (var i = 0; i < alvos.length; i++) { alvos[i].classList.add('visivel'); }
+        return;
+      }
+      var obs = new IntersectionObserver(function (entradas) {
+        entradas.forEach(function (e) {
+          if (e.isIntersecting) {
+            e.target.classList.add('visivel');
+            obs.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+      for (var j = 0; j < alvos.length; j++) { obs.observe(alvos[j]); }
+    })();
+  </script>
 </body>
 </html>
