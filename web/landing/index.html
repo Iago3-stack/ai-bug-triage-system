@@ -169,8 +169,9 @@
       border: 1px solid var(--borda); border-radius: 20px; padding: 30px 26px 26px;
       display: flex; flex-direction: column;
     }
+    .plano-topo { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
     .plano-card .flag {
-      position: absolute; top: 6px; right: 14px; z-index: 3;
+      flex-shrink: 0;
       background: var(--fundo-2); color: var(--texto-suave);
       font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
       padding: 5px 12px; border: 1px solid var(--borda); border-radius: 999px;
@@ -179,7 +180,7 @@
     .plano-card.premium .flag {
       background: rgba(37, 211, 102, 0.15); color: var(--verde); border-color: rgba(37, 211, 102, 0.4);
     }
-    .plano-card .plano { font-size: 1.02rem; font-weight: 800; display: flex; align-items: center; gap: 8px; padding-right: 132px; }
+    .plano-card .plano { font-size: 1.02rem; font-weight: 800; display: flex; align-items: center; gap: 8px; }
     .plano-card .plano .icone { width: 30px; height: 30px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.95rem; }
     .plano-card .icone.basic { background: var(--fundo-2); }
     .plano-card .icone.premium { background: rgba(37, 211, 102, 0.15); }
@@ -427,8 +428,10 @@
       </div>
       <div class="planos">
         <article class="plano-card basic animar">
-          <span class="flag">Grátis</span>
-          <p class="plano"><span class="icone basic">🔓</span> Basic</p>
+          <div class="plano-topo">
+            <p class="plano"><span class="icone basic">🔓</span> Basic</p>
+            <span class="flag">Grátis</span>
+          </div>
           <p class="valor">R$ 0</p>
           <p class="periodo">para sempre · sem cartão de crédito</p>
           <p class="ideal">Ideal para <strong>testar e demonstrar</strong>.</p>
@@ -448,8 +451,10 @@
         </article>
 
         <article class="plano-card premium animar atraso-1">
-          <span class="flag">⭐ Mais escolhido</span>
-          <p class="plano"><span class="icone premium">🎁</span> Premium</p>
+          <div class="plano-topo">
+            <p class="plano"><span class="icone premium">🎁</span> Premium</p>
+            <span class="flag">⭐ Mais escolhido</span>
+          </div>
           <p class="valor">R$ 19,99</p>
           <p class="periodo">por mês · pago via PIX no próprio app</p>
           <p class="ideal">Ideal para <strong>produção contínua</strong>.</p>
