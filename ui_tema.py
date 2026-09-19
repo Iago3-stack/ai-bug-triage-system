@@ -93,6 +93,14 @@ _BASE_CSS = """
         opacity: .92 !important; box-shadow: 0 6px 18px rgba(255,255,255,.12) !important;
     }
 
+    /* Gatilho invisível do link "Termos & Privacidade" do rodapé: o link vive num
+       iframe com sandbox (não navega o topo), então um botão real do Streamlit
+       escondido assume o clique e faz st.switch_page (mesma sessão). */
+    [data-testid="stMain"] [data-testid="stElementContainer"]:has(.marca-rodape-legal),
+    [data-testid="stMain"] [data-testid="stElementContainer"]:has(.marca-rodape-legal) + [data-testid="stElementContainer"]:has([data-testid="stButton"]) {
+        display: none !important;
+    }
+
     /* Badge de prioridade animado (pulando) */
     @keyframes iago-pulse { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
     .badge-prioridade { display: inline-block; padding: 3px 12px; border-radius: 999px; font-weight: 800; font-size: 14px; color: #fff; animation: iago-pulse 1.4s ease-in-out infinite; box-shadow: 0 2px 8px rgba(0,0,0,.18); }

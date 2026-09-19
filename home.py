@@ -226,6 +226,13 @@ except StreamlitAPIException as _exc:
         raise
 ui_comum.rodape()
 
+# Navegação pelo rodapé (Termos/Privacidade): o `st.switch_page` preserva a
+# posição de rolagem, então a página Legal abria no fim. Roda o scroll-to-top
+# só quando esse fluxo foi usado (flag setada em `_ir_para_legal`), depois que
+# toda a página — inclusive o rodapé — já foi montada.
+if st.session_state.pop("_legal_topo", False):
+    ui_comum._rolar_topo()
+
 # Botão interno do dialog usou st.rerun() (ex.: trocar tema), que fecha o modal.
 # Este flag reabre o modal com o corpo re-renderizado.
 if st.session_state.pop("_reabrir_config", False):

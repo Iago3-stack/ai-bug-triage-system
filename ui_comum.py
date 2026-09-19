@@ -3,6 +3,7 @@ import base64
 from pathlib import Path
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 import jira_client
 import github_client
@@ -610,11 +611,24 @@ def rodape():
         <a href="{repo_url}blob/main/LICENSE" target="_blank" style="color:#cbd5e1;text-decoration:none;display:inline-flex;align-items:center;gap:6px">
           ⚖️ Licença MIT
         </a>
-        <a href="#" id="link-termos" target="_blank" rel="noopener"
-           onclick="try{{this.href=new URL('./legal?aba=termos', window.parent.location.href).href}}catch(e){{this.href='./legal?aba=termos'}}"
+        <a href="#" id="link-termos" rel="noopener" onclick="return irParaLegalPeloRodape()"
            style="color:#cbd5e1;text-decoration:none;display:inline-flex;align-items:center;gap:6px">
           📜 Termos &amp; Privacidade
         </a>
+      </div>
+      <script>
+      function irParaLegalPeloRodape() {{
+        try {{
+          var bts = window.parent.document.querySelectorAll('button');
+          for (var i = 0; i < bts.length; i++) {{
+            var tx = (bts[i].textContent || '').replace(/\\s+/g, ' ');
+            if (tx.indexOf('Termos & Privacidade') !== -1) {{ bts[i].click(); return false; }}
+          }}
+        }} catch (e) {{}}
+        try {{ window.parent.open('./legal?aba=termos', '_blank'); }} catch (e) {{}}
+        return false;
+      }}
+      </script>
       </div>
       <div style="padding:12px 16px;text-align:center;font-size:12px;color:#64748b;border-top:1px solid rgba(255,255,255,.08)">
         © {VERSAO} <b style="color:#94a3b8">Iago Nunes de Araújo</b> · 🚀 QA Automation Engineer · Estudante de IA &amp; ML (UNIASSELVI)<br/>
@@ -623,4 +637,73 @@ def rodape():
     </div>
     """
     st.iframe(_footer_html, height=560)
+    _rodape_legal()
+
+
+def _rodape_legal() -> None:
+    """Botão real (invisível) atrás do rodapé para o link "Termos & Privacidade".
+
+    O rodapé é um `st.iframe` com sandbox (sem `allow-top-navigation`), então o
+    link interno NÃO consegue navegar a página pai — abrir em outra aba cria
+    nova sessão e cai no Início. Aqui o link roda JS (same-origin) que CLICA
+    este botão do Streamlit, que usa `st.switch_page` (mesma sessão), igual aos
+    botões do menu_top. O botão é escondido por CSS (`:has(.marca-rodape-legal)`).
+    """
+    st.markdown('<div class="marca-rodape-legal" style="display:none"></div>', unsafe_allow_html=True)
+    if st.button("⚖️ Termos & Privacidade", key="rodape_legal", use_container_width=True):
+        _ir_para_legal("termos")
+
+
+def _rolar_topo() -> None:
+    """Força o container de rolagem do app (`[data-testid="stMain"]`) ao topo.
+
+    O `st.switch_page` preserva a posição de scroll (comportamento nativo do
+    Streamlit), então quem clica num botão do rodapé cairia no FIM da página
+    nova. Um componente HTML (same-origin) roda JS no contexto da página e zera
+    o `scrollTop`; um loop curto garante o reset mesmo se o Streamlit reaplicar
+    a rolagem logo após a montagem.
+
+    IMPORTANTE: NÃO usar `st.iframe` aqui — `height=0` é inválido
+    (StreamlitInvalidHeightError) e o `except` engolia o erro, então o script
+    nunca executava. `components.html` aceita height=0 e tem acesso ao parent.
+    """
+    try:
+        components.html(
+            "<script>"
+            "(function(){var d=window.parent.document;"
+            "function sobe(){try{var m=d.querySelector('[data-testid=\"stMain\"]');"
+            "if(m){m.scrollTop=0;}else{window.parent.scrollTo(0,0);}}catch(e){}}"
+            "sobe();"
+            "var n=0;var id=setInterval(function(){sobe();if(++n>12){clearInterval(id);}},400);"
+            "})();"
+            "</script>",
+            height=0,
+        )
+    except Exception:
+        pass
+
+
+def _ir_para_legal(aba: str) -> None:
+    """Navega para a página Legal já na aba pedida.
+
+    Guarda a aba em `session_state` (em vez de mexer no `?aba=`) e chama
+    `st.switch_page` puro — o mesmo caminho dos botões do CTA do Início. A
+    página Legal lê essa escolha para definir a aba inicial e sobe ao topo
+    (o `st.switch_page` sozinho preserva a rolagem).
+    """
+    try:
+        st.session_state["_aba_legal"] = (
+            "privacidade" if str(aba).strip().lower() == "privacidade" else "termos"
+        )
+        # Muda a chave do widget de abas na página Legal: força o Streamlit a
+        # recriá-lo já na aba escolhida (o `default` do st.tabs só vale na
+        # criação; sem isso, clicar no rodapé estando na Legal não trocaria).
+        st.session_state["_legal_nonce"] = st.session_state.get("_legal_nonce", 0) + 1
+        # Sinaliza para a página Legal rodar o scroll-to-top só nesta navegação.
+        st.session_state["_legal_topo"] = True
+    except Exception:
+        pass
+    if st.session_state.get("_url_atual") == "legal":
+        st.rerun()
+    st.switch_page(roteador.PAGINAS["legal"])
 
