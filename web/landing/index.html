@@ -96,6 +96,10 @@
     .btn:hover { text-decoration: none; transform: translateY(-1px); }
     .btn-verde { background: var(--verde); color: var(--verde-escuro) !important; }
     .btn-verde:hover { box-shadow: 0 6px 20px rgba(37, 211, 102, 0.35); }
+    .btn-laranja { background: #FB923C; color: #1A1206 !important; }
+    .btn-laranja:hover { box-shadow: 0 6px 20px rgba(249, 115, 22, 0.45); }
+    .btn-amarelo { background: #FFC107; color: #1F2937 !important; }
+    .btn-amarelo:hover { box-shadow: 0 6px 20px rgba(255, 193, 7, 0.45); }
     .btn-azul { background: var(--azul); color: #fff !important; }
     .btn-azul:hover { box-shadow: 0 6px 20px rgba(46, 124, 246, 0.35); }
     .btn-ghost { background: transparent; color: var(--texto) !important; border: 1px solid var(--borda); }
@@ -198,16 +202,21 @@
     .plano-card .acoes-card { margin-top: 20px; display: flex; flex-direction: column; gap: 8px; }
     .plano-card .nota { font-size: 0.8rem; color: var(--texto-suave); text-align: center; }
 
-    .plano-card.basic { border-color: var(--borda); }
-    .plano-card.premium { border: 1px solid rgba(37, 211, 102, 0.4); }
+    .plano-card.basic { border: 2px solid rgba(249, 115, 22, 0.55); }
+    .plano-card.basic .plano { color: #FB923C; }
+    .plano-card.basic .periodo { color: var(--texto-suave); }
+    .plano-card.basic .flag {
+      background: rgba(249, 115, 22, 0.15); color: #FB923C; border-color: rgba(249, 115, 22, 0.45);
+    }
+    .plano-card.premium { border: 2px solid rgba(37, 211, 102, 0.85); }
     .plano-card.premium .plano { color: var(--verde); }
     .plano-card.premium .valor { color: var(--verde); }
-    .plano-card.teste { }
+    .plano-card { }
     .plano-card.teste .plano { color: #FFD24D; }
     .plano-card.teste .valor { color: #FFD24D; }
     .plano-card.teste::before {
       content: ""; position: absolute; inset: 0; border-radius: 20px; padding: 2px;
-      background: linear-gradient(90deg, #FFC107, #25D366, #FFC107); background-size: 220% auto;
+      background: linear-gradient(90deg, #FFC107, #FB923C, #FFC107); background-size: 220% auto;
       -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
       -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none;
       animation: orbitaBorda 5s linear infinite; z-index: 1;
@@ -303,10 +312,11 @@
     }
     .plano-card:hover {
       transform: scale(1.045) translateY(-6px);
-      border-color: rgba(37, 211, 102, 0.6);
       box-shadow: 0 24px 50px rgba(0, 0, 0, 0.45);
     }
-    .plano-card.teste:hover { border-color: rgba(255, 193, 7, 0.65); box-shadow: 0 24px 50px rgba(255, 193, 7, 0.18); }
+    .plano-card.basic:hover { border-color: rgba(249, 115, 22, 0.85); box-shadow: 0 24px 50px rgba(249, 115, 22, 0.18); }
+    .plano-card.teste:hover { border-color: rgba(255, 193, 7, 0.85); box-shadow: 0 24px 50px rgba(255, 193, 7, 0.18); }
+    .plano-card.premium:hover { border-color: rgba(37, 211, 102, 0.9); box-shadow: 0 24px 50px rgba(37, 211, 102, 0.18); }
     .animar.plano-card:hover, .animar.plano-card.visivel:hover { transition-delay: 0s; transform: scale(1.045) translateY(-6px); }
 
     .preco-card { position: relative; overflow: hidden; }
@@ -464,7 +474,7 @@
             <li class="menos"><span class="check">✗</span> Histórico/Dashboard limitado</li>
           </ul>
           <div class="acoes-card">
-            <a class="btn btn-ghost" href="https://ai-bug-triage-system-d6vigycbjt4qxez2wrvsxf.streamlit.app/" target="_blank" rel="noopener">Começar grátis</a>
+            <a class="btn btn-laranja" href="https://ai-bug-triage-system-d6vigycbjt4qxez2wrvsxf.streamlit.app/" target="_blank" rel="noopener">Começar grátis</a>
             <span class="nota">Cadastro com e-mail em 1 minuto</span>
           </div>
         </article>
@@ -487,7 +497,7 @@
             <li><span class="check">✓</span> Alertas de CRÍTICA/ALTA</li>
           </ul>
           <div class="acoes-card">
-            <a class="btn btn-verde btn-pulsar" href="https://ai-bug-triage-system-d6vigycbjt4qxez2wrvsxf.streamlit.app/" target="_blank" rel="noopener">🎁 Testar grátis 7 dias</a>
+            <a class="btn btn-amarelo btn-pulsar" href="https://ai-bug-triage-system-d6vigycbjt4qxez2wrvsxf.streamlit.app/" target="_blank" rel="noopener">🎁 Testar grátis 7 dias</a>
             <span class="nota">Ao final, é só escolher se quer assinar ou voltar pro Basic</span>
           </div>
         </article>
