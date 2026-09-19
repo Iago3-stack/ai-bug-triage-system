@@ -1,6 +1,7 @@
 """Página Integração — vitrine/tutorial das integrações Playwright e Postman."""
 import streamlit as st
 
+import hero_animado
 import roteador
 from adaptadores import estruturar
 
@@ -146,7 +147,10 @@ def render() -> None:
             st.switch_page(roteador.PAGINAS["triagem"])
 
     with pm:
-        st.markdown("##### 📬 Postman · Newman")
+        st.markdown(
+            f'<h5 style="display:flex;align-items:center;gap:8px;margin:0">{hero_animado._svg_postman(20)}<span>Postman · Newman</span></h5>',
+            unsafe_allow_html=True,
+        )
         st.code(_EXEMPLO_POSTMAN, language="bash")
         e_pm = estruturar(_EXEMPLO_POSTMAN)
         if e_pm:
