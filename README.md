@@ -2,7 +2,7 @@
   <img src="https://capsule-render.vercel.app/api?type=soft&color=gradient&customColorList=20,24,25&height=80&section=header&text=AI%20Bug%20Triage%20System&fontSize=22&fontColor=fff&fontAlignY=60" width="100%" />
 </div>
 
-![Tela do app](assets/screenshot.png)
+![Tela do app](assets/screenshot.png?v=202609)
 
 > 🌐 *English readers: this document is in PT-BR, but your browser can translate it automatically (right-click → "Translate").*
 
