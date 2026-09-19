@@ -4,6 +4,37 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v3.0.0] - 2026-09-19
+
+### Adicionado
+- **Release principal 3.0** 🎉 — marca a maturidade do app como portfólio de produto SaaS de QA.
+- **Logo oficial do Postman** na página Integração — SVG real (simple-icons, `#FF6C37`) via `<img>` base64, mesmo método dos ícones de contato que renderizam no app (o `<svg>` inline não aparecia em ambiente restrito).
+- **Botões da tela de login/cadastro com cores sólidas e SEM hover nos dois temas:**
+  - 🚪 **Entrar** — verde sólido (`#059669`).
+  - ✨ **Criar conta grátis** — gradiente Google de 4 cores.
+  - 🔑 **Esqueceu a senha?** — vermelho sólido (`#dc2626`).
+  - 📧 **Reenviar confirmação** — azul sólido (`#2563eb`).
+  - **Enviar link de recuperação / Reenviar link de confirmação** — verde sólido.
+  - **Voltar** e **🏠 Voltar ao Início** — verdes sólidos com mesmo tamanho dos principais.
+  - O CSS abandonou o seletor antigo (`stVerticalBlock:has(> stElementContainer)`) que **não casava** com a estrutura real do Streamlit e deixava o fundo branco com hover cinza; agora usa o padrão comprovado **`stColumn:has(.marca-x)`**, com os marcadores dentro das mesmas colunas dos botões.
+
+### Alterado
+- **Página Início:** o card **"Triagem de bugs com IA para QA"** subiu para o topo (primeira impressão do app) e o masthead **"Conheça o plano"** desceu para logo acima da **tabela comparativa** — o visitante lê a proposta antes e vê a comparação de planos logo em seguida.
+- **README:** screenshot do app atualizado (nova captura 1920×1080) + cache-buster `?v=202609` na URL da imagem para o GitHub mostrar a versão nova.
+
+### Corrigido
+- **Botões "Voltar ao Início", "Enviar link de recuperação" e "Voltar" ficavam brancos com hover cinza** — mesma falha do seletor `:has(>)`; corrigidos pelo padrão `stColumn:has` (ver acima).
+
+## [v2.16.21] - 2026-09-18
+
+### Alterado
+- **Textos do pagamento sem jargão** — mensagens da confirmação de cobrança (webhook) mais claras e amigáveis para o assinante.
+
+## [v2.16.20] - 2026-09-18
+
+### Alterado
+- **Troca de senha com feedback verdadeiro:** mensagens distintas para senha **igual à atual**, **fraca/conhecida** ou que **não atende os requisitos** (`auth_supabase.definir_senha`), com testes cobrindo cada caso (`test_auth_supabase.py`).
+
 ## [v2.16.19] - 2026-09-18
 
 ### Corrigido
