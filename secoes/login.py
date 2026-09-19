@@ -103,10 +103,12 @@ def render() -> bool:
         _modo = st.session_state.get("_auth_modo")
         col_rec, col_reenv = st.columns(2)
         with col_rec:
+            st.markdown('<div class="marca-rec" style="display:none"></div>', unsafe_allow_html=True)
             if st.button("🔑 Esqueceu a senha?", key="_auth_btn_recuperar", use_container_width=True):
                 st.session_state["_auth_modo"] = "recuperar"
                 st.rerun()
         with col_reenv:
+            st.markdown('<div class="marca-reenv" style="display:none"></div>', unsafe_allow_html=True)
             if st.button("📧 Reenviar confirmação", key="_auth_btn_reenviar", use_container_width=True):
                 st.session_state["_auth_modo"] = "reenviar"
                 st.rerun()
@@ -137,6 +139,7 @@ def render() -> bool:
                         st.rerun()
                     else:
                         st.error(msg)
+            st.markdown('<div class="marca-voltar-modo" style="display:none"></div>', unsafe_allow_html=True)
             if st.button("Voltar", key="_auth_voltar"):
                 st.session_state.pop("_auth_modo", None)
                 st.rerun()
