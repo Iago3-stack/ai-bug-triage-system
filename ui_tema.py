@@ -410,15 +410,17 @@ body:has([data-st-tema="escuro"]) .marca-g-google { color:#9aa3af !important; }
 [data-testid="stColumn"]:has(.marca-reenv) [data-testid="stButton"] button { background:#2563eb !important; color:#ffffff !important; border:none !important; font-weight:700 !important; height:38px !important; min-height:38px !important; line-height:38px !important; padding-top:0 !important; padding-bottom:0 !important; white-space:nowrap !important; }
 [data-testid="stColumn"]:has(.marca-reenv) [data-testid="stButton"] button:hover { background:#2563eb !important; color:#ffffff !important; }
 
+/* Enviar link de recuperação / Reenviar link (modo) — verde sólido, sem hover */
+[data-testid="stColumn"]:has(.marca-enviar-modo) [data-testid="stFormSubmitButton"] button { background:#059669 !important; color:#ffffff !important; border:none !important; font-weight:700 !important; }
+[data-testid="stColumn"]:has(.marca-enviar-modo) [data-testid="stFormSubmitButton"] button:hover { background:#059669 !important; color:#ffffff !important; }
+
 /* Voltar (modo recuperar/reenviar) — verde sólido, sem hover */
-[data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"]:has(.marca-voltar-modo)) [data-testid="stButton"] button { background:#059669 !important; color:#ffffff !important; border:none !important; font-weight:700 !important; }
-[data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"]:has(.marca-voltar-modo)) [data-testid="stButton"] button:hover { background:#059669 !important; color:#ffffff !important; }
+[data-testid="stColumn"]:has(.marca-voltar-modo) [data-testid="stButton"] button { background:#059669 !important; color:#ffffff !important; border:none !important; font-weight:700 !important; }
+[data-testid="stColumn"]:has(.marca-voltar-modo) [data-testid="stButton"] button:hover { background:#059669 !important; color:#ffffff !important; }
 
 /* Voltar ao Início — verde sólido, sem hover, nos dois temas */
-[data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"]:has(.marca-voltar)) [data-testid="stButton"] button { background:#059669 !important; color:#ffffff !important; border:none !important; border-radius:999px !important; font-weight:700 !important; }
-[data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"]:has(.marca-voltar)) [data-testid="stButton"] button:hover { background:#059669 !important; color:#ffffff !important; }
-body:has([data-st-tema="escuro"]) [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"]:has(.marca-voltar)) [data-testid="stButton"] button { background:#059669 !important; color:#ffffff !important; }
-body:has([data-st-tema="escuro"]) [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"]:has(.marca-voltar)) [data-testid="stButton"] button:hover { background:#059669 !important; color:#ffffff !important; }
+[data-testid="stColumn"]:has(.marca-voltar) [data-testid="stButton"] button { background:#059669 !important; color:#ffffff !important; border:none !important; border-radius:999px !important; font-weight:700 !important; }
+[data-testid="stColumn"]:has(.marca-voltar) [data-testid="stButton"] button:hover { background:#059669 !important; color:#ffffff !important; }
 
 /* Página Meu Plano — botões com COR SÓLIDA e sem hover (checkout, admin, migração, WhatsApp) */
 [data-testid="stElementContainer"]:has(.marca-plano-migrar) + [data-testid="stElementContainer"] [data-testid="stButton"] button,

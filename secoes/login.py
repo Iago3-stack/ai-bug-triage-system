@@ -128,21 +128,24 @@ def render() -> bool:
                     "Se a conta ainda não foi confirmada, reenviamos o link. "
                     "Verifique sua caixa de entrada (e o spam)."
                 )
-            with st.form(f"form_{_modo}", clear_on_submit=True):
-                st.text_input("Seu e-mail", key=f"_auth_{_modo}_email")
-                enviar = st.form_submit_button(rotulo)
-                if enviar:
-                    ok, msg = funcao(st.session_state[f"_auth_{_modo}_email"])
-                    if ok:
-                        st.success(msg_ok)
-                        st.session_state.pop("_auth_modo", None)
-                        st.rerun()
-                    else:
-                        st.error(msg)
-            st.markdown('<div class="marca-voltar-modo" style="display:none"></div>', unsafe_allow_html=True)
-            if st.button("Voltar", key="_auth_voltar"):
-                st.session_state.pop("_auth_modo", None)
-                st.rerun()
+            _m1, _m2, _m3 = st.columns([1, 1.2, 1])
+            with _m2:
+                with st.form(f"form_{_modo}", clear_on_submit=True):
+                    st.text_input("Seu e-mail", key=f"_auth_{_modo}_email")
+                    st.markdown('<div class="marca-enviar-modo" style="display:none"></div>', unsafe_allow_html=True)
+                    enviar = st.form_submit_button(rotulo, use_container_width=True)
+                    if enviar:
+                        ok, msg = funcao(st.session_state[f"_auth_{_modo}_email"])
+                        if ok:
+                            st.success(msg_ok)
+                            st.session_state.pop("_auth_modo", None)
+                            st.rerun()
+                        else:
+                            st.error(msg)
+                st.markdown('<div class="marca-voltar-modo" style="display:none"></div>', unsafe_allow_html=True)
+                if st.button("Voltar", key="_auth_voltar", use_container_width=True):
+                    st.session_state.pop("_auth_modo", None)
+                    st.rerun()
 
     esquerda, direita = st.columns([1.25, 1], gap="medium")
     with esquerda:
@@ -166,9 +169,9 @@ def render() -> bool:
     import roteador
 
     with st.container():
-        st.markdown('<div class="marca-voltar" style="display:none"></div>', unsafe_allow_html=True)
         _c1, _c2, _c3 = st.columns([1, 0.7, 1])
         with _c2:
+            st.markdown('<div class="marca-voltar" style="display:none"></div>', unsafe_allow_html=True)
             if st.button(
                 "🏠 Voltar ao Início",
                 key="voltar_inicio",
