@@ -85,17 +85,13 @@ def render():
         )
 
     # --- CABEÇALHO ---
+    hero_animado.linha()
     col_foto, col_info = st.columns([1, 2])
+    with col_foto:
+        st.image("assets/o novo.png", width=250, caption="Iago Nunes")
     with col_info:
-        st.markdown('<h1 class="nome-site" style="font-weight:700; line-height:1.2; letter-spacing:-0.02em; padding:0; margin:0; color:black">Iago Nunes<span style="font-size:0.5em; vertical-align:super; font-weight:400; color:#6b7280; margin-left:2px">©</span></h1>', unsafe_allow_html=True)
-        hero_animado.linha()
         hero_animado.render()
-    with col_foto:    
-        st.image("assets/o novo.png", width=250,caption="Iago Nunes")
-
-        st.markdown("""
-    <div style="height:3px;width:100%;background:linear-gradient(90deg,transparent,#25D366,#2E7CF6,#7c3aed,transparent);border-radius:999px;margin:8px 0"></div>
-    """, unsafe_allow_html=True)
+    hero_animado.linha()
 
     st.markdown("""
     <div style="margin-top:14px;width:100%;background:linear-gradient(135deg,#0f172a 0%,#16233c 55%,#25D366 170%);border-radius:16px;color:#e2e8f0;font-size:15px;line-height:1.6;padding:22px 24px">

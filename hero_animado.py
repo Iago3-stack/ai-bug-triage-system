@@ -162,6 +162,22 @@ def _svg_groq(tamanho: int = 18, cor: str = "#0f172a") -> str:
     )
 
 
+def _svg_gmail(tamanho: int = 17) -> str:
+    """'M' colorido oficial do Gmail (2020) em SVG inline (mesmo método do 'G' do Google)."""
+    largura = round(tamanho * 88 / 66)
+    return (
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="52 42 88 66" '
+        f'width="{largura}" height="{tamanho}" role="img" aria-label="Gmail" '
+        f'style="display:inline-block;vertical-align:middle">'
+        '<path fill="#4285f4" d="M58 108h14V74L52 59v43c0 3.32 2.69 6 6 6"/>'
+        '<path fill="#34a853" d="M120 108h14c3.32 0 6-2.69 6-6V59l-20 15"/>'
+        '<path fill="#fbbc04" d="M120 48v26l20-15v-8c0-7.42-8.47-11.65-14.4-7.2"/>'
+        '<path fill="#ea4335" d="M72 74V48l24 18 24-18v26L96 92"/>'
+        '<path fill="#c5221f" d="M52 51v8l20 15V48l-5.6-4.2c-5.94-4.45-14.4-.22-14.4 7.2"/>'
+        '</svg>'
+    )
+
+
 CONTATO_URLS = {
     "whatsapp": "https://wa.me/5598985914235?text=Ol%C3%A1%20Iago%2C%20vi%20seu%20portf%C3%B3lio%20de%20IA%20e%20QA%20e%20gostaria%20de%20conversar%20sobre%20uma%20oportunidade!",
     "linkedin": "https://www.linkedin.com/in/iago-nunes-897a5832b/?lipi=urn%3Ali%3Apage%3Ad_flagship3_profile_view_base_contact_details%3B%2F15y3S36T5SI8UZodVDXGw%3D%3D",
@@ -194,6 +210,13 @@ CONTATO_CSS = """
 """
 
 def _contato_icon(nome: str) -> str:
+    if nome == "gmail":
+        return (
+            '<span style="display:inline-block;background:#ffffff;border-radius:4px;'
+            'padding:1px 2px;vertical-align:middle;margin-right:9px;line-height:0">'
+            + _svg_gmail()
+            + "</span>"
+        )
     href = "data:image/svg+xml;base64," + _B64[nome]
     return f'<img src="{href}" width="17" height="17" style="vertical-align:middle; margin-right:9px"/>'
 

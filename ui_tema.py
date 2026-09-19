@@ -93,25 +93,6 @@ _BASE_CSS = """
         opacity: .92 !important; box-shadow: 0 6px 18px rgba(255,255,255,.12) !important;
     }
 
-    /* Card Legal do rodapé: mesmo leiaute do CTA do Início (título + 1 botão).
-       Mantém o botão DENTRO do card — no mobile as colunas empilham sozinhas. */
-    [data-testid="stVerticalBlock"]:has(.marca-legal):has(> [data-testid="stLayoutWrapper"]):not(:has(> :not([data-testid="stLayoutWrapper"]))) {
-        background: linear-gradient(135deg,#0f172a 0%,#16233c 55%,#25D366 175%) !important;
-        border-radius: 14px !important;
-        padding: 14px 14px 12px !important;
-    }
-    .marca-legal { text-align: center; color: #e2e8f0 !important; font-size: 15px; line-height: 1.6; }
-    .marca-legal-titulo { font-size: 19px; font-weight: 800; color: #ffffff !important; margin-bottom: 6px; }
-    .marca-legal-sub { color: #94a3b8 !important; font-size: 14px; font-weight: 700; margin: 0; }
-    [data-testid="stVerticalBlock"]:has(.marca-legal):has(> [data-testid="stLayoutWrapper"]):not(:has(> :not([data-testid="stLayoutWrapper"]))) [data-testid="stColumn"]:nth-child(2) [data-testid="stButton"] button {
-        background: #25D366 !important;
-        color: #022c0e !important; font-weight: 800 !important; font-size: 14px !important;
-        border: 1px solid rgba(255,255,255,.22) !important; border-radius: 10px !important; padding: 12px 16px !important;
-    }
-    [data-testid="stVerticalBlock"]:has(.marca-legal):has(> [data-testid="stLayoutWrapper"]):not(:has(> :not([data-testid="stLayoutWrapper"]))) [data-testid="stButton"] button:hover {
-        opacity: .92 !important; box-shadow: 0 6px 18px rgba(255,255,255,.12) !important;
-    }
-
     /* Badge de prioridade animado (pulando) */
     @keyframes iago-pulse { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
     .badge-prioridade { display: inline-block; padding: 3px 12px; border-radius: 999px; font-weight: 800; font-size: 14px; color: #fff; animation: iago-pulse 1.4s ease-in-out infinite; box-shadow: 0 2px 8px rgba(0,0,0,.18); }
