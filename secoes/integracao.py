@@ -148,7 +148,7 @@ def render() -> None:
 
     with pm:
         st.markdown(
-            f'<h5 style="display:flex;align-items:center;gap:8px;margin:0">{hero_animado._svg_postman(20)}<span>Postman · Newman</span></h5>',
+            f'<h5 style="display:flex;align-items:center;gap:8px;margin:0">{hero_animado._img_postman(20)}<span>Postman · Newman</span></h5>',
             unsafe_allow_html=True,
         )
         st.code(_EXEMPLO_POSTMAN, language="bash")
