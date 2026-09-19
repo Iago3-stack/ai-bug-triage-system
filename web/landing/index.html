@@ -161,52 +161,59 @@
     .preco-card li .check { color: var(--verde); font-weight: 800; }
     .preco-card .nota { margin-top: 18px; font-size: 0.85rem; color: var(--texto-suave); }
 
-    /* Tabela comparativa Basic × Premium */
-    .planos { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 980px; margin: 0 auto; align-items: stretch; }
+    /* Tabela comparativa Basic × Teste × Premium */
+    .planos { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; max-width: 1080px; margin: 0 auto; align-items: stretch; }
     .plano-card {
       position: relative; overflow: hidden;
       background: linear-gradient(135deg, var(--superficie), var(--fundo-2));
-      border: 1px solid var(--borda); border-radius: 20px; padding: 30px 26px 26px;
+      border: 1px solid var(--borda); border-radius: 20px; padding: 30px 22px 24px;
       display: flex; flex-direction: column;
     }
-    .plano-topo { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .plano-topo { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .plano-card .flag {
       flex-shrink: 0;
       background: var(--fundo-2); color: var(--texto-suave);
-      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
-      padding: 5px 12px; border: 1px solid var(--borda); border-radius: 999px;
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+      padding: 5px 10px; border: 1px solid var(--borda); border-radius: 999px;
       white-space: nowrap;
+    }
+    .plano-card.teste .flag {
+      background: rgba(255, 193, 7, 0.15); color: #FFD24D; border-color: rgba(255, 193, 7, 0.45);
     }
     .plano-card.premium .flag {
       background: rgba(37, 211, 102, 0.15); color: var(--verde); border-color: rgba(37, 211, 102, 0.4);
     }
-    .plano-card .plano { font-size: 1.02rem; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+    .plano-card .plano { font-size: 1rem; font-weight: 800; display: flex; align-items: center; gap: 8px; }
     .plano-card .plano .icone { width: 30px; height: 30px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.95rem; }
     .plano-card .icone.basic { background: var(--fundo-2); }
+    .plano-card .icone.teste { background: rgba(255, 193, 7, 0.15); }
     .plano-card .icone.premium { background: rgba(37, 211, 102, 0.15); }
-    .plano-card .valor { font-size: 2.6rem; font-weight: 800; margin: 14px 0 2px; }
-    .plano-card .periodo { color: var(--texto-suave); font-size: 0.92rem; margin-bottom: 6px; }
-    .plano-card .ideal { font-size: 0.82rem; color: var(--texto-suave); margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--borda); }
+    .plano-card .valor { font-size: 2.4rem; font-weight: 800; margin: 14px 0 2px; }
+    .plano-card .periodo { color: var(--texto-suave); font-size: 0.9rem; margin-bottom: 6px; }
+    .plano-card .ideal { font-size: 0.82rem; color: var(--texto-suave); margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--borda); }
     .plano-card ul { list-style: none; text-align: left; flex: 1; }
-    .plano-card li { padding: 7px 0; color: var(--texto-suave); font-size: 0.92rem; display: flex; gap: 10px; align-items: flex-start; }
+    .plano-card li { padding: 7px 0; color: var(--texto-suave); font-size: 0.9rem; display: flex; gap: 10px; align-items: flex-start; }
     .plano-card li .check { color: var(--verde); font-weight: 800; }
     .plano-card li.menos { opacity: 0.5; }
     .plano-card .acoes-card { margin-top: 20px; display: flex; flex-direction: column; gap: 8px; }
     .plano-card .nota { font-size: 0.8rem; color: var(--texto-suave); text-align: center; }
 
     .plano-card.basic { border-color: var(--borda); }
-    .plano-card.premium { border: 1px solid rgba(37, 211, 102, 0.55); }
+    .plano-card.premium { border: 1px solid rgba(37, 211, 102, 0.4); }
     .plano-card.premium .plano { color: var(--verde); }
     .plano-card.premium .valor { color: var(--verde); }
-    .plano-card.premium::before {
+    .plano-card.teste { }
+    .plano-card.teste .plano { color: #FFD24D; }
+    .plano-card.teste .valor { color: #FFD24D; }
+    .plano-card.teste::before {
       content: ""; position: absolute; inset: 0; border-radius: 20px; padding: 2px;
-      background: linear-gradient(90deg, #25D366, #2E7CF6, #25D366); background-size: 220% auto;
+      background: linear-gradient(90deg, #FFC107, #25D366, #FFC107); background-size: 220% auto;
       -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
       -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none;
       animation: orbitaBorda 5s linear infinite; z-index: 1;
     }
-    .plano-card.premium > * { position: relative; z-index: 2; }
-    @media (max-width: 760px) {
+    .plano-card.teste > * { position: relative; z-index: 2; }
+    @media (max-width: 900px) {
       .planos { grid-template-columns: 1fr; max-width: 460px; }
     }
 
@@ -450,10 +457,33 @@
           </div>
         </article>
 
-        <article class="plano-card premium animar atraso-1">
+        <article class="plano-card teste animar atraso-1">
           <div class="plano-topo">
-            <p class="plano"><span class="icone premium">🎁</span> Premium</p>
+            <p class="plano"><span class="icone teste">🎁</span> Teste 7 dias</p>
             <span class="flag">⭐ Mais escolhido</span>
+          </div>
+          <p class="valor">R$ 0</p>
+          <p class="periodo">7 dias de Premium grátis · sem cartão de crédito</p>
+          <p class="ideal">Ideal para <strong>experimentar tudo antes de assinar</strong>.</p>
+          <ul>
+            <li><span class="check">✓</span> Tudo do Premium liberado por 7 dias</li>
+            <li><span class="check">✓</span> Análises de IA — causa raiz + comparativo IA×local</li>
+            <li><span class="check">✓</span> RAG — “como foi resolvido” em casos similares</li>
+            <li><span class="check">✓</span> Histórico/Dashboard completo</li>
+            <li><span class="check">✓</span> Múltiplos canais de alerta (e-mail + Discord)</li>
+            <li><span class="check">✓</span> Integração com dev</li>
+            <li><span class="check">✓</span> Alertas de CRÍTICA/ALTA</li>
+          </ul>
+          <div class="acoes-card">
+            <a class="btn btn-verde btn-pulsar" href="https://ai-bug-triage-system-d6vigycbjt4qxez2wrvsxf.streamlit.app/" target="_blank" rel="noopener">🎁 Testar grátis 7 dias</a>
+            <span class="nota">Ao final, é só escolher se quer assinar ou voltar pro Basic</span>
+          </div>
+        </article>
+
+        <article class="plano-card premium animar atraso-2">
+          <div class="plano-topo">
+            <p class="plano"><span class="icone premium">⭐</span> Premium</p>
+            <span class="flag">Produção contínua</span>
           </div>
           <p class="valor">R$ 19,99</p>
           <p class="periodo">por mês · pago via PIX no próprio app</p>
@@ -466,10 +496,9 @@
             <li><span class="check">✓</span> RAG — “como foi resolvido” em casos similares</li>
             <li><span class="check">✓</span> Histórico/Dashboard completo</li>
             <li><span class="check">✓</span> Múltiplos canais de alerta (e-mail + Discord)</li>
-            <li><span class="check">🎁</span> Teste Premium 7 dias grátis</li>
           </ul>
           <div class="acoes-card">
-            <a class="btn btn-verde btn-pulsar" href="https://ai-bug-triage-system-d6vigycbjt4qxez2wrvsxf.streamlit.app/" target="_blank" rel="noopener">🎁 Assinar Premium</a>
+            <a class="btn btn-verde" href="https://ai-bug-triage-system-d6vigycbjt4qxez2wrvsxf.streamlit.app/" target="_blank" rel="noopener">Assinar Premium</a>
             <span class="nota">O pagamento é confirmado automaticamente assim que o PIX é quitado.</span>
           </div>
         </article>
