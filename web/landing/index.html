@@ -297,6 +297,18 @@
     }
     .animar.passo:hover, .animar.card:hover, .animar.passo.visivel:hover, .animar.card.visivel:hover { transform: translateY(-4px); }
 
+    /* Cards de plano crescem ao passar o mouse */
+    .plano-card {
+      transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease, border-color 0.28s ease;
+    }
+    .plano-card:hover {
+      transform: scale(1.045) translateY(-6px);
+      border-color: rgba(37, 211, 102, 0.6);
+      box-shadow: 0 24px 50px rgba(0, 0, 0, 0.45);
+    }
+    .plano-card.teste:hover { border-color: rgba(255, 193, 7, 0.65); box-shadow: 0 24px 50px rgba(255, 193, 7, 0.18); }
+    .animar.plano-card:hover, .animar.plano-card.visivel:hover { transition-delay: 0s; transform: scale(1.045) translateY(-6px); }
+
     .preco-card { position: relative; overflow: hidden; }
     .preco-card::before {
       content: "";
@@ -356,7 +368,7 @@
         <a class="btn btn-verde btn-pulsar" href="https://ai-bug-triage-system-d6vigycbjt4qxez2wrvsxf.streamlit.app/" target="_blank" rel="noopener">Começar grátis</a>
         <a class="btn btn-ghost" href="#precos">Ver preços</a>
       </div>
-      <p class="prova animar a4">Cadastro grátis com e-mail · Sem instalação · Funciona direto no navegador</p>
+      <p class="prova animar a4">Cadastro grátis com e-mail · Sem instalação · Funciona direto no navegador 🚀️</p>
     </div>
   </section>
 
@@ -498,7 +510,7 @@
             <li><span class="check">✓</span> Múltiplos canais de alerta (e-mail + Discord)</li>
           </ul>
           <div class="acoes-card">
-            <a class="btn btn-verde" href="https://ai-bug-triage-system-d6vigycbjt4qxez2wrvsxf.streamlit.app/" target="_blank" rel="noopener">Assinar Premium</a>
+            <a class="btn btn-verde" href="https://ai-bug-triage-system-d6vigycbjt4qxez2wrvsxf.streamlit.app/" target="_blank" rel="noopener">⭐️ Assinar Premium</a>
             <span class="nota">O pagamento é confirmado automaticamente assim que o PIX é quitado.</span>
           </div>
         </article>
