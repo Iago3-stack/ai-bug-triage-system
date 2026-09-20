@@ -41,12 +41,6 @@
       "price": "19.99",
       "priceCurrency": "BRL",
       "description": "Plano Premium (mensal) — pagamento por PIX"
-    },
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      "ratingValue": "5",
-      "bestRating": "5",
-      "ratingCount": "1"
     }
   }
   </script>
@@ -260,6 +254,7 @@
       border: 1px solid rgba(255, 255, 255, 0.2); background: var(--fundo); color: var(--texto); outline: none;
     }
     .lead-form input[type="email"]:focus { border-color: var(--verde); box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.25); }
+    .lead-form .honeypot { position: absolute; left: -9999px; width: 0; height: 0; opacity: 0; }
 
     /* Rodapé */
     footer { border-top: 1px solid var(--borda); padding: 32px 20px; text-align: center; color: var(--texto-suave); font-size: 0.9rem; }
@@ -412,14 +407,29 @@
     @media (max-width: 760px) {
       .passos { grid-template-columns: 1fr; }
       nav.links .oculto-mobile { display: none; }
+      .brand { font-size: 0; gap: 0; }
+      .brand img { margin-right: 2px; }
+      nav.links { gap: 12px; }
       section { padding: 48px 16px; }
+    }
+
+    /* Badge dos planos nunca pode ser cortado na borda do card (o "A" sumia) */
+    @media (max-width: 520px) {
+      .plano-topo { gap: 6px; }
+      .plano-card .plano { font-size: 0.95rem; }
+      .plano-card .flag { font-size: 0.6rem; letter-spacing: 0.03em; padding: 4px 8px; }
+    }
+    @media (max-width: 400px) {
+      .plano-topo { gap: 4px; }
+      .plano-card .flag { font-size: 0.55rem; letter-spacing: 0.02em; padding: 3px 6px; }
+      .plano-card .plano { font-size: 0.9rem; }
     }
   </style>
 </head>
 <body>
   <header class="nav">
     <div class="container nav-inner">
-      <span class="brand"><img src="logo7_robo.png" alt="Logo do AI Bug Triage System" width="34" height="34" /> AI Bug Triage System</span>
+      <span class="brand" aria-label="AI Bug Triage System — página inicial"><img src="logo7_robo.png" alt="Logo do AI Bug Triage System" width="34" height="34" /> AI Bug Triage System</span>
       <nav class="links">
         <a href="#como-funciona" class="oculto-mobile">Como funciona</a>
         <a href="#recursos" class="oculto-mobile">Recursos</a>
@@ -507,7 +517,7 @@
         <article class="card animar atraso-2">
           <span class="icone-linha azul-l">P</span>
           <h3>PIX automático</h3>
-          <p>Plano Premium pago na hora via PIX, com confirmação automática — sem burocracia de boleto.</p>
+          <p>Plano Premium pago na hora via PIX, com confirmação automática — sem cartão de crédito e sem fidelidade.</p>
         </article>
       </div>
     </div>
@@ -630,29 +640,26 @@
   </section>
 
   <section class="cta-final">
-
-  <section class="cta-final">
-    <div class="container">
-      <h2>Receba novidades e dicas de QA com IA</h2>
-      <p style="margin-top:12px; color: var(--texto-suave);">Fique por dentro de novos recursos, estudos de caso e melhorias do AI Bug Triage System.</p>
-      <form class="lead-form" action="https://formsubmit.co/viago4415@gmail.com" method="POST" style="margin-top: 24px;">
-        <input type="hidden" name="_captcha" value="false" />
-        <input type="hidden" name="_subject" value="Novo lead na landing — AI Bug Triage System" />
-        <input type="hidden" name="_template" value="table" />
-        <input type="email" name="email" placeholder="Seu melhor e-mail" required />
-        <button type="submit" class="btn btn-verde">Quero receber</button>
-      </form>
-      <p style="margin-top:14px; font-size: 0.85rem; color: var(--texto-suave);">Sem spam. Só conteúdo relevante. Cancele quando quiser.</p>
-    </div>
-  </section>
-
-  <section class="cta-final">
     <div class="container">
       <h2>Pronto para triar melhor hoje?</h2>
       <p style="margin-top:12px; color: var(--texto-suave);">Leva menos de um minuto para começar.</p>
       <div class="acoes" style="margin-top: 24px;">
         <a class="btn btn-verde" href="https://ai-bug-triage-system-d6vigycbjt4qxez2wrvsxf.streamlit.app/" target="_blank" rel="noopener">Abrir o app agora</a>
       </div>
+
+      <hr style="max-width: 420px; margin: 36px auto 26px; border: 0; border-top: 1px solid var(--borda);" />
+
+      <h3 style="font-size: 1.05rem; margin-bottom: 4px;">ou fique por dentro das novidades</h3>
+      <p style="margin-top:6px; color: var(--texto-suave); font-size: 0.9rem;">Novos recursos, estudos de caso e melhorias do AI Bug Triage System.</p>
+      <form class="lead-form" action="https://formsubmit.co/viago4415@gmail.com" method="POST" style="margin-top: 20px;">
+        <input type="hidden" name="_captcha" value="false" />
+        <input type="hidden" name="_subject" value="Novo lead na landing — AI Bug Triage System" />
+        <input type="hidden" name="_template" value="table" />
+        <input type="text" name="_honey" class="honeypot" tabindex="-1" aria-hidden="true" autocomplete="off" />
+        <input type="email" name="email" placeholder="Seu melhor e-mail" required />
+        <button type="submit" class="btn btn-verde">Quero receber</button>
+      </form>
+      <p style="margin-top:14px; font-size: 0.85rem; color: var(--texto-suave);">Sem spam. Só conteúdo relevante. Cancele quando quiser.</p>
     </div>
   </section>
 
@@ -663,7 +670,7 @@
         <a href="https://github.com/iago3-stack/ai-bug-triage-system" target="_blank" rel="noopener">Código aberto</a>
       </div>
       <p>
-        <img alt="Testes: X passed" src="https://img.shields.io/endpoint?url=https%3A%2F%2Fai-bug-triage.com.br%2Fpytest-badge.json&cacheSeconds=300"
+        <img alt="Contagem de testes do repositório" src="https://img.shields.io/endpoint?url=https%3A%2F%2Fai-bug-triage.com.br%2Fpytest-badge.json&cacheSeconds=300"
              style="max-width: 260px;" loading="lazy" />
       </p>
       <p>AI Bug Triage System · Triage de bugs de software com IA</p>
