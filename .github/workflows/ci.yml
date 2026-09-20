@@ -33,6 +33,11 @@ jobs:
       - name: Instalar dependências de teste
         run: pip install -r requirements-dev.txt
 
+      - name: Auditoria de vulnerabilidades (pip-audit)
+        run: |
+          pip install pip-audit
+          pip-audit --disable-pip
+
       - name: Rodar testes unitários
         run: pytest -v --junitxml=junit.xml
 

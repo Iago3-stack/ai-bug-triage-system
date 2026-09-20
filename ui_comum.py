@@ -430,11 +430,40 @@ class _ImagemHeicSemSuporte(Exception):
     """Foto HEIC/HEIF enviada, mas sem decodificador instalado (pillow-heif)."""
 
 
+_MAX_AVATAR_BYTES = 8 * 1024 * 1024  # 8 MB brutos na entrada
+_MAX_AVATAR_LADO = 8000  # páginas pitorescas que subiriam como "avatar"
+
+
+def _tem_magia_de_imagem(dados: bytes) -> bool:
+    """Confere os bytes mágicos reais do arquivo (não a extensão).
+
+    Wikipedia dos piratas: arquivo renomeado para .png não engana quem olha
+    o conteúdo. Suporta JPEG/PNG/WebP/HEIC-HEIF.
+    """
+    if len(dados) < 12:
+        return False
+    if dados[:3] == b"\xff\xd8\xff":  # JPEG
+        return True
+    if dados[:8] == b"\x89PNG\r\n\x1a\n":  # PNG
+        return True
+    if dados[:4] == b"RIFF" and dados[8:12] == b"WEBP":  # WebP
+        return True
+    if dados[4:8] == b"ftyp":  # HEIC/HEIF
+        return dados[8:12] in (b"heic", b"heix", b"hevc", b"hevm", b"mif1", b"msf1")
+    return False
+
+
 def _abrir_imagem_enviada(origem) -> "Image.Image":
     """Abre JPG/PNG/WebP/HEIC do upload ou da câmera (celular incluído)."""
     import io
 
     from PIL import Image
+
+    dados = origem.getvalue()
+    if not _tem_magia_de_imagem(dados):
+        raise ValueError("Arquivo não é uma imagem reconhecida.")
+    if len(dados) > _MAX_AVATAR_BYTES:
+        raise ValueError("Imagem acima do limite de tamanho.")
 
     nome = (getattr(origem, "name", "") or "").lower()
     if nome.endswith((".heic", ".heif")):
@@ -443,7 +472,10 @@ def _abrir_imagem_enviada(origem) -> "Image.Image":
         except ImportError as err:
             raise _ImagemHeicSemSuporte() from err
         register_heif_opener()
-    return Image.open(io.BytesIO(origem.getvalue()))
+    img = Image.open(io.BytesIO(dados))
+    if img.size[0] > _MAX_AVATAR_LADO or img.size[1] > _MAX_AVATAR_LADO:
+        raise ValueError("Imagem com dimensões acima do permitido.")
+    return img
 
 
 @st.dialog("👤 Seu perfil")

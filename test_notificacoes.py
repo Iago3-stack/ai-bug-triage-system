@@ -3,6 +3,7 @@
 # Confirma: só alerta CRÍTICA/ALTA, webhook ausente é no-op, falha de rede não derruba.
 
 import pytest
+import socket
 
 import notificacoes
 
@@ -42,6 +43,12 @@ def _mock_urlopen(monkeypatch, captura=None):
         return _Resp()
 
     monkeypatch.setattr("urllib.request.urlopen", _abre)
+    # Resolução DNS fake (IP público) para o validator anti-SSRF ficar offline.
+    monkeypatch.setattr(
+        notificacoes, "_resolver",
+        lambda host, porta, proto=socket.IPPROTO_TCP:
+            [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("8.8.8.8", porta))],
+    )
 
 
 def test_envia_alerta_critico(monkeypatch):
@@ -83,7 +90,54 @@ def test_webhook_cai_no_env_quando_falta_variavel(monkeypatch):
     assert notificacoes.webhook_discord() == "https://env-file/x"
 
 
-# --- E-mail (SMTP mockado, sem rede) ---
+# --- Validação anti-SSRF do webhook (sem rede) ---
+def _resolver_fake(host, porta, proto=socket.IPPROTO_TCP, ips=("1.2.3.4",)):
+    return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", (ip, porta)) for ip in ips]
+
+
+def test_webhook_seguro_aceita_url_publica(monkeypatch):
+    monkeypatch.setattr(notificacoes, "_resolver",
+                        lambda h, p, proto=socket.IPPROTO_TCP: _resolver_fake(h, p))
+    assert notificacoes._webhook_seguro("https://discord.com/api/webhooks/abc") is True
+
+
+def test_webhook_seguro_bloqueia_metadata_aws(monkeypatch):
+    monkeypatch.setattr(notificacoes, "_resolver",
+                        lambda h, p, proto=socket.IPPROTO_TCP: _resolver_fake(h, p, ips=("169.254.169.254",)))
+    assert notificacoes._webhook_seguro("http://169.254.169.254/latest/meta-data") is False
+
+
+def test_webhook_seguro_bloqueia_ip_privado(monkeypatch):
+    monkeypatch.setattr(notificacoes, "_resolver",
+                        lambda h, p, proto=socket.IPPROTO_TCP: _resolver_fake(h, p, ips=("192.168.0.10",)))
+    assert notificacoes._webhook_seguro("http://192.168.0.10/hook") is False
+
+
+def test_webhook_seguro_bloqueia_localhost(monkeypatch):
+    monkeypatch.setattr(notificacoes, "_resolver",
+                        lambda h, p, proto=socket.IPPROTO_TCP: _resolver_fake(h, p, ips=("127.0.0.1",)))
+    assert notificacoes._webhook_seguro("http://localhost:3000/hook") is False
+
+
+def test_webhook_seguro_bloqueia_esquema_nao_http():
+    assert notificacoes._webhook_seguro("file:///etc/passwd") is False
+    assert notificacoes._webhook_seguro("ftp://discord.com/x") is False
+
+
+def test_webhook_seguro_bloqueia_url_vazia_e_dns_invalido(monkeypatch):
+    assert notificacoes._webhook_seguro("") is False
+    assert notificacoes._webhook_seguro(None) is False
+    monkeypatch.setattr(notificacoes, "_resolver",
+                        lambda h, p, proto=socket.IPPROTO_TCP: (_ for _ in ()).throw(
+                            socket.gaierror("nxdomain")))
+    assert notificacoes._webhook_seguro("https://nao-existe.invalid/x") is False
+
+
+def test_discord_privado_nao_dispara(monkeypatch):
+    monkeypatch.setattr(notificacoes, "webhook_discord", lambda: "http://192.168.0.10/hook")
+    assert notificacoes.notificar_discord("CRÍTICA 🚨", "x") is False
+    ok, msg = notificacoes.testar_discord()
+    assert ok is False and "bloqueado" in msg.lower()
 class _Correio:
     def __init__(self, host, porta, timeout):
         self.host = host

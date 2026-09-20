@@ -1,0 +1,21 @@
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "08:00"
+      timezone: "America/Fortaleza"
+    open-pull-requests-limit: 10
+    labels:
+      - dependências
+      - segurança
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "08:00"
+      timezone: "America/Fortaleza"
+    open-pull-requests-limit: 5
