@@ -1,4 +1,35 @@
 """Entrada do app: rota (st.navigation) + CSS global + sidebar/rodapé comuns."""
+import os
+
+
+def _carregar_env_local() -> None:
+    """Sobe o arquivo .env para os.environ (antes de importar o resto).
+
+    Sem dependência externa (python-dotenv): imita o .env com linhas
+    CHAVE=valor (espaços ao redor do "=" ignorados, "#" = comentário).
+    Só aplica se a variável ainda não existe no ambiente (o export do
+    terminal continua tendo prioridade). No Streamlit Cloud não existe
+    .env: aqui é no-op e valem os Secrets.
+    """
+    try:
+        caminho = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+        if not os.path.exists(caminho):
+            return
+        with open(caminho, encoding="utf-8") as f:
+            for linha in f:
+                linha = linha.strip()
+                if not linha or linha.startswith("#") or "=" not in linha:
+                    continue
+                chave, _, valor = linha.partition("=")
+                chave = chave.strip()
+                if chave:
+                    os.environ.setdefault(chave, valor.strip())
+    except Exception:
+        pass
+
+
+_carregar_env_local()
+
 import streamlit as st
 
 from streamlit.errors import StreamlitAPIException
