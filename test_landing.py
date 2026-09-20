@@ -95,6 +95,6 @@ def test_sitemap_xml_valido_e_com_url_principal():
 
 
 def test_logo_do_app_na_navegacao():
-    assert (_RAIZ / "web" / "landing" / "logo7_robo.svg").exists()
-    assert 'src="logo7_robo.svg"' in _HTML
+    assert (_RAIZ / "web" / "landing" / "logo7_robo.png").exists()
+    assert 'src="logo7_robo.png"' in _HTML
     assert 'alt="Logo do AI Bug Triage System"' in _HTML
