@@ -20,10 +20,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout do código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Configurar Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
 
@@ -76,7 +76,7 @@ jobs:
           cp -r web/landing/. badge/
           ls -la badge
           echo "Landing + badge em https://ai-bug-triage.com.br/ (+ pytest-badge.json)"
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         if: always()
         with:
           path: badge
@@ -92,7 +92,7 @@ jobs:
       id-token: write
     steps:
       - name: Configurar GitHub Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
       - name: Deploy do badge para Pages
         uses: actions/deploy-pages@v4
 
