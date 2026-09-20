@@ -36,7 +36,7 @@ jobs:
       - name: Auditoria de vulnerabilidades (pip-audit)
         run: |
           pip install pip-audit
-          pip-audit --disable-pip
+          pip-audit -r requirements.txt -r requirements-dev.txt
 
       - name: Rodar testes unitários
         run: pytest -v --junitxml=junit.xml
