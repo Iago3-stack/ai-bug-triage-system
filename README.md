@@ -50,7 +50,6 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
   <img src="https://img.shields.io/badge/Hist%C3%B3rico%20persistido%20%28JSONL%29-25D366?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Guardrails%20de%20PII-E91E63?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Login%20multi-tenant-7C3AED?style=for-the-badge" />
-  <img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fai-bug-triage.com.br%2Fpytest-badge.json&style=for-the-badge&logo=pytest&logoColor=white&cacheSeconds=300" />
   <a href="https://github.com/Iago3-stack/ai-bug-triage-system/actions"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fai-bug-triage.com.br%2Fpytest-badge.json&style=for-the-badge&logo=githubactions&logoColor=white&cacheSeconds=300" /></a>
   <img src="https://img.shields.io/badge/Sess%C3%A3o%20persiste%20no%20F5-0EA5E9?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Plano%20Basic%20%2F%20Premium-F59E0B?style=for-the-badge" />
