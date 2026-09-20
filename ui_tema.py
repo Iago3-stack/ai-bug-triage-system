@@ -228,6 +228,14 @@ body:has([data-st-tema="escuro"]) .marca-top-user { color:#e2e8f0 !important; ba
 [data-testid="stColumn"]:has(.marca-nav) [data-testid="stButton"] button:hover { background:rgba(255,255,255,.09) !important; color:#ffffff !important; }
 [data-testid="stColumn"]:has(.marca-nav-ativo) [data-testid="stButton"] button,
 [data-testid="stColumn"]:has(.marca-nav-ativo) [data-testid="stButton"] button:hover { color:#86efac !important; background:rgba(37,211,102,.14) !important; }
+
+/* Botão "🔒 Faça login" do topo — verde sólido, SEM hover/sombra nos dois temas */
+.st-key-topnav_login [data-testid="stBaseButton-primary"],
+.st-key-topnav_login [data-testid="stButton"] button,
+.st-key-topnav_login [data-testid="stButton"] button:hover,
+.st-key-topnav_login [data-testid="stButton"] button:active,
+.st-key-topnav_login [data-testid="stButton"] button:focus { background:#059669 !important; color:#ffffff !important; border:none !important; font-weight:700 !important; box-shadow:none !important; }
+
 @media (max-width: 620px) { .marca-top-logo span { display:none !important; } .marca-top-logo { gap:0 !important; } }
 
 /* -------- MODO ESCURO: paleta própria do app -------- */
