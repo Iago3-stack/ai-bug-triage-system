@@ -22,8 +22,9 @@ def _carregar_env_local() -> None:
                     continue
                 chave, _, valor = linha.partition("=")
                 chave = chave.strip()
+                valor = valor.strip().strip('"').strip("'")
                 if chave:
-                    os.environ.setdefault(chave, valor.strip())
+                    os.environ.setdefault(chave, valor)
     except Exception:
         pass
 
