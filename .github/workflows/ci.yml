@@ -92,7 +92,7 @@ jobs:
       id-token: write
     steps:
       - name: Configurar GitHub Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
       - name: Deploy do badge para Pages
         uses: actions/deploy-pages@v4
 
