@@ -76,7 +76,7 @@ jobs:
           cp -r web/landing/. badge/
           ls -la badge
           echo "Landing + badge em https://ai-bug-triage.com.br/ (+ pytest-badge.json)"
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         if: always()
         with:
           path: badge
