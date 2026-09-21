@@ -519,6 +519,30 @@
     .contador-triagens .ct-hoje { color: #25D366; font-weight: 700; }
     .contador-triagens small { color: var(--texto-suave); font-size: 0.75rem; }
     @media (prefers-reduced-motion: reduce) { .contador-triagens .ct-ponto { animation: none; } }
+
+    /* Seção "Números do produto": cards com dados reais (stats.json) */
+    .numeros {
+      display: none; grid-template-columns: repeat(3, 1fr); gap: 18px;
+      max-width: 900px; margin: 0 auto;
+    }
+    .numeros .numero {
+      background: var(--superficie); border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 18px; padding: 28px 20px; text-align: center;
+    }
+    .numeros .num-valor {
+      display: block; font-size: 2.6rem; font-weight: 800; line-height: 1;
+      color: var(--verde);
+    }
+    .numeros .numero p { color: var(--texto-suave); font-size: 0.92rem; margin-top: 10px; }
+    .beneficios { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 28px; }
+    .beneficios .chip-bene {
+      border: 1px dashed rgba(37, 211, 102, 0.45); color: #A7F3D0;
+      background: rgba(37, 211, 102, 0.08); border-radius: 999px;
+      padding: 8px 16px; font-size: 0.85rem; font-weight: 600;
+    }
+    @media (max-width: 640px) {
+      .numeros { grid-template-columns: 1fr; max-width: 360px; }
+    }
   </style>
 </head>
 <body>
@@ -663,6 +687,35 @@
           <h3>PIX automático</h3>
           <p>Plano Premium pago na hora via PIX, com confirmação automática — sem cartão de crédito e sem fidelidade.</p>
         </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="numeros">
+    <div class="container">
+      <div class="titulo-secao">
+        <h2>Números do produto, não estimativa</h2>
+        <p>Dados medidos no sistema real, recalculados todo dia a partir das triagens.</p>
+      </div>
+      <div class="numeros" id="numero-sistema">
+        <article class="numero" id="card-ia">
+          <span class="num-valor" id="num-ia">—</span>
+          <p>das triagens usaram o motor de IA</p>
+        </article>
+        <article class="numero" id="card-critica">
+          <span class="num-valor" id="num-critica">—</span>
+          <p>dos relatos chegaram como críticos</p>
+        </article>
+        <article class="numero" id="card-tempo">
+          <span class="num-valor" id="num-tempo">—</span>
+          <p>resposta média por triagem</p>
+        </article>
+      </div>
+      <div class="beneficios">
+        <span class="chip-bene">7 dias grátis</span>
+        <span class="chip-bene">Sem cartão de crédito</span>
+        <span class="chip-bene">Sem fidelidade</span>
+        <span class="chip-bene">Relatório em PDF</span>
       </div>
     </div>
   </section>
@@ -1025,24 +1078,46 @@
   </script>
 
   <script>
-    // Contador de triagens: lê o stats.json gerado pelo workflow de estatísticas
-    // (dados reais do Supabase, sem expor nenhuma chave). Falha em silêncio.
+    // Contador + métricas: uma só leitura do stats.json gerado pelo workflow de
+    // estatísticas (dados reais do Supabase, sem expor chave nenhuma).
+    // Falha em silêncio: sem stats.json, contador e números ficam ocultos.
     (function () {
-      var caixa = document.getElementById('contador-triagens');
-      if (!caixa || !window.fetch) return;
+      var caixaContador = document.getElementById('contador-triagens');
+      var seccao = document.getElementById('numero-sistema');
+      var precisa = caixaContador || seccao;
+      if (!precisa || !window.fetch) return;
       var nf = new Intl.NumberFormat('pt-BR');
+
+      function pct(num, den) { return den ? Math.round((num / den) * 100) : '—'; }
+
       fetch('stats.json').then(function (r) {
         if (!r.ok) throw new Error('sem stats');
         return r.json();
       }).then(function (d) {
-        if (!d || typeof d.total !== 'number') return;
-        document.getElementById('ct-total').textContent = nf.format(d.total);
-        if (typeof d.hoje === 'number' && d.hoje > 0) {
-          var hoje = document.getElementById('ct-hoje');
-          hoje.textContent = '+ ' + nf.format(d.hoje) + ' hoje';
-          hoje.hidden = false;
+        var t = typeof d.total === 'number' ? d.total : 0;
+
+        if (caixaContador) {
+          document.getElementById('ct-total').textContent = nf.format(t);
+          if (typeof d.hoje === 'number' && d.hoje > 0) {
+            var hoje = document.getElementById('ct-hoje');
+            hoje.textContent = '+ ' + nf.format(d.hoje) + ' hoje';
+            hoje.hidden = false;
+          }
+          caixaContador.style.display = 'inline-flex';
         }
-        caixa.style.display = 'inline-flex';
+
+        if (seccao) {
+          document.getElementById('num-ia').textContent = pct(d.com_ia, t) + '%';
+          document.getElementById('num-critica').textContent = pct(d.critica, t) + '%';
+          var elTempo = document.getElementById('num-tempo');
+          if (typeof d.tempo_medio_ms === 'number' && d.tempo_medio_ms > 0) {
+            elTempo.textContent = (d.tempo_medio_ms / 1000).toFixed(1) + ' s';
+          } else {
+            var cardTempo = document.getElementById('card-tempo');
+            if (cardTempo) cardTempo.style.display = 'none';
+          }
+          seccao.style.display = 'grid';
+        }
       }).catch(function () {});
     })();
   </script>

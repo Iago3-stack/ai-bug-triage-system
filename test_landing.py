@@ -200,6 +200,20 @@ def test_contador_so_faz_fetch_local():
     assert ocorrencias == ["stats.json"], f"fetch inesperado: {ocorrencias}"
 
 
+def test_metricas_do_produto_presentes():
+    """Seção 'Números do produto': cards reais (stats.json) + fatos da oferta."""
+    assert 'id="numeros"' in _HTML
+    assert 'id="num-ia"' in _HTML and 'id="num-critica"' in _HTML and 'id="num-tempo"' in _HTML
+    assert 'id="card-tempo"' in _HTML
+    assert "Números do produto, não estimativa" in _HTML
+    # Faxos da oferta (fatos, não estatísticas)
+    for fato in ("7 dias grátis", "Sem cartão de crédito", "Sem fidelidade", "Relatório em PDF"):
+        assert fato in _HTML, f"fato ausente: {fato}"
+    # Oculta até carregar; esconde card de tempo enquanto não há medição
+    assert "cardTempo.style.display = 'none'" in _HTML
+    assert "seccao.style.display = 'grid'" in _HTML
+
+
 def test_workflow_stats_existe():
     """Job de estatísticas: cron diário, secrets por referência, deploy com fallback."""
     wf = (_RAIZ / ".github" / "workflows" / "stats-triagens.yml").read_text(encoding="utf-8")
