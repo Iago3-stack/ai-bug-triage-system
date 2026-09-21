@@ -1,7 +1,7 @@
 # O motor de triagem (triagem.py) usa apenas a biblioteca padrão do Python.
 # TextBlob foi removido: a antiga chamada ao Google Translate falha em datacenter.
 streamlit==1.64.0
-pandas==3.0.5
+pandas==3.0.6
 # Fase 3 — análise por IA via Google Gemini (google-genai).
 # A chave GEMINI_API_KEY NUNCA vai para o repositório:
 #   - Streamlit Cloud: Settings -> Secrets -> GEMINI_API_KEY
