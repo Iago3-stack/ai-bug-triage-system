@@ -136,6 +136,20 @@ def test_index_links_para_o_artigo():
     assert "/artigos/triage-de-bugs-com-ia.html" in _HTML
 
 
+def test_terminal_demo_no_hero():
+    """Telinha de terminal: barra de tráfego, linhas digitadas e redução de movimento."""
+    assert 'id="term-linhas"' in _HTML
+    assert "ai-bug-triage — zsh" in _HTML
+    # Bolinhas verde / amarela / vermelha
+    assert "#FF5F57" in _HTML and "#FEBC2E" in _HTML and "#28C840" in _HTML
+    # O texto digitado aparece no HTML (conteúdo real, não imagem)
+    assert "ai-triage relatos/pagamento_falhou.txt" in _HTML
+    assert "CRÍTICA" in _HTML
+    # Acessibilidade: respeita prefers-reduced-motion e tem descrição
+    assert "prefers-reduced-motion: reduce" in _HTML
+    assert "aria-label" in _HTML
+
+
 def test_logo_do_app_na_navegacao():
     assert (_RAIZ / "web" / "landing" / "logo7_robo.png").exists()
     assert 'src="logo7_robo.png"' in _HTML

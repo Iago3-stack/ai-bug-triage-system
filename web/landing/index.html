@@ -424,6 +424,44 @@
       .plano-card .flag { font-size: 0.55rem; letter-spacing: 0.02em; padding: 3px 6px; }
       .plano-card .plano { font-size: 0.9rem; }
     }
+
+    /* Terminal demo (telinha com barra de tráfego digitando uma triagem) */
+    .term-demo { max-width: 780px; margin: 46px auto 0; text-align: left; }
+    .term-demo .legenda { color: var(--texto-suave); font-size: 0.92rem; margin-bottom: 12px; }
+    .terminal {
+      background: #0B1220; border: 1px solid rgba(148, 163, 184, 0.18);
+      border-radius: 14px; overflow: hidden;
+      box-shadow: 0 24px 55px rgba(0, 0, 0, 0.5);
+    }
+    .term-barra { position: relative; display: flex; align-items: center; padding: 10px 14px; background: #16233C; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+    .term-barra .bolinhas { display: flex; gap: 8px; }
+    .term-barra .bolinha { width: 12px; height: 12px; border-radius: 50%; flex: none; }
+    .term-barra .v { background: #FF5F57; }
+    .term-barra .a { background: #FEBC2E; }
+    .term-barra .g { background: #28C840; }
+    .term-barra .titulo {
+      position: absolute; left: 50%; transform: translateX(-50%);
+      color: #64748b; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px; font-weight: 700; letter-spacing: 0.03em; white-space: nowrap;
+    }
+    .term-corpo {
+      margin: 0; padding: 18px 20px 22px; min-height: 276px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px; line-height: 1.75; color: #CBD5E1; white-space: pre-wrap; word-break: break-word;
+    }
+    .term-corpo .t-verde { color: #25D366; }
+    .term-corpo .t-dim { color: #64748B; }
+    .term-corpo .t-sev { color: #F87171; font-weight: 700; }
+    .term-corpo .t-bom { color: #28C840; font-weight: 700; }
+    .cursor {
+      display: inline-block; width: 8px; height: 15px; background: #25D366;
+      vertical-align: text-bottom; margin-left: 2px; animation: piscaCursor 1s steps(1) infinite;
+    }
+    @keyframes piscaCursor { 50% { opacity: 0; } }
+    .hero .animar.a5 { animation-delay: 0.6s; }
+    @media (prefers-reduced-motion: reduce) {
+      .cursor { animation: none; }
+    }
   </style>
 </head>
 <body>
@@ -454,6 +492,21 @@
         <a class="btn btn-ghost" href="#precos">Ver preços</a>
       </div>
       <p class="prova animar a4">Cadastro grátis com e-mail · Sem instalação · Funciona direto no navegador 🚀️</p>
+
+      <div class="term-demo animar a5" aria-label="Demonstração: tela de terminal triando um relato de bug em tempo real">
+        <p class="legenda">🚀 Uma triagem real acontecendo agora — como no seu cadastro:</p>
+        <div class="terminal" role="img">
+          <div class="term-barra">
+            <div class="bolinhas">
+              <span class="bolinha v"></span>
+              <span class="bolinha a"></span>
+              <span class="bolinha g"></span>
+            </div>
+            <span class="titulo">ai-bug-triage — zsh</span>
+          </div>
+          <pre class="term-corpo" id="term-linhas"></pre>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -728,6 +781,68 @@
         });
       }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
       for (var j = 0; j < alvos.length; j++) { obs.observe(alvos[j]); }
+    })();
+  <script>
+    // Terminal demo: digita uma triagem real em loop, com cursor piscando.
+    // Respeita prefers-reduced-motion (mostra tudo parado, sem loop).
+    (function () {
+      var pre = document.getElementById('term-linhas');
+      if (!pre) return;
+      var reduz = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      var linhas = [
+        { c: 't-verde', t: '$ ai-triage relatos/pagamento_falhou.txt', fim: 160 },
+        { c: 't-dim', t: '▸ colando relato do QA…', fim: 260 },
+        { c: '', t: '', fim: 180 },
+        { c: '', t: '"a tela de pagamento retorna ERRO 500 depois do PIX confirmado."', fim: 900 },
+        { c: '', t: '', fim: 220 },
+        { c: 't-sev', t: 'severidade ......... CRÍTICA 🚨', fim: 300 },
+        { c: '', t: 'componente ......... checkout_pagamento', fim: 220 },
+        { c: '', t: 'causa provável ..... timeout no webhook do PIX', fim: 220 },
+        { c: '', t: 'proposta ........... retry idempotente na confirmação', fim: 220 },
+        { c: '', t: '', fim: 180 },
+        { c: 't-bom', t: '✔ Relatório em PDF gerado · 2.4s', fim: 3200 }
+      ];
+      var VEL = reduz ? 0 : 26;
+
+      var cursor = document.createElement('span');
+      cursor.className = 'cursor';
+
+      function escrever() {
+        pre.textContent = '';
+        if (!reduz) pre.appendChild(cursor);
+        var i = 0;
+        (function proxima() {
+          if (i >= linhas.length) {
+            setTimeout(function () {
+              if (!reduz) escrever();
+            }, linhas[i - 1].fim);
+            return;
+          }
+          var l = linhas[i++];
+          var span = document.createElement('span');
+          if (l.c) span.className = l.c;
+          pre.appendChild(span);
+          if (l.t === '') {
+            pre.appendChild(document.createTextNode(' '));
+            setTimeout(proxima, VEL ? l.fim : 0);
+            return;
+          }
+          if (reduz) {
+            span.textContent = l.t;
+            setTimeout(proxima, 0);
+            return;
+          }
+          var k = 0;
+          cursor.remove();
+          (function digitar() {
+            span.textContent = l.t.slice(0, ++k);
+            if (k < l.t.length) { setTimeout(digitar, VEL); }
+            else { pre.appendChild(cursor); setTimeout(proxima, l.fim); }
+          })();
+        })();
+      }
+      escrever();
     })();
   </script>
 </body>
