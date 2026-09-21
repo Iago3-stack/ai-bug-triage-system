@@ -12,10 +12,12 @@ _RAIZ = pathlib.Path(__file__).resolve().parent
 _HTML = (_RAIZ / "web" / "landing" / "index.html").read_text(encoding="utf-8")
 _SITEMAP = (_RAIZ / "web" / "landing" / "sitemap.xml").read_text(encoding="utf-8")
 _ROBOTS = (_RAIZ / "web" / "landing" / "robots.txt").read_text(encoding="utf-8")
+_ARTIGO = (_RAIZ / "web" / "landing" / "artigos" / "triage-de-bugs-com-ia.html").read_text(encoding="utf-8")
 
 APP_URL = "https://ai-bug-triage-system-d6vigycbjt4qxez2wrvsxf.streamlit.app/"
 DOMINIO = "https://ai-bug-triage.com.br/"
 PAGES_URL = DOMINIO
+ARTIGO_URL = f"{PAGES_URL}artigos/triage-de-bugs-com-ia.html"
 
 
 def _bloco_json_ld() -> dict:
@@ -92,6 +94,46 @@ def test_sitemap_xml_valido_e_com_url_principal():
     assert '<?xml version="1.0" encoding="UTF-8"?>' in _SITEMAP
     assert "http://www.sitemaps.org/schemas/sitemap/0.9" in _SITEMAP
     assert f"<loc>{PAGES_URL}</loc>" in _SITEMAP
+    assert f"<loc>{ARTIGO_URL}</loc>" in _SITEMAP
+
+
+def test_artigo_existe_e_tem_seo():
+    """Página de conteúdo: meta de SEO, canonical próprio e robots indexável."""
+    assert _ARTIGO.startswith("<!DOCTYPE html>")
+    assert "<title>" in _ARTIGO
+    assert 'name="description"' in _ARTIGO
+    assert 'name="robots" content="index, follow"' in _ARTIGO
+    assert ARTIGO_URL in _ARTIGO  # canonical + og:url apontam para si mesma
+
+
+def test_artigo_json_ld_completo():
+    """Article + BreadcrumbList + FAQPage válidos e coerentes entre si."""
+    blocos = re.findall(
+        r'<script type="application/ld\+json">(.*?)</script>', _ARTIGO, re.S
+    )
+    tipos = [json.loads(b)["@type"] for b in blocos]
+    assert tipos == ["Article", "BreadcrumbList", "FAQPage"]
+    artigo = json.loads(blocos[0])
+    assert artigo["@type"] == "Article"
+    assert artigo["mainEntityOfPage"] == ARTIGO_URL
+    assert "triage de bugs" in artigo["headline"].lower()
+    faq = json.loads(blocos[2])
+    assert faq["@type"] == "FAQPage"
+    assert len(faq["mainEntity"]) == 4
+
+
+def test_artigo_tem_conteudo_para_pesquisa():
+    """Palavras-chave long-tail presentes no corpo (conteúdo, não só meta)."""
+    corpo = _ARTIGO.lower()
+    for alvo in ("triage de bugs", "triagem manual", "severidade", "componente",
+                 "proposta de correção", "relatório em pdf", "checklist", "qa"):
+        assert alvo in corpo, f"artigo deveria conter: {alvo}"
+
+
+def test_index_links_para_o_artigo():
+    """A landing referencia o artigo via caminho relativo (Pages) e no sitemap
+    a URL canônica absoluta — o Google descobre o artigo pela home."""
+    assert "/artigos/triage-de-bugs-com-ia.html" in _HTML
 
 
 def test_logo_do_app_na_navegacao():
