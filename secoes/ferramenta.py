@@ -3,6 +3,7 @@ import re
 import json
 import io
 import time
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import streamlit as st
@@ -28,6 +29,84 @@ try:
 except Exception as _e:  # pragma: no cover — só falha em ambiente sem a dependência
     FPDF = None
     _FPDF_ERRO = repr(_e)
+
+# ─── Feedback pós-triagem (estrelas 1-5 + comentário, discreto por frequência) ─
+_FB_DIAS = 7  # relembrar o usuário no mínimo 1x a cada semana (não é chato)
+_FB_ESTRELAS = ("1 ⭐", "2 ⭐", "3 ⭐", "4 ⭐", "5 ⭐")
+
+
+def _fb_identidade() -> tuple[str, str]:
+    """(uid, email) da conta logada, para identificar o dono do feedback."""
+    try:
+        import auth_supabase
+
+        sessao = auth_supabase.sessao() if auth_supabase.disponivel() else None
+        user = (sessao or {}).get("user") or {}
+        return (user.get("id") or ""), (user.get("email") or "")
+    except Exception:
+        return "", ""
+
+
+def _fb_ultimo_em(uid: str) -> str | None:
+    """Data (ISO) da última avaliação salva do usuário, ou None."""
+    try:
+        import nuvem_supabase
+
+        return nuvem_supabase.ultimo_feedback_em(uid)
+    except Exception:
+        return None
+
+
+def _fb_deve_perguntar(uid: str) -> bool:
+    """Só pergunta se o usuário não avaliou nos últimos _FB_DIAS.
+    Sem identificação não pergunta; leitura indisponível = pergunta de novo
+    (nunca quebra o fluxo, e o envio avisa com calma se a nuvem não estiver pronta)."""
+    if not uid:
+        return False
+    try:
+        ultimo = _fb_ultimo_em(uid)
+    except Exception:
+        return True
+    if not ultimo:
+        return True
+    try:
+        ultimo_dt = datetime.fromisoformat(ultimo.replace("Z", "+00:00"))
+        return (datetime.now(timezone.utc) - ultimo_dt) >= timedelta(days=_FB_DIAS)
+    except Exception:
+        return True
+
+
+def _ui_feedback_pos_triagem() -> None:
+    """Card discreto após a triagem: estrelas + comentário, no máx. a cada _FB_DIAS."""
+    uid, email = _fb_identidade()
+    if not uid or st.session_state.get("fb_enviado_sessao"):
+        return
+    if not _fb_deve_perguntar(uid):
+        return
+    with st.expander("💬 Como foi sua experiência?", key="ex_feedback"):
+        st.markdown('<div class="marca-feedback" style="display:none"></div>', unsafe_allow_html=True)
+        st.caption(
+            "Suas estrelas e comentário vão direto para quem cuida do produto — ajudam "
+            "a melhorar a triagem, a velocidade e a resposta. Sua resposta fica no anonimato se quiser."
+        )
+        estrelas = st.radio("Avalie a triagem de hoje:", _FB_ESTRELAS, horizontal=True, key="fb_estrelas")
+        comentario = st.text_area(
+            "(opcional) Comentário ou sugestão de melhoria:", key="fb_comentario",
+            placeholder="Ex.: a resposta veio rápida, mas senti falta de um resumo em palavras simples.",
+        )
+        if st.button("💾 Enviar feedback", key="fb_enviar"):
+            try:
+                import nuvem_supabase
+
+                num = _FB_ESTRELAS.index(estrelas) + 1
+                if nuvem_supabase.registrar_feedback(uid, email, num, (comentario or "").strip()):
+                    st.session_state["fb_enviado_sessao"] = True
+                    st.toast("Obrigado pelo feedback! 💚")
+                    st.rerun()
+                else:
+                    st.warning("Não consegui salvar agora (nuvem indisponível). Tente de novo em instantes. 😉")
+            except Exception:
+                st.warning("Não consegui salvar agora (nuvem indisponível). Tente de novo em instantes. 😉")
 
 _EXEMPLO_PLAYWRIGHT = """1) chromium › login.spec.ts:18 › teste de login com sucesso
 
@@ -829,6 +908,8 @@ def render():
 
         st.info("📋 O relatório também pode ser copiado direto da caixa acima para o Jira ou GitHub!")
         st.success("Triagem finalizada com sucesso! ✅")
+
+        _ui_feedback_pos_triagem()
 
         # --- 6. HISTÓRICO (TABELA pandas) ---
         with st.expander(f"📊 Histórico de triagens desta sessão ({len(st.session_state['historico'])})", key="ex_sessao"):

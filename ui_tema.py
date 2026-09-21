@@ -161,6 +161,8 @@ _BASE_CSS = """
     [data-testid="stExpander"]:has(.marca-colar) summary { color: #15803d !important; font-weight: 700 !important; }
     [data-testid="stExpander"]:has(.marca-plano) { border: 2px solid #d97706 !important; border-radius: 12px !important; background: rgba(217, 119, 6, 0.05) !important; }
     [data-testid="stExpander"]:has(.marca-plano) summary { color: #b45309 !important; font-weight: 700 !important; }
+    [data-testid="stExpander"]:has(.marca-feedback) { border: 2px solid #7c3aed !important; border-radius: 12px !important; background: rgba(124, 58, 237, 0.05) !important; }
+    [data-testid="stExpander"]:has(.marca-feedback) summary { color: #7c3aed !important; font-weight: 700 !important; }
     [data-testid="stExpander"]:has(.marca-plano) [data-testid="stExpanderDetails"] { overflow-x: auto; }
     [data-testid="stElementContainer"]:has(.marca-modelo-btn) + [data-testid="stElementContainer"] [data-testid="stButton"] button { background: #f97316 !important; color: #ffffff !important; }
     [data-testid="stElementContainer"]:has(.marca-modelo-btn) + [data-testid="stElementContainer"] [data-testid="stButton"] button:hover { background: #ea580c !important; }
@@ -341,6 +343,8 @@ body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:has(.marca-colar) s
 body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:has(.marca-colar) summary:hover { color:#4ade80 !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:has(.marca-plano) summary,
 body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:has(.marca-plano) summary:hover { color:#fbbf24 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:has(.marca-feedback) summary,
+body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:has(.marca-feedback) summary:hover { color:#a78bfa !important; }
 
 /* Setinha de expandir/recolher (chevron) dos expanders — some sumindo no fundo claro do tema escuro */
 body:has([data-st-tema="escuro"]) [data-testid="stExpander"] [data-testid="stBaseButton-secondary"] { background:transparent !important; color:#8b94a3 !important; border:none !important; box-shadow:none !important; }

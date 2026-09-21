@@ -1,4 +1,5 @@
 import pytest
+from datetime import datetime, timedelta, timezone
 
 
 @pytest.fixture(scope="module")
@@ -89,3 +90,55 @@ def test_botao_preencher_relato_cor_solida_nos_dois_temas():
     assert "background:#059669 !important; color:#ffffff !important; border:none !important" in bloco
     assert ":hover" in bloco and ":focus" in bloco and ":active" in bloco
     assert "box-shadow:none !important" in bloco
+
+
+# --- Feedback pós-triagem --------------------------------------------------
+def test_fb_deve_perguntar_sem_uid_nao_insiste():
+    from secoes import ferramenta as f
+
+    assert f._fb_deve_perguntar("") is False
+
+
+def test_fb_deve_perguntar_nunca_avaliou(monkeypatch):
+    from secoes import ferramenta as f
+
+    monkeypatch.setattr(f, "_fb_ultimo_em", lambda uid: None)
+    assert f._fb_deve_perguntar("uid1") is True
+
+
+def test_fb_deve_perguntar_avaliou_recente_nao_insiste(monkeypatch):
+    from secoes import ferramenta as f
+
+    recente = datetime.now(timezone.utc).isoformat()
+    monkeypatch.setattr(f, "_fb_ultimo_em", lambda uid: recente)
+    assert f._fb_deve_perguntar("uid1") is False
+
+
+def test_fb_deve_perguntar_avaliou_ha_semanas_insiste(monkeypatch):
+    from secoes import ferramenta as f
+
+    antigo = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
+    monkeypatch.setattr(f, "_fb_ultimo_em", lambda uid: antigo)
+    assert f._fb_deve_perguntar("uid1") is True
+
+
+def test_fb_deve_perguntar_leitura_falha_nao_quebra(monkeypatch):
+    from secoes import ferramenta as f
+
+    monkeypatch.setattr(f, "_fb_ultimo_em", lambda uid: (_ for _ in ()).throw(OSError("x")))
+    # falha de leitura não quebra o fluxo e pergunta de novo (conservador, estilo 'falha suave')
+    assert f._fb_deve_perguntar("uid1") is True
+
+
+def test_feedback_ui_tem_chaves_e_frequencia_semanal():
+    from pathlib import Path
+
+    raiz = Path(__file__).resolve().parent
+    ferra = (raiz / "secoes" / "ferramenta.py").read_text(encoding="utf-8")
+    assert 'key="fb_estrelas"' in ferra
+    assert 'key="fb_comentario"' in ferra
+    assert 'key="fb_enviar"' in ferra
+    assert 'key="ex_feedback"' in ferra
+    assert "fb_enviado_sessao" in ferra
+    assert "_FB_DIAS = 7" in ferra
+    assert "_ui_feedback_pos_triagem()" in ferra
