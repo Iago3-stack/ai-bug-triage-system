@@ -249,6 +249,15 @@ def test_workflow_stats_calcula_metricas_reais():
     assert "if duracao else None" in wf
 
 
+def test_ci_preserva_stats_json():
+    """O deploy do CI não pode apagar o stats.json: preserva o que está no ar."""
+    ci = (_RAIZ / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    assert "curl -sf" in ci
+    assert "-o badge/stats.json" in ci
+    # Sem quebra: se ainda não existe, o contador simplesmente fica oculto
+    assert "stats.json ainda não existe" in ci
+
+
 def test_logo_do_app_na_navegacao():
     assert (_RAIZ / "web" / "landing" / "logo7_robo.png").exists()
     assert 'src="logo7_robo.png"' in _HTML

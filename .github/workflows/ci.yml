@@ -76,6 +76,11 @@ jobs:
         if: always()
         run: |
           cp -r web/landing/. badge/
+          # Preserva o stats.json que está no ar (do workflow de estatísticas):
+          # sem isso, um deploy de CI que venha depois do job de stats "apaga" o
+          # contador/métricas até o próximo cron. Se ainda não existe, o JS da
+          # landing esconde tudo com elegância.
+          curl -sf "https://ai-bug-triage.com.br/stats.json" -o badge/stats.json || echo "stats.json ainda não existe — oculto até o job de estatísticas rodar"
           ls -la badge
           echo "Landing + badge em https://ai-bug-triage.com.br/ (+ pytest-badge.json)"
       - uses: actions/upload-pages-artifact@v5
