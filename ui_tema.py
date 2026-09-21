@@ -63,6 +63,28 @@ _BASE_CSS = """
     /* Card do formulário: textarea da triagem com moldura colorida (marcador irmão) */
     [data-testid="stElementContainer"]:has(.marca-form) + [data-testid="stElementContainer"] [data-testid="stTextArea"] textarea { background: #fbfefc !important; border: 1.5px solid #25D366 !important; border-radius: 12px !important; box-shadow: 0 2px 12px rgba(37, 211, 102, 0.14) !important; }
 
+    /* Campo de relato do usuário com cara de terminal (vale para os dois temas:
+       a janela do terminal é escura e o texto é mono verde — mesma cara no claro e no escuro).
+       Cada estado (hover/focus/active) é igual: sem glow, sem mudança de cor, sem sombra. */
+    .term-cab { display:flex !important; align-items:center !important; gap:7px !important; background:#161b22 !important; border:1px solid #30363d !important; border-bottom:none !important; border-radius:12px 12px 0 0 !important; padding:9px 12px !important; }
+    .term-ponto { width:12px !important; height:12px !important; border-radius:50% !important; flex:none !important; }
+    .term-roto { font-family:ui-monospace,"SFMono-Regular",Menlo,Consolas,"Fira Code",monospace !important; font-size:12px !important; color:#8b949e !important; margin-left:6px !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; }
+    [data-testid="stElementContainer"]:has(.marca-relato-term) + [data-testid="stElementContainer"] [data-testid="stTextArea"] textarea,
+    [data-testid="stElementContainer"]:has(.marca-relato-term) + [data-testid="stElementContainer"] [data-testid="stTextArea"] textarea:hover,
+    [data-testid="stElementContainer"]:has(.marca-relato-term) + [data-testid="stElementContainer"] [data-testid="stTextArea"] textarea:focus,
+    [data-testid="stElementContainer"]:has(.marca-relato-term) + [data-testid="stElementContainer"] [data-testid="stTextArea"] textarea:active {
+        background:#0d1117 !important; color:#4ade80 !important;
+        border:1px solid #30363d !important;
+        border-radius:0 0 12px 12px !important;
+        font-family:ui-monospace,"SFMono-Regular",Menlo,Consolas,"Fira Code",monospace !important;
+        font-size:14px !important; line-height:1.7 !important;
+        box-shadow:none !important; outline:none !important; caret-color:#4ade80 !important;
+    }
+    [data-testid="stElementContainer"]:has(.marca-relato-term) + [data-testid="stElementContainer"] [data-testid="stTextArea"] textarea::placeholder {
+        color:#2f9e6e !important; opacity:.85 !important;
+        font-family:ui-monospace,"SFMono-Regular",Menlo,Consolas,"Fira Code",monospace !important;
+    }
+
     /* Card CTA do Início: pinta APENAS o bloco do container border cujo único filho
        é o leiaute de colunas (o :has() simples vazaria para os ancestrais e tingiria
        a página inteira). */

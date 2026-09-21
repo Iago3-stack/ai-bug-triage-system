@@ -51,3 +51,24 @@ def test_limpar_markdown_remove_marcacao():
     assert "negrito" in limpo and "**" not in limpo
     assert "código" in limpo
     assert "[link](" in limpo or "link" in limpo
+
+
+def test_campo_relato_com_cara_de_terminal():
+    """O campo de relato do usuário vira um terminal (barra + textarea mono verde),
+    com o mesmo visual no claro e no escuro e SEM glow/hover."""
+    from pathlib import Path
+
+    raiz = Path(__file__).resolve().parent
+    ferra = (raiz / "secoes" / "ferramenta.py").read_text(encoding="utf-8")
+    css = (raiz / "ui_tema.py").read_text(encoding="utf-8")
+
+    # Barra de janela do terminal logo acima do campo de relato
+    assert 'class="term-cab"' in ferra
+    assert "ai-bug-triage" in ferra
+    assert 'class="marca-relato-term"' in ferra
+    assert 'key="relato_entrada"' in ferra
+    # O visual do textarea não muda nem no hover/focus/active (sem glow)
+    assert "marca-relato-term" in css
+    assert "textbox-shadow:none" not in css  # explicitly: box-shadow:none via !important
+    assert "box-shadow:none !important" in css
+    assert "hover" in css and ":focus" in css and ":active" in css

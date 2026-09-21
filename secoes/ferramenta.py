@@ -298,6 +298,18 @@ def render():
         st.success(f"✨ Relato preenchido abaixo! Detectei: {_det}. Revise e clique em Executar.")
 
     st.session_state.setdefault("relato_entrada", "")
+    st.markdown(
+        """
+        <div class="term-cab">
+          <span class="term-ponto" style="background:#ff5f57"></span>
+          <span class="term-ponto" style="background:#febc2e"></span>
+          <span class="term-ponto" style="background:#28c840"></span>
+          <span class="term-roto">$ ai-bug-triage — relato do usuário</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown('<div class="marca-relato-term" style="display:none"></div>', unsafe_allow_html=True)
     descricao_bug = st.text_area("Entrada do Usuário (Relato do Bug):", height=150,
                                  placeholder="Ex: Estou tentando pagar e o botão não responde, estou muito frustrado!",
                                  key="relato_entrada",
