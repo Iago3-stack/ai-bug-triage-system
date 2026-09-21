@@ -1,0 +1,91 @@
+name: Estatísticas de Triagens (stats.json)
+
+on:
+  schedule:
+    - cron: '12 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: stats-pages
+  cancel-in-progress: false
+
+jobs:
+  stats:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - name: Baixar código da landing
+        uses: actions/checkout@v7
+
+      # Só publica quando der tudo certo — se faltar badge vivo, chave ou a
+      # consulta falhar, o job termina sem deploy e o site continua o que era.
+      - name: Gerar stats.json (contagem real de triagens do Supabase)
+        run: |
+          set -e
+          if ! curl -sf "https://ai-bug-triage.com.br/pytest-badge.json" -o badge.json; then
+            echo "Badge vivo indisponível — mantendo deploy atual."
+            exit 0
+          fi
+          python3 - <<'PY'
+          import datetime
+          import json
+          import os
+          import urllib.request
+          import zoneinfo
+
+          url = os.environ.get("SUPABASE_URL", "").rstrip("/")
+          key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+          if not url or not key:
+              raise SystemExit("Secret SUPABASE_URL/SERVICE_ROLE ausente")
+
+          hoje = datetime.datetime.now(
+              zoneinfo.ZoneInfo("America/Fortaleza")
+          ).strftime("%Y-%m-%d")
+
+          def contar(where: str = ""):
+              uri = f"{url}/rest/v1/triagens"
+              if where:
+                  uri += "?" + where
+              req = urllib.request.Request(
+                  uri,
+                  headers={
+                      "apikey": key,
+                      "Authorization": f"Bearer {key}",
+                      "Prefer": "count=exact",
+                  },
+              )
+              with urllib.request.urlopen(req, timeout=25) as r:
+                  cr = r.headers.get("Content-Range", "0-0/0")
+              return int(cr.split("/")[-1])
+
+          stats = {
+              "total": contar("select=id&limit=1"),
+              "hoje": contar(f"select=id&limit=1&data=eq.{hoje}"),
+              "atualizado_em": datetime.datetime.now(zoneinfo.ZoneInfo("America/Fortaleza")).isoformat(timespec="minutes"),
+          }
+          with open("stats.json", "w", encoding="utf-8") as f:
+              json.dump(stats, f, ensure_ascii=False)
+          print(f"stats: total={stats['total']} hoje={stats['hoje']}")
+          PY
+
+      - name: Montar site (landing + badge vivo + stats.json)
+        run: |
+          mkdir -p badge
+          cp -r web/landing/. badge/
+          mv badge.json badge/pytest-badge.json
+          mv stats.json badge/stats.json
+
+      - uses: actions/configure-pages@v6
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: badge
+
+      - uses: actions/deploy-pages@v5

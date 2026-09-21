@@ -177,9 +177,43 @@ def test_preview_eh_100_local_sem_api():
     assert "CAUSAS" in _HTML
     assert "function severidade" in _HTML and "function componente" in _HTML
     assert "normalize('NFD')" in _HTML
-    # Nenhuma chamada de rede para triar na landing
-    assert "fetch(" not in _HTML
-    assert "api.key" not in _HTML and "AIza" not in _HTML
+    # Nenhuma chave de API embutida na landing
+    assert "api.key" not in _HTML and "AIza" not in _HTML and "Bearer " not in _HTML
+
+
+def test_contador_triagens_no_hero():
+    """Contador de triagens: lê stats.json local (dados reais) e não vaza chave."""
+    assert 'id="contador-triagens"' in _HTML
+    assert 'id="ct-total"' in _HTML and 'id="ct-hoje"' in _HTML
+    assert 'fetch(\'stats.json\')' in _HTML
+    assert "relatos já triados no sistema" in _HTML
+    assert "número real, atualizado diariamente" in _HTML
+    # Esconde até carregar (sem número falso pulando na visita)
+    assert "display: none" in _HTML
+    # Falha silenciosa: .catch sem quebrar a página
+    assert ".catch(function () {});" in _HTML
+
+
+def test_contador_so_faz_fetch_local():
+    """O único fetch da landing é o stats.json local — nenhuma chamada externa."""
+    ocorrencias = re.findall(r"fetch\(\s*['\"]([^'\"]+)['\"]", _HTML)
+    assert ocorrencias == ["stats.json"], f"fetch inesperado: {ocorrencias}"
+
+
+def test_workflow_stats_existe():
+    """Job de estatísticas: cron diário, secrets por referência, deploy com fallback."""
+    wf = (_RAIZ / ".github" / "workflows" / "stats-triagens.yml").read_text(encoding="utf-8")
+    assert "cron: '12 3 * * *'" in wf
+    assert "workflow_dispatch" in wf
+    # Só usa secrets por referência — nunca valores literais
+    assert "${{ secrets.SUPABASE_URL }}" in wf
+    assert "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" in wf
+    # Fallback: se o badge vivo não estiver disponível, não derruba o deploy
+    assert "exit 0" in wf
+    assert "actions/deploy-pages" in wf
+    assert '"Prefer": "count=exact"' in wf
+    assert "Content-Range" in wf
+    assert "America/Fortaleza" in wf
 
 
 def test_logo_do_app_na_navegacao():

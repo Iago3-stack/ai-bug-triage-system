@@ -501,6 +501,24 @@
     .preview-resultado { margin-top: 18px; text-align: left; }
     .preview-resultado .term-corpo { min-height: 0; }
     .preview-nota { margin-top: 14px; text-align: center; font-size: 0.85rem; color: var(--texto-suave); }
+
+    /* Contador de relatos triados (dados reais do Supabase via stats.json) */
+    .contador-triagens {
+      display: none; margin: 24px auto 0; align-items: center; justify-content: center;
+      flex-wrap: wrap; gap: 8px 10px; width: fit-content;
+      background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(37, 211, 102, 0.3);
+      border-radius: 999px; padding: 10px 18px;
+      font-size: 0.95rem; color: #E2E8F0;
+    }
+    .contador-triagens .ct-ponto {
+      width: 9px; height: 9px; border-radius: 50%; background: #25D366;
+      animation: pulso 1.8s ease-out infinite;
+    }
+    @keyframes pulso { 0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.45); } 70% { box-shadow: 0 0 0 9px rgba(37, 211, 102, 0); } 100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); } }
+    .contador-triagens strong { color: #fff; font-size: 1.15rem; }
+    .contador-triagens .ct-hoje { color: #25D366; font-weight: 700; }
+    .contador-triagens small { color: var(--texto-suave); font-size: 0.75rem; }
+    @media (prefers-reduced-motion: reduce) { .contador-triagens .ct-ponto { animation: none; } }
   </style>
 </head>
 <body>
@@ -531,6 +549,13 @@
         <a class="btn btn-ghost" href="#precos">Ver preços</a>
       </div>
       <p class="prova animar a4">Cadastro grátis com e-mail · Sem instalação · Funciona direto no navegador 🚀️</p>
+
+      <div class="contador-triagens" id="contador-triagens" role="status">
+        <span class="ct-ponto" aria-hidden="true"></span>
+        <strong id="ct-total">—</strong> relatos já triados no sistema
+        <span class="ct-hoje" id="ct-hoje" hidden>+ 0 hoje</span>
+        <small>número real, atualizado diariamente</small>
+      </div>
 
       <div class="term-demo animar a5" aria-label="Demonstração: tela de terminal triando um relato de bug em tempo real">
         <p class="legenda">🚀 Uma triagem real acontecendo agora — como no seu cadastro:</p>
@@ -996,6 +1021,29 @@
       entrada.addEventListener('keydown', function (ev) {
         if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); triar(); }
       });
+    })();
+  </script>
+
+  <script>
+    // Contador de triagens: lê o stats.json gerado pelo workflow de estatísticas
+    // (dados reais do Supabase, sem expor nenhuma chave). Falha em silêncio.
+    (function () {
+      var caixa = document.getElementById('contador-triagens');
+      if (!caixa || !window.fetch) return;
+      var nf = new Intl.NumberFormat('pt-BR');
+      fetch('stats.json').then(function (r) {
+        if (!r.ok) throw new Error('sem stats');
+        return r.json();
+      }).then(function (d) {
+        if (!d || typeof d.total !== 'number') return;
+        document.getElementById('ct-total').textContent = nf.format(d.total);
+        if (typeof d.hoje === 'number' && d.hoje > 0) {
+          var hoje = document.getElementById('ct-hoje');
+          hoje.textContent = '+ ' + nf.format(d.hoje) + ' hoje';
+          hoje.hidden = false;
+        }
+        caixa.style.display = 'inline-flex';
+      }).catch(function () {});
     })();
   </script>
 </body>
