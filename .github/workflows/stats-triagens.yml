@@ -49,30 +49,53 @@ jobs:
               zoneinfo.ZoneInfo("America/Fortaleza")
           ).strftime("%Y-%m-%d")
 
-          def contar(where: str = ""):
-              uri = f"{url}/rest/v1/triagens"
-              if where:
-                  uri += "?" + where
-              req = urllib.request.Request(
-                  uri,
-                  headers={
-                      "apikey": key,
-                      "Authorization": f"Bearer {key}",
-                      "Prefer": "count=exact",
-                  },
-              )
-              with urllib.request.urlopen(req, timeout=25) as r:
-                  cr = r.headers.get("Content-Range", "0-0/0")
-              return int(cr.split("/")[-1])
+          def paginar():
+              """Traz todos os payloads (paginado) para calcular métricas reais."""
+              linhas, inicio = [], 0
+              while True:
+                  req = urllib.request.Request(
+                      f"{url}/rest/v1/triagens?select=payload&order=data_hora.asc",
+                      headers={
+                          "apikey": key,
+                          "Authorization": f"Bearer {key}",
+                          "Range": f"{inicio}-{inicio + 199}",
+                      },
+                  )
+                  with urllib.request.urlopen(req, timeout=30) as r:
+                      data = json.loads(r.read().decode())
+                  linhas.extend(data)
+                  if len(data) < 200:
+                      break
+                  inicio += 200
+              return linhas
 
+          linhas = paginar()
+          n = len(linhas)
+          com_ia = sum(1 for l in linhas if (l.get("payload") or {}).get("usou_ia"))
+          critica = sum(
+              1
+              for l in linhas
+              if str((l.get("payload") or {}).get("gravidade") or "").startswith("CRÍTICA")
+          )
+          duracao = [
+              int(d)
+              for d in ((l.get("payload") or {}).get("duracao_ms") for l in linhas)
+              if isinstance(d, (int, float))
+          ]
           stats = {
-              "total": contar("select=id&limit=1"),
-              "hoje": contar(f"select=id&limit=1&data=eq.{hoje}"),
-              "atualizado_em": datetime.datetime.now(zoneinfo.ZoneInfo("America/Fortaleza")).isoformat(timespec="minutes"),
+              "total": n,
+              "hoje": sum(1 for l in linhas if (l.get("payload") or {}).get("data") == hoje),
+              "com_ia": com_ia,
+              "critica": critica,
+              "tempo_medio_ms": round(sum(duracao) / len(duracao)) if duracao else None,
+              "atualizado_em": datetime.datetime.now(
+                  zoneinfo.ZoneInfo("America/Fortaleza")
+              ).isoformat(timespec="minutes"),
           }
           with open("stats.json", "w", encoding="utf-8") as f:
               json.dump(stats, f, ensure_ascii=False)
-          print(f"stats: total={stats['total']} hoje={stats['hoje']}")
+          print(f"stats: total={stats['total']} com_ia={stats['com_ia']} "
+                f"critica={stats['critica']} tempo={stats['tempo_medio_ms']}")
           PY
 
       - name: Montar site (landing + badge vivo + stats.json)

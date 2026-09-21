@@ -211,9 +211,28 @@ def test_workflow_stats_existe():
     # Fallback: se o badge vivo não estiver disponível, não derruba o deploy
     assert "exit 0" in wf
     assert "actions/deploy-pages" in wf
-    assert '"Prefer": "count=exact"' in wf
-    assert "Content-Range" in wf
     assert "America/Fortaleza" in wf
+
+
+def test_workflow_stats_calcula_metricas_reais():
+    """As métricas do stats.json saem dos dados reais (payload), com paginação."""
+    wf = (_RAIZ / ".github" / "workflows" / "stats-triagens.yml").read_text(encoding="utf-8")
+
+    def dentro(bloco, token):
+        i = wf.find(bloco)
+        return i >= 0 and wf.find(token, i, i + len(bloco)) >= 0
+
+    # Lê payloads paginados (Range header) — nunca perde linhas por limite
+    assert '"Range"' in wf and "inicio + 199" in wf
+    # Métricas reais calculadas dos dados
+    assert '"total"' in wf and '"com_ia"' in wf and '"critica"' in wf
+    assert '"tempo_medio_ms"' in wf
+    # Percentuais não são inventados: saem de contagens reais
+    assert 'get("usou_ia")' in wf
+    assert 'startswith("CRÍTICA")' in wf
+    assert 'get("duracao_ms")' in wf
+    # tempo fica null enquanto não houver nenhuma medição (honestidade)
+    assert "if duracao else None" in wf
 
 
 def test_logo_do_app_na_navegacao():
