@@ -500,40 +500,36 @@ def teste_disponivel() -> bool:
 
 
 def carregar_todos_planos() -> list[dict]:
-    """Todas as linhas de planos_usuario (uid, plano, teste_ate) — painel do dono.
+    """Todas as linhas de planos_usuario (uid, plano, teste_ate, teste_auto) — painel do dono.
 
-    Se a coluna `teste_ate` ainda não existir (ALTER TABLE pendente), o PostgREST
-    responde 400 no select — então refaz sem ela e preenche `teste_ate: None`
-    (o painel funciona; o teste só aparece depois do SQL aplicado).
+    Se uma coluna ainda não existir (ALTER TABLE pendente), o PostgREST
+    responde 400 no select — então refaz sem ela e preenche o campo ausente
+    como None (o painel funciona; o dado só aparece depois do SQL aplicado).
     """
     config = _config()
     if not config:
         return []
-    try:
-        resposta = requests.get(
-            _planos_url(),
-            headers=_headers(),
-            params={"select": "uid,plano,teste_ate"},
-            timeout=15,
-        )
-        resposta.raise_for_status()
-        return resposta.json() or []
-    except Exception:
-        pass
-    try:
-        resposta = requests.get(
-            _planos_url(),
-            headers=_headers(),
-            params={"select": "uid,plano"},
-            timeout=15,
-        )
-        resposta.raise_for_status()
-        docs = resposta.json() or []
-        for doc in docs:
-            doc["teste_ate"] = None
-        return docs
-    except Exception:
-        return []
+    campos = ["uid", "plano", "teste_ate", "teste_auto"]
+    for tentativa in range(3):
+        try:
+            if tentativa >= len(campos):
+                break
+            selecao = ",".join(campos[: len(campos) - tentativa])
+            resposta = requests.get(
+                _planos_url(),
+                headers=_headers(),
+                params={"select": selecao},
+                timeout=15,
+            )
+            resposta.raise_for_status()
+            docs = resposta.json() or []
+            for doc in docs:
+                doc.setdefault("teste_ate", None)
+                doc.setdefault("teste_auto", None)
+            return docs
+        except Exception:
+            continue
+    return []
 
 
 def migrar_tenant_global(uid: str) -> int:

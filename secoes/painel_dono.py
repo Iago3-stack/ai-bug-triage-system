@@ -36,14 +36,18 @@ def _teste_ativo(iso) -> bool:
         return False
 
 
-def _badge(tipo: str) -> str:
-    """Badge visual do plano da conta."""
+def _badge(tipo: str, sub: str | None = None) -> str:
+    """Badge visual do plano da conta (sub = origem do teste: 'user'/'admin')."""
     if tipo == "premium":
         return ('<span style="background:rgba(251,191,36,.16);color:#f59e0b;border:1px solid rgba(251,191,36,.5);'
                 'border-radius:999px;padding:2px 10px;font-size:11px;font-weight:800">⭐ Premium</span>')
     if tipo == "teste":
-        return ('<span style="background:rgba(46,124,246,.16);color:#60a5fa;border:1px solid rgba(46,124,246,.5);'
-                'border-radius:999px;padding:2px 10px;font-size:11px;font-weight:800">🎁 Teste Premium</span>')
+        _rotulo = {
+            "user": "Teste Premium (User)",
+            "admin": "Teste Premium (Admin)",
+        }.get(sub or "", "Teste Premium")
+        return (f'<span style="background:rgba(46,124,246,.16);color:#60a5fa;border:1px solid rgba(46,124,246,.5);'
+                f'border-radius:999px;padding:2px 10px;font-size:11px;font-weight:800">🎁 {_rotulo}</span>')
     return ('<span style="background:rgba(37,211,102,.16);color:#22c55e;border:1px solid rgba(37,211,102,.5);'
             'border-radius:999px;padding:2px 10px;font-size:11px;font-weight:800">🔓 Basic</span>')
 
@@ -108,6 +112,7 @@ def render():
     for p in planos:
         por_uid.setdefault(p.get("uid"), {})["plano"] = p.get("plano") or "free"
         por_uid[p.get("uid")]["teste_ate"] = p.get("teste_ate")
+        por_uid[p.get("uid")]["teste_auto"] = p.get("teste_auto")
     for pf in perfis:
         por_uid.setdefault(pf.get("uid"), {})["nome"] = pf.get("nome") or ""
         por_uid[pf.get("uid")]["empresa"] = pf.get("empresa") or ""
@@ -116,6 +121,7 @@ def render():
         dados.setdefault("email", "—")
         dados.setdefault("plano", "free")
         dados.setdefault("teste_ate", None)
+        dados.setdefault("teste_auto", None)
 
     # ─── Métricas ──────────────────────────────────────────────────────────────
     qtd_premium = qtd_teste = 0
@@ -172,6 +178,7 @@ def render():
             continue
 
         _tipo = "premium" if dados.get("plano") == "pago" else ("teste" if dados.get("_teste") else "basic")
+        _tipo_teste = "user" if dados.get("teste_auto") else "admin"
         _linha1 = f"{nome + ' · ' + empresa if nome and empresa else (nome or empresa or email)}"
         _inicial = (nome or email or "?").strip()[0].upper()
         st.markdown(
@@ -185,7 +192,7 @@ def render():
             f'<div style="color:#64748b;font-size:11px;margin-top:2px">'
             f'último acesso: {_fmt_data(dados.get("ultimo_login"))} · criado: {_fmt_data(dados.get("criado_em"))}'
             f'{" · 🎁 teste até " + _fmt_data(dados.get("teste_ate")) if dados.get("teste_ate") else ""}'
-            f"</div></div>{_badge(_tipo)}"
+            f"</div></div>{_badge(_tipo, _tipo_teste)}"
             f'</div>',
             unsafe_allow_html=True,
         )

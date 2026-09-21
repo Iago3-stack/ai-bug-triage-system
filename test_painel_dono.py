@@ -220,11 +220,13 @@ def test_gravar_teste_banco_upsert(monkeypatch):
 
 def test_carregar_todos_planos(monkeypatch):
     _mock_rest(monkeypatch, [{"uid": "u1", "plano": "pago", "teste_ate": None}])
-    assert nuvem_supabase.carregar_todos_planos() == [{"uid": "u1", "plano": "pago", "teste_ate": None}]
+    assert nuvem_supabase.carregar_todos_planos() == [
+        {"uid": "u1", "plano": "pago", "teste_ate": None, "teste_auto": None}
+    ]
 
 
 def test_carregar_todos_planos_cai_sem_teste_quando_coluna_falta(monkeypatch):
-    """ALTER TABLE pendente: select c/ `teste_ate` falha → refaz sem a coluna."""
+    """ALTER TABLE pendente: select c/ colunas novas falha → refaz sem elas."""
     chamadas = []
 
     class _Erro(_Resp):
@@ -233,16 +235,16 @@ def test_carregar_todos_planos_cai_sem_teste_quando_coluna_falta(monkeypatch):
 
     def _get(url, headers=None, params=None, timeout=None):
         chamadas.append(params["select"])
-        if "teste_ate" in params["select"]:
+        if "teste_auto" in params["select"] or "teste_ate" in params["select"]:
             return _Erro()
         return _Resp([{"uid": "u1", "plano": "pago"}, {"uid": "u2", "plano": "free"}])
 
     monkeypatch.setattr(nuvem_supabase, "_config", lambda: ("https://supa.supabase.co", "chave"))
     monkeypatch.setattr(nuvem_supabase.requests, "get", _get)
     docs = nuvem_supabase.carregar_todos_planos()
-    assert len(chamadas) == 2
-    assert docs[0] == {"uid": "u1", "plano": "pago", "teste_ate": None}
-    assert docs[1] == {"uid": "u2", "plano": "free", "teste_ate": None}
+    assert len(chamadas) == 3
+    assert docs[0] == {"uid": "u1", "plano": "pago", "teste_ate": None, "teste_auto": None}
+    assert docs[1] == {"uid": "u2", "plano": "free", "teste_ate": None, "teste_auto": None}
 
 
 def test_carregar_todos_planos_sem_tabela_retorna_vazio(monkeypatch):

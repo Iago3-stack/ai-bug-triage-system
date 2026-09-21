@@ -364,3 +364,40 @@ def test_ativar_teste_usuario_coluna_pendente_falso(monkeypatch):
 def test_ativar_teste_usuario_offline_falso(monkeypatch):
     _sem_config(monkeypatch)
     assert nuvem_supabase.ativar_teste_usuario("u-1", "A", "B") is False
+
+
+def test_carregar_todos_planos_inclui_teste_auto(monkeypatch):
+    _sem_config(monkeypatch)
+    monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-test")
+
+    def _fake_get(url, headers=None, params=None, timeout=None):
+        assert params["select"] == "uid,plano,teste_ate,teste_auto"
+        return _FakeResposta([
+            {"uid": "u-1", "plano": "free", "teste_ate": "x", "teste_auto": "y"}
+        ])
+
+    monkeypatch.setattr(nuvem_supabase.requests, "get", _fake_get)
+    docs = nuvem_supabase.carregar_todos_planos()
+    assert docs[0]["teste_auto"] == "y"
+    assert docs[0]["teste_ate"] == "x"
+
+
+def test_carregar_todos_planos_degrada_sem_coluna_teste_auto(monkeypatch):
+    # Coluna teste_auto pendente -> 400/erro na 1ª consulta -> releituras menores.
+    _sem_config(monkeypatch)
+    monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-test")
+    chamadas = []
+
+    def _fake_get(url, headers=None, params=None, timeout=None):
+        chamadas.append(params["select"])
+        if "teste_auto" in params["select"]:
+            raise RuntimeError("400 coluna pendente")
+        return _FakeResposta([{"uid": "u-1", "plano": "free", "teste_ate": "x"}])
+
+    monkeypatch.setattr(nuvem_supabase.requests, "get", _fake_get)
+    docs = nuvem_supabase.carregar_todos_planos()
+    assert docs == [{"uid": "u-1", "plano": "free", "teste_ate": "x", "teste_auto": None}]
+    # tentou "uid,plano,teste_ate" depois (sem a coluna nova) e funcionou
+    assert "uid,plano,teste_ate" in chamadas
