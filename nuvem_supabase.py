@@ -68,6 +68,20 @@
 #   create policy "anon select" on usuarios for select to anon using (true);
 #   create policy "anon update" on usuarios for update to anon using (true);
 #
+# Tabela de feedbacks (avaliação pós-triagem — estrelas 1-5 + comentário):
+#   create table if not exists feedbacks (
+#     id          bigserial primary key,
+#     uid         text not null default '',
+#     email       text not null default '',
+#     estrelas    int  not null default 5,
+#     comentario  text not null default '',
+#     criado_em   timestamptz not null default now()
+#   );
+#   alter table feedbacks enable row level security;
+#   create policy "anon insert" on feedbacks for insert to anon with check (true);
+#   create policy "anon select" on feedbacks for select to anon using (true);
+#   create policy "anon update" on feedbacks for update to anon using (true);
+#
 # Teste Premium com validade (Passo 6 — expira sozinho):
 #   alter table planos_usuario add column if not exists teste_ate timestamptz;
 # Teste Premium autoatendimento (o PRÓPRIO usuário ativa uma única vez):
@@ -91,6 +105,7 @@ _TABELA_PLANOS = "planos_usuario"
 _TABELA_COBRANCAS = "solicitacoes_pagamento"
 _TABELA_PERFIS = "perfis_usuario"
 _TABELA_USUARIOS = "usuarios"
+_TABELA_FEEDBACKS = "feedbacks"
 
 
 def _carregar_env():
@@ -726,3 +741,77 @@ def carregar_todos_perfis() -> list[dict]:
     )
     resposta.raise_for_status()
     return resposta.json() or []
+
+
+# ─── Feedbacks (avaliação pós-triagem, estrelas 1-5 + comentário) ─────────────
+
+def _feedbacks_url() -> str:
+    return f"{_base_url()}/{_TABELA_FEEDBACKS}"
+
+
+def registrar_feedback(uid: str, email: str, estrelas: int, comentario: str) -> bool:
+    """Grava uma avaliação de pós-triagem. Best-effort: nunca levanta (a triagem
+    nunca pode quebrar por causa de feedback). Sem a tabela criada no Supabase,
+    devolve False e o app mostra um aviso suave.
+    """
+    config = _config()
+    if not config:
+        return False
+    try:
+        linha = {
+            "uid": (uid or "").strip(),
+            "email": (email or "").strip(),
+            "estrelas": int(estrelas),
+            "comentario": (comentario or "").strip(),
+        }
+        resposta = requests.post(
+            _feedbacks_url(),
+            headers={**_headers(), "Prefer": "resolution=merge-duplicates,return=minimal"},
+            json=linha,
+            timeout=15,
+        )
+        resposta.raise_for_status()
+        return True
+    except Exception:
+        return False
+
+
+def carregar_feedbacks() -> list[dict]:
+    """Todas as avaliações (uid, email, estrelas, comentario, criado_em), das
+    mais recentes para as mais antigas. Empty/aviso suave se a tabela não existir.
+    """
+    config = _config()
+    if not config:
+        return []
+    try:
+        resposta = requests.get(
+            _feedbacks_url(),
+            headers=_headers(),
+            params={"select": "*", "order": "criado_em.desc"},
+            timeout=15,
+        )
+        resposta.raise_for_status()
+        return resposta.json() or []
+    except Exception:
+        return []
+
+
+def ultimo_feedback_em(uid: str) -> str | None:
+    """Data (ISO) da avaliação mais recente do usuário, ou None se nunca avaliou."""
+    config = _config()
+    if not config:
+        return None
+    try:
+        resposta = requests.get(
+            _feedbacks_url(),
+            headers=_headers(),
+            params={"select": "criado_em", "uid": f"eq.{uid}", "order": "criado_em.desc", "limit": "1"},
+            timeout=15,
+        )
+        resposta.raise_for_status()
+        docs = resposta.json() or []
+        if not docs:
+            return None
+        return (docs[0] or {}).get("criado_em") or None
+    except Exception:
+        return None

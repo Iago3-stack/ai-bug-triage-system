@@ -157,6 +157,84 @@ def test_registrar_resolucao_id_inexistente_retorna_falso(monkeypatch):
     assert nuvem_supabase.registrar_resolucao("xyz", "nada") is False
 
 
+# --- Feedbacks (pós-triagem) -------------------------------------------
+def test_registrar_feedback_envia_post(monkeypatch):
+    _sem_config(monkeypatch)
+    monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-test")
+    chamadas = {}
+
+    def _fake_post(url, headers=None, json=None, timeout=None):
+        chamadas["url"] = url
+        chamadas["json"] = json
+        return _FakeResposta([json])
+
+    monkeypatch.setattr(nuvem_supabase.requests, "post", _fake_post)
+    ok = nuvem_supabase.registrar_feedback("uid1", "a@b.co", 5, "  Show!  ")
+    assert ok is True
+    assert "rest/v1/feedbacks" in chamadas["url"]
+    assert chamadas["json"]["uid"] == "uid1"
+    assert chamadas["json"]["estrelas"] == 5
+    assert chamadas["json"]["comentario"] == "Show!"
+    assert "email" in chamadas["json"]
+
+
+def test_registrar_feedback_falha_suave(monkeypatch):
+    """Sem configuração, nunca levanta — devolve False (aviso suave no app)."""
+    _sem_config(monkeypatch)
+    assert nuvem_supabase.registrar_feedback("uid1", "a@b.co", 4, "ok") is False
+
+
+def test_carregar_feedbacks_mais_recentes_primeiro(monkeypatch):
+    _sem_config(monkeypatch)
+    monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-test")
+    docs = [
+        {"id": 2, "uid": "u2", "email": "b@x.co", "estrelas": 5, "comentario": "amarrei", "criado_em": "2026-09-21T10:00:00Z"},
+        {"id": 1, "uid": "u1", "email": "a@x.co", "estrelas": 3, "comentario": "", "criado_em": "2026-09-20T10:00:00Z"},
+    ]
+
+    def _fake_get(url, headers=None, params=None, timeout=None):
+        assert params["order"] == "criado_em.desc"
+        return _FakeResposta(docs)
+
+    monkeypatch.setattr(nuvem_supabase.requests, "get", _fake_get)
+    result = nuvem_supabase.carregar_feedbacks()
+    assert len(result) == 2
+    assert result[0]["uid"] == "u2"
+
+
+def test_carregar_feedbacks_falha_suave(monkeypatch):
+    _sem_config(monkeypatch)
+    monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-test")
+    monkeypatch.setattr(nuvem_supabase.requests, "get",
+                        lambda *a, **k: (_ for _ in ()).throw(OSError("offline")))
+    assert nuvem_supabase.carregar_feedbacks() == []
+
+
+def test_ultimo_feedback_em_filtra_por_uid(monkeypatch):
+    _sem_config(monkeypatch)
+    monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-test")
+
+    def _fake_get(url, headers=None, params=None, timeout=None):
+        assert params["uid"] == "eq.uid1"
+        assert params["limit"] == "1"
+        return _FakeResposta([{"criado_em": "2026-09-21T10:00:00Z"}])
+
+    monkeypatch.setattr(nuvem_supabase.requests, "get", _fake_get)
+    assert nuvem_supabase.ultimo_feedback_em("uid1") == "2026-09-21T10:00:00Z"
+
+
+def test_ultimo_feedback_em_sem_registro_e_falha(monkeypatch):
+    _sem_config(monkeypatch)
+    monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-test")
+    monkeypatch.setattr(nuvem_supabase.requests, "get", lambda *a, **k: _FakeResposta([]))
+    assert nuvem_supabase.ultimo_feedback_em("uid1") is None
+
+
 # --- Facade persistencia.py (dispatch) ----------------------------------
 def test_facade_usa_nuvem_quando_configurada(monkeypatch, tmp_path):
     # Sem caminho local nem backend forçado -> dispatches para a nuvem.
