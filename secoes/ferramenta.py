@@ -2,6 +2,7 @@
 import re
 import json
 import io
+import time
 from pathlib import Path
 
 import streamlit as st
@@ -459,6 +460,9 @@ def render():
                 st.session_state["flag_seguranca"] = flag_seguranca
 
                 # --- 2. RELATÓRIO GHERKIN ---
+                # Cronômetro da triagem: mede o tempo total percebido pelo usuário
+                # (heurística + IA + relatório). Vira a métrica real "tempo de resposta".
+                t_inicio_triagem = time.perf_counter()
                 relatorio = f"""### 🛡️ Relatório de Triagem Técnica
     **Resumo:** {descricao_limpa[:100]}...
     **Prioridade:** {gravidade}
@@ -566,6 +570,7 @@ def render():
                     "fatores": fatores,
                     "usou_ia": bool(usar_llm and resultado_llm),
                     "sensiveis_mascarados": list(sensiveis) if sensiveis else [],
+                    "duracao_ms": int((time.perf_counter() - t_inicio_triagem) * 1000),
                 }
                 if resultado_llm:
                     snapshot.update({

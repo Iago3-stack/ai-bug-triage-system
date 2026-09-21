@@ -51,11 +51,14 @@ def test_linha_para_doc_extrai_colunas():
         "data": "2026-09-07",
         "resumo": "bug",
         "gravidade": "CRÍTICA 🚨",
+        "duracao_ms": 2048,
     }
     doc = nuvem_supabase._linha_para_doc(registro)
     assert doc["id"] == "abc123"
     assert doc["data"] == "2026-09-07"
     assert doc["payload"] is registro  # payload guarda o registro inteiro
+    # duracao_ms viaja dentro do payload (sem exigir coluna nova na tabela)
+    assert doc["payload"]["duracao_ms"] == 2048
 
 
 def test_doc_para_linha_restaura_payload_e_jira():

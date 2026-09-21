@@ -20,6 +20,13 @@ def test_registrar_e_carregar(tmp_path, monkeypatch):
     assert registros[0]["resumo"] == "bug 1"
 
 
+def test_duracao_ms_sobrevive_na_persistencia(tmp_path, monkeypatch):
+    _caminho_tmp(tmp_path, monkeypatch)
+    persistencia.registrar_triagem({"resumo": "bug", "duracao_ms": 4321})
+    registros = persistencia.carregar_registros()
+    assert registros[0]["duracao_ms"] == 4321
+
+
 def test_timestamp_usa_fuso_local_brasil(tmp_path, monkeypatch):
     from datetime import datetime
     _caminho_tmp(tmp_path, monkeypatch)
