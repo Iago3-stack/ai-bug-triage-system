@@ -96,7 +96,7 @@ jobs:
       - name: Configurar GitHub Pages
         uses: actions/configure-pages@v6
       - name: Deploy do badge para Pages
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
 #
 # Este workflow roda automaticamente a cada push/PR na branch main.
