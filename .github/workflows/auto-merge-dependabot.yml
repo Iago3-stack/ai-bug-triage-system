@@ -1,0 +1,23 @@
+name: Auto-merge Dependabot
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  automerge:
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Habilitar auto-merge (squash)
+        continue-on-error: true
+        run: |
+          gh pr merge "$PR" --auto --squash --delete-branch
+        env:
+          PR: ${{ github.event.pull_request.number }}
