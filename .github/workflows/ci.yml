@@ -12,8 +12,10 @@ permissions:
   id-token: write
 
 concurrency:
-  group: badge-pages
-  cancel-in-progress: true
+  # Grupo por-ref: cada branch/PR cancela só a própria run anterior.
+  # Sem isso, PRs simultâneos (ex.: Dependabot) cancelavam uns aos outros.
+  group: badge-pages-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   test:
