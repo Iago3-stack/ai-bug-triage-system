@@ -106,6 +106,47 @@ def render():
         st.warning("Você não está logado — faça login para gerenciar o plano da sua conta.")
         return
 
+    # ─── Teste Premium de 7 dias (autoatendimento, uma única vez) ──────────────
+    if plano.teste_auto_disponivel():
+        _ja_pagou = any(
+            c.get("status") == "confirmado" for c in pixbilling.cobrancas_do_uid(uid)
+        )
+        if atual == "pago":
+            _dias = plano.dias_restantes_teste(uid)
+            if _dias is not None:
+                _quanto = "termina hoje" if _dias == 0 else f"termina em **{_dias} dia(s)**"
+                st.caption(f"⏳ Seu Teste Premium {_quanto} — depois a conta volta ao Basic.")
+        elif plano.teste_usuario_usado(uid):
+            st.caption("✅ Você já usou seu Teste Premium de 7 dias nesta conta — essa oportunidade não reativa.")
+        elif _ja_pagou:
+            st.caption("💳 Esta conta já foi Premium — para voltar a usar, é só assinar abaixo.")
+        else:
+            with st.container(border=True):
+                _c1, _c2 = st.columns([3, 1], vertical_alignment="center")
+                with _c1:
+                    st.markdown(
+                        "**🎁 Teste Premium grátis — 7 dias**  \nAcesso completo na hora, "
+                        "sem cartão e sem precisar de aprovação. Expira sozinho e a conta volta ao Basic."
+                    )
+                with _c2:
+                    if st.button(
+                        "🎁 Ativar teste grátis",
+                        key="btn_teste_free",
+                        type="primary",
+                        width="stretch",
+                    ):
+                        _ok, _motivo = plano.ativar_teste_automatico(uid)
+                        if _ok:
+                            _lembrete_refresh(
+                                "🎉 Seu Teste Premium de 7 dias está ativo — acesso completo liberado!"
+                            )
+                        else:
+                            _lembrete_refresh(
+                                "⚠️ Não deu para ativar agora (se você já usou o teste nesta conta, "
+                                "ele não reativa). Tente novamente em instantes."
+                            )
+                        st.rerun()
+
     with st.container(border=True):
         # ─── Migração dos registros legados (dados antigos sem dono) ─────────────
         st.markdown("### 📦 Dados da sua conta")

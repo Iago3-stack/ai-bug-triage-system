@@ -124,6 +124,65 @@ def definir_trial(uid: str, dias: int) -> bool:
         return False
 
 
+# ─── Teste Premium autoatendimento (o usuário ativa, uma única vez) ─────────
+
+def teste_usuario_usado(uid: str) -> bool:
+    """True se o PRÓPRIO usuário já ativou o Teste Premium (coluna teste_auto).
+
+    Enquanto o ALTER TABLE não for rodado no Supabase, a coluna não existe e
+    isso devolve False (botão aparece) — o click a mais só avisa "não deu",
+    sem quebrar nada. Tolerante a offline.
+    """
+    try:
+        return bool(nuvem_supabase.carregar_teste_auto(uid))
+    except Exception:
+        return False
+
+
+def teste_auto_disponivel() -> bool:
+    """True se o PostgREST enxerga a coluna `teste_auto` (botão pode aparecer)."""
+    try:
+        return nuvem_supabase.teste_auto_disponivel()
+    except Exception:
+        return False
+
+
+def dias_restantes_teste(uid: str) -> int | None:
+    """Dias (inteiros) de Teste Premium restantes; None sem teste ativo."""
+    ate = _datetime_de_iso(teste_premium_restante(uid) or "")
+    if not ate:
+        return None
+    restante = ate - datetime.now(timezone.utc)
+    if restante.total_seconds() <= 0:
+        return 0
+    return int(restante.total_seconds() // 86400)
+
+
+def ativar_teste_automatico(uid: str, dias: int = 7) -> tuple[bool, str]:
+    """Self-service: dá N dias de Teste Premium ao usuário, uma única vez.
+
+    Idempotente: quem já usou (teste_auto) não reativa. Se já há uma validade
+    maior (ex.: teste dado pelo dono), mantém a maior — nunca encurta nem
+    estende o dobro. Retorna (ok, chave) para a UI.
+    """
+    if not uid:
+        return False, "sem_uid"
+    if teste_usuario_usado(uid):
+        return False, "usado"
+    agora = datetime.now(timezone.utc)
+    atual = _datetime_de_iso(teste_premium_restante(uid) or "")
+    limite = agora + timedelta(days=int(dias))
+    if atual and atual > agora and atual > limite:
+        limite = atual
+    try:
+        ok = nuvem_supabase.ativar_teste_usuario(uid, limite.isoformat(), agora.isoformat())
+        if ok and teste_usuario_usado(uid):
+            return True, "ok"
+        return False, "erro"
+    except Exception:
+        return False, "erro"
+
+
 def definir_plano_manual(uid: str, plano: str) -> bool:
     """Ação do painel do dono: ativar Premium / voltar a Basic, encerra teste."""
     try:

@@ -1,4 +1,5 @@
 import plano
+from datetime import datetime, timedelta, timezone
 
 
 def test_plano_padrao_free(monkeypatch):
@@ -205,3 +206,147 @@ def test_usuario_com_nuvem_off_mantem_env_legado(monkeypatch):
     _mock_login(monkeypatch)
     _mock_nuvem_ativa(monkeypatch, ativa=False)
     assert plano.plano_atual() == "pago"
+
+
+# ─── Passo 7: Teste Premium autoatendimento (coluna teste_auto) ─────────────
+
+def _NS_teste(teste_banco=None, teste_auto=None, ativa=True):
+    class NS:
+        @staticmethod
+        def disponivel():
+            return ativa
+
+        @staticmethod
+        def carregar_teste_banco(uid):
+            return teste_banco
+
+        @staticmethod
+        def carregar_teste_auto(uid):
+            return teste_auto
+
+        @staticmethod
+        def ativar_teste_usuario(uid, ate_iso, auto_iso):
+            return False
+
+    return NS
+
+
+def test_teste_usuario_usado_delega_coluna(monkeypatch):
+    _mock_login(monkeypatch)
+    monkeypatch.setattr(plano, "nuvem_supabase",
+                        _NS_teste(teste_auto="2026-09-20T00:00:00Z"))
+    assert plano.teste_usuario_usado("u-abc") is True
+
+
+def test_teste_usuario_nao_usado_ou_sem_coluna(monkeypatch):
+    _mock_login(monkeypatch)
+    monkeypatch.setattr(plano, "nuvem_supabase", _NS_teste(teste_auto=None))
+    assert plano.teste_usuario_usado("u-abc") is False
+
+
+def test_teste_usuario_usado_offline_e_falso(monkeypatch):
+    _mock_login(monkeypatch)
+
+    class Fora:
+        @staticmethod
+        def carregar_teste_auto(uid):
+            raise RuntimeError("offline")
+
+    monkeypatch.setattr(plano, "nuvem_supabase", Fora)
+    assert plano.teste_usuario_usado("u-abc") is False
+
+
+def test_teste_auto_disponivel_delega_coluna(monkeypatch):
+    class NS:
+        @staticmethod
+        def teste_auto_disponivel():
+            return True
+
+    monkeypatch.setattr(plano, "nuvem_supabase", NS)
+    assert plano.teste_auto_disponivel() is True
+
+
+def test_dias_restantes_teste_por_validade(monkeypatch):
+    _mock_login(monkeypatch)
+    fim = datetime.now(timezone.utc) + timedelta(days=3, hours=5)
+    monkeypatch.setattr(plano, "nuvem_supabase", _NS_teste(teste_banco=fim.isoformat()))
+    assert plano.dias_restantes_teste("u-abc") == 3
+
+
+def test_dias_restantes_sem_teste_e_none(monkeypatch):
+    _mock_login(monkeypatch)
+    monkeypatch.setattr(plano, "nuvem_supabase", _NS_teste(teste_banco=None))
+    assert plano.dias_restantes_teste("u-abc") is None
+
+
+def test_ativar_teste_automatico_ativa_7_dias(monkeypatch):
+    _mock_login(monkeypatch)
+    chamadas = {}
+    monkeypatch.setattr(plano, "nuvem_supabase", _NS_teste(teste_banco=None))
+
+    def _usado(uid):
+        return bool(chamadas.get("gravou"))
+
+    def _ativar(uid, ate_iso, auto_iso):
+        chamadas["gravou"] = True
+        chamadas["ate_iso"] = ate_iso
+        return True
+
+    monkeypatch.setattr(plano, "teste_usuario_usado", _usado)
+    monkeypatch.setattr(plano.nuvem_supabase, "ativar_teste_usuario", _ativar)
+
+    ok, msg = plano.ativar_teste_automatico("u-abc")
+    assert ok is True
+    assert msg == "ok"
+    # a validade é ~7 dias a partir de agora
+    limite = datetime.fromisoformat(chamadas["ate_iso"])
+    esperado = datetime.now(timezone.utc) + timedelta(days=7)
+    assert esperado - timedelta(hours=1) < limite <= esperado + timedelta(hours=1)
+
+
+def test_ativar_teste_automatico_nao_reativa_quem_ja_usou(monkeypatch):
+    _mock_login(monkeypatch)
+    monkeypatch.setattr(plano, "nuvem_supabase",
+                        _NS_teste(teste_auto="2026-09-01T00:00:00Z"))
+
+    def _nao_ativar(*a, **k):
+        raise AssertionError("não pode regravar teste de quem já usou")
+
+    monkeypatch.setattr(plano.nuvem_supabase, "ativar_teste_usuario", _nao_ativar)
+    assert plano.ativar_teste_automatico("u-abc") == (False, "usado")
+
+
+def test_ativar_teste_automatico_mantem_validade_maior(monkeypatch):
+    # Teste dado pelo dono com validade maior NÃO é encurtado pelo atalho.
+    _mock_login(monkeypatch)
+    futuro = datetime.now(timezone.utc) + timedelta(days=30)
+    monkeypatch.setattr(plano, "nuvem_supabase", _NS_teste(teste_banco=futuro.isoformat()))
+    chamadas = {}
+
+    def _usado(uid):
+        return bool(chamadas.get("gravou"))
+
+    def _ativar(uid, ate_iso, auto_iso):
+        chamadas["gravou"] = True
+        chamadas["ate_iso"] = ate_iso
+        return True
+
+    monkeypatch.setattr(plano, "teste_usuario_usado", _usado)
+    monkeypatch.setattr(plano.nuvem_supabase, "ativar_teste_usuario", _ativar)
+    ok, _msg = plano.ativar_teste_automatico("u-abc")
+    assert ok is True
+    assert chamadas["ate_iso"] == futuro.isoformat()
+
+
+def test_ativar_teste_automatico_erro_offline(monkeypatch):
+    _mock_login(monkeypatch)
+    monkeypatch.setattr(plano, "nuvem_supabase", _NS_teste(teste_banco=None))
+    monkeypatch.setattr(plano, "teste_usuario_usado", lambda uid: False)
+    monkeypatch.setattr(plano.nuvem_supabase, "ativar_teste_usuario",
+                        lambda *a, **k: (_ for _ in ()).throw(RuntimeError("offline")))
+    assert plano.ativar_teste_automatico("u-abc") == (False, "erro")
+
+
+def test_ativar_teste_automatico_sem_uid_falso(monkeypatch):
+    _mock_login(monkeypatch, uid=None)
+    assert plano.ativar_teste_automatico(None) == (False, "sem_uid")

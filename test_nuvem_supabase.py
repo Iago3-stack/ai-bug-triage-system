@@ -7,8 +7,9 @@ import nuvem_supabase
 
 
 class _FakeResposta:
-    def __init__(self, dados=None):
+    def __init__(self, dados=None, status=200):
         self._dados = dados or []
+        self.status_code = status
 
     def raise_for_status(self):
         return None
@@ -225,3 +226,141 @@ def test_facade_registrar_resolucao_id_inexistente_falha(monkeypatch, tmp_path):
     monkeypatch.setenv("PERSISTENCIA_ARQUIVO", str(arquivo))
     persistencia.registrar_triagem({"resumo": "um"})
     assert persistencia.registrar_resolucao("id-que-nao-existe", "x") is False
+
+
+# --- Teste Premium autoatendimento (coluna teste_auto) ----------------------
+
+def test_carregar_teste_auto_le_a_coluna(monkeypatch):
+    _sem_config(monkeypatch)
+    monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-test")
+
+    def _fake_get(url, headers=None, params=None, timeout=None):
+        assert params["select"] == "teste_auto"
+        assert params["uid"] == "eq.u-1"
+        return _FakeResposta([{"teste_auto": "2026-09-27T12:00:00Z"}])
+
+    monkeypatch.setattr(nuvem_supabase.requests, "get", _fake_get)
+    assert nuvem_supabase.carregar_teste_auto("u-1") == "2026-09-27T12:00:00Z"
+
+
+def test_carregar_teste_auto_sem_linha_e_none(monkeypatch):
+    _sem_config(monkeypatch)
+    monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-test")
+    monkeypatch.setattr(nuvem_supabase.requests, "get",
+                        lambda *a, **k: _FakeResposta([]))
+    assert nuvem_supabase.carregar_teste_auto("u-1") is None
+
+
+def test_carregar_teste_auto_offline_e_none(monkeypatch):
+    _sem_config(monkeypatch)
+    assert nuvem_supabase.carregar_teste_auto("u-1") is None
+
+
+def test_teste_auto_disponivel_confirma_coluna(monkeypatch):
+    _sem_config(monkeypatch)
+    monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-test")
+    monkeypatch.setattr(nuvem_supabase.requests, "get",
+                        lambda *a, **k: _FakeResposta(status=200))
+    assert nuvem_supabase.teste_auto_disponivel() is True
+
+
+def test_teste_auto_disponivel_falso_quando_coluna_pendente(monkeypatch):
+    # ALTER TABLE ainda não rodado -> PostgREST responde 400; botão fica oculto.
+    _sem_config(monkeypatch)
+    monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-test")
+    monkeypatch.setattr(nuvem_supabase.requests, "get",
+                        lambda *a, **k: _FakeResposta(status=400))
+    assert nuvem_supabase.teste_auto_disponivel() is False
+
+
+def test_teste_auto_disponivel_offline_falso(monkeypatch):
+    _sem_config(monkeypatch)
+    assert nuvem_supabase.teste_auto_disponivel() is False
+
+
+def test_ativar_teste_usuario_atualiza_com_patch_condicional(monkeypatch):
+    _sem_config(monkeypatch)
+    monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-test")
+    patch_info = {}
+
+    def _fake_patch(url, headers=None, params=None, json=None, timeout=None):
+        patch_info["headers"] = headers
+        patch_info["params"] = params
+        patch_info["json"] = json
+        return _FakeResposta([{"uid": "u-1", "teste_auto": "2026-09-20T00:00:00Z"}])
+
+    monkeypatch.setattr(nuvem_supabase.requests, "patch", _fake_patch)
+    ok = nuvem_supabase.ativar_teste_usuario(
+        "u-1", "2026-09-27T00:00:00Z", "2026-09-20T00:00:00Z"
+    )
+    assert ok is True
+    # só atualiza quando teste_auto ainda é NULL (quem já usou não reativa)
+    assert patch_info["params"] == {"uid": "eq.u-1", "teste_auto": "is.null"}
+    assert patch_info["json"]["teste_auto"] == "2026-09-20T00:00:00Z"
+    assert "return=representation" in patch_info["headers"]["Prefer"]
+
+
+def test_ativar_teste_usuario_sem_linha_cria_upsert(monkeypatch):
+    # PATCH vazio (não há linha) -> lê de novo (nada) -> POST upsert cria.
+    _sem_config(monkeypatch)
+    monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-test")
+    post_info = {}
+
+    def _fake_patch(*a, **k):
+        return _FakeResposta([])
+
+    def _fake_get(*a, **k):
+        return _FakeResposta([])
+
+    def _fake_post(url, headers=None, params=None, json=None, timeout=None):
+        post_info["params"] = params
+        post_info["json"] = json
+        return _FakeResposta([])
+
+    monkeypatch.setattr(nuvem_supabase.requests, "patch", _fake_patch)
+    monkeypatch.setattr(nuvem_supabase.requests, "get", _fake_get)
+    monkeypatch.setattr(nuvem_supabase.requests, "post", _fake_post)
+    assert nuvem_supabase.ativar_teste_usuario("u-1", "A", "B") is True
+    assert post_info["params"] == {"on_conflict": "uid"}
+    assert post_info["json"]["uid"] == "u-1"
+    assert post_info["json"]["teste_auto"] == "B"
+    assert post_info["json"]["plano"] == "free"
+
+
+def test_ativar_teste_usuario_ja_usado_nao_reativa(monkeypatch):
+    # PATCH não casa (teste_auto já preenchido) -> leitura mostra que já usou.
+    _sem_config(monkeypatch)
+    monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-test")
+
+    def _nao_post(*a, **k):
+        raise AssertionError("quem já usou nunca deve regravar teste_auto")
+
+    monkeypatch.setattr(nuvem_supabase.requests, "patch",
+                        lambda *a, **k: _FakeResposta([]))
+    monkeypatch.setattr(nuvem_supabase.requests, "get",
+                        lambda *a, **k: _FakeResposta(
+                            [{"teste_auto": "2026-09-01T00:00:00Z"}]))
+    monkeypatch.setattr(nuvem_supabase.requests, "post", _nao_post)
+    assert nuvem_supabase.ativar_teste_usuario("u-1", "A", "B") is False
+
+
+def test_ativar_teste_usuario_coluna_pendente_falso(monkeypatch):
+    # ALTER TABLE pendente -> PostgREST rejeita o select -> sem crash, False.
+    _sem_config(monkeypatch)
+    monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-test")
+    monkeypatch.setattr(nuvem_supabase.requests, "patch",
+                        lambda *a, **k: (_ for _ in ()).throw(RuntimeError("400")))
+    assert nuvem_supabase.ativar_teste_usuario("u-1", "A", "B") is False
+
+
+def test_ativar_teste_usuario_offline_falso(monkeypatch):
+    _sem_config(monkeypatch)
+    assert nuvem_supabase.ativar_teste_usuario("u-1", "A", "B") is False

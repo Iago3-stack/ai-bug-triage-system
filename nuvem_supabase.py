@@ -70,6 +70,12 @@
 #
 # Teste Premium com validade (Passo 6 — expira sozinho):
 #   alter table planos_usuario add column if not exists teste_ate timestamptz;
+# Teste Premium autoatendimento (o PRÓPRIO usuário ativa uma única vez):
+#   alter table planos_usuario add column if not exists teste_auto timestamptz;
+#   `teste_auto` guarda QUANDO o usuário ativou o próprio teste; o teste dado
+#   pelo dono (definir_trial) escreve só `teste_ate`. Enquanto a coluna não
+#   existir, carregar_teste_auto devolve None e o botão fica oculto — o app
+#   funciona igual ao de hoje, sem quebrar.
 #
 # A configuração per-tenant usada na Cloud NÃO precisa desta tabela: se ela não
 # existir ou a leitura falhar, o app cai no plano por variável de ambiente.
@@ -377,6 +383,96 @@ def gravar_teste_banco(uid: str, ate_iso: str) -> bool:
     )
     resposta.raise_for_status()
     return True
+
+
+def teste_auto_disponivel() -> bool:
+    """True se a coluna `teste_auto` existe na schema cache do PostgREST.
+
+    O botão de "Teste grátis" só aparece quando o dono rodou o ALTER TABLE
+    (senão o upsert devolveria 400 PGRST204). Nunca levanta — só relata se o
+    PostgREST enxerga a coluna.
+    """
+    config = _config()
+    if not config:
+        return False
+    try:
+        resposta = requests.get(
+            _planos_url(),
+            headers=_headers(),
+            params={"select": "teste_auto", "limit": "1"},
+            timeout=15,
+        )
+        return resposta.status_code == 200
+    except Exception:
+        return False
+
+
+def carregar_teste_auto(uid: str) -> str | None:
+    """Quando o PRÓPRIO usuário ativou o Teste Premium (teste_auto, ISO) ou None.
+
+    Sem linha na tabela, offline ou coluna ainda não criada → None (não usado).
+    """
+    config = _config()
+    if not config:
+        return None
+    try:
+        resposta = requests.get(
+            _planos_url(),
+            headers=_headers(),
+            params={"select": "teste_auto", "uid": f"eq.{uid}", "limit": "1"},
+            timeout=15,
+        )
+        resposta.raise_for_status()
+        docs = resposta.json() or []
+        if not docs:
+            return None
+        valor = docs[0].get("teste_auto")
+        return valor or None
+    except Exception:
+        return None
+
+
+def ativar_teste_usuario(uid: str, ate_iso: str, auto_iso: str) -> bool:
+    """Auto-trial idempotente do usuário: grava `teste_ate` + `teste_auto`.
+
+    1) PATCH condicional só quando `teste_auto` é NULL — se a linha já tem o
+       teste próprio marcado, nada é sobrescrito; 2) sem linha (usuário novo),
+       cria via upsert. Assim, dois cliques/abas concorrentes nunca dão 14 dias
+       nem reativam quem já usou o teste.
+    """
+    config = _config()
+    if not config:
+        return False
+    # 1) linha existe e nunca auto-ativou -> PATCH condicional
+    try:
+        resposta = requests.patch(
+            _planos_url(),
+            headers={**_headers(), "Prefer": "return=representation"},
+            params={"uid": f"eq.{uid}", "teste_auto": "is.null"},
+            json={"teste_ate": ate_iso, "teste_auto": auto_iso},
+            timeout=15,
+        )
+        resposta.raise_for_status()
+        if resposta.json() or []:
+            return True
+    except Exception:
+        return False
+    # 2) PATCH não tocou nada: ou não há linha, ou já usado.
+    if carregar_teste_auto(uid):
+        return False
+    try:
+        linha = {"uid": uid, "plano": "free", "teste_ate": ate_iso, "teste_auto": auto_iso}
+        resposta = requests.post(
+            _planos_url(),
+            headers={**_headers(), "Prefer": "resolution=merge-duplicates,return=minimal"},
+            params={"on_conflict": "uid"},
+            json=linha,
+            timeout=15,
+        )
+        resposta.raise_for_status()
+        return True
+    except Exception:
+        return False
 
 
 def teste_disponivel() -> bool:
