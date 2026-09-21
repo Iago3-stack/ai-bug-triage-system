@@ -85,6 +85,16 @@ _BASE_CSS = """
         font-family:ui-monospace,"SFMono-Regular",Menlo,Consolas,"Fira Code",monospace !important;
     }
 
+    /* Botão "✨ Preencher relato a partir da falha" — verde sólido nos dois temas,
+       mesmo visual em hover/focus/active (sem glow/sombra/mudança de cor). */
+    [data-testid="stElementContainer"]:has(.marca-colar-btn) + [data-testid="stElementContainer"] [data-testid="stButton"] button,
+    [data-testid="stElementContainer"]:has(.marca-colar-btn) + [data-testid="stElementContainer"] [data-testid="stButton"] button:hover,
+    [data-testid="stElementContainer"]:has(.marca-colar-btn) + [data-testid="stElementContainer"] [data-testid="stButton"] button:active,
+    [data-testid="stElementContainer"]:has(.marca-colar-btn) + [data-testid="stElementContainer"] [data-testid="stButton"] button:focus {
+        background:#059669 !important; color:#ffffff !important; border:none !important;
+        border-radius:10px !important; font-weight:700 !important; box-shadow:none !important;
+    }
+
     /* Card CTA do Início: pinta APENAS o bloco do container border cujo único filho
        é o leiaute de colunas (o :has() simples vazaria para os ancestrais e tingiria
        a página inteira). */

@@ -72,3 +72,20 @@ def test_campo_relato_com_cara_de_terminal():
     assert "textbox-shadow:none" not in css  # explicitly: box-shadow:none via !important
     assert "box-shadow:none !important" in css
     assert "hover" in css and ":focus" in css and ":active" in css
+
+
+def test_botao_preencher_relato_cor_solida_nos_dois_temas():
+    """'Preencher relato a partir da falha' tem verde sólido igual no hover/focus/active —
+    penho nos dois temas, sem glow."""
+    from pathlib import Path
+
+    raiz = Path(__file__).resolve().parent
+    css = (raiz / "ui_tema.py").read_text(encoding="utf-8")
+    ferra = (raiz / "secoes" / "ferramenta.py").read_text(encoding="utf-8")
+
+    assert 'class="marca-colar-btn"' in ferra
+    assert 'key="btn_colar_falha"' in ferra
+    bloco = css[css.find("marca-colar-btn") :]
+    assert "background:#059669 !important; color:#ffffff !important; border:none !important" in bloco
+    assert ":hover" in bloco and ":focus" in bloco and ":active" in bloco
+    assert "box-shadow:none !important" in bloco
