@@ -150,6 +150,38 @@ def test_terminal_demo_no_hero():
     assert "aria-label" in _HTML
 
 
+def test_selo_de_qualidade_nos_passos():
+    """Cada passo do 'Como funciona' carrega um selo de qualidade."""
+    selos = re.findall(r'class="selo-passo">([^<]+)<', _HTML)
+    assert len(selos) == 3, f"esperado 3 selos, obtido {len(selos)}: {selos}"
+    for esperado in ("Testabilidade", "Tempo real", "Rastreável"):
+        assert esperado in selos, f"selo '{esperado}' ausente"
+
+
+def test_preview_teste_agora_presente():
+    """Seção interativa 'Teste agora': campo, botão, chips e honestidade."""
+    assert 'id="teste-agora"' in _HTML
+    assert 'id="preview-bug"' in _HTML and 'id="preview-btn"' in _HTML
+    assert 'id="preview-resultado"' in _HTML
+    assert 'aria-live="polite"' in _HTML
+    # Chips prontos para clicar (exemplos reais do produto)
+    assert 'data-preview-exemplo' in _HTML
+    assert "💳 PIX / erro 500" in _HTML
+    # Aviso de que é uma prévia ilustrativa (sem prometer IA real no navegador)
+    assert "Prévia ilustrativa" in _HTML
+    assert "grátis no cadastro" in _HTML
+
+
+def test_preview_eh_100_local_sem_api():
+    """A preview não deve expor chave nem chamar backend: só heurística local."""
+    assert "CAUSAS" in _HTML
+    assert "function severidade" in _HTML and "function componente" in _HTML
+    assert "normalize('NFD')" in _HTML
+    # Nenhuma chamada de rede para triar na landing
+    assert "fetch(" not in _HTML
+    assert "api.key" not in _HTML and "AIza" not in _HTML
+
+
 def test_logo_do_app_na_navegacao():
     assert (_RAIZ / "web" / "landing" / "logo7_robo.png").exists()
     assert 'src="logo7_robo.png"' in _HTML

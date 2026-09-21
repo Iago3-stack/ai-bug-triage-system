@@ -472,6 +472,35 @@
     @media (prefers-reduced-motion: reduce) {
       .cursor { animation: none; }
     }
+
+    /* Selos de qualidade nos passos */
+    .passo { position: relative; }
+    .selo-passo {
+      position: absolute; top: 16px; right: 16px;
+      font-size: 0.62rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--verde); background: rgba(37, 211, 102, 0.12);
+      border: 1px solid rgba(37, 211, 102, 0.35); border-radius: 999px; padding: 4px 10px;
+    }
+    @media (max-width: 520px) {
+      .selo-passo { font-size: 0.56rem; padding: 3px 8px; top: 12px; right: 12px; }
+    }
+
+    /* Preview "teste agora" */
+    .preview { max-width: 760px; margin: 0 auto; }
+    .preview-chips { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 18px; }
+    .preview-chips .chip { padding: 8px 14px; font-size: 0.9rem; }
+    .preview-campo { display: flex; flex-direction: column; gap: 14px; align-items: stretch; }
+    .preview-campo textarea {
+      width: 100%; resize: vertical; min-height: 92px;
+      background: var(--superficie); color: var(--texto);
+      border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 14px;
+      padding: 16px 18px; font: inherit; font-size: 1rem; outline: none;
+    }
+    .preview-campo textarea:focus { border-color: var(--verde); box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.2); }
+    .preview-campo .btn { align-self: flex-start; }
+    .preview-resultado { margin-top: 18px; text-align: left; }
+    .preview-resultado .term-corpo { min-height: 0; }
+    .preview-nota { margin-top: 14px; text-align: center; font-size: 0.85rem; color: var(--texto-suave); }
   </style>
 </head>
 <body>
@@ -520,6 +549,29 @@
     </div>
   </section>
 
+  <section id="teste-agora">
+    <div class="container">
+      <div class="titulo-secao">
+        <h2>Teste a triagem agora</h2>
+        <p>Cole um relato e veja, na hora, a severidade, o componente suspeito e a proposta de correção.</p>
+      </div>
+
+      <div class="preview">
+        <div class="preview-chips">
+          <button type="button" class="btn btn-ghost chip" data-preview-exemplo="A tela de pagamento retorna ERRO 500 depois do PIX confirmado.">💳 PIX / erro 500</button>
+          <button type="button" class="btn btn-ghost chip" data-preview-exemplo="Tento entrar pelo app e a tela de login não carrega, fica em loading para sempre.">🔑 Login travado</button>
+          <button type="button" class="btn btn-ghost chip" data-preview-exemplo="O relatório em PDF fica lento para gerar quando há muitos bugs no histórico.">🐢 Relatório lento</button>
+        </div>
+        <div class="preview-campo">
+          <textarea id="preview-bug" rows="3" placeholder="Ex.: a tela de pagamento retorna ERRO 500 depois do PIX confirmado..." aria-label="Relato do bug para a prévia de triagem"></textarea>
+          <button type="button" id="preview-btn" class="btn btn-verde">Trie este relato</button>
+        </div>
+        <div class="preview-resultado" id="preview-resultado" aria-live="polite"></div>
+        <p class="preview-nota">Prévia ilustrativa do fluxo — a triagem real com IA acontece no app, grátis no cadastro.</p>
+      </div>
+    </div>
+  </section>
+
   <section id="como-funciona">
     <div class="container">
       <div class="titulo-secao">
@@ -528,16 +580,19 @@
       </div>
       <div class="passos">
         <article class="passo animar">
+          <span class="selo-passo">Testabilidade</span>
           <span class="numero">1</span>
           <h3>Cole o relato do bug</h3>
           <p>Descreva com suas palavras o que aconteceu, em que tela, com qual passo a passo. Naturalmente, como você fala.</p>
         </article>
         <article class="passo animar atraso-1">
+          <span class="selo-passo">Tempo real</span>
           <span class="numero">2</span>
           <h3>A IA faz a triagem</h3>
           <p>O sistema classifica a severidade, aponta o componente suspeito, avalia o impacto e sugere uma correção.</p>
         </article>
         <article class="passo animar atraso-2">
+          <span class="selo-passo">Rastreável</span>
           <span class="numero">3</span>
           <h3>Receba o relatório em PDF</h3>
           <p>Um relatório estruturado, pronto para compartilhar com o time ou anexar no seu Gestor de tarefas.</p>
@@ -847,6 +902,100 @@
         })();
       }
       escrever();
+    })();
+  </script>
+
+  <script>
+    // Preview "Teste agora": triagem ilustrativa 100% local (prévia do fluxo).
+    // Não chama nenhuma API — é uma demonstração da experiência do app.
+    (function () {
+      var entrada = document.getElementById('preview-bug');
+      var botao = document.getElementById('preview-btn');
+      var saida = document.getElementById('preview-resultado');
+      if (!entrada || !botao || !saida) return;
+
+      var CAUSAS = {
+        checkout_pagamento: ['confirmação do webhook do PIX com timeout', 'retry idempotente na confirmação'],
+        autenticacao: ['falha na renovação do token de sessão', 'validar as credenciais e registrar logs de falha'],
+        performance: ['consulta sem índice no banco', 'otimizar a query e adicionar índice e cache'],
+        geracao_relatorio: ['falha ao consultar o histórico antigo', 'tratar históricos migrados e revalidar o PDF'],
+        frontend_ui: ['JS quebrado apenas em alguns navegadores', 'adicionar fallback e teste de regressão de UI'],
+        api_core: ['erro não tratado em fluxo de borda', 'tratar a exceção, logar contexto e adicionar teste']
+      };
+
+      function limpar(t) {
+        return t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      }
+
+      function severidade(t) {
+        var s = limpar(t);
+        if (/erro 500|falha 500|\b500\b|crash|crasheou|travou|travando|congelou|parou de responder|vazamento|perda de dados|seguranca|duplicad|nao confirmou|pix nao/.test(s)) return 'CRÍTICA 🚨';
+        if (/nao funciona|nao abre|nao carrega|nao loga|nao envia|lento|demora|timeout|\bbug\b|erro|quebr|corromp/.test(s)) return 'ALTA';
+        if (/layout|botao|fonte|cor|espac|campo|interface|visual|digit/.test(s)) return 'MÉDIA';
+        return 'BAIXA';
+      }
+
+      function componente(t) {
+        var s = limpar(t);
+        if (/pagamento|pix|checkout|boleto|cartao|cobranca|transacao|fatura|nota/.test(s)) return 'checkout_pagamento';
+        if (/login|senha|conta|acesso|autentic|sessao|logout|token/.test(s)) return 'autenticacao';
+        if (/lento|demora|carreg|performance|query|banco|cache/.test(s)) return 'performance';
+        if (/relatorio|pdf|export|baixar|download|historico/.test(s)) return 'geracao_relatorio';
+        if (/layout|botao|fonte|cor|campo|tela|menu|mobile|interface|visual/.test(s)) return 'frontend_ui';
+        return 'api_core';
+      }
+
+      var ocupado = false;
+
+      function triar() {
+        var t = entrada.value.trim();
+        if (!t || ocupado) return;
+        ocupado = true;
+        saida.innerHTML = '';
+
+        var sev = severidade(t);
+        var comp = componente(t);
+        var d = CAUSAS[comp] || CAUSAS.api_core;
+        var linhas = [
+          { c: 't-dim', t: '▸ triando seu relato…' },
+          { c: '', t: 'severidade ......... ' + sev },
+          { c: '', t: 'componente ......... ' + comp },
+          { c: '', t: 'causa provável ..... ' + d[0] },
+          { c: '', t: 'proposta ........... ' + d[1] },
+          { c: 't-bom', t: '✔ triagem concluída — prévia do fluxo' }
+        ];
+
+        var pre = document.createElement('pre');
+        pre.className = 'term-corpo';
+        saida.appendChild(pre);
+
+        var linha = 0;
+        (function escreverLinha() {
+          if (linha >= linhas.length) { ocupado = false; return; }
+          var l = linhas[linha++];
+          var span = document.createElement('span');
+          if (l.c) span.className = l.c;
+          pre.appendChild(span);
+          var k = 0;
+          (function digitar() {
+            span.textContent = l.t.slice(0, ++k);
+            if (k < l.t.length) { setTimeout(digitar, 13); }
+            else { pre.appendChild(document.createTextNode('\n')); setTimeout(escreverLinha, 100); }
+          })();
+        })();
+      }
+
+      var chips = document.querySelectorAll('[data-preview-exemplo]');
+      for (var ch = 0; ch < chips.length; ch++) {
+        chips[ch].addEventListener('click', function () {
+          entrada.value = this.getAttribute('data-preview-exemplo');
+          triar();
+        });
+      }
+      botao.addEventListener('click', triar);
+      entrada.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); triar(); }
+      });
     })();
   </script>
 </body>
