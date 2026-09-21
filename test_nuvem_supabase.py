@@ -235,6 +235,26 @@ def test_ultimo_feedback_em_sem_registro_e_falha(monkeypatch):
     assert nuvem_supabase.ultimo_feedback_em("uid1") is None
 
 
+def test_excluir_feedback_envia_delete_por_id(monkeypatch):
+    _sem_config(monkeypatch)
+    monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-test")
+    vistos = {}
+
+    def _fake_delete(url, headers=None, params=None, timeout=None):
+        vistos["params"] = params
+        return _FakeResposta([])
+
+    monkeypatch.setattr(nuvem_supabase.requests, "delete", _fake_delete)
+    assert nuvem_supabase.excluir_feedback(7) is True
+    assert vistos["params"]["id"] == "eq.7"
+
+
+def test_excluir_feedback_falha_suave(monkeypatch):
+    _sem_config(monkeypatch)
+    assert nuvem_supabase.excluir_feedback(7) is False
+
+
 # --- Facade persistencia.py (dispatch) ----------------------------------
 def test_facade_usa_nuvem_quando_configurada(monkeypatch, tmp_path):
     # Sem caminho local nem backend forçado -> dispatches para a nuvem.

@@ -157,6 +157,50 @@ def render():
             "pendentes — trate-os no **💼 Meu Plano → Painel do responsável**."
         )
 
+    # ─── Feedbacks (avaliações pós-triagem) ─────────────────────────────────
+    st.markdown("### 💬 Feedbacks de usuários")
+    feedbacks = _carregar(nuvem_supabase.carregar_feedbacks, [])
+    if not feedbacks:
+        st.caption(
+            "Nenhum feedback ainda — eles aparecem aqui depois que um usuário logado "
+            "avalia uma triagem. (Sem a tabela `feedbacks` no Supabase nada quebra, só fica vazio.)"
+        )
+    else:
+        _fb_busca = st.text_input("🔍 Filtrar por e-mail / uid / comentário", key="dono_fb_busca").strip().lower()
+        _media = round(sum(int(f.get("estrelas") or 0) for f in feedbacks) / len(feedbacks), 1)
+        st.caption(f"**{len(feedbacks)}** avaliação(ões) · **média {_media:.1f}/5** · mostrando {len(feedbacks)}")
+        for _i, fb in enumerate(feedbacks):
+            _emiss = fb.get("email") or "—"
+            _uidf = str(fb.get("uid") or "")
+            _texto = (fb.get("comentario") or "").strip()
+            _est = int(fb.get("estrelas") or 0)
+            _linha_busca = " ".join((_emiss, _uidf, _texto)).lower()
+            if _fb_busca and _fb_busca not in _linha_busca:
+                continue
+            _estrelas_html = "⭐" * min(max(_est, 0), 5)
+            st.markdown(
+                f'<div style="border:1px solid rgba(124,58,237,.28);border-radius:12px;'
+                f'background:rgba(124,58,237,.05);padding:10px 14px;margin:6px 0">'
+                f'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
+                f'<span style="color:#fbbf24;font-size:15px;letter-spacing:2px">{_estrelas_html}</span>'
+                f'<span style="color:#94a3b8;font-size:12px">{_emiss} · {_fmt_data(fb.get("criado_em"))}</span>'
+                f'<span style="color:#64748b;font-size:11px;font-family:monospace">…{_uidf[-10:]}</span>'
+                f'</div>'
+                f'<div style="color:#e2e8f0;font-size:14px;margin-top:6px">{_texto or "—"}</div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+            _c1, _c2 = st.columns([4, 1])
+            with _c2:
+                _marca("marca-fb-del")
+                if st.button("🗑️ Remover", key=f"dono_fb_del_{_i}", use_container_width=True):
+                    if nuvem_supabase.excluir_feedback(fb.get("id")):
+                        _toast("Feedback removido.")
+                        st.rerun()
+                    else:
+                        st.error("Falha ao remover (offline/Supabase).")
+        st.caption("Os feedbacks alimentam as melhorias — estrelas e comentários são dos próprios usuários do app.")
+
     if not por_uid:
         st.caption("Nenhuma conta registrada ainda (usuários aparecem aqui depois do primeiro login — e a tabela `usuarios` precisa existir no Supabase).")
         return

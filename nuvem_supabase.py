@@ -815,3 +815,21 @@ def ultimo_feedback_em(uid: str) -> str | None:
         return (docs[0] or {}).get("criado_em") or None
     except Exception:
         return None
+
+
+def excluir_feedback(fb_id) -> bool:
+    """Remove uma avaliação (gestão do painel do dono). Best-effort."""
+    config = _config()
+    if not config:
+        return False
+    try:
+        resposta = requests.delete(
+            _feedbacks_url(),
+            headers=_headers(),
+            params={"id": f"eq.{fb_id}"},
+            timeout=15,
+        )
+        resposta.raise_for_status()
+        return True
+    except Exception:
+        return False

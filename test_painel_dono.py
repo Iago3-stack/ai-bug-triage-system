@@ -408,6 +408,20 @@ def test_badges_dos_planos():
         assert tipo in "premium teste basic".split() and badge.startswith("<span")
 
 
+def test_painel_tem_secao_de_feedbacks():
+    from pathlib import Path
+
+    raiz = Path(__file__).resolve().parent
+    fonte = (raiz / "secoes" / "painel_dono.py").read_text(encoding="utf-8")
+    nuvem = (raiz / "nuvem_supabase.py").read_text(encoding="utf-8")
+    # Seção visível no painel + carregamento tolerante (sem quebrar quandodo vazio)
+    assert "💬 Feedbacks de usuários" in fonte
+    assert "carregar_feedbacks" in fonte
+    assert "dono_fb_del" in fonte
+    assert "excluir_feedback" in fonte and "excluir_feedback" in nuvem
+    assert "média" in fonte and "⭐" in fonte
+
+
 # ─── teste_disponivel: coluna teste_ate na schema cache do PostgREST ────────
 
 def test_teste_disponivel_detecta_coluna_faltando(monkeypatch):
