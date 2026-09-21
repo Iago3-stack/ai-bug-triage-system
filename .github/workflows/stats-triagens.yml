@@ -82,12 +82,16 @@ jobs:
               for d in ((l.get("payload") or {}).get("duracao_ms") for l in linhas)
               if isinstance(d, (int, float))
           ]
+          # "Média" só tem valor com algumas amostras: abaixo de 3, fica None e o
+          # card de resposta permanece oculto (honestidade sobre o dado).
+          tempo_n = len(duracao)
           stats = {
               "total": n,
               "hoje": sum(1 for l in linhas if (l.get("payload") or {}).get("data") == hoje),
               "com_ia": com_ia,
               "critica": critica,
-              "tempo_medio_ms": round(sum(duracao) / len(duracao)) if duracao else None,
+              "tempo_medio_ms": round(sum(duracao) / tempo_n) if tempo_n >= 3 else None,
+              "tempo_n": tempo_n,
               "atualizado_em": datetime.datetime.now(
                   zoneinfo.ZoneInfo("America/Fortaleza")
               ).isoformat(timespec="minutes"),

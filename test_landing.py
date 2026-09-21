@@ -245,8 +245,9 @@ def test_workflow_stats_calcula_metricas_reais():
     assert 'get("usou_ia")' in wf
     assert 'startswith("CRÍTICA")' in wf
     assert 'get("duracao_ms")' in wf
-    # tempo fica null enquanto não houver nenhuma medição (honestidade)
-    assert "if duracao else None" in wf
+    # tempo só vira média com >= 3 medições; abaixo, fica null (card oculto)
+    assert "if tempo_n >= 3 else None" in wf
+    assert '"tempo_n": tempo_n' in wf
 
 
 def test_ci_preserva_stats_json():
