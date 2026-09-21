@@ -786,11 +786,10 @@
 
   <script>
     // Terminal demo: digita uma triagem real em loop, com cursor piscando.
-    // Respeita prefers-reduced-motion (mostra tudo parado, sem loop).
+    // Sempre anima — o texto continua real e legível para leitores de tela.
     (function () {
       var pre = document.getElementById('term-linhas');
       if (!pre) return;
-      var reduz = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
       var linhas = [
         { c: 't-verde', t: '$ ai-triage relatos/pagamento_falhou.txt', fim: 160 },
@@ -805,20 +804,18 @@
         { c: '', t: '', fim: 180 },
         { c: 't-bom', t: '✔ Relatório em PDF gerado · 2.4s', fim: 3200 }
       ];
-      var VEL = reduz ? 0 : 26;
+      var VEL = 26;
 
       var cursor = document.createElement('span');
       cursor.className = 'cursor';
 
       function escrever() {
         pre.textContent = '';
-        if (!reduz) pre.appendChild(cursor);
+        pre.appendChild(cursor);
         var i = 0;
         (function proxima() {
           if (i >= linhas.length) {
-            setTimeout(function () {
-              if (!reduz) escrever();
-            }, linhas[i - 1].fim);
+            setTimeout(escrever, linhas[i - 1].fim);
             return;
           }
           var l = linhas[i++];
@@ -827,12 +824,7 @@
           pre.appendChild(span);
           if (l.t === '') {
             pre.appendChild(document.createTextNode(' '));
-            setTimeout(proxima, VEL ? l.fim : 0);
-            return;
-          }
-          if (reduz) {
-            span.textContent = l.t;
-            setTimeout(proxima, 0);
+            setTimeout(proxima, l.fim);
             return;
           }
           var k = 0;

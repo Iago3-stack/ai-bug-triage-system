@@ -137,7 +137,7 @@ def test_index_links_para_o_artigo():
 
 
 def test_terminal_demo_no_hero():
-    """Telinha de terminal: barra de tráfego, linhas digitadas e redução de movimento."""
+    """Telinha de terminal: barra de tráfego, linhas digitadas e cursor piscando."""
     assert 'id="term-linhas"' in _HTML
     assert "ai-bug-triage — zsh" in _HTML
     # Bolinhas verde / amarela / vermelha
@@ -145,8 +145,8 @@ def test_terminal_demo_no_hero():
     # O texto digitado aparece no HTML (conteúdo real, não imagem)
     assert "ai-triage relatos/pagamento_falhou.txt" in _HTML
     assert "CRÍTICA" in _HTML
-    # Acessibilidade: respeita prefers-reduced-motion e tem descrição
-    assert "prefers-reduced-motion: reduce" in _HTML
+    # Sempre digita em loop (sem trava de prefers-reduced-motion)
+    assert "setTimeout(escrever" in _HTML
     assert "aria-label" in _HTML
 
 
