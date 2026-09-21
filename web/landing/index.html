@@ -450,6 +450,10 @@
       font-size: 12px; font-weight: 700; letter-spacing: 0.03em; white-space: nowrap;
       overflow: hidden; text-overflow: ellipsis; max-width: calc(100% - 90px);
     }
+    @media (max-width: 540px) {
+      .term-barra { justify-content: flex-end; }
+      .term-barra .titulo { max-width: 100%; font-size: 11px; }
+    }
     .term-corpo {
       margin: 0; padding: 18px 20px 22px; min-height: 276px;
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
