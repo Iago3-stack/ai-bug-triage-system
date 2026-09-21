@@ -420,6 +420,13 @@ def test_painel_tem_secao_de_feedbacks():
     assert "dono_fb_del" in fonte
     assert "excluir_feedback" in fonte and "excluir_feedback" in nuvem
     assert "média" in fonte and "⭐" in fonte
+    # Cartão usa classe .fb-card (sem cores inline lavadas) e o Remover é vermelho sem glow
+    assert 'class="fb-card"' in fonte
+    css = (raiz / "ui_tema.py").read_text(encoding="utf-8")
+    assert ".fb-card" in css and "box-shadow: none !important" in css
+    assert "marca-fb-del" in css and "#dc2626" in css
+    assert "focus-visible" in css
+    assert "body:has([data-st-tema=\"escuro\"]) .fb-card" in css
 
 
 # ─── teste_disponivel: coluna teste_ate na schema cache do PostgREST ────────

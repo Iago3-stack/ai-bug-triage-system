@@ -179,14 +179,13 @@ def render():
                 continue
             _estrelas_html = "⭐" * min(max(_est, 0), 5)
             st.markdown(
-                f'<div style="border:1px solid rgba(124,58,237,.28);border-radius:12px;'
-                f'background:rgba(124,58,237,.05);padding:10px 14px;margin:6px 0">'
-                f'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
-                f'<span style="color:#fbbf24;font-size:15px;letter-spacing:2px">{_estrelas_html}</span>'
-                f'<span style="color:#94a3b8;font-size:12px">{_emiss} · {_fmt_data(fb.get("criado_em"))}</span>'
-                f'<span style="color:#64748b;font-size:11px;font-family:monospace">…{_uidf[-10:]}</span>'
+                f'<div class="fb-card" style="padding:10px 14px;margin:6px 0">'
+                f'<div class="fb-meta" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
+                f'<span class="fb-estrelas" style="font-size:15px;letter-spacing:2px">{_estrelas_html}</span>'
+                f'<span>{_emiss} · {_fmt_data(fb.get("criado_em"))}</span>'
+                f'<span class="fb-uid">…{_uidf[-10:]}</span>'
                 f'</div>'
-                f'<div style="color:#e2e8f0;font-size:14px;margin-top:6px">{_texto or "—"}</div>'
+                f'<div class="fb-texto" style="font-size:14px;margin-top:6px">{_texto or "—"}</div>'
                 f'</div>',
                 unsafe_allow_html=True,
             )

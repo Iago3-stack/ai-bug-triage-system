@@ -192,6 +192,21 @@ _BASE_CSS = """
     [data-testid="stSidebar"] [data-testid="stExpander"]:has(.marca-jira) summary { color: #3b82f6 !important; }
     [data-testid="stSidebar"] [data-testid="stExpander"]:has(.marca-jira) [data-testid="stButton"] button { background: #059669 !important; color: #ffffff !important; }
     [data-testid="stSidebar"] [data-testid="stExpander"]:has(.marca-jira) [data-testid="stButton"] button:hover { background: #059669 !important; color: #ffffff !important; }
+
+    /* Card de feedback no Painel do dono — tema claro sem brilho: fundo neutro,
+       texto escuro legível e nenhuma sombra/glow. */
+    .fb-card { background: #f8fafc !important; border: 1px solid #dfe4ee !important; border-radius: 12px !important; box-shadow: none !important; }
+    .fb-card .fb-estrelas { color: #f59e0b !important; }
+    .fb-card .fb-meta { color: #5b6472 !important; font-size: 12px !important; }
+    .fb-card .fb-uid { color: #94a3b8 !important; font-size: 11px !important; font-family: ui-monospace, Menlo, Consolas, monospace !important; }
+    .fb-card .fb-texto { color: #334155 !important; }
+
+    /* Botão "🗑️ Remover" de feedback — vermelho fixo nos dois temas, sem hover/glow */
+    [data-testid="stColumn"]:has(.marca-fb-del) [data-testid="stButton"] button,
+    [data-testid="stColumn"]:has(.marca-fb-del) [data-testid="stButton"] button:hover,
+    [data-testid="stColumn"]:has(.marca-fb-del) [data-testid="stButton"] button:active,
+    [data-testid="stColumn"]:has(.marca-fb-del) [data-testid="stButton"] button:focus,
+    [data-testid="stColumn"]:has(.marca-fb-del) [data-testid="stButton"] button:focus-visible { background: #dc2626 !important; color: #ffffff !important; border: none !important; box-shadow: none !important; outline: none !important; }
 </style>
 """
 
@@ -495,6 +510,14 @@ body:has([data-st-tema="escuro"]) [data-testid="stColumn"]:has(.marca-dono-teste
 body:has([data-st-tema="escuro"]) [data-testid="stColumn"]:has(.marca-dono-teste) [data-testid="stButton"] button:hover { background:#b45309 !important; color:#ffffff !important; border:none !important; box-shadow:0 3px 10px rgba(180,83,9,.45) !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stColumn"]:has(.marca-dono-basic) [data-testid="stButton"] button,
 body:has([data-st-tema="escuro"]) [data-testid="stColumn"]:has(.marca-dono-basic) [data-testid="stButton"] button:hover { background:#52525b !important; color:#ffffff !important; border:none !important; box-shadow:0 3px 10px rgba(82,82,91,.45) !important; }
+body:has([data-st-tema="escuro"]) .fb-card { background: rgba(124, 58, 237, 0.07) !important; border: 1px solid rgba(124, 58, 237, 0.3) !important; }
+body:has([data-st-tema="escuro"]) .fb-card .fb-meta { color: #94a3b8 !important; }
+body:has([data-st-tema="escuro"]) .fb-card .fb-uid { color: #64748b !important; }
+body:has([data-st-tema="escuro"]) .fb-card .fb-texto { color: #e2e8f0 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stColumn"]:has(.marca-fb-del) [data-testid="stButton"] button,
+body:has([data-st-tema="escuro"]) [data-testid="stColumn"]:has(.marca-fb-del) [data-testid="stButton"] button:hover,
+body:has([data-st-tema="escuro"]) [data-testid="stColumn"]:has(.marca-fb-del) [data-testid="stButton"] button:active,
+body:has([data-st-tema="escuro"]) [data-testid="stColumn"]:has(.marca-fb-del) [data-testid="stButton"] button:focus { background:#dc2626 !important; color:#ffffff !important; border:none !important; box-shadow:none !important; outline:none !important; }
 </style>
 """
 
