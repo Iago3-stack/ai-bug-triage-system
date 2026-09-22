@@ -103,6 +103,26 @@ def test_booster_nao_vaza_para_fora_da_janela():
     assert r["score"] != -2.0 * 1.6  # não amplificou
 
 
+# --- Ênfase: CAIXA ALTA e pontuação amplificam severidade ---
+def test_caps_amplifica_score_negativo():
+    sem_caps = triar("estou frustrado")
+    com_caps = triar("ESTOU FRUSTRADO")
+    assert com_caps["score"] < sem_caps["score"]
+
+
+def test_pontuacao_repetida_amplifica_score():
+    sem_pont = triar("estou frustrado")
+    r = triar("estou frustrado!!!")
+    assert r["score"] < sem_pont["score"] < 0
+
+
+def test_caps_neutro_nao_cria_severidade():
+    # Texto só com caps mas sem termo do léxico: não vira severidade do nada
+    r = triar("POR FAVOR VERIFICAR")
+    assert "NORMAL" in r["gravidade"]
+    assert r["score"] == 0
+
+
 
 def test_lentidao_flexoes_eh_media():
     r = triar("o aplicativo está lentíssimo hoje")

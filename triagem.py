@@ -138,6 +138,24 @@ def _aplicar_negacoes(texto):
     return score, acertos
 
 
+def _fator_enfase(descricao, score):
+    """Amplifica a magnitude do score quando há sinais de ênfase no relato:
+    palavras em CAIXA ALTA e/ou pontuação repetida ('!!!', '???').
+
+    Conservador: só amplifica se o relato já tem sinal (score != 0) — um texto
+    todo em caps neutro não cria severidade do nada.
+    """
+    if score == 0:
+        return 1.0
+    fator = 1.0
+    caps = re.findall(r"\b[A-ZÀ-Ú][A-ZÀ-Ú]{2,}\b", descricao)
+    if caps:
+        fator *= 1.3
+    if re.search(r"[!?]{2,}", descricao):
+        fator = min(fator * 1.2, 1.6)
+    return fator
+
+
 def triar(descricao):
     """Classifica a severidade de um relato de bug usando NLP local.
 
@@ -147,7 +165,7 @@ def triar(descricao):
 
     score_lexico, acertos_lexico = _aplicar_lexico(texto)
     score_negacao, acertos_negacao = _aplicar_negacoes(texto)
-    score = score_lexico + score_negacao
+    score = (score_lexico + score_negacao) * _fator_enfase(descricao, score_lexico + score_negacao)
 
     termos = [t for t in acertos_lexico if t not in PALAVRAS_TECNICAS_INERTES]
     n_negacoes = len(acertos_negacao)
