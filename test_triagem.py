@@ -123,6 +123,23 @@ def test_caps_neutro_nao_cria_severidade():
     assert r["score"] == 0
 
 
+# --- Extensão do léxico (novos termos técnicos/emocionais) ---
+def test_termo_perda_de_dados_eh_critico():
+    assert "CRÍTICA" in triar("perdi acesso e houve vazamento de dados")["gravidade"]
+
+
+def test_fora_do_ar_eh_grave():
+    assert "MÉDIA" in triar("o sistema está fora do ar")["gravidade"]
+
+
+def test_apagar_corromper_eh_critico():
+    assert "CRÍTICA" in triar("o app apagou meus relatórios e corrompeu tudo")["gravidade"]
+
+
+def test_duplicou_eh_media():
+    assert "MÉDIA" in triar("a cobrança duplicou na fatura")["gravidade"]
+
+
 
 def test_lentidao_flexoes_eh_media():
     r = triar("o aplicativo está lentíssimo hoje")
