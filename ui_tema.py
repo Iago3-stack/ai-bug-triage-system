@@ -88,7 +88,7 @@ _BASE_CSS = """
        2) compensa o gap do pai com margem inferior negativa na barra.
        Resultado: fundo da barra encosta no topo do textarea, nos dois temas. */
     [data-testid="stElementContainer"]:has(.marca-relato-term) { display: none !important; }
-    [data-testid="stElementContainer"]:has(.term-cab) { margin-bottom: calc(-9px) !important; padding-bottom: 0 !important; }
+    [data-testid="stElementContainer"]:has(.term-cab) { margin-bottom: calc(-1rem) !important; padding-bottom: 0 !important; }
     [data-testid="stElementContainer"]:has(.marca-relato-term) + [data-testid="stElementContainer"] { margin-top: 0 !important; padding-top: 0 !important; }
 
     /* Botão "✨ Preencher relato a partir da falha" — verde sólido nos dois temas,
