@@ -200,6 +200,8 @@ _BASE_CSS = """
     .fb-card .fb-meta { color: #5b6472 !important; font-size: 12px !important; }
     .fb-card .fb-uid { color: #94a3b8 !important; font-size: 11px !important; font-family: ui-monospace, Menlo, Consolas, monospace !important; }
     .fb-card .fb-texto { color: #334155 !important; }
+    .fb-aviso { background: #f8fafc !important; border: 1px solid #dfe4ee !important; border-radius: 12px !important; box-shadow: none !important; padding: 10px 14px !important; color: #334155 !important; font-size: 14px !important; }
+    .fb-aviso-txt { color: #5b6472 !important; font-size: 12.5px !important; }
 
     /* Botão "🗑️ Remover" de feedback — vermelho fixo nos dois temas, sem hover/glow */
     [data-testid="stColumn"]:has(.marca-fb-del) [data-testid="stButton"] button,
@@ -514,6 +516,8 @@ body:has([data-st-tema="escuro"]) .fb-card { background: rgba(124, 58, 237, 0.07
 body:has([data-st-tema="escuro"]) .fb-card .fb-meta { color: #94a3b8 !important; }
 body:has([data-st-tema="escuro"]) .fb-card .fb-uid { color: #64748b !important; }
 body:has([data-st-tema="escuro"]) .fb-card .fb-texto { color: #e2e8f0 !important; }
+body:has([data-st-tema="escuro"]) .fb-aviso { background: rgba(124, 58, 237, 0.07) !important; border: 1px solid rgba(124, 58, 237, 0.3) !important; color: #e2e8f0 !important; }
+body:has([data-st-tema="escuro"]) .fb-aviso-txt { color: #94a3b8 !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stColumn"]:has(.marca-fb-del) [data-testid="stButton"] button,
 body:has([data-st-tema="escuro"]) [data-testid="stColumn"]:has(.marca-fb-del) [data-testid="stButton"] button:hover,
 body:has([data-st-tema="escuro"]) [data-testid="stColumn"]:has(.marca-fb-del) [data-testid="stButton"] button:active,

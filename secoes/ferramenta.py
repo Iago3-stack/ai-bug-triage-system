@@ -76,12 +76,45 @@ def _fb_deve_perguntar(uid: str) -> bool:
         return True
 
 
-def _ui_feedback_pos_triagem() -> None:
-    """Card discreto após a triagem: estrelas + comentário, no máx. a cada _FB_DIAS."""
+def _fb_proxima_oportunidade_em(uid: str) -> int | None:
+    """Dias inteiros até a próxima oportunidade de avaliar novamente (0 = já pode).
+    None quando não dá pra calcular (sem registro ou leitura falhou)."""
+    try:
+        ultimo = _fb_ultimo_em(uid)
+        if not ultimo:
+            return None
+        ultimo_dt = datetime.fromisoformat(ultimo.replace("Z", "+00:00"))
+        faltam = timedelta(days=_FB_DIAS).total_seconds() - (datetime.now(timezone.utc) - ultimo_dt).total_seconds()
+        if faltam <= 0:
+            return 0
+        return int(faltam // 86400) + 1
+    except Exception:
+        return None
+
+
+def _fb_agradecimento(uid: str) -> None:
+    """Estado 'obrigado' discreto no lugar do formulário após uma avaliação."""
+    dias = _fb_proxima_oportunidade_em(uid)
+    voltar = f"dentro de <b>{dias} dia(s)</b>" if dias else "em breve"
+    st.markdown(
+        f'<div class="fb-aviso">✅ <b>Feedback enviado — obrigado!</b><br>'
+        f'<span class="fb-aviso-txt">Sua próxima oportunidade de avaliar volta {voltar}.</span></div>',
+        unsafe_allow_html=True,
+    )
+
+
+def _ui_feedback() -> None:
+    """Widget fixo no fim da página de triagem (só logado). Nunca incomoda:
+    sem identificação não aparece; quem já avaliou nos últimos _FB_DIAS vê um
+    discreto 'obrigado' no lugar do formulário. O envio segue a régua semanal."""
     uid, email = _fb_identidade()
-    if not uid or st.session_state.get("fb_enviado_sessao"):
+    if not uid:
+        return
+    if st.session_state.get("fb_enviado_sessao"):
+        _fb_agradecimento(uid)
         return
     if not _fb_deve_perguntar(uid):
+        _fb_agradecimento(uid)
         return
     with st.expander("💬 Como foi sua experiência?", key="ex_feedback"):
         st.markdown('<div class="marca-feedback" style="display:none"></div>', unsafe_allow_html=True)
@@ -909,8 +942,6 @@ def render():
         st.info("📋 O relatório também pode ser copiado direto da caixa acima para o Jira ou GitHub!")
         st.success("Triagem finalizada com sucesso! ✅")
 
-        _ui_feedback_pos_triagem()
-
         # --- 6. HISTÓRICO (TABELA pandas) ---
         with st.expander(f"📊 Histórico de triagens desta sessão ({len(st.session_state['historico'])})", key="ex_sessao"):
             st.markdown('<div class="marca-sessao" style="display:none"></div>', unsafe_allow_html=True)
@@ -1059,3 +1090,6 @@ def render():
         with st.expander("📈️ Dashboard de QA — visão geral do histórico", key="ex_dashboard"):
             st.markdown('<div class="marca-dashboard" style="display:none"></div>', unsafe_allow_html=True)
             dashboard_qa.render_dashboard(registros_totais)
+
+    # --- 6.7 FEEDBACK — widget fixo no fim da página (só logado) ---
+    _ui_feedback()

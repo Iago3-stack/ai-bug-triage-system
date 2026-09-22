@@ -130,15 +130,40 @@ def test_fb_deve_perguntar_leitura_falha_nao_quebra(monkeypatch):
     assert f._fb_deve_perguntar("uid1") is True
 
 
-def test_feedback_ui_tem_chaves_e_frequencia_semanal():
+def test_fb_proxima_oportunidade_arredonda_para_cima(monkeypatch):
+    from secoes import ferramenta as f
+
+    rec_menos_1dia = (datetime.now(timezone.utc) - timedelta(days=1)).isoformat()
+    monkeypatch.setattr(f, "_fb_ultimo_em", lambda uid: rec_menos_1dia)
+    assert f._fb_proxima_oportunidade_em("uid1") == 6  # 6 dias restantes → volta em 6
+
+    ha_7dias = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+    monkeypatch.setattr(f, "_fb_ultimo_em", lambda uid: ha_7dias)
+    assert f._fb_proxima_oportunidade_em("uid1") == 0  # já pode
+
+    monkeypatch.setattr(f, "_fb_ultimo_em", lambda uid: None)
+    assert f._fb_proxima_oportunidade_em("uid1") is None
+
+    monkeypatch.setattr(f, "_fb_ultimo_em", lambda uid: (_ for _ in ()).throw(OSError("x")))
+    assert f._fb_proxima_oportunidade_em("uid1") is None
+
+
+def test_feedback_ui_tem_chaves_frequencia_e_estado_obrigado():
     from pathlib import Path
 
     raiz = Path(__file__).resolve().parent
     ferra = (raiz / "secoes" / "ferramenta.py").read_text(encoding="utf-8")
+    css = (raiz / "ui_tema.py").read_text(encoding="utf-8")
     assert 'key="fb_estrelas"' in ferra
     assert 'key="fb_comentario"' in ferra
     assert 'key="fb_enviar"' in ferra
     assert 'key="ex_feedback"' in ferra
     assert "fb_enviado_sessao" in ferra
     assert "_FB_DIAS = 7" in ferra
-    assert "_ui_feedback_pos_triagem()" in ferra
+    # Widget fixo no fim da página (depois do dashboard de QA), não só pós-triagem
+    assert "    _ui_feedback()\n" in ferra
+    assert ferra.find("    _ui_feedback()\n") > ferra.find("Dashboard de QA")
+    assert "_ui_feedback_pos_triagem" not in ferra
+    # Estado 'obrigado' discreto quando já avaliou (mantém a régua semanal)
+    assert "_fb_agradecimento" in ferra and "fb-aviso" in ferra and "fb-aviso" in css
+    assert "volta" in ferra and "obrigado" in ferra
