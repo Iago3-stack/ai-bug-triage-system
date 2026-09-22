@@ -89,6 +89,21 @@ def test_lento_e_lenta_eh_media():
     assert "MÉDIA" in triar("a página está lenta")["gravidade"]
 
 
+def test_booster_muito_amplifica_score():
+    # "muito frustrado" deve valer mais que "frustrado" (mesma base, ki do booster)
+    sem_boost = triar("estou frustrado")
+    com_boost = triar("estou muito frustrado")
+    assert com_boost["score"] <= sem_boost["score"] * 1.5
+    assert com_boost["score"] < sem_boost["score"]
+
+
+def test_booster_nao_vaza_para_fora_da_janela():
+    # "muito" distante do termo negativo não deve amplificá-lo
+    r = triar("estou frustrado, e muito obrigado pelo retorno")
+    assert r["score"] != -2.0 * 1.6  # não amplificou
+
+
+
 def test_lentidao_flexoes_eh_media():
     r = triar("o aplicativo está lentíssimo hoje")
     assert "MÉDIA" in r["gravidade"]

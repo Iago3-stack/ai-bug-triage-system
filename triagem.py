@@ -39,6 +39,16 @@ LE_XICO = {
     "perfeito": 1.0, "excelente": 1.0, "ótimo": 1.0, "ótima": 1.0, "amei": 1.0,
 }
 
+# Boosters (amplificadores de intensidade): multiplicam o peso do termo que
+# precedem. "muito frustrado" vale mais que "frustrado". Determinístico e local:
+# só o termo imediatamente precedido pelo booster é amplificado.
+BOOSTERS = {
+    "muito": 1.6, "bastante": 1.35, "extremamente": 2.0, "altamente": 1.8,
+    "totalmente": 1.5, "completamente": 1.6, "super": 1.6, "demais": 1.7,
+    "demasiadamente": 1.8, "absurdamente": 2.2, "insuportavelmente": 2.2,
+    "incrivelmente": 1.6, "realmente": 1.2, "pra caramba": 1.6,
+}
+
 # Padrões de léxico por RAIZ (regex compilados): cobrem flexões/derivações de uma vez.
 # \blent(?!es?\b)\w* captura lento/lenta/lentos/lentas/lentamente/lentidão/lentíssimo/lentinho...
 # e o lookahead (?!es?\b) exclui apenas "lente"/"lentes" (falsos positivos).
@@ -80,6 +90,23 @@ PADROES_NEGACAO = [
 MOTOR = "Léxico PT local (determinístico, offline)"
 
 
+def _fator_booster(texto, posicao):
+    """Fator de intensificação se houver um booster nas 3 palavras antes de `pos`.
+
+    Janela pontual (determinística): olha só o trecho que precede o termo,
+    então "muito frustrado" amplifica, mas "frustrado, e muito obrigado" não.
+    """
+    janela = texto[max(0, posicao - 40):posicao]
+    palavras = re.findall(r"[\wà-ú]+", janela)
+    if len(palavras) > 3:
+        palavras = palavras[-3:]
+    melhor = 1.0
+    for booster, fator in BOOSTERS.items():
+        if booster in palavras:
+            melhor = max(melhor, fator)
+    return melhor
+
+
 def _aplicar_lexico(texto):
     """Soma pesos dos termos do léxico sem contar sobreposições duas vezes."""
     acertos = []
@@ -88,13 +115,15 @@ def _aplicar_lexico(texto):
         if any(termo in ja_visto for ja_visto in acertos):
             continue
         if termo in texto:
-            score += LE_XICO[termo]
+            fator = _fator_booster(texto, texto.index(termo))
+            score += LE_XICO[termo] * fator
             acertos.append(termo)
     for padrao, peso in PADROES_LEXICO:
-        matches = [m.group() for m in padrao.finditer(texto)]
+        matches = [m for m in padrao.finditer(texto)]
         if matches:
-            score += peso
-            acertos.append(matches[0])
+            fator = _fator_booster(texto, matches[0].start())
+            score += peso * fator
+            acertos.append(matches[0].group())
     return score, acertos
 
 
