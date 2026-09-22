@@ -52,12 +52,10 @@ _BASE_CSS = """
     /* Masthead (card do plano) — agora fica logo abaixo da barra de navegação
        do topo; margem negativa não é mais necessária (a barra ocupa o topo). */
     .marca-mastro { margin-top: 0 !important; }
-    body:has([data-st-tema="escuro"]) .marca-mastro { margin-top: 0 !important; }
 
     /* Mobile (<768px): mantém a barra nativa visível (hambúrguer p/ sidebar). */
     @media (max-width: 767px) {
         .marca-mastro { margin-top: 0 !important; }
-        body:has([data-st-tema="escuro"]) .marca-mastro { margin-top: 0 !important; }
     }
 
     /* Card do formulário: textarea da triagem com moldura colorida (marcador irmão) */
@@ -144,7 +142,6 @@ _BASE_CSS = """
     /* Badge de prioridade animado (pulando) */
     @keyframes iago-pulse { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
     .badge-prioridade { display: inline-block; padding: 3px 12px; border-radius: 999px; font-weight: 800; font-size: 14px; color: #fff; animation: iago-pulse 1.4s ease-in-out infinite; box-shadow: 0 2px 8px rgba(0,0,0,.18); }
-    [data-testid="stElementContainer"]:has(.marca-pri) + [data-testid="stElementContainer"] .badge-prioridade { animation-delay: .1s; }
 
     /* Destaque colorido por expander: marcador oculto dentro do corpo +
        seleção via :has() (funciona msm sem id estável no DOM) */
@@ -430,7 +427,6 @@ body:has([data-st-tema="escuro"]) [data-testid="stDataFrame"],
 body:has([data-st-tema="escuro"]) [data-testid="stTable"] { color-scheme: dark; }
 
 /* Textos/cards com cor fixa inline que ficariam escuros demais no fundo escuro */
-body:has([data-st-tema="escuro"]) h1.nome-site { color:#ffffff !important; }
 body:has([data-st-tema="escuro"]) .campo-tit { color:#e2e8f0 !important; }
 body:has([data-st-tema="escuro"]) .prio-final { color:#f3f4f6 !important; }
 body:has([data-st-tema="escuro"]) .hero-sub { color:#cbd5e1 !important; }
@@ -442,10 +438,6 @@ body:has([data-st-tema="escuro"]) .hcard-s { color:#94a3b8 !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stColumn"]:has(.marca-prov-custom) [data-testid="stButton"] button { background:#2b1608 !important; color:#fdba74 !important; border:2px solid #7c2d12 !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stColumn"]:has(.prov-provid-sel) [data-testid="stButton"] button { outline-color:#f8fafc !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] [data-testid="stColumn"]:has(.tema-ativo) [data-testid="stButton"] button { outline:2.5px solid #7dd3fc !important; }
-
-/* Card do usuário logado na sidebar — legível nos dois temas */
-[data-testid="stSidebar"] .marca-usuario { display:flex !important; align-items:center !important; gap:8px !important; background:rgba(46,124,246,.10) !important; border:1px solid rgba(46,124,246,.25) !important; border-radius:10px !important; padding:8px 10px !important; font-size:12px !important; color:#0f172a !important; margin-bottom:8px !important; }
-body:has([data-st-tema="escuro"]) [data-testid="stSidebar"] .marca-usuario { color:#e2e8f0 !important; }
 
 /* Botão "🚪 Sair" com cor sólida vermelha (padrão :has() + marcador oculto) */
 [data-testid="stElementContainer"]:has(.marca-sair) + [data-testid="stElementContainer"] [data-testid="stButton"] button { background:#dc2626 !important; color:#ffffff !important; border:none !important; font-weight:600 !important; box-shadow:0 2px 8px rgba(220,38,38,.25) !important; }
