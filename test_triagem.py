@@ -194,3 +194,24 @@ def test_negacao_termo_composto_curado_nao_recorta():
     r = triar("o download não baixa")
     assert "MÉDIA" in r["gravidade"]
     assert "não baixa" in r["fatores"]
+
+
+# --- Diminuidores (atenuadores: "um pouco", "leve"...) ---
+def test_diminuidor_reduz_score_em_vez_de_amplificar():
+    sem_dim = triar("estou frustrado")
+    com_dim = triar("estou um pouco frustrado")
+    assert com_dim["score"] < 0
+    assert com_dim["score"] > sem_dim["score"]  # menos grave, não mais
+
+
+def test_diminuidor_vs_booster_antagonico():
+    boost = triar("estou muito frustrado")
+    dim = triar("estou um pouco frustrado")
+    assert boost["score"] < dim["score"]
+
+
+def test_relato_medio_com_diminuidor_nao_dispara_critico():
+    # relato real que estava estourando CRÍTICA indevidamente
+    r = triar("A busca está um pouco lenta. Não trava, mas duplicou alguns registros. Nada crítico.")
+    assert r["score"] > -2.0
+    assert "CRÍTICA" not in r["gravidade"]

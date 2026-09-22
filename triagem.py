@@ -56,6 +56,15 @@ BOOSTERS = {
     "incrivelmente": 1.6, "realmente": 1.2, "pra caramba": 1.6,
 }
 
+# Diminuidores (atenuadores): espelho dos boosters, multiplicam < 1.0 o termo
+# que precedem. "um pouco lenta" vale menos que "lenta". Determinístico e local:
+# só o trecho imediatamente antes do termo é considerado.
+DIMINUIDORES = {
+    "um pouco": 0.6, "um pouquinho": 0.5, "um cadinho": 0.5, "pouco": 0.6,
+    "levemente": 0.7, "ligeiramente": 0.7, "sutilmente": 0.8, "quase": 0.7,
+    "fracamente": 0.7, "um tico": 0.6, "um nadinha": 0.5,
+}
+
 # Padrões de léxico por RAIZ (regex compilados): cobrem flexões/derivações de uma vez.
 # \blent(?!es?\b)\w* captura lento/lenta/lentos/lentas/lentamente/lentidão/lentíssimo/lentinho...
 # e o lookahead (?!es?\b) exclui apenas "lente"/"lentes" (falsos positivos).
@@ -121,6 +130,23 @@ def _fator_booster(texto, posicao):
     return melhor
 
 
+def _fator_diminuidor(texto, posicao):
+    """Fator de atenuação se houver um diminuidor nas 3 palavras antes de `pos`.
+
+    Espelho dos boosters: "um pouco lenta" reduz o peso de "lenta". Igual à
+    lógica dos boosters para manter consistência e determinismo.
+    """
+    janela = texto[max(0, posicao - 40):posicao]
+    palavras = re.findall(r"[\wà-ú]+", janela)
+    if len(palavras) > 3:
+        palavras = palavras[-3:]
+    melhor = 1.0
+    for diminuidor, fator in sorted(DIMINUIDORES.items(), key=lambda k: len(k[0]), reverse=True):
+        if diminuidor in palavras:
+            melhor = min(melhor, fator)
+    return melhor
+
+
 def _esta_negado(texto, posicao):
     """True se o termo que começa em `posicao` for precedido por um negador.
 
@@ -138,12 +164,12 @@ def _esta_negado(texto, posicao):
 
 
 def _aplicar_peso(termo, peso, texto):
-    """Aplica peso com booster e negação granular ao termo de posição inicial."""
+    """Aplica booster, diminuidor e negação granular ao termo de posição inicial."""
     posicao = texto.index(termo)
-    base = peso * _fator_booster(texto, posicao)
+    base = peso * _fator_booster(texto, posicao) * _fator_diminuidor(texto, posicao)
     if _esta_negado(texto, posicao):
         # negação de BÊNÇÃO vira maldição; negação de MALDIÇÃO cancela/acalma
-        base = -peso * 0.8 if peso > 0 else peso * 0.33
+        base = -peso * 0.8 if peso > 0 else peso * 0.15
     return base
 
 
