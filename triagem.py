@@ -231,7 +231,14 @@ def triar(descricao):
     score_negacao, acertos_negacao = _aplicar_negacoes(texto)
     score = (score_lexico + score_negacao) * _fator_enfase(descricao, score_lexico + score_negacao)
 
-    termos = [t for t in acertos_lexico if t not in PALAVRAS_TECNICAS_INERTES]
+    termos = []
+    for t in acertos_lexico:
+        if t in PALAVRAS_TECNICAS_INERTES:
+            continue
+        if _esta_negado(texto, texto.index(t)):
+            termos.append(f"{t} (negado)")
+        else:
+            termos.append(t)
     n_negacoes = len(acertos_negacao)
     neg_fatores = []
     if n_negacoes:
