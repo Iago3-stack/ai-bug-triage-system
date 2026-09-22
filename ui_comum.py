@@ -405,6 +405,9 @@ def _bolinha_perfil(email: str) -> None:
             background:{_fundo}linear-gradient(135deg,#25D366,#2E7CF6);
         }}
         [data-testid="stColumn"]:has(.marca-perfil-avatar) [data-testid="stButton"] button:hover {{ filter:brightness(1.06); transform:scale(1.04); }}
+        [data-testid="stColumn"]:has(.marca-perfil-avatar) [data-testid="stButton"] button:focus,
+        [data-testid="stColumn"]:has(.marca-perfil-avatar) [data-testid="stButton"] button:focus-visible,
+        [data-testid="stColumn"]:has(.marca-perfil-avatar) [data-testid="stButton"] button:active {{ outline:none !important; box-shadow:0 2px 8px rgba(37,211,102,.35) !important; border:none !important; }}
         </style>
         """,
         unsafe_allow_html=True,

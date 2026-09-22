@@ -88,7 +88,7 @@ _BASE_CSS = """
        2) compensa o gap do pai com margem inferior negativa na barra.
        Resultado: fundo da barra encosta no topo do textarea, nos dois temas. */
     [data-testid="stElementContainer"]:has(.marca-relato-term) { display: none !important; }
-    [data-testid="stElementContainer"]:has(.term-cab) { margin-bottom: calc(-12px) !important; padding-bottom: 0 !important; }
+    [data-testid="stElementContainer"]:has(.term-cab) { margin-bottom: calc(-11px) !important; padding-bottom: 0 !important; }
     [data-testid="stElementContainer"]:has(.marca-relato-term) + [data-testid="stElementContainer"] { margin-top: 0 !important; padding-top: 0 !important; }
 
     /* Botão "✨ Preencher relato a partir da falha" — verde sólido nos dois temas,
@@ -277,9 +277,15 @@ body:has([data-st-tema="escuro"]) .marca-top-logo span { background:none !import
 .marca-top-user { color:#0f172a !important; font-size:13px !important; text-align:center !important; padding:6px 14px !important; background:rgba(37,99,235,.10) !important; border:1px solid rgba(37,99,235,.30) !important; border-radius:999px !important; font-weight:600 !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; }
 body:has([data-st-tema="escuro"]) .marca-top-user { color:#e2e8f0 !important; background:rgba(30,41,59,.45) !important; border:1px solid rgba(46,124,246,.4) !important; }
 [data-testid="stColumn"]:has(.marca-nav) [data-testid="stButton"] button { background:transparent !important; color:#cbd5e1 !important; border:none !important; box-shadow:none !important; font-weight:600 !important; padding:7px 10px !important; border-radius:9px !important; }
-[data-testid="stColumn"]:has(.marca-nav) [data-testid="stButton"] button:hover { background:rgba(255,255,255,.09) !important; color:#ffffff !important; }
-[data-testid="stColumn"]:has(.marca-nav-ativo) [data-testid="stButton"] button,
-[data-testid="stColumn"]:has(.marca-nav-ativo) [data-testid="stButton"] button:hover { color:#86efac !important; background:rgba(37,211,102,.14) !important; }
+    [data-testid="stColumn"]:has(.marca-nav) [data-testid="stButton"] button:hover,
+    [data-testid="stColumn"]:has(.marca-nav) [data-testid="stButton"] button:active { background:rgba(255,255,255,.09) !important; color:#ffffff !important; }
+    [data-testid="stColumn"]:has(.marca-nav) [data-testid="stButton"] button:focus,
+    [data-testid="stColumn"]:has(.marca-nav) [data-testid="stButton"] button:focus-visible { background:transparent !important; color:#cbd5e1 !important; outline:none !important; box-shadow:none !important; }
+    [data-testid="stColumn"]:has(.marca-nav-ativo) [data-testid="stButton"] button,
+    [data-testid="stColumn"]:has(.marca-nav-ativo) [data-testid="stButton"] button:hover,
+    [data-testid="stColumn"]:has(.marca-nav-ativo) [data-testid="stButton"] button:focus,
+    [data-testid="stColumn"]:has(.marca-nav-ativo) [data-testid="stButton"] button:focus-visible,
+    [data-testid="stColumn"]:has(.marca-nav-ativo) [data-testid="stButton"] button:active { color:#86efac !important; background:rgba(37,211,102,.14) !important; outline:none !important; box-shadow:none !important; }
 
 /* Botão "🔒 Faça login" do topo — verde sólido, SEM hover/sombra nos dois temas */
 .st-key-topnav_login [data-testid="stBaseButton-primary"],
