@@ -259,3 +259,17 @@ def test_postman_http500_mantem_critica():
 def test_assertionerror_sem_incidente_nao_escalona():
     r = triar("AssertionError: expected response to have status code 200, but got 200 with body vazio")
     assert "CRÍTICA" not in r["gravidade"]
+
+
+# --- Erros de serviço explícitos (internos do Postman/newman) ---
+def test_internal_server_error_mais_timeout_eh_critico():
+    r = triar("POST https://api.producao.com.br/v1/cobranca [500 Internal Server Error, 412B, 150ms] — response body: {\"error\": \"database timeout\"}")
+    assert "CRÍTICA" in r["gravidade"]
+
+
+def test_database_timeout_tem_peso_proprio():
+    # não depende da palavra do domínio ("pagamento"): "cobrança" não está no
+    # léxico, mas o erro de serviço sozinho já sustenta severidade alta
+    r = triar("POST https://api.exemplo.com/v1/cobranca [500 Internal Server Error] database timeout")
+    assert "CRÍTICA" in r["gravidade"] or "MÉDIA" in r["gravidade"]
+    assert "database timeout" in r["fatores"]

@@ -71,6 +71,11 @@ DIMINUIDORES = {
 # O peso é somado UMA vez por padrão, mesmo se houver vários matches no texto.
 PADROES_LEXICO = [
     (re.compile(r"\blent(?!es?\b)\w*", re.UNICODE), -0.7),
+    # Erros de serviço explícitos (Postman/newman/curl): peso forte e próprio,
+    # sem depender da palavra do domínio ("pagamento" vs "cobrança").
+    (re.compile(r"\b(?:internal server error|gateway timeout|service unavailable)\b", re.UNICODE), -1.5),
+    (re.compile(r"\bdatabase timeout\b", re.UNICODE), -1.5),
+    (re.compile(r"\bconnection refused\b", re.UNICODE), -1.2),
 ]
 
 # Termos puramente técnicos que NÃO devem escalar severidade sozinhos
