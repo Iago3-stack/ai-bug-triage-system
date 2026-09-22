@@ -31,7 +31,7 @@ except Exception as _e:  # pragma: no cover — só falha em ambiente sem a depe
     _FPDF_ERRO = repr(_e)
 
 # ─── Feedback pós-triagem (estrelas 1-5 + comentário, discreto por frequência) ─
-_FB_DIAS = 7  # relembrar o usuário no mínimo 1x a cada semana (não é chato)
+_FB_DIAS = 3  # relembrar o usuário a cada 3 dias (nem longe, nem perto — sem ser chato)
 _FB_ESTRELAS = ("1 ⭐", "2 ⭐", "3 ⭐", "4 ⭐", "5 ⭐")
 
 

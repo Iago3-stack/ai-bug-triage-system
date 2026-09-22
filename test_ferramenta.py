@@ -135,7 +135,7 @@ def test_fb_proxima_oportunidade_arredonda_para_cima(monkeypatch):
 
     rec_menos_1dia = (datetime.now(timezone.utc) - timedelta(days=1)).isoformat()
     monkeypatch.setattr(f, "_fb_ultimo_em", lambda uid: rec_menos_1dia)
-    assert f._fb_proxima_oportunidade_em("uid1") == 6  # 6 dias restantes → volta em 6
+    assert f._fb_proxima_oportunidade_em("uid1") == 2  # 2 dias restantes (janela de 3)
 
     ha_7dias = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
     monkeypatch.setattr(f, "_fb_ultimo_em", lambda uid: ha_7dias)
@@ -159,7 +159,7 @@ def test_feedback_ui_tem_chaves_frequencia_e_estado_obrigado():
     assert 'key="fb_enviar"' in ferra
     assert 'key="ex_feedback"' in ferra
     assert "fb_enviado_sessao" in ferra
-    assert "_FB_DIAS = 7" in ferra
+    assert "_FB_DIAS = 3" in ferra
     # Widget fixo no fim da página (depois do dashboard de QA), não só pós-triagem
     assert "    _ui_feedback()\n" in ferra
     assert ferra.find("    _ui_feedback()\n") > ferra.find("Dashboard de QA")
