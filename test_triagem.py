@@ -215,3 +215,28 @@ def test_relato_medio_com_diminuidor_nao_dispara_critico():
     r = triar("A busca está um pouco lenta. Não trava, mas duplicou alguns registros. Nada crítico.")
     assert r["score"] > -2.0
     assert "CRÍTICA" not in r["gravidade"]
+
+
+# --- Meta-severidade (voto explícito do usuário limita o teto) ---
+def test_nada_critico_veta_teto_critica():
+    r = triar("perdi todos os meus dados, mas nada crítico")
+    assert "CRÍTICA" not in r["gravidade"]
+    assert r["score"] >= -0.5
+
+
+def test_nao_e_urgente_veta_teto_critica():
+    r = triar("o sistema está fora do ar, mas não é urgente")
+    assert "CRÍTICA" not in r["gravidade"]
+    assert r["score"] >= -0.5
+
+
+def test_meta_severidade_nao_remove_critica_sem_voto():
+    # sem autoavaliação explícita, o peso do léxico decide
+    r = triar("PERDA TOTAL de dados, URGENTE!!!")
+    assert "CRÍTICA" in r["gravidade"]
+
+
+def test_meta_severidade_nao_altera_assinatura_triar():
+    # retorna sempre o mesmo dict com as 5 chaves
+    r = triar("perda de dados, nada crítico")
+    assert set(r) == {"score", "gravidade", "sentimento", "fatores", "motor"}

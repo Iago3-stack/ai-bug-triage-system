@@ -110,6 +110,20 @@ NEGADORES = ("não", "nao", "nunca", "jamais", "tampouco")
 AUXILIARES_NEGADOS = ("está", "esta", "tá", "ta", "estava", "ficou", "fica",
                       "estando", "ficava", "vem", "estão", "estao")
 
+# Meta-severidade: o próprio usuário julgando o impacto ("nada crítico",
+# "baixa prioridade"). É um "voto" explícito que limita o teto, NÃO soma ao
+# léxico (sinais de natureza diferente). Determinístico: regex + teto fixo.
+META_BAIXA_PRIORIDADE = [
+    re.compile(r"\bn[ãa]o\s*[ée]\s*cr[ií]tic", re.UNICODE),
+    re.compile(r"\bn[ãa]o\s*[ée]\s*urgente", re.UNICODE),
+    re.compile(r"\bn[ãa]o\s*[ée]\s*grave", re.UNICODE),
+    re.compile(r"\bnada\s+cr[ií]tic", re.UNICODE),
+    re.compile(r"\bb[aa]ixa\s+prioridade", re.UNICODE),
+    re.compile(r"\bbeima\s+de\s+urgente", re.UNICODE),
+    re.compile(r"\ba g[ée]nt[eê]e\s+segura", re.UNICODE),  # sem perda/dano grave
+]
+TETO_BAIXA_PRIORIDADE = -0.5  # mesmo que diga "nada crítico", nunca sobe p/ CRÍTICA
+
 MOTOR = "Léxico PT local (determinístico, offline)"
 
 
@@ -220,6 +234,18 @@ def _fator_enfase(descricao, score):
     return fator
 
 
+def _aplicar_meta_severidade(descricao, score):
+    """Veto do usuário ao teto de severidade (ex.: "nada crítico").
+
+    Não soma ao léxico — apenas impõe um teto (score >= TETO) quando o próprio
+    relato deixa claro que o impacto é baixo. Determinístico.
+    """
+    texto = unicodedata.normalize("NFC", descricao.lower())
+    if any(p.search(texto) for p in META_BAIXA_PRIORIDADE):
+        return max(score, TETO_BAIXA_PRIORIDADE)
+    return score
+
+
 def triar(descricao):
     """Classifica a severidade de um relato de bug usando NLP local.
 
@@ -230,6 +256,7 @@ def triar(descricao):
     score_lexico, acertos_lexico = _aplicar_lexico(texto)
     score_negacao, acertos_negacao = _aplicar_negacoes(texto)
     score = (score_lexico + score_negacao) * _fator_enfase(descricao, score_lexico + score_negacao)
+    score = _aplicar_meta_severidade(descricao, score)
 
     termos = []
     for t in acertos_lexico:
