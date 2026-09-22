@@ -21,7 +21,6 @@ import persistencia
 import guardrails
 import notificacoes
 import plano
-import dashboard as dashboard_qa
 
 _FPDF_ERRO = ""
 try:
@@ -942,15 +941,7 @@ def render():
         st.info("📋 O relatório também pode ser copiado direto da caixa acima para o Jira ou GitHub!")
         st.success("Triagem finalizada com sucesso! ✅")
 
-        # --- 6. HISTÓRICO (TABELA pandas) ---
-        with st.expander(f"📊 Histórico de triagens desta sessão ({len(st.session_state['historico'])})", key="ex_sessao"):
-            st.markdown('<div class="marca-sessao" style="display:none"></div>', unsafe_allow_html=True)
-            st.dataframe(pd.DataFrame(st.session_state["historico"]),
-                         use_container_width=True, hide_index=True)
-            if st.button("🗑️ Limpar histórico"):
-                st.session_state["historico"] = []
-
-    # --- 6.5 HISTÓRICO PERSISTIDO (JSONL local ou Supabase na nuvem) ---
+    # --- 6. HISTÓRICO PERSISTIDO (JSONL local ou Supabase na nuvem) ---
     registros_totais = persistencia.carregar_registros()
     if not plano.pago() and len(registros_totais) > plano.limite_historico_free():
         # Plano free: resumo limitado às últimas triagens (história completa = pago).
@@ -1085,11 +1076,5 @@ def render():
                     st.success("✅ Resolução salva no histórico!")
                 else:
                     st.warning("Nada foi alterado (campo vazio ou registro não encontrado).")
-    # --- 6.6 DASHBOARD DE QA (visão geral do histórico persistido) ---
-    if registros_totais:
-        with st.expander("📈️ Dashboard de QA — visão geral do histórico", key="ex_dashboard"):
-            st.markdown('<div class="marca-dashboard" style="display:none"></div>', unsafe_allow_html=True)
-            dashboard_qa.render_dashboard(registros_totais)
-
-    # --- 6.7 FEEDBACK — widget fixo no fim da página (só logado) ---
+    # --- 7. FEEDBACK — widget fixo no fim da página (só logado) ---
     _ui_feedback()

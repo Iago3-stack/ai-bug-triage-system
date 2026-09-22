@@ -160,10 +160,14 @@ def test_feedback_ui_tem_chaves_frequencia_e_estado_obrigado():
     assert 'key="ex_feedback"' in ferra
     assert "fb_enviado_sessao" in ferra
     assert "_FB_DIAS = 3" in ferra
-    # Widget fixo no fim da página (depois do dashboard de QA), não só pós-triagem
+    # Widget fixo no fim da página (depois do histórico persistido), não só pós-triagem
     assert "    _ui_feedback()\n" in ferra
-    assert ferra.find("    _ui_feedback()\n") > ferra.find("Dashboard de QA")
+    assert ferra.find("    _ui_feedback()\n") > ferra.find("Histórico persistido")
     assert "_ui_feedback_pos_triagem" not in ferra
+    # Duplicatas removidas: sessão e dashboard expander não existem mais na ferramenta
+    assert "Histórico de triagens desta sessão" not in ferra
+    assert "Dashboard de QA" not in ferra
+    assert "ex_sessao" not in ferra and "ex_dashboard" not in ferra
     # Estado 'obrigado' discreto quando já avaliou (mantém a régua semanal)
     assert "_fb_agradecimento" in ferra and "fb-aviso" in ferra and "fb-aviso" in css
     assert "volta" in ferra and "obrigado" in ferra

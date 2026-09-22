@@ -142,8 +142,6 @@ _BASE_CSS = """
        seleção via :has() (funciona msm sem id estável no DOM) */
     [data-testid="stExpander"]:has(.marca-resolucao) { border: 2px solid #e11d48 !important; border-radius: 12px !important; background: rgba(225, 29, 72, 0.05) !important; }
     [data-testid="stExpander"]:has(.marca-resolucao) summary { color: #e11d48 !important; font-weight: 700 !important; }
-    [data-testid="stExpander"]:has(.marca-sessao) { border: 2px solid #2563eb !important; border-radius: 12px !important; }
-    [data-testid="stExpander"]:has(.marca-sessao) summary { color: #2563eb !important; font-weight: 700 !important; }
     [data-testid="stExpander"]:has(.marca-historico) { border: 2px solid #059669 !important; border-radius: 12px !important; }
     [data-testid="stExpander"]:has(.marca-historico) summary { color: #059669 !important; font-weight: 700 !important; }
     [data-testid="stExpander"]:has(.marca-historico) [data-testid="stDownloadButton"], [data-testid="stExpander"]:has(.marca-historico) [data-testid="stButton"] { width: 100%; }
@@ -151,8 +149,6 @@ _BASE_CSS = """
     [data-testid="stExpander"]:has(.marca-historico) [data-testid="stDownloadButton"] button:hover { background: #065f46 !important; color: #ffffff !important; }
     [data-testid="stExpander"]:has(.marca-historico) [data-testid="stButton"] button { background: #059669 !important; color: #ffffff !important; }
     [data-testid="stExpander"]:has(.marca-historico) [data-testid="stButton"] button:hover { background: #059669 !important; color: #ffffff !important; }
-    [data-testid="stExpander"]:has(.marca-dashboard) { border: 2px solid #7c3aed !important; border-radius: 12px !important; }
-    [data-testid="stExpander"]:has(.marca-dashboard) summary { color: #7c3aed !important; font-weight: 700 !important; }
     [data-testid="stExpander"]:has(.marca-diag) { border: 2px solid #d97706 !important; border-radius: 12px !important; }
     [data-testid="stExpander"]:has(.marca-diag) summary { color: #d97706 !important; font-weight: 700 !important; }
     [data-testid="stExpander"]:has(.marca-modelo) { border: 2px solid #f97316 !important; border-radius: 12px !important; background: rgba(249, 115, 22, 0.05) !important; }
@@ -336,8 +332,8 @@ body:has([data-st-tema="escuro"]) [data-testid="stRadioOption"] label p { color:
 body:has([data-st-tema="escuro"]) [data-testid="stSelectbox"] [role="combobox"] { background:#151a21 !important; color:#e5e7eb !important; }
 
 /* Expanda o rest (unmarked) */
-body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:not(:has(.marca-resolucao,.marca-sessao,.marca-historico,.marca-dashboard,.marca-diag,.marca-modelo,.marca-jira,.marca-colar,.marca-plano)) { background:transparent !important; border:1px solid #2b3443 !important; }
-body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:not(:has(.marca-resolucao,.marca-sessao,.marca-historico,.marca-dashboard,.marca-diag,.marca-modelo,.marca-jira,.marca-colar,.marca-plano)) summary { color:#e6ecf2 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:not(:has(.marca-resolucao,.marca-historico,.marca-diag,.marca-modelo,.marca-jira,.marca-colar,.marca-plano)) { background:transparent !important; border:1px solid #2b3443 !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:not(:has(.marca-resolucao,.marca-historico,.marca-diag,.marca-modelo,.marca-jira,.marca-colar,.marca-plano)) summary { color:#e6ecf2 !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stExpander"] summary:hover { color:#f1f5f9 !important; }
 
 /* Título (summary) com FUNDO sólido escuro sempre — sem hover abrir/clarear:
@@ -352,8 +348,6 @@ body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:has(.marca-jira) su
 body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:has(.marca-jira) summary:hover { color:#3b82f6 !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:has(.marca-historico) summary,
 body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:has(.marca-historico) summary:hover { color:#34d399 !important; }
-body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:has(.marca-dashboard) summary,
-body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:has(.marca-dashboard) summary:hover { color:#a78bfa !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:has(.marca-modelo) summary,
 body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:has(.marca-modelo) summary:hover { color:#fb923c !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stExpander"]:has(.marca-colar) summary,
