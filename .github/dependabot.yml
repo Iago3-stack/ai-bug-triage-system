@@ -6,7 +6,7 @@ updates:
       interval: weekly
       day: monday
       time: "08:00"
-      timezone: "America/Fortaleza"
+      timezone: "America/Sao_Paulo"
     open-pull-requests-limit: 10
     labels:
       - dependências
@@ -17,5 +17,5 @@ updates:
       interval: weekly
       day: monday
       time: "08:00"
-      timezone: "America/Fortaleza"
+      timezone: "America/Sao_Paulo"
     open-pull-requests-limit: 5

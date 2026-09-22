@@ -46,7 +46,7 @@ jobs:
               raise SystemExit("Secret SUPABASE_URL/SERVICE_ROLE ausente")
 
           hoje = datetime.datetime.now(
-              zoneinfo.ZoneInfo("America/Fortaleza")
+              zoneinfo.ZoneInfo("America/Sao_Paulo")
           ).strftime("%Y-%m-%d")
 
           def paginar():
@@ -93,7 +93,7 @@ jobs:
               "tempo_medio_ms": round(sum(duracao) / tempo_n) if tempo_n >= 3 else None,
               "tempo_n": tempo_n,
               "atualizado_em": datetime.datetime.now(
-                  zoneinfo.ZoneInfo("America/Fortaleza")
+                  zoneinfo.ZoneInfo("America/Sao_Paulo")
               ).isoformat(timespec="minutes"),
           }
           with open("stats.json", "w", encoding="utf-8") as f:

@@ -225,7 +225,7 @@ def test_workflow_stats_existe():
     # Fallback: se o badge vivo não estiver disponível, não derruba o deploy
     assert "exit 0" in wf
     assert "actions/deploy-pages" in wf
-    assert "America/Fortaleza" in wf
+    assert "America/Sao_Paulo" in wf
 
 
 def test_workflow_stats_calcula_metricas_reais():
