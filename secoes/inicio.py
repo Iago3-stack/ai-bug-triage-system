@@ -89,7 +89,7 @@ def render():
     hero_animado.linha()
     col_foto, col_info = st.columns([1, 2])
     with col_foto:
-        st.image("assets/o novo.png", width=250, caption="Iago Nunes")
+        st.image("assets/o novo@2x.png", width=250, caption="Iago Nunes")
     with col_info:
         hero_animado.render()
     hero_animado.linha()
