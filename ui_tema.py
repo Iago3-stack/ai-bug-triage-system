@@ -64,7 +64,7 @@ _BASE_CSS = """
     /* Campo de relato do usuário com cara de terminal (vale para os dois temas:
        a janela do terminal é escura e o texto é mono verde — mesma cara no claro e no escuro).
        Cada estado (hover/focus/active) é igual: sem glow, sem mudança de cor, sem sombra. */
-    .term-cab { display:flex !important; align-items:center !important; gap:7px !important; background:#161b22 !important; border:1px solid #30363d !important; border-bottom:none !important; border-radius:12px 12px 0 0 !important; padding:9px 12px !important; position:relative !important; z-index:1 !important; }
+    .term-cab { display:flex !important; align-items:center !important; gap:7px !important; background:#161b22 !important; border:1px solid #30363d !important; border-bottom:none !important; border-radius:12px 12px 0 0 !important; padding:9px 12px !important; }
     .term-ponto { width:12px !important; height:12px !important; border-radius:50% !important; flex:none !important; }
     .term-roto { font-family:ui-monospace,"SFMono-Regular",Menlo,Consolas,"Fira Code",monospace !important; font-size:12px !important; color:#8b949e !important; margin-left:6px !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; }
     [data-testid="stElementContainer"]:has(.marca-relato-term) + [data-testid="stElementContainer"] [data-testid="stTextArea"] textarea,
@@ -82,13 +82,13 @@ _BASE_CSS = """
         color:#2f9e6e !important; opacity:.85 !important;
         font-family:ui-monospace,"SFMono-Regular",Menlo,Consolas,"Fira Code",monospace !important;
     }
-    /* Barra do terminal "escostada" no textarea. O Streamlit põe um gap (1rem)
-       entre os blocos irmãos — margem normal não resolve. Estratégia:
-       1) esconde o container do marcador intermediário (display:none) e
-       2) compensa o gap do pai com margem inferior negativa na barra.
-       Resultado: fundo da barra encosta no topo do textarea, nos dois temas. */
+    /* Barra do terminal com base preta entre ela e o textarea (em vez de encostar):
+       o bloco da barra ganha um respiro preto de 1rem (o gap que o Streamlit põe entre
+       blocos) e compensa esse gap com margem inferior negativa, puxando o textarea
+       para logo abaixo do respiro. Resultado: barra -> respiro preto -> textarea,
+       sem fundo claro à mostra, nos dois temas. */
     [data-testid="stElementContainer"]:has(.marca-relato-term) { display: none !important; }
-    [data-testid="stElementContainer"]:has(.term-cab) { margin-bottom: calc(-1rem + 4px) !important; padding-bottom: 0 !important; }
+    [data-testid="stElementContainer"]:has(.term-cab) { background:#161b22 !important; padding-bottom: 1rem !important; margin-bottom: -1rem !important; }
     [data-testid="stElementContainer"]:has(.marca-relato-term) + [data-testid="stElementContainer"] { margin-top: 0 !important; padding-top: 0 !important; }
 
     /* Botão "✨ Preencher relato a partir da falha" — verde sólido nos dois temas,
