@@ -79,8 +79,9 @@ def render():
     """)
         st.markdown(
             '<div class="marca-aviso-plano" style="font-size:14px;margin-top:4px">O plano é <b>por '
-            'usuário</b>: cada conta tem o seu (página 💼 <b>Meu Plano</b>). Sem cobrança '
-            'neste projeto — é a vitrine de um produto real.</div>',
+            'usuário</b>: cada conta tem o seu (página 💼 <b>Meu Plano</b>). O <b>Premium de '
+            'R$ 19,99/mês</b> é pago via <b>Pix</b> e libera histórico completo, múltiplos '
+            'canais de alerta e análise de IA.</div>',
             unsafe_allow_html=True,
         )
 
