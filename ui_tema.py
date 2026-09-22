@@ -135,9 +135,8 @@ _BASE_CSS = """
        iframe com sandbox (não navega o topo), então um botão real do Streamlit
        escondido assume o clique e faz st.switch_page (mesma sessão). */
     [data-testid="stMain"] [data-testid="stElementContainer"]:has(.marca-rodape-legal),
-    [data-testid="stMain"] [data-testid="stElementContainer"]:has(.marca-rodape-legal) + [data-testid="stElementContainer"]:has([data-testid="stButton"]) {
-        display: none !important;
-    }
+    [data-testid="stMain"] [data-testid="stElementContainer"]:has(.marca-rodape-legal) + [data-testid="stElementContainer"]:has([data-testid="stButton"]),
+    .st-key-rodape_legal { display: none !important; }
 
     /* Badge de prioridade animado (pulando) */
     @keyframes iago-pulse { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }

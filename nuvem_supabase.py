@@ -96,6 +96,7 @@
 
 import json
 import os
+import time
 from datetime import datetime, timezone
 
 import requests
@@ -143,6 +144,38 @@ def _config():
 
 def disponivel() -> bool:
     return _config() is not None
+
+
+# Cache de leitura com TTL: evita que cada rerun de página dispare as 3 chamadas
+# ao Supabase (histórico) de uma vez — os blocos montam "instantâneos" na troca
+# de página em vez de deixar sombras vazias aguardando a rede (~3s).
+_LEITURA_TTL = 60  # segundos
+_leitura_cache: dict[str, tuple[float, object]] = {}
+
+
+def _leitura_cacheada(chave: str):
+    """Cache TTL para leituras que demoram (Supabase). Retorna o valor ou None (expirou)."""
+
+    def _decorator(fn):
+        def _wrapper(*args, **kwargs):
+            agora = time.monotonic()
+            item = _leitura_cache.get(chave)
+            if item and (agora - item[0]) < _LEITURA_TTL:
+                return item[1]
+            valor = fn(*args, **kwargs)
+            _leitura_cache[chave] = (agora, valor)
+            return valor
+
+        return _wrapper
+
+    return _decorator
+
+
+def _invalidar_leitura(chaves: tuple[str, ...] | None = None) -> None:
+    """Zera o cache de leitura (depois de um INSERT/PATCH no histórico)."""
+    alvos = chaves if chaves is not None else tuple(_leitura_cache)
+    for c in alvos:
+        _leitura_cache.pop(c, None)
 
 
 def _base_url() -> str:
@@ -197,9 +230,11 @@ def registrar_triagem(dados: dict) -> dict:
         timeout=15,
     )
     resposta.raise_for_status()
+    _invalidar_leitura(("registros", "registros_por_data", "datas"))
     return dados
 
 
+@_leitura_cacheada("registros")
 def carregar_registros() -> list[dict]:
     """Todos os registros em ordem cronológica (do mais antigo para o mais novo)."""
     config = _config()
@@ -218,6 +253,7 @@ def carregar_registros() -> list[dict]:
     return [_doc_para_linha(doc) for doc in docs]
 
 
+@_leitura_cacheada("registros_por_data")
 def registros_por_data(data_iso: str) -> list[dict]:
     config = _config()
     if not config:
@@ -232,6 +268,7 @@ def registros_por_data(data_iso: str) -> list[dict]:
     return [_doc_para_linha(doc) for doc in (resposta.json() or [])]
 
 
+@_leitura_cacheada("datas")
 def datas_disponiveis() -> list[str]:
     config = _config()
     if not config:
@@ -260,6 +297,7 @@ def registrar_exportacao_jira(chave: str, url: str) -> bool:
         timeout=15,
     )
     resposta.raise_for_status()
+    _invalidar_leitura(("registros", "registros_por_data", "datas"))
     return True
 
 
@@ -288,6 +326,7 @@ def registrar_resolucao(registro_id: str, texto: str) -> bool:
         timeout=15,
     )
     resposta.raise_for_status()
+    _invalidar_leitura(("registros", "registros_por_data"))
     return True
 
 
