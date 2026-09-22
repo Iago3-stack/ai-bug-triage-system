@@ -124,6 +124,25 @@ META_BAIXA_PRIORIDADE = [
 ]
 TETO_BAIXA_PRIORIDADE = -0.5  # mesmo que diga "nada crítico", nunca sobe p/ CRÍTICA
 
+# Contexto de teste automatizado (Playwright, Postman/newman, executável de QA):
+# relato de uma execução de teste que falhou é ruído de pipeline, NÃO incidente.
+# Só capa o teto se NÃO houver sinal forte de incidente real (HTTP 4xx/5xx em
+# serviço, produção, perda de dados etc.) — esses mantêm a severidade real.
+META_CONTEXTO_TESTE = [
+    re.compile(r"\.spec\.(js|ts|py)\b", re.UNICODE),
+    re.compile(r"\bexpect\(|toHaveText|locator\(|assertionerror", re.UNICODE),
+    re.compile(r"\bplaywright\b|\bnewman\b|\bpostman\b|\bteste automatizado\b", re.UNICODE),
+    re.compile(r"\bteste de login\b|\btest case\b|\btc(?:-|_)?\d+", re.UNICODE),
+    re.compile(r"\bfailed\b.*\bpassed\b|\bpassed\b.*\bfailed\b", re.UNICODE),
+]
+META_SINAL_INCIDENTE = [
+    re.compile(r"http[s]?://\S+\s+\[?(?:40\d|50\d)", re.UNICODE),
+    re.compile(r"\b(?:internal server error|database timeout|connection refused)\b", re.UNICODE),
+    re.compile(r"\b(?:produ[çc][ãa]o|em produ[çc][ãa]o|prod)\b", re.UNICODE),
+    re.compile(r"\b(?:perda de dados|vazamento|fora do ar|corrompeu)\b", re.UNICODE),
+]
+TETO_CONTEXTO_TESTE = -0.5  # teste que falhou sem incidente = no máximo MÉDIA
+
 MOTOR = "Léxico PT local (determinístico, offline)"
 
 
@@ -235,14 +254,20 @@ def _fator_enfase(descricao, score):
 
 
 def _aplicar_meta_severidade(descricao, score):
-    """Veto do usuário ao teto de severidade (ex.: "nada crítico").
+    """Veto do usuário/contexto ao teto de severidade.
 
-    Não soma ao léxico — apenas impõe um teto (score >= TETO) quando o próprio
-    relato deixa claro que o impacto é baixo. Determinístico.
+    Não soma ao léxico — apenas impõe um teto (score >= TETO) quando:
+    1. o relato deixa claro que o impacto é baixo ("nada crítico"), ou
+    2. é saída de teste automatizado que falhou SEM sinal de incidente real
+       (ruído de pipeline não é acidente de produção).
+    Determinístico.
     """
     texto = unicodedata.normalize("NFC", descricao.lower())
     if any(p.search(texto) for p in META_BAIXA_PRIORIDADE):
         return max(score, TETO_BAIXA_PRIORIDADE)
+    eh_teste = any(p.search(texto) for p in META_CONTEXTO_TESTE)
+    if eh_teste and not any(p.search(texto) for p in META_SINAL_INCIDENTE):
+        return max(score, TETO_CONTEXTO_TESTE)
     return score
 
 

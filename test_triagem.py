@@ -240,3 +240,22 @@ def test_meta_severidade_nao_altera_assinatura_triar():
     # retorna sempre o mesmo dict com as 5 chaves
     r = triar("perda de dados, nada crítico")
     assert set(r) == {"score", "gravidade", "sentimento", "fatores", "motor"}
+
+
+# --- Contexto de teste automatizado (Playwright/Postman) vs incidente real ---
+def test_saida_playwright_teste_login_nao_eh_critica():
+    # exemplo oficial do app: teste de login que falhou = ruído de pipeline
+    r = triar("login.spec.ts: teste de login com sucesso — Expected: Bem-vindo, Received: Erro")
+    assert "CRÍTICA" not in r["gravidade"]
+    assert r["score"] >= -0.5
+
+
+def test_postman_http500_mantem_critica():
+    # exemplo oficial: HTTP 500 + database timeout = incidente real, não vira ruído
+    r = triar("POST https://api.exemplo.com/v1/pagamento [500 Internal Server Error, 412B, 150ms] — expected 200, but got 500; response body: {\"error\": \"database timeout\"}")
+    assert "CRÍTICA" in r["gravidade"]
+
+
+def test_assertionerror_sem_incidente_nao_escalona():
+    r = triar("AssertionError: expected response to have status code 200, but got 200 with body vazio")
+    assert "CRÍTICA" not in r["gravidade"]
