@@ -94,6 +94,13 @@ PADROES_NEGACAO = [
     (r"\bparou\s+de\s+(funcionar|responder)", -1.8),
 ]
 
+# Negadores gerais (regra 2: negação local sobre QUALQUER termo do léxico —
+# cobre flexões e verbos que a lista fixa PADROES_NEGACAO não enumera,
+# ex.: "não funcionou", "não estava funcionando", "não trava").
+NEGADORES = ("não", "nao", "nunca", "jamais", "tampouco")
+AUXILIARES_NEGADOS = ("está", "esta", "tá", "ta", "estava", "ficou", "fica",
+                      "estando", "ficava", "vem", "estão", "estao")
+
 MOTOR = "Léxico PT local (determinístico, offline)"
 
 
@@ -114,6 +121,32 @@ def _fator_booster(texto, posicao):
     return melhor
 
 
+def _esta_negado(texto, posicao):
+    """True se o termo que começa em `posicao` for precedido por um negador.
+
+    Regra geral e local: olha 1-2 palavras antes (ex.: "não", "não estava").
+    Só vale para termos que já tem peso no léxico — evita a caça de exceções.
+    """
+    janela = re.findall(r"[\wà-ú]+", texto[max(0, posicao - 40):posicao])
+    if not janela:
+        return False
+    if janela[-1] in NEGADORES:
+        return True
+    if len(janela) >= 2 and janela[-2] in NEGADORES and janela[-1] in AUXILIARES_NEGADOS:
+        return True
+    return False
+
+
+def _aplicar_peso(termo, peso, texto):
+    """Aplica peso com booster e negação granular ao termo de posição inicial."""
+    posicao = texto.index(termo)
+    base = peso * _fator_booster(texto, posicao)
+    if _esta_negado(texto, posicao):
+        # negação de BÊNÇÃO vira maldição; negação de MALDIÇÃO cancela/acalma
+        base = -peso * 0.8 if peso > 0 else peso * 0.33
+    return base
+
+
 def _aplicar_lexico(texto):
     """Soma pesos dos termos do léxico sem contar sobreposições duas vezes."""
     acertos = []
@@ -122,14 +155,12 @@ def _aplicar_lexico(texto):
         if any(termo in ja_visto for ja_visto in acertos):
             continue
         if termo in texto:
-            fator = _fator_booster(texto, texto.index(termo))
-            score += LE_XICO[termo] * fator
+            score += _aplicar_peso(termo, LE_XICO[termo], texto)
             acertos.append(termo)
     for padrao, peso in PADROES_LEXICO:
         matches = [m for m in padrao.finditer(texto)]
         if matches:
-            fator = _fator_booster(texto, matches[0].start())
-            score += peso * fator
+            score += _aplicar_peso(matches[0].group(), peso, texto)
             acertos.append(matches[0].group())
     return score, acertos
 

@@ -161,3 +161,36 @@ def test_lento_maiusculo_e_composto():
     r = triar("O sistema está LENTÍSSIMO e o botão não responde")
     assert "CRÍTICA" in r["gravidade"]
     assert any("lent" in f for f in r["fatores"])
+
+
+# --- Regra geral de negação (negar bênção vira maldição; negar maldição acalma) ---
+def test_negacao_positiva_inverte_o_sinal():
+    r = triar("o rollback não funcionou")
+    assert r["score"] < 0  # não pode mais ficar positivo
+    assert "MÉDIA" in r["gravidade"]
+
+
+def test_negacao_negativa_acalma_o_score():
+    r = triar("o sistema não trava")
+    assert "NORMAL" in r["gravidade"] or "MÉDIA" in r["gravidade"]
+    assert r["score"] > -1.0  # não mantém o peso cru -1.5
+
+
+def test_negacao_lista_fixa_continua_intacta():
+    r = triar("o botão não funciona")
+    assert "MÉDIA" in r["gravidade"]
+    assert r["score"] == -1.5
+
+
+def test_negacao_com_auxiliar_flexao_pega():
+    # flexão/passado que a lista fixa não enumera -> regra geral cobre
+    r = triar("o app não estava funcionando")
+    assert r["score"] < 0
+    assert "NORMAL" in r["gravidade"] or "MÉDIA" in r["gravidade"]
+
+
+def test_negacao_termo_composto_curado_nao_recorta():
+    # "não baixa" é termo curado próprio; não pode ser duplo-contado pela regra geral
+    r = triar("o download não baixa")
+    assert "MÉDIA" in r["gravidade"]
+    assert "não baixa" in r["fatores"]
