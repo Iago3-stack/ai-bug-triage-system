@@ -84,6 +84,11 @@ _BASE_CSS = """
         color:#2f9e6e !important; opacity:.85 !important;
         font-family:ui-monospace,"SFMono-Regular",Menlo,Consolas,"Fira Code",monospace !important;
     }
+    /* Barra do terminal "escostada" no textarea: zera as margens dos containers
+       intermediários (barra → marcador oculto → textarea) sem tocar no conteúdo. */
+    [data-testid="stElementContainer"]:has(.term-cab) { margin-bottom: 0 !important; }
+    [data-testid="stElementContainer"]:has(.marca-relato-term) { margin: 0 !important; padding: 0 !important; }
+    [data-testid="stElementContainer"]:has(.marca-relato-term) + [data-testid="stElementContainer"] { margin-top: 0 !important; }
 
     /* Botão "✨ Preencher relato a partir da falha" — verde sólido nos dois temas,
        mesmo visual em hover/focus/active (sem glow/sombra/mudança de cor). */
