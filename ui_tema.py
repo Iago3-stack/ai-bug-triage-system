@@ -169,8 +169,10 @@ _BASE_CSS = """
     [data-testid="stExpander"]:has(.marca-colar) summary { color: #15803d !important; font-weight: 700 !important; }
     [data-testid="stExpander"]:has(.marca-plano) { border: 2px solid #d97706 !important; border-radius: 12px !important; background: rgba(217, 119, 6, 0.05) !important; }
     [data-testid="stExpander"]:has(.marca-plano) summary { color: #b45309 !important; font-weight: 700 !important; }
-    /* Bloco "☝️ quadrado" da página Meu Plano — borda laranja acompanhando o expander de comparativo */
-    [data-testid="stVerticalBlock"]:has(.marca-plano-caixa) { border: 2px solid #d97706 !important; }
+    /* Bloco "☝️ quadrado" da página Meu Plano — borda laranja acompanhando o expander de comparativo.
+       Mesmo padrão do .marca-tbn: só o stVerticalBlock cujo FILHO DIRETO carrega o marcador,
+       nunca os ancestrais (que pintariam a página inteira). */
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"]:has(.marca-plano-caixa)) { border: 2px solid #d97706 !important; }
     [data-testid="stExpander"]:has(.marca-feedback) { border: 2px solid #7c3aed !important; border-radius: 12px !important; background: rgba(124, 58, 237, 0.05) !important; }
     [data-testid="stExpander"]:has(.marca-feedback) summary { color: #7c3aed !important; font-weight: 700 !important; }
     [data-testid="stExpander"]:has(.marca-plano) [data-testid="stExpanderDetails"] { overflow-x: auto; }
