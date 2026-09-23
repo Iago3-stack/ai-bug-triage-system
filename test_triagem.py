@@ -273,3 +273,72 @@ def test_database_timeout_tem_peso_proprio():
     r = triar("POST https://api.exemplo.com/v1/cobranca [500 Internal Server Error] database timeout")
     assert "CRÍTICA" in r["gravidade"] or "MÉDIA" in r["gravidade"]
     assert "database timeout" in r["fatores"]
+
+
+# --- Negações comuns de fala real (bloco 1) ---
+def test_nao_clica_eh_media():
+    r = triar("o botão não clica de jeito nenhum")
+    assert "MÉDIA" in r["gravidade"]
+
+
+def test_nao_inicia_eh_media():
+    r = triar("o app não inicia no meu celular")
+    assert "MÉDIA" in r["gravidade"]
+
+
+def test_nao_atualiza_eh_media():
+    r = triar("a página não atualiza com os novos dados")
+    assert "MÉDIA" in r["gravidade"]
+
+
+def test_nao_sincroniza_eh_media():
+    r = triar("não sincroniza meus contatos com a nuvem")
+    assert "MÉDIA" in r["gravidade"]
+
+
+def test_nao_processa_pagamento_acumula():
+    r = triar("não processa o pagamento e não conclui a compra")
+    assert "MÉDIA" in r["gravidade"] or "CRÍTICA" in r["gravidade"]
+
+
+# --- Termos técnicos graves (bloco 2) ---
+def test_tela_branca_eh_media_ou_critica():
+    r = triar("a tela fica branca quando abro o relatório")
+    assert "MÉDIA" in r["gravidade"] or "CRÍTICA" in r["gravidade"]
+
+
+def test_tela_preta_eh_media_ou_critica():
+    r = triar("depois do update a tela fica preta")
+    assert "MÉDIA" in r["gravidade"] or "CRÍTICA" in r["gravidade"]
+
+
+def test_loop_infinito_eh_critico():
+    r = triar("o sistema entrou em loop infinito de recarga")
+    assert "CRÍTICA" in r["gravidade"] or "MÉDIA" in r["gravidade"]
+
+
+def test_instavel_eh_media():
+    r = triar("a conexão está instável, cai a cada minuto")
+    assert "MÉDIA" in r["gravidade"]
+
+
+def test_perda_total_eh_critica():
+    r = triar("houve perda total das configurações do sistema")
+    assert "CRÍTICA" in r["gravidade"]
+
+
+# --- Ausência 'sem X' como sinal de incidente (bloco 3) ---
+def test_sem_acesso_eh_media():
+    r = triar("estou sem acesso ao painel agora")
+    assert "MÉDIA" in r["gravidade"]
+    assert "sem acesso" in r["fatores"]
+
+
+def test_sem_conexao_eh_media():
+    r = triar("o dispositivo ficou sem conexão com o servidor")
+    assert "MÉDIA" in r["gravidade"]
+
+
+def test_sem_sinal_acumula_com_parou():
+    r = triar("fiquei sem sinal e parou de responder")
+    assert "MÉDIA" in r["gravidade"] or "CRÍTICA" in r["gravidade"]

@@ -11,10 +11,11 @@ import unicodedata
 LE_XICO = {
     # Técnicos graves (sinal de bug sério / impacto em infra ou negócio)
     "crashando": -2.0, "crash": -2.0,
-    "tela azul": -2.0, "erro fatal": -2.0, "erro 500": -2.0, "500": -1.5,
+    "erro fatal": -2.0, "loop infinito": -1.8, "erro 500": -2.0, "500": -1.5,
     "trava toda": -2.0, "travando": -1.5, "trava": -1.5, "travado": -1.5,
+    "instável": -1.2, "instabilidade": -1.2,
     "congelando": -1.5, "congela": -1.5, "congelou": -1.5,
-    "perda de dados": -2.0, "vazamento": -2.0, "inseguro": -2.0,
+    "perda de dados": -2.0, "perda total": -2.0, "vazamento": -2.0, "inseguro": -2.0,
     "apagou": -2.0, "corrompeu": -2.0, "perdi": -1.5, "sumiu": -1.5,
     "duplicou": -1.2, "resetou": -1.2, "reinicia sozinho": -1.8,
     "fecha sozinho": -1.8, "fora do ar": -1.8, "indisponível": -1.5,
@@ -76,6 +77,10 @@ PADROES_LEXICO = [
     (re.compile(r"\b(?:internal server error|gateway timeout|service unavailable)\b", re.UNICODE), -1.5),
     (re.compile(r"\bdatabase timeout\b", re.UNICODE), -1.5),
     (re.compile(r"\bconnection refused\b", re.UNICODE), -1.2),
+    # Tela anômala (bolinha branca/preta) — tolera verbo entre "tela" e a cor,
+    # ex.: "a tela fica branca", "a tela ficou preta".
+    (re.compile(r"\btela\s+(?:fica|ficou|ficava|está|est[áa]|estava)\s+(?:branca|preta)\b", re.UNICODE), -1.8),
+    (re.compile(r"\btela\s+(?:branca|branquinha|preta|pretinha)\b", re.UNICODE), -1.8),
 ]
 
 # Termos puramente técnicos que NÃO devem escalar severidade sozinhos
@@ -104,14 +109,39 @@ PADROES_NEGACAO = [
     (r"\bn[ãa]o\s+(aparece|aparecer|apareceu)", -1.0),
     (r"\bn[ãa]o\s+(deixa|deixar)", -1.0),
     (r"\bn[ãa]o\s+(mostra|mostrar)", -1.0),
+    (r"\bn[ãa]o\s+(clica|clicar|clicou)", -1.2),
+    (r"\bn[ãa]o\s+(inicia|iniciar|iniciou)", -1.2),
+    (r"\bn[ãa]o\s+(atualiza|atualizar|atualizou|atualizava)", -1.2),
+    (r"\bn[ãa]o\s+(sincroniza|sincronizar|sincronizou)", -1.2),
+    (r"\bn[ãa]o\s+(conclui|concluir|conclu[iu]do)", -1.2),
+    (r"\bn[ãa]o\s+(processa|processar|processou)", -1.2),
+    (r"\bn[ãa]o\s+(conecta|conectar|conectou)", -1.2),
+    (r"\bn[ãa]o\s+(recebe|receber|recebeu)", -1.2),
+    (r"\bn[ãa]o\s+(encontra|encontrar|encontrou)", -1.2),
+    (r"\bn[ãa]o\s+(valida|validar|validou)", -1.2),
     (r"\bnunca\s+(funciona|funcionou|carregou|abriu)", -1.5),
     (r"\bparou\s+de\s+(funcionar|responder)", -1.8),
+]
+
+# "sem X" ausência de recurso/estado vital = sinal de problema (negação nominal).
+# Cobre "sem acesso"/"sem conexão"/"sem resposta" — situações que a negação
+# verbal "não funciona" não alcança. Mesmo peso de falha (regra 1 do léxico).
+PADROES_SEM = [
+    (r"\bsem\s+acesso", -1.5),
+    (r"\bsem\s+conex[ãa]o", -1.5),
+    (r"\bsem\s+resposta", -1.2),
+    (r"\bsem\s+internet", -1.2),
+    (r"\bsem\s+energia", -1.2),
+    (r"\bsem\s+permiss[ãa]o", -1.0),
+    (r"\bsem\s+sinal", -1.0),
+    (r"\bsem\s+dados", -1.0),
+    (r"\bsem\s+rede", -1.2),
 ]
 
 # Negadores gerais (regra 2: negação local sobre QUALQUER termo do léxico —
 # cobre flexões e verbos que a lista fixa PADROES_NEGACAO não enumera,
 # ex.: "não funcionou", "não estava funcionando", "não trava").
-NEGADORES = ("não", "nao", "nunca", "jamais", "tampouco")
+NEGADORES = ("não", "nao", "nunca", "jamais", "tampouco", "sem")
 AUXILIARES_NEGADOS = ("está", "esta", "tá", "ta", "estava", "ficou", "fica",
                       "estando", "ficava", "vem", "estão", "estao")
 
@@ -240,6 +270,17 @@ def _aplicar_negacoes(texto):
     return score, acertos
 
 
+def _aplicar_sem(texto):
+    """Soma pesos dos padrões de ausência 'sem X' (cada padrão só uma vez)."""
+    score = 0.0
+    acertos = []
+    for padrao, peso in PADROES_SEM:
+        if re.search(padrao, texto):
+            score += peso
+            acertos.append(re.search(padrao, texto).group())
+    return score, acertos
+
+
 def _fator_enfase(descricao, score):
     """Amplifica a magnitude do score quando há sinais de ênfase no relato:
     palavras em CAIXA ALTA e/ou pontuação repetida ('!!!', '???').
@@ -285,7 +326,9 @@ def triar(descricao):
 
     score_lexico, acertos_lexico = _aplicar_lexico(texto)
     score_negacao, acertos_negacao = _aplicar_negacoes(texto)
-    score = (score_lexico + score_negacao) * _fator_enfase(descricao, score_lexico + score_negacao)
+    score_sem, acertos_sem = _aplicar_sem(texto)
+    base = score_lexico + score_negacao + score_sem
+    score = base * _fator_enfase(descricao, base)
     score = _aplicar_meta_severidade(descricao, score)
 
     termos = []
@@ -301,7 +344,7 @@ def triar(descricao):
     if n_negacoes:
         neg_fatores.append(f"negação ({n_negacoes} padrão negado)" if n_negacoes == 1
                            else f"negação ({n_negacoes} padrões)")
-    fatores = list(termos) + neg_fatores
+    fatores = list(termos) + neg_fatores + list(acertos_sem)
     tem_emocional = any(t in EMOCIONAIS_NEGATIVAS for t in acertos_lexico)
 
     if score <= -2.0:
