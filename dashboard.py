@@ -258,6 +258,7 @@ def render_dashboard(registros: list[dict]) -> None:
     n_sens = sum(1 for r in registros if _sensiveis(r))
     mask_col.metric("🔒 Credenciais/PII mascaradas", n_sens)
     mask_exp = mask_col.expander("Por que mascaramos?", expanded=False)
+    mask_exp.markdown('<div class="marca-mascara" style="display:none"></div>', unsafe_allow_html=True)
     tipos = guardrails_auditoria(registros)
     if tipos:
         linhas = [
