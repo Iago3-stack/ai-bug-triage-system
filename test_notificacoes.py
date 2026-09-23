@@ -17,7 +17,8 @@ def test_nao_alerta_prioridade_media():
     assert notificacoes.notificar_discord("MÉDIA ⚠️", "resumo") is False
 
 
-def test_alerta_critico_sem_webhook_fica_silencioso():
+def test_alerta_critico_sem_webhook_fica_silencioso(monkeypatch):
+    monkeypatch.setattr(notificacoes, "webhook_discord", lambda: "")
     assert notificacoes.notificar_discord("CRÍTICA 🚨", "resumo") is False
 
 
@@ -373,7 +374,8 @@ def test_limpar_config_sessao_esvazia():
 
 
 # --- Testes manuais de canal (botões "Enviar teste" do modal) ---
-def test_testar_discord_sem_webhook_fala():
+def test_testar_discord_sem_webhook_fala(monkeypatch):
+    monkeypatch.setattr(notificacoes, "webhook_discord", lambda: "")
     ok, msg = notificacoes.testar_discord()
     assert ok is False
     assert "Sem webhook" in msg

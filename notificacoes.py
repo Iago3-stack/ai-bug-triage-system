@@ -13,8 +13,15 @@ import socket
 from email.message import EmailMessage
 import urllib.parse
 import urllib.request
+import urllib.error
 
 _SOPADRA = "***"
+
+# O Discord (via Cloudflare) bloqueia o User-Agent padrão do urllib do Python
+# ("Python-urllib/...") como bot — código 1010. Usando um header de navegador
+# o webhook responde 204 normal.
+_USER_AGENT = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+               "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36")
 
 _resolver = socket.getaddrinfo
 
@@ -178,7 +185,7 @@ def notificar_discord(prioridade_final: str, resumo: str, provedor: str | None =
         req = urllib.request.Request(
             url,
             data=corpo,
-            headers={"Content-Type": "application/json"},
+            headers={"Content-Type": "application/json", "User-Agent": _USER_AGENT},
             method="POST",
         )
         with urllib.request.urlopen(req, timeout=5) as resp:
@@ -265,13 +272,15 @@ def testar_discord() -> tuple[bool, str]:
         req = urllib.request.Request(
             url,
             data=corpo,
-            headers={"Content-Type": "application/json"},
+            headers={"Content-Type": "application/json", "User-Agent": _USER_AGENT},
             method="POST",
         )
         with urllib.request.urlopen(req, timeout=5) as resp:
             if resp.status == 204:
                 return True, "Teste enviado ao Discord."
             return False, f"Resposta inesperada do Discord (HTTP {resp.status})."
+    except urllib.error.HTTPError as e:
+        return False, f"HTTP {e.code} — {e.reason} (Discord recusou o webhook)."
     except Exception as e:
         return False, f"Falha ao enviar: {type(e).__name__}"
 
@@ -323,7 +332,7 @@ def notificar_evento(titulo: str, corpo: str) -> bool:
             req = urllib.request.Request(
                 url,
                 data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
-                headers={"Content-Type": "application/json"},
+                headers={"Content-Type": "application/json", "User-Agent": _USER_AGENT},
                 method="POST",
             )
             with urllib.request.urlopen(req, timeout=5) as resp:
