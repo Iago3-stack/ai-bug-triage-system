@@ -344,7 +344,7 @@ def render():
             [data-testid="stElementContainer"]:has(.marca-amostra-limpar) + [data-testid="stElementContainer"] [data-testid="stButton"] button:hover,
             [data-testid="stElementContainer"]:has(.marca-amostra-limpar) + [data-testid="stElementContainer"] [data-testid="stButton"] button:active,
             [data-testid="stElementContainer"]:has(.marca-amostra-limpar) + [data-testid="stElementContainer"] [data-testid="stButton"] button:focus {
-              background: #64748b !important; color: #ffffff !important; border: none !important;
+              background: #dc2626 !important; color: #ffffff !important; border: none !important;
               font-weight: 800 !important; box-shadow: none !important;
             }
             /* Falha bruta com cara de terminal azul (igual ao relato do usuário, mas azul
