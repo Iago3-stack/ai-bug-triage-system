@@ -27,6 +27,13 @@ def test_limite_historico_por_plano(monkeypatch):
     assert plano.limite_historico_free() > 10**8
 
 
+def test_limite_historico_free_fixo_independente_do_plano(monkeypatch):
+    monkeypatch.setenv("PLANO", "free")
+    assert plano.limite_historico_free_fixo() == 30
+    monkeypatch.setenv("PLANO", "pago")
+    assert plano.limite_historico_free_fixo() == 30
+
+
 def test_tenant_padrao_global(monkeypatch):
     monkeypatch.delenv("TENANT_ID", raising=False)
     assert plano.tenant_atual() == "global"

@@ -169,6 +169,8 @@ _BASE_CSS = """
     [data-testid="stExpander"]:has(.marca-colar) summary { color: #15803d !important; font-weight: 700 !important; }
     [data-testid="stExpander"]:has(.marca-plano) { border: 2px solid #d97706 !important; border-radius: 12px !important; background: rgba(217, 119, 6, 0.05) !important; }
     [data-testid="stExpander"]:has(.marca-plano) summary { color: #b45309 !important; font-weight: 700 !important; }
+    /* Bloco "☝️ quadrado" da página Meu Plano — borda laranja acompanhando o expander de comparativo */
+    [data-testid="stVerticalBlock"]:has(.marca-plano-caixa) { border: 2px solid #d97706 !important; }
     [data-testid="stExpander"]:has(.marca-feedback) { border: 2px solid #7c3aed !important; border-radius: 12px !important; background: rgba(124, 58, 237, 0.05) !important; }
     [data-testid="stExpander"]:has(.marca-feedback) summary { color: #7c3aed !important; font-weight: 700 !important; }
     [data-testid="stExpander"]:has(.marca-plano) [data-testid="stExpanderDetails"] { overflow-x: auto; }
@@ -251,7 +253,13 @@ _TEMA_CSS = """
 [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-gh) { border:2px solid #24292e !important; border-radius:12px !important; background:rgba(36,41,46,.05) !important; }
 [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-gh) summary { color:#24292e !important; font-weight:700 !important; }
 [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-gh) [data-testid="stButton"] button,
-[data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-gh) [data-testid="stButton"] button:hover { background:#24292e !important; color:#ffffff !important; }
+[data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-gh) [data-testid="stButton"] button:hover,
+[data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-gh) [data-testid="stButton"] button:active,
+[data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-gh) [data-testid="stButton"] button:focus { background:#24292e !important; color:#ffffff !important; border:none !important; box-shadow:none !important; }
+[data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-gh) [data-testid="stButton"] button span,
+[data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-gh) [data-testid="stButton"] button p,
+[data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-gh) [data-testid="stButton"] button span *,
+[data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-gh) [data-testid="stButton"] button [data-testid="stMarkdownContainer"] { color:#ffffff !important; }
 
 /* Corpo dos expanders com fundo próprio para os campos se destacarem sem depender de hover */
 [data-testid="stDialog"] [data-testid="stExpanderDetails"] { background:#f4f7fa !important; border:1px solid #cfd8e3 !important; border-radius:0 0 10px 10px !important; }
@@ -423,7 +431,13 @@ body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stColum
 body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-jira) [data-testid="stButton"] button,
 body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-jira) [data-testid="stButton"] button:hover { background:#059669 !important; color:#ffffff !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-gh) [data-testid="stButton"] button,
-body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-gh) [data-testid="stButton"] button:hover { background:#30363d !important; color:#ffffff !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-gh) [data-testid="stButton"] button:hover,
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-gh) [data-testid="stButton"] button:active,
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-gh) [data-testid="stButton"] button:focus { background:#30363d !important; color:#ffffff !important; }
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-gh) [data-testid="stButton"] button span,
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-gh) [data-testid="stButton"] button p,
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-gh) [data-testid="stButton"] button span *,
+body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-gh) [data-testid="stButton"] button [data-testid="stMarkdownContainer"] { color:#ffffff !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpanderDetails"] { background:#0b1018 !important; color:#d7dbe0 !important; border:1px solid #2b3443 !important; border-radius:0 0 10px 10px !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-jira) [data-testid="stExpanderDetails"] { background:#0d1523 !important; border-color:#1e3a5f !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stDialog"] [data-testid="stExpander"]:has(.marca-notif) [data-testid="stExpanderDetails"] { background:#141021 !important; border-color:#3b2f5a !important; }

@@ -201,6 +201,11 @@ def limite_historico_free() -> int:
     return _LIMITE_FREE if not pago() else 10**9
 
 
+def limite_historico_free_fixo() -> int:
+    """Limite fixo do plano free (30) para textos comparativos Basic × Premium."""
+    return _LIMITE_FREE
+
+
 def tenant_atual() -> str:
     """Tenant corrente: UID da conta logada, senão env TENANT_ID/global."""
     uid = uid_logado()

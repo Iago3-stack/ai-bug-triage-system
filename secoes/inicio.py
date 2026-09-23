@@ -72,7 +72,7 @@ def render():
     | 🔮 IA (Gemini / Groq / modelo próprio) | liberado | liberado |
     | 🧠 Análises de IA — *causas raiz* e *comparativo IA×local* | — | liberado |
     | 📚 RAG — consulta casos similares + \u201ccomo foi resolvido\u201d | — | liberado |
-    | 🧺 Histórico / Dashboard de QA | últimas **{plano.limite_historico_free()}** triagens | completo |
+    | 🧺 Histórico / Dashboard de QA | últimas **{plano.limite_historico_free_fixo()}** triagens | completo |
     | 🔔 Canais de alerta (e-mail/Discord) | **1** canal | múltiplos canais |
     | 🚨 Prioridade máxima ao alertar CRÍTICA/ALTA | liberado | liberado |
     | **Ideal para** | testar / demonstrar | produção contínua |
