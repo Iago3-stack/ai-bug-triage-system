@@ -347,16 +347,23 @@ def render():
               background: #64748b !important; color: #ffffff !important; border: none !important;
               font-weight: 800 !important; box-shadow: none !important;
             }
-            [data-testid="stElementContainer"]:has(.marca-colar) [data-testid="stTextArea"] textarea,
-            textarea[placeholder^="Traceback"],
-            textarea[placeholder*="Traceback (most recent call last)"] {
-              color: #1d4ed8 !important;
-              caret-color: #1d4ed8 !important;
+            /* Falha bruta com cara de terminal azul (igual ao relato do usuário, mas azul
+               para diferenciar: mesmo fundo preto, texto mono azul claro, sem glow).
+               Vale para os dois temas: a "janela" é sempre escura. */
+            [data-testid="stElementContainer"]:has(.marca-colar-term) + [data-testid="stElementContainer"] [data-testid="stTextArea"] textarea,
+            [data-testid="stElementContainer"]:has(.marca-colar-term) + [data-testid="stElementContainer"] [data-testid="stTextArea"] textarea:hover,
+            [data-testid="stElementContainer"]:has(.marca-colar-term) + [data-testid="stElementContainer"] [data-testid="stTextArea"] textarea:focus,
+            [data-testid="stElementContainer"]:has(.marca-colar-term) + [data-testid="stElementContainer"] [data-testid="stTextArea"] textarea:active {
+              background: #0d1117 !important; color: #93c5fd !important;
+              border: 1px solid #30363d !important;
+              border-radius: 0 0 12px 12px !important;
+              font-family: ui-monospace,"SFMono-Regular",Menlo,Consolas,"Fira Code",monospace !important;
+              font-size: 14px !important; line-height: 1.7 !important;
+              box-shadow: none !important; outline: none !important; caret-color: #93c5fd !important;
             }
-            [data-testid="stElementContainer"]:has(.marca-colar) [data-testid="stTextArea"] textarea::placeholder,
-            textarea[placeholder^="Traceback"]::placeholder,
-            textarea[placeholder*="Traceback (most recent call last)"]::placeholder {
-              color: #60a5fa !important;
+            [data-testid="stElementContainer"]:has(.marca-colar-term) + [data-testid="stElementContainer"] [data-testid="stTextArea"] textarea::placeholder {
+              color: #3b82f6 !important; opacity: .85 !important;
+              font-family: ui-monospace,"SFMono-Regular",Menlo,Consolas,"Fira Code",monospace !important;
             }
             </style>
             """,
@@ -378,6 +385,7 @@ def render():
             if st.button("🧹 Limpar", key="btn_amostra_limpar", use_container_width=True):
                 st.session_state["colar_falha_bruta"] = ""
                 st.toast("Campo limpo.", icon="🧹")
+        st.markdown('<div class="marca-colar-term" style="display:none"></div>', unsafe_allow_html=True)
         evidencia_bruta = st.text_area(
             "Falha bruta (stack trace, log, mensagem de erro):",
             height=130,

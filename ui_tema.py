@@ -90,6 +90,10 @@ _BASE_CSS = """
     [data-testid="stElementContainer"]:has(.marca-relato-term) { display: none !important; }
     [data-testid="stElementContainer"]:has(.term-cab) { background:#161b22 !important; padding-bottom: 1rem !important; margin-bottom: -1rem !important; }
     [data-testid="stElementContainer"]:has(.marca-relato-term) + [data-testid="stElementContainer"] { margin-top: 0 !important; padding-top: 0 !important; }
+    /* Falha bruta: o textarea terminal azul vive dentro do expander do Pilar 1.
+       Esconde o container do marcador e encosta o campo abaixo dos botões de exemplo. */
+    [data-testid="stElementContainer"]:has(.marca-colar-term) { display: none !important; }
+    [data-testid="stElementContainer"]:has(.marca-colar-term) + [data-testid="stElementContainer"] { margin-top: 0 !important; padding-top: 0 !important; }
 
     /* Botão "✨ Preencher relato a partir da falha" — verde sólido nos dois temas,
        mesmo visual em hover/focus/active (sem glow/sombra/mudança de cor). */
