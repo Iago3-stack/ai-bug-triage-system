@@ -217,7 +217,7 @@ def test_metricas_do_produto_presentes():
 def test_workflow_stats_existe():
     """Job de estatísticas: cron diário, secrets por referência, deploy com fallback."""
     wf = (_RAIZ / ".github" / "workflows" / "stats-triagens.yml").read_text(encoding="utf-8")
-    assert "cron: '12 3 * * *'" in wf
+    assert "cron: '12 */6 * * *'" in wf
     assert "workflow_dispatch" in wf
     # Só usa secrets por referência — nunca valores literais
     assert "${{ secrets.SUPABASE_URL }}" in wf
