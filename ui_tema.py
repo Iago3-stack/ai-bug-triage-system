@@ -170,9 +170,10 @@ _BASE_CSS = """
     [data-testid="stExpander"]:has(.marca-plano) { border: 2px solid #d97706 !important; border-radius: 12px !important; background: rgba(217, 119, 6, 0.05) !important; }
     [data-testid="stExpander"]:has(.marca-plano) summary { color: #b45309 !important; font-weight: 700 !important; }
     /* Bloco "☝️ quadrado" da página Meu Plano — borda laranja acompanhando o expander de comparativo.
-       Mesmo padrão do .marca-tbn: só o stVerticalBlock cujo FILHO DIRETO carrega o marcador,
-       nunca os ancestrais (que pintariam a página inteira). */
-    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"]:has(.marca-plano-caixa)) { border: 2px solid #d97706 !important; }
+       O container com borda (st.container(border=True)) é justamente o stVerticalBlock cujo FILHO
+       DIRETO é o stElementContainer que carrega o marcador; usar descendente .marca-plano-caixa
+       (sem :has() aninhado — proibido por spec) pinta só o quadrado, nunca os ancestrais. */
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .marca-plano-caixa) { border: 2px solid #d97706 !important; }
     [data-testid="stExpander"]:has(.marca-feedback) { border: 2px solid #7c3aed !important; border-radius: 12px !important; background: rgba(124, 58, 237, 0.05) !important; }
     [data-testid="stExpander"]:has(.marca-feedback) summary { color: #7c3aed !important; font-weight: 700 !important; }
     [data-testid="stExpander"]:has(.marca-plano) [data-testid="stExpanderDetails"] { overflow-x: auto; }
