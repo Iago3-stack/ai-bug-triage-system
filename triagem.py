@@ -24,6 +24,16 @@ LE_XICO = {
     "segurança": -1.5, "senha": -1.0, "login": -1.0, "logado": -1.0,
     "acesso": -0.8, "autenticar": -0.8, "é rejeitado": -1.2,
     "cobrança dupla": -1.8, "cobrou duas": -1.8, "extornar": -1.2,
+    # Finanças (dinheiro do cliente = impacto negócio grave)
+    "cobrança indevida": -1.8, "cobrou a mais": -1.8, "fatura errada": -1.5,
+    "saldo sumiu": -1.8, "saldo errado": -1.2,
+    "taxa indevida": -1.5,
+    # Segurança fina (além de "vazamento"/"inseguro" genéricos)
+    "dados expostos": -2.0, "dado exposto": -2.0,
+    "credencial vazada": -2.0, "credenciais vazadas": -2.0,
+    "acesso indevido": -1.8, "falha de autenticação": -1.5,
+    "ataque": -1.8, "brute force": -1.8, "força bruta": -1.8,
+    "pane geral": -1.8, "pane no": -1.5,
     # Negados fora dos padrões PADROES_NEGACAO (evitar contagem dupla com eles)
     "não baixa": -1.5, "não loga": -1.5,
     # Emocionais negativos (frustração real do usuário)
@@ -81,6 +91,18 @@ PADROES_LEXICO = [
     # ex.: "a tela fica branca", "a tela ficou preta".
     (re.compile(r"\btela\s+(?:fica|ficou|ficava|está|est[áa]|estava)\s+(?:branca|preta)\b", re.UNICODE), -1.8),
     (re.compile(r"\btela\s+(?:branca|branquinha|preta|pretinha)\b", re.UNICODE), -1.8),
+    # Recusas/erros HTTP de acesso ou recurso (401/403/404) — sem sufixo,
+    # cobre "erro 401", "retorna 403", "tela 404".
+    (re.compile(r"\b(?:40[134])\b", re.UNICODE), -1.2),
+    # Timeout/tempo esgotado genéricos (sem "http" prefixado p/ não colidir com
+    # os erros de serviço já mapeados que citam timeout).
+    (re.compile(r"\b(?:tempo\s+esgotado|request\s+timeout)\b", re.UNICODE), -1.0),
+    # "dados ... expostos" tolera verbos/posições de posse no meio.
+    (re.compile(r"\bexpost[oa]s?\b", re.UNICODE), -2.0),
+    # "pix/dinheiro/transferência ... não caiu" — tolera palavras no meio.
+    (re.compile(r"\b(?:pix|transfer[eê]ncia|dinheiro)\b[^.;\n]{0,40}\bn[ãa]o\b[^.;\n]{0,40}\bcaiu\b", re.UNICODE), -1.5),
+    # "débito ... em dobro / veio em dobro / duplo" — tolera verbos no meio.
+    (re.compile(r"\bd[ée]bit[oa]\b[^.;\n]{0,30}\b(?:em\s+dobro|dobro|duplo|em\s+duplo)\b", re.UNICODE), -1.8),
 ]
 
 # Termos puramente técnicos que NÃO devem escalar severidade sozinhos
@@ -119,6 +141,10 @@ PADROES_NEGACAO = [
     (r"\bn[ãa]o\s+(recebe|receber|recebeu)", -1.2),
     (r"\bn[ãa]o\s+(encontra|encontrar|encontrou)", -1.2),
     (r"\bn[ãa]o\s+(valida|validar|validou)", -1.2),
+    # Estorno/reembolso: a AUSÊNCIA é o problema (o pedido em si é benigno).
+    # Toleram palavras no meio: "o estorno ainda não chegou", "não veio o reembolso".
+    (r"\b(?:estorno|reembolso)[^.;\n]{0,40}\bn[ãa]o\b[^.;\n]{0,40}\b(?:chegou|veio|entrou|foi\s+feito|foi\s+processado)\b", -1.5),
+    (r"\bn[ãa]o\b[^.;\n]{0,40}\b(?:chegou|veio|entrou|houve|aconteceu)\b[^.;\n]{0,40}\b(?:estorno|reembolso)\b", -1.5),
     (r"\bnunca\s+(funciona|funcionou|carregou|abriu)", -1.5),
     (r"\bparou\s+de\s+(funcionar|responder)", -1.8),
 ]
@@ -144,6 +170,32 @@ PADROES_SEM = [
 NEGADORES = ("não", "nao", "nunca", "jamais", "tampouco", "sem")
 AUXILIARES_NEGADOS = ("está", "esta", "tá", "ta", "estava", "ficou", "fica",
                       "estando", "ficava", "vem", "estão", "estao")
+
+# Escala (incidente amplo ≠ problema de 1 usuário): ampliam via fator, NÃO somam
+# cego. Só atuam se já existe sinal negativo — "todos os usuários" num relato
+# positivo não vira severidade do nada (mesma filosofia do _fator_enfase).
+PADROES_ESCALA = [
+    re.compile(r"\btodos?\s+os\s+(?:usu[aá]rios|clientes|colaboradores)s?\b", re.UNICODE),
+    re.compile(r"\b(?:ningu[ée]m|todo mundo)\s+(?:consegue|conseguiram|acessa|acessam|entra|entram)\b", re.UNICODE),
+    re.compile(r"\b(?:o|no)\s+sistema\s+inteiro\b", re.UNICODE),
+    re.compile(r"\bpane\s+geral\b", re.UNICODE),
+    re.compile(r"\b100%\s+dos?\s+(?:usu[aá]rios|clientes)\b", re.UNICODE),
+]
+
+# Recorrência (falha não é pontual, é intermitente/constante): ampliam via fator.
+# Idem: só atuam se já há sinal negativo — "de novo" num elogio não escala.
+PADROES_RECORRENCIA = [
+    re.compile(r"\btoda\s+vez\b", re.UNICODE),
+    re.compile(r"\bsempre\s+que\b", re.UNICODE),
+    re.compile(r"\bde\s+novo\b", re.UNICODE),
+    re.compile(r"\bnovamente\b", re.UNICODE),
+    re.compile(r"\bv[áa]rias\s+vezes\b", re.UNICODE),
+    re.compile(r"\brepetidamente\b", re.UNICODE),
+    re.compile(r"\b(?:vem\s+repetindo|acontece\s+repetidamente)\b", re.UNICODE),
+]
+
+FATOR_ESCALA = 1.35
+FATOR_RECORRENCIA = 1.25
 
 # Meta-severidade: o próprio usuário julgando o impacto ("nada crítico",
 # "baixa prioridade"). É um "voto" explícito que limita o teto, NÃO soma ao
@@ -299,6 +351,29 @@ def _fator_enfase(descricao, score):
     return fator
 
 
+def _fator_escala_recorrencia(descricao, score):
+    """Amplia a magnitude quando o relato sinaliza alcance amplo ou recorrência.
+
+    Escala = incidente que afeta todos/ninguém consegue/pane geral.
+    Recorrência = falha que se repete (toda vez, sempre que, de novo).
+
+    Só multiplica se já há sinal negativo (score < 0): amplifica o que existe,
+    nunca cria severidade do nada. Retorna (fator, rótulos).
+    """
+    if score >= 0:
+        return 1.0, []
+    texto = unicodedata.normalize("NFC", descricao.lower())
+    fator = 1.0
+    rotulos = []
+    if any(p.search(texto) for p in PADROES_ESCALA):
+        fator *= FATOR_ESCALA
+        rotulos.append("escala")
+    if any(p.search(texto) for p in PADROES_RECORRENCIA):
+        fator *= FATOR_RECORRENCIA
+        rotulos.append("recorrência")
+    return fator, rotulos
+
+
 def _aplicar_meta_severidade(descricao, score):
     """Veto do usuário/contexto ao teto de severidade.
 
@@ -329,6 +404,8 @@ def triar(descricao):
     score_sem, acertos_sem = _aplicar_sem(texto)
     base = score_lexico + score_negacao + score_sem
     score = base * _fator_enfase(descricao, base)
+    fator_ctx, rotulos_ctx = _fator_escala_recorrencia(descricao, score)
+    score *= fator_ctx
     score = _aplicar_meta_severidade(descricao, score)
 
     termos = []
@@ -344,7 +421,7 @@ def triar(descricao):
     if n_negacoes:
         neg_fatores.append(f"negação ({n_negacoes} padrão negado)" if n_negacoes == 1
                            else f"negação ({n_negacoes} padrões)")
-    fatores = list(termos) + neg_fatores + list(acertos_sem)
+    fatores = list(termos) + neg_fatores + list(acertos_sem) + rotulos_ctx
     tem_emocional = any(t in EMOCIONAIS_NEGATIVAS for t in acertos_lexico)
 
     if score <= -2.0:

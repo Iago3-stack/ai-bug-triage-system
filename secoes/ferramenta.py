@@ -347,6 +347,17 @@ def render():
               background: #64748b !important; color: #ffffff !important; border: none !important;
               font-weight: 800 !important; box-shadow: none !important;
             }
+            [data-testid="stElementContainer"]:has(.marca-colar) [data-testid="stTextArea"] textarea,
+            textarea[placeholder^="Traceback"],
+            textarea[placeholder*="Traceback (most recent call last)"] {
+              color: #1d4ed8 !important;
+              caret-color: #1d4ed8 !important;
+            }
+            [data-testid="stElementContainer"]:has(.marca-colar) [data-testid="stTextArea"] textarea::placeholder,
+            textarea[placeholder^="Traceback"]::placeholder,
+            textarea[placeholder*="Traceback (most recent call last)"]::placeholder {
+              color: #60a5fa !important;
+            }
             </style>
             """,
             unsafe_allow_html=True,

@@ -342,3 +342,121 @@ def test_sem_conexao_eh_media():
 def test_sem_sinal_acumula_com_parou():
     r = triar("fiquei sem sinal e parou de responder")
     assert "MÉDIA" in r["gravidade"] or "CRÍTICA" in r["gravidade"]
+
+
+# --- Finanças (dinheiro do cliente = impacto de negócio) ---
+def test_cobrou_a_mais_eh_grave():
+    r = triar("a plataforma cobrou a mais na minha fatura")
+    assert "MÉDIA" in r["gravidade"] or "CRÍTICA" in r["gravidade"]
+
+
+def test_cobranca_indevida_eh_critica():
+    r = triar("houve cobrança indevida duas vezes seguidas")
+    assert "CRÍTICA" in r["gravidade"] or "MÉDIA" in r["gravidade"]
+
+
+def test_saldo_sumiu_eh_grave():
+    r = triar("o saldo da minha conta sumiu depois do pagamento")
+    assert "MÉDIA" in r["gravidade"] or "CRÍTICA" in r["gravidade"]
+
+
+def test_pix_nao_caiu_eh_grave():
+    r = triar("fiz um pix e o dinheiro não caiu na conta")
+    assert "MÉDIA" in r["gravidade"] or "CRÍTICA" in r["gravidade"]
+
+
+def test_debito_em_dobro_eh_grave():
+    r = triar("meu débito veio em dobro esse mês")
+    assert "MÉDIA" in r["gravidade"] or "CRÍTICA" in r["gravidade"]
+
+
+def test_estorno_sozinho_nao_eh_media():
+    # solicitar estorno ≠ incidente: é pedido na interface, não bug grave
+    r = triar("gostaria de pedir o estorno do valor")
+    assert "NORMAL" in r["gravidade"]
+
+
+def test_estorno_que_nao_chega_eh_grave():
+    # a AUSÊNCIA do estorno é o problema: aqui sim pesa
+    r = triar("fiz o pedido de estorno e ele não chegou na conta")
+    assert "MÉDIA" in r["gravidade"] or "CRÍTICA" in r["gravidade"]
+
+
+def test_reembolso_que_nao_veio_eh_grave():
+    r = triar("pedi reembolso e não veio nada até hoje")
+    assert "MÉDIA" in r["gravidade"] or "CRÍTICA" in r["gravidade"]
+
+
+# --- Escala (incidente amplo) ---
+def test_todos_usuarios_amplifica_incidente():
+    base = triar("o login está fora do ar")
+    amplo = triar("todos os usuários estão sem acesso ao login, ninguém consegue entrar")
+    assert "CRÍTICA" in amplo["gravidade"]
+    assert amplo["score"] <= base["score"]
+    assert "escala" in amplo["fatores"]
+
+
+def test_pane_geral_eh_critica():
+    r = triar("pane geral no sistema inteiro, ninguém consegue acessar")
+    assert "CRÍTICA" in r["gravidade"]
+
+
+def test_escala_em_relato_positivo_nao_dispara():
+    # "todos os usuários" num elogio não pode virar severidade
+    r = triar("todos os usuários elogiaram a nova interface da home")
+    assert "NORMAL" in r["gravidade"]
+    assert r["score"] >= 0
+
+
+# --- Recorrência (falha intermitente/constante) ---
+def test_recorrencia_amplifica_falha():
+    r = triar("a tela fica branca toda vez que tento abrir o relatório")
+    assert "CRÍTICA" in r["gravidade"]
+    assert "recorrência" in r["fatores"]
+
+
+def test_recorrencia_em_elogio_nao_dispara():
+    r = triar("funciona perfeitamente de novo, obrigado pela correção")
+    assert "NORMAL" in r["gravidade"]
+
+
+# --- Segurança fina ---
+def test_dados_expostos_eh_critico():
+    r = triar("os dados dos clientes ficaram expostos no relatório")
+    assert "CRÍTICA" in r["gravidade"]
+
+
+def test_credencial_vazada_eh_critica():
+    r = triar("credencial vazada, senha apareceu no logs")
+    assert "CRÍTICA" in r["gravidade"]
+
+
+def test_acesso_indevido_eh_grave():
+    r = triar("detectamos acesso indevido a contas de usuário")
+    assert "CRÍTICA" in r["gravidade"] or "MÉDIA" in r["gravidade"]
+
+
+def test_falha_autenticacao_eh_media():
+    r = triar("falha de autenticação ao tentar entrar com a senha correta")
+    assert "MÉDIA" in r["gravidade"] or "CRÍTICA" in r["gravidade"]
+
+
+# --- Status HTTP (401/403/404) ---
+def test_erro_404_eh_media():
+    r = triar("o link retorna 404 ao clicar no botão")
+    assert "MÉDIA" in r["gravidade"]
+
+
+def test_erro_403_eh_media():
+    r = triar("a API retorna 403 Forbidden no ambiente de produção")
+    assert "MÉDIA" in r["gravidade"] or "CRÍTICA" in r["gravidade"]
+
+
+def test_erro_401_eh_media():
+    r = triar("recebi um 401 ao tentar acessar o painel")
+    assert "MÉDIA" in r["gravidade"]
+
+
+def test_tempo_esgotado_eh_media():
+    r = triar("deu tempo esgotado ao esperar a resposta do sistema")
+    assert "MÉDIA" in r["gravidade"]
