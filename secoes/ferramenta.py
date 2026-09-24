@@ -434,7 +434,7 @@ def render():
           <span class="term-ponto" style="background:#ff5f57"></span>
           <span class="term-ponto" style="background:#febc2e"></span>
           <span class="term-ponto" style="background:#28c840"></span>
-          <span class="term-roto">$ triage — <relato do usuário></span>
+          <span class="term-roto">$ triage — &lt;relato do usuário&gt;</span>
         </div>
         """,
         unsafe_allow_html=True,
