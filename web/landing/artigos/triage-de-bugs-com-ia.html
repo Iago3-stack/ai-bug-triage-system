@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Triage de bugs com IA: o que é, como fazer e como agilizar seu QA</title>
-  <meta name="description" content="Guia completo de triage de bugs: o que é, por que a triagem manual vira gargalo, como a IA classifica severidade e sugere correção, e um checklist que qualquer time de QA pode aplicar hoje." />
-  <meta name="keywords" content="triage de bugs, triagem de bugs com IA, priorizar bugs, severidade de bug, QA, teste de software, relatório de bug, dashboard de qualidade" />
+  <title>Triage de bugs com IA: guia com fallback, PII e checklist de QA</title>
+  <meta name="description" content="Guia completo de triage de bugs: o que é, por que a triagem manual vira gargalo, como a IA classifica severidade com fallback determinístico, guardrails de PII e um checklist que qualquer time de QA pode aplicar hoje." />
+  <meta name="keywords" content="triage de bugs, triagem de bugs com IA, priorizar bugs, severidade de bug, QA, teste de software, relatório de bug, dashboard de qualidade, fallback sem IA, guardrails de PII, LGPD QA, motor NLP determinístico" />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://ai-bug-triage.com.br/artigos/triage-de-bugs-com-ia.html" />
   <link rel="icon" type="image/x-icon" href="../favicon.ico" />
@@ -13,16 +13,16 @@
   <meta property="og:type" content="article" />
   <meta property="og:locale" content="pt_BR" />
   <meta property="og:site_name" content="AI Bug Triage System" />
-  <meta property="og:title" content="Triage de bugs com IA: o que é, como fazer e como agilizar seu QA" />
-  <meta property="og:description" content="Como a IA classifica severidade, aponta o componente suspeito e sugere a correção do bug em segundos — mais um checklist para o seu time." />
+  <meta property="og:title" content="Triage de bugs com IA: guia com fallback, PII e checklist de QA" />
+  <meta property="og:description" content="Severidade, fallback determinístico quando a IA cai, guardrails para não vazar PII e um checklist para o seu time de QA." />
   <meta property="og:url" content="https://ai-bug-triage.com.br/artigos/triage-de-bugs-com-ia.html" />
   <meta property="og:image" content="https://ai-bug-triage.com.br/og-image.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
 
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Triage de bugs com IA: guia completo" />
-  <meta name="twitter:description" content="Severidade, componente suspeito e proposta de correção em segundos — e um checklist de triagem para o seu time de QA." />
+  <meta name="twitter:title" content="Triage de bugs com IA: guia com fallback e PII" />
+  <meta name="twitter:description" content="Severidade com fallback determinístico, guardrails de PII e um checklist de QA — direto ao ponto." />
   <meta name="twitter:image" content="https://ai-bug-triage.com.br/og-image.png" />
 
   <meta name="theme-color" content="#0F172A" />
@@ -31,11 +31,11 @@
   {
     "@context": "https://schema.org",
     "@type": "Article",
-    "headline": "Triage de bugs com IA: o que é, como fazer e como agilizar seu QA",
-    "description": "Guia completo de triage de bugs: conceito, gargalos da triagem manual, como a IA classifica severidade e sugere correção, e um checklist prático.",
+    "headline": "Triage de bugs com IA: guia com fallback determinístico, guardrails de PII e checklist de QA",
+    "description": "Guia completo de triage de bugs: conceito, gargalos da triagem manual, IA com fallback determinístico, guardrails de PII e um checklist prático para o time de QA.",
     "inLanguage": "pt-BR",
     "datePublished": "2026-09-20",
-    "dateModified": "2026-09-20",
+    "dateModified": "2026-09-24",
     "mainEntityOfPage": "https://ai-bug-triage.com.br/artigos/triage-de-bugs-com-ia.html",
     "author": { "@type": "Organization", "name": "AI Bug Triage System" },
     "publisher": {
@@ -71,6 +71,16 @@
         "@type": "Question",
         "name": "A IA substitui o analista de QA?",
         "acceptedAnswer": { "@type": "Answer", "text": "Não. A IA acelera a triagem, padroniza a severidade e sugere a correção, mas a decisão final e a validação continuam com o time." }
+      },
+      {
+        "@type": "Question",
+        "name": "E se a IA cair?",
+        "acceptedAnswer": { "@type": "Answer", "text": "O sistema tem fallback determinístico: um motor NLP offline calcula a severidade sempre; se o provedor principal falhar, há fallback para um segundo provedor antes de voltar à resposta local." }
+      },
+      {
+        "@type": "Question",
+        "name": "Os dados dos relatos vazam?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Não. Guardrails de entrada e saída mascaram credenciais, tokens, e-mails, telefones e CPFs antes de qualquer dado seguir para a IA, o Jira ou o histórico." }
       },
       {
         "@type": "Question",
@@ -481,9 +491,9 @@
 
   <section class="hero" style="padding:64px 20px 56px;">
     <div class="container">
-      <p style="color:var(--texto-suave);font-size:0.9rem;font-weight:700;letter-spacing:.04em;">GUIA DE QA · ATUALIZADO EM 20/09/2026 · 6 MIN DE LEITURA</p>
-      <h1 style="margin-top:14px;">Triage de bugs com IA: <span class="destaque">o que é, como fazer e como agilizar a fila do seu QA</span></h1>
-      <p class="sub">Se a fila de bugs parece um paredão, o problema muitas vezes não é volume — é triage. Veja como classificar severidade, apontar o componente suspeito e sugerir a correção em segundos, com ou sem IA.</p>
+      <p style="color:var(--texto-suave);font-size:0.9rem;font-weight:700;letter-spacing:.04em;">GUIA DE QA · ATUALIZADO EM 24/09/2026 · 8 MIN DE LEITURA</p>
+      <h1 style="margin-top:14px;">Triage de bugs com IA: <span class="destaque">o que é, fallback determinístico, guardrails de PII e como agilizar a fila do seu QA</span></h1>
+      <p class="sub">Se a fila de bugs parece um paredão, o problema muitas vezes não é volume — é triage. Veja como classificar severidade, apontar o componente suspeito e sugerir a correção em segundos — com fallback sem IA, proteção de dados sensíveis e um fluxo que funciona até quando o modelo cai.</p>
       <div class="acoes" style="margin-top:28px;">
         <a class="btn btn-verde btn-pulsar" href="https://ai-bug-triage-system-d6vigycbjt4qxez2wrvsxf.streamlit.app/" target="_blank" rel="noopener">🎁 Testar grátis 7 dias</a>
         <a class="btn btn-ghost" href="https://ai-bug-triage.com.br/">← Voltar para o início</a>
@@ -539,6 +549,28 @@
     </section>
 
     <section>
+      <h2>O que a IA não substitui: o fallback determinístico</h2>
+      <p>A primeira pergunta que um time sênior faz sobre triagem com IA é: <strong>"e se o modelo cair?"</strong> A resposta honesta é que a aposta total em um LLM é frágil — 503, timeout, chave expirada e <em>rate limit</em> derrubam qualquer pipeline que não tenha plano B.</p>
+      <p>É por isso que uma triagem robusta trabalha em <strong>camadas</strong>: um <strong>motor NLP determinístico e offline</strong> calcula a severidade com regras explícitas (crash, perda de dados, erro no pagamento, login…) e um <strong>léxico em português</strong> com detecção de negação — tudo isso funciona <strong>sem internet</strong> e <strong>sem custo</strong>, então o app nunca "desliga" quando a IA falha.</p>
+      <p>Sobre esse motor, a IA entra como <strong>aprofundamento</strong>: o LLM pede causa raiz provável, componente suspeito e proposta de correção em JSON estruturado — e, se o provedor principal (Gemini) cair, há <strong>fallback automático</strong> para um segundo (Groq) antes de voltar à resposta determinística. O resultado é um <strong>comparativo IA × local</strong>: dá para ver quando a IA divergiu do léxico e avaliar a qualidade das duas camadas.</p>
+      <p>Na prática, isso significa <em>disponibilidade de produto</em> — não é um "se der sorte funcionar", é uma cadeia de tolerância a falhas desenhada de propósito.</p>
+    </section>
+
+    <section>
+      <h2>Guardrails de privacidade: nada sensível sai do sistema</h2>
+      <p>Relato de bug costuma vir com informação sensível junto: <strong>e-mails, telefones, CPFs, tokens de API, chaves de acesso</strong>. Se a sua triagem com IA manda o texto cru para o modelo — e depois para o Jira e para o histórico —, você está vazando dado de cliente por padrão.</p>
+      <p>Uma triagem sênior aplica <strong>guarda-chaves de entrada e saída (guardrails)</strong>: antes de qualquer coisa seguir para o LLM, para o integrador ou para o histórico, os padrões sensíveis são <strong>detectados e mascarados</strong>. O analista continua vendo o texto com os campos mascarados para o fluxo, mas <strong>nada de credencial ou dado pessoal sai do ambiente do seu time</strong>.</p>
+      <p>Isso não é detalhe opcional — é requisito de conformidade (LGPD) e de confiança. E é exatamente o tipo de preocupação que separa um <em>demo</em> de IA de um sistema que pode ir para produção.</p>
+    </section>
+
+    <section>
+      <h2>O que isso muda na prática (e quanto tempo devolve)</h2>
+      <p>O efeito mais visível da automação é o <strong>tempo de análise por relato</strong>. Quando a triagem é manual, cada bug passa por leitura, classificação de severidade e busca mental de algo parecido — facilmente <strong>15 a 30 minutos por relato</strong> quando a fila está cheia. Com a triagem em camadas (motor local + IA com fallback), o mesmo relato sai com severidade, componente e proposta de correção em <strong>segundos</strong>.</p>
+      <p>Em uma semana típica, isso devolve <strong>horas por pessoa</strong> que antes eram gastas em análise repetitiva — tempo que volta para o que importa: reproduzir o bug de verdade, validar a correção e escrever testes que impedem a regressão.</p>
+      <p>A métrica não é "gerar mais relatório". A métrica é <strong>decidir mais rápido</strong> e <strong>padronizar a classificação</strong> que antes dependia do QA mais experiente do time.</p>
+    </section>
+
+    <section>
       <h2>Checklist de triagem para usar hoje (mesmo sem IA)</h2>
       <p>Enquanto a IA não entra no fluxo do seu time, um bom triage de bugs manual segue este roteiro:</p>
       <ol>
@@ -571,7 +603,7 @@
           <p>Relatório em PDF para o time, exportação para Jira e dashboards de QA para acompanhar.</p>
         </article>
       </div>
-      <p style="margin-top:20px;">O app é gratuito para começar, com painel de QA, histórico em nuvem por conta e plano Premium de R$ 19,99/mês — com teste grátis de 7 dias.</p>
+      <p style="margin-top:20px;">O app é gratuito para começar, com painel de QA, histórico em nuvem por conta, guardrails de PII (nada sensível vaza para a IA ou para o Jira) e plano Premium de R$ 19,99/mês — com teste grátis de 7 dias. E mesmo que a IA caia, o motor determinístico segue triando: a fila nunca para.</p>
     </section>
 
     <section>
@@ -583,6 +615,14 @@
       <details class="faq">
         <summary>A IA substitui o analista de QA?</summary>
         <p>Não. A IA acelera a triagem e padroniza a classificação, mas a decisão final e a validação continuam com o time.</p>
+      </details>
+      <details class="faq">
+        <summary>E se a IA cair ou ficar indisponível?</summary>
+        <p>O sistema nunca depende 100% da IA: um motor NLP determinístico e offline calcula a severidade o tempo todo. Se o provedor principal falhar, há fallback automático para um segundo provedor antes de voltar à resposta local.</p>
+      </details>
+      <details class="faq">
+        <summary>Meus dados vazam para a IA ou para o Jira?</summary>
+        <p>Não. Guardrails de entrada e saída detectam e mascaram credenciais, tokens, e-mails, telefones e CPFs antes de qualquer dado seguir para o LLM, para o Jira ou para o histórico.</p>
       </details>
       <details class="faq">
         <summary>Quanto custa usar triage de bugs com IA?</summary>

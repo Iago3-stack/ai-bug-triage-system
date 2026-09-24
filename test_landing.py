@@ -119,7 +119,7 @@ def test_artigo_json_ld_completo():
     assert "triage de bugs" in artigo["headline"].lower()
     faq = json.loads(blocos[2])
     assert faq["@type"] == "FAQPage"
-    assert len(faq["mainEntity"]) == 4
+    assert len(faq["mainEntity"]) == 6
 
 
 def test_artigo_tem_conteudo_para_pesquisa():
