@@ -34,9 +34,22 @@ def _mock_nuvem_trial(monkeypatch, teste_ate=None, plano_b="free", ativa=True):
             return True
 
         @staticmethod
-        def gravar_plano_banco(uid, plano_novo, clear_teste=False):
+        def gravar_plano_banco(uid, plano_novo, clear_teste=False, clear_assinatura=False):
             registros_trial["plano"] = plano_novo
             registros_trial["clear"] = clear_teste
+            registros_trial["clear_assinatura"] = clear_assinatura
+            return True
+
+        @staticmethod
+        def assinatura_disponivel():
+            return False
+
+        @staticmethod
+        def carregar_assinatura_banco(uid):
+            return None
+
+        @staticmethod
+        def gravar_assinatura_banco(uid, ate_iso):
             return True
 
     registros_trial.clear()
@@ -220,7 +233,7 @@ def test_gravar_teste_banco_upsert(monkeypatch):
 def test_carregar_todos_planos(monkeypatch):
     _mock_rest(monkeypatch, [{"uid": "u1", "plano": "pago", "teste_ate": None}])
     assert nuvem_supabase.carregar_todos_planos() == [
-        {"uid": "u1", "plano": "pago", "teste_ate": None, "teste_auto": None}
+        {"uid": "u1", "plano": "pago", "teste_ate": None, "teste_auto": None, "assinatura_ate": None}
     ]
 
 
@@ -234,16 +247,16 @@ def test_carregar_todos_planos_cai_sem_teste_quando_coluna_falta(monkeypatch):
 
     def _get(url, headers=None, params=None, timeout=None):
         chamadas.append(params["select"])
-        if "teste_auto" in params["select"] or "teste_ate" in params["select"]:
+        if "teste_auto" in params["select"] or "teste_ate" in params["select"] or "assinatura_ate" in params["select"]:
             return _Erro()
         return _Resp([{"uid": "u1", "plano": "pago"}, {"uid": "u2", "plano": "free"}])
 
     monkeypatch.setattr(nuvem_supabase, "_config", lambda: ("https://supa.supabase.co", "chave"))
     monkeypatch.setattr(nuvem_supabase.requests, "get", _get)
     docs = nuvem_supabase.carregar_todos_planos()
-    assert len(chamadas) == 3
-    assert docs[0] == {"uid": "u1", "plano": "pago", "teste_ate": None, "teste_auto": None}
-    assert docs[1] == {"uid": "u2", "plano": "free", "teste_ate": None, "teste_auto": None}
+    assert len(chamadas) == 4
+    assert docs[0] == {"uid": "u1", "plano": "pago", "teste_ate": None, "teste_auto": None, "assinatura_ate": None}
+    assert docs[1] == {"uid": "u2", "plano": "free", "teste_ate": None, "teste_auto": None, "assinatura_ate": None}
 
 
 def test_carregar_todos_planos_sem_tabela_retorna_vazio(monkeypatch):

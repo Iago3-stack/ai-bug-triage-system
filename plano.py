@@ -66,10 +66,17 @@ def plano_no_banco(uid: str) -> str | None:
         return None
 
 
-def definir_plano_no_banco(uid: str, plano: str) -> bool:
-    """Grava o plano do usuário na nuvem. False se offline (sem efeito)."""
+def definir_plano_no_banco(uid: str, plano: str, clear_teste: bool = False) -> bool:
+    """Grava o plano do usuário na nuvem. False se offline (sem efeito).
+
+    `clear_teste=True` encerra também um Teste Premium ativo (usado ao pagar).
+    """
     try:
-        return nuvem_supabase.gravar_plano_banco(uid, plano if plano in _PLANOS else "free")
+        return nuvem_supabase.gravar_plano_banco(
+            uid,
+            plano if plano in _PLANOS else "free",
+            clear_teste=clear_teste,
+        )
     except Exception:
         return False
 
@@ -80,14 +87,18 @@ def plano_atual() -> str:
     Usuário logado com nuvem ativa SEMPRE vem do banco — sem linha = 'free'
     (novo usuário) mesmo que haja PLANO=pago legado no env. O env só vale
     para quem não está logado ou quando a nuvem está off (testes/offline).
-    O **Teste Premium** (teste_ate no futuro) também conta como 'pago'.
+    O **Teste Premium** (teste_ate no futuro) e a **assinatura paga vigente**
+    (assinatura_ate no futuro) também contam como 'pago'; a assinatura
+    expirada volta a 'free' sozinha (sem ação manual).
     """
     uid = uid_logado()
     if uid:
         nuvem_ativa = bool(getattr(nuvem_supabase, "disponivel", lambda: False)())
         banco = plano_no_banco(uid)
         if banco == "pago":
-            return "pago"
+            if _teste_em_vigor(uid) or assinatura_vigente(uid):
+                return "pago"
+            return "free"
         if banco == "free":
             return "pago" if _teste_em_vigor(uid) else "free"
         if banco is None:
@@ -113,6 +124,97 @@ def teste_premium_restante(uid: str) -> str | None:
 def _teste_em_vigor(uid: str) -> bool:
     ate = _datetime_de_iso(teste_premium_restante(uid) or "")
     return bool(ate) and ate > datetime.now(timezone.utc)
+
+
+# ─── Assinatura Premium mensal (Passo 7 — 30 dias, expira sozinho) ───────────
+
+_DIAS_ASSINATURA = 30
+
+
+def assinatura_vencimento(uid: str) -> str | None:
+    """assinatura_ate (ISO) do usuário na nuvem, ou None (sem assinatura)."""
+    try:
+        _ler = getattr(nuvem_supabase, "carregar_assinatura_banco", None)
+        if _ler is None:
+            return None
+        return _ler(uid) or None
+    except Exception:
+        return None
+
+
+def _assinatura_fim(uid: str) -> datetime | None:
+    return _datetime_de_iso(assinatura_vencimento(uid) or "")
+
+
+def _assinatura_coluna_disponivel() -> bool:
+    """Se a coluna `assinatura_ate` existe no Supabase (ALTER pendente → False)."""
+    try:
+        return bool(getattr(nuvem_supabase, "assinatura_disponivel", lambda: False)())
+    except Exception:
+        return False
+
+
+def assinatura_dias_restantes(uid: str) -> int | None:
+    """Dias (inteiros) de assinatura restantes; None sem vencimento registrado."""
+    fim = _assinatura_fim(uid)
+    if not fim:
+        return None
+    restante = fim - datetime.now(timezone.utc)
+    if restante.total_seconds() <= 0:
+        return 0
+    return int(restante.total_seconds() // 86400)
+
+
+def assinatura_vigente(uid: str) -> bool:
+    """True se o usuário tem assinatura Premium ativa (vencimento futuro).
+
+    **Legado** (pago SEM vencimento gravado — quem assinou antes desta regra)
+    passa a valer a partir de HOJE: no primeiro acesso concede 30 dias
+    (backfill idempotente). Sem a coluna no Supabase (ALTER pendente/offline)
+    mantém o 'pago' ativo como antes, para nada quebrar antes do SQL.
+    """
+    fim = _assinatura_fim(uid)
+    if fim:
+        return fim > datetime.now(timezone.utc)
+    if not _assinatura_coluna_disponivel():
+        return True  # coluna pendente/offline → comportamento atual (graça)
+    renovar_assinatura(uid)  # backfill legado: +30 dias contando de hoje
+    return True
+
+
+def renovar_assinatura(uid: str, dias: int = _DIAS_ASSINATURA) -> bool:
+    """Renova/ativa a assinatura Premium: +`dias` (30) contando de hoje.
+
+    Idempotente e **sem empilhar**: se já há assinatura ativa com vencimento
+    futuro MAIOR que hoje+dias, mantém a maior (nunca encurta nem soma dias).
+    Garante plano='pago' no banco e encerra qualquer teste ativo do usuário.
+    Usado tanto na confirmação do Pix (renovação mensal) quanto na ativação
+    manual do painel do dono.
+    """
+    if not uid:
+        return False
+    if not _assinatura_coluna_disponivel():
+        # ALTER pendente/offline → ativa 'pago' sem vencimento (comportamento antigo)
+        return definir_plano_no_banco(uid, "pago", clear_teste=True)
+    agora = datetime.now(timezone.utc)
+    fim = agora + timedelta(days=int(dias))
+    atual = _assinatura_fim(uid)
+    if atual and atual > agora and atual > fim:
+        fim = atual
+    try:
+        if not definir_plano_no_banco(uid, "pago", clear_teste=True):
+            return False
+        return bool(nuvem_supabase.gravar_assinatura_banco(uid, fim.isoformat()))
+    except Exception:
+        return False
+
+
+def encerrar_assinatura(uid: str) -> bool:
+    """Encerra o ciclo pago (estorno / "voltar a Basic"): free + limpa vencimento e teste."""
+    try:
+        return bool(nuvem_supabase.gravar_plano_banco(uid, "free", clear_teste=True, clear_assinatura=True))
+    except Exception:
+        return False
 
 
 def definir_trial(uid: str, dias: int) -> bool:
@@ -184,11 +286,11 @@ def ativar_teste_automatico(uid: str, dias: int = 7) -> tuple[bool, str]:
 
 
 def definir_plano_manual(uid: str, plano: str) -> bool:
-    """Ação do painel do dono: ativar Premium / voltar a Basic, encerra teste."""
-    try:
-        return nuvem_supabase.gravar_plano_banco(uid, plano if plano in _PLANOS else "free", clear_teste=True)
-    except Exception:
-        return False
+    """Ação do painel do dono: ativar Premium inicia +30 dias, voltar a Basic
+    encerra o ciclo (limpa teste e vencimento da assinatura)."""
+    if plano == "pago":
+        return renovar_assinatura(uid)
+    return encerrar_assinatura(uid)
 
 
 def pago() -> bool:

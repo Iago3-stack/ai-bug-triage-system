@@ -91,6 +91,13 @@
 #   existir, carregar_teste_auto devolve None e o botão fica oculto — o app
 #   funciona igual ao de hoje, sem quebrar.
 #
+# Assinatura Premium mensal (Passo 7 — R$ 19,99/30 dias, expira sozinho):
+#   alter table planos_usuario add column if not exists assinatura_ate timestamptz;
+#   `assinatura_ate` guarda o FIM da assinatura paga (pagamento → +30 dias a
+#   partir de hoje, sem empilhar); expirou → plano_atual volta a 'free'.
+#   Legado: quem já era 'pago' SEM vencimento gravado ganha 30 dias contando
+#   da data em que esta versão passar a ler o campo (backfill a partir de hoje).
+#
 # A configuração per-tenant usada na Cloud NÃO precisa desta tabela: se ela não
 # existir ou a leitura falhar, o app cai no plano por variável de ambiente.
 
@@ -359,11 +366,13 @@ def carregar_plano_banco(uid: str) -> str | None:
     return plano if plano in ("free", "pago") else None
 
 
-def gravar_plano_banco(uid: str, plano: str, clear_teste: bool = False) -> bool:
+def gravar_plano_banco(uid: str, plano: str, clear_teste: bool = False, clear_assinatura: bool = False) -> bool:
     """Define o plano de um usuário na nuvem (upsert por uid).
 
     Pagar ('pago') encerra qualquer Teste Premium ativo automaticamente;
     `clear_teste=True` faz o mesmo mesmo quando mantendo/voltando a 'free'.
+    `clear_assinatura=True` limpa também o vencimento da assinatura (usado no
+    estorno e no "voltar a Basic" do painel — encerra o ciclo mensal).
     """
     config = _config()
     if not config:
@@ -392,6 +401,18 @@ def gravar_plano_banco(uid: str, plano: str, clear_teste: bool = False) -> bool:
                 headers=_headers(),
                 params={"uid": f"eq.{uid}"},
                 json={"teste_ate": None},
+                timeout=15,
+            )
+        except Exception:
+            pass
+    if clear_assinatura:
+        # Mesma lógica de tolerância: coluna `assinatura_ate` pendente não derruba.
+        try:
+            requests.patch(
+                _planos_url(),
+                headers=_headers(),
+                params={"uid": f"eq.{uid}"},
+                json={"assinatura_ate": None},
                 timeout=15,
             )
         except Exception:
@@ -427,6 +448,67 @@ def gravar_teste_banco(uid: str, ate_iso: str) -> bool:
     if not config:
         return False
     linha = {"uid": uid, "teste_ate": ate_iso}
+    resposta = requests.post(
+        _planos_url(),
+        headers={**_headers(), "Prefer": "resolution=merge-duplicates,return=minimal"},
+        params={"on_conflict": "uid"},
+        json=linha,
+        timeout=15,
+    )
+    resposta.raise_for_status()
+    return True
+
+
+def assinatura_disponivel() -> bool:
+    """True se a coluna `assinatura_ate` existe na schema cache do PostgREST.
+
+    Semelhante à `teste_auto_disponivel`: enquanto o ALTER TABLE não for rodado
+    (ou a schema cache estiver desatualizada), o upsert devolveria 400
+    (PGRST204). Nunca levanta — apenas relata se o PostgREST enxerga a coluna.
+    """
+    config = _config()
+    if not config:
+        return False
+    try:
+        resposta = requests.get(
+            _planos_url(),
+            headers=_headers(),
+            params={"select": "assinatura_ate", "limit": "1"},
+            timeout=15,
+        )
+        return resposta.status_code == 200
+    except Exception:
+        return False
+
+
+def carregar_assinatura_banco(uid: str) -> str | None:
+    """assinatura_ate (ISO) do usuário na nuvem, ou None (sem assinatura/sem linha)."""
+    config = _config()
+    if not config:
+        return None
+    try:
+        resposta = requests.get(
+            _planos_url(),
+            headers=_headers(),
+            params={"select": "assinatura_ate", "uid": f"eq.{uid}", "limit": "1"},
+            timeout=15,
+        )
+        resposta.raise_for_status()
+        docs = resposta.json() or []
+        if not docs:
+            return None
+        valor = docs[0].get("assinatura_ate")
+        return valor or None
+    except Exception:
+        return None
+
+
+def gravar_assinatura_banco(uid: str, ate_iso: str) -> bool:
+    """Define o fim da assinatura Premium de um usuário (upsert por uid)."""
+    config = _config()
+    if not config:
+        return False
+    linha = {"uid": uid, "assinatura_ate": ate_iso}
     resposta = requests.post(
         _planos_url(),
         headers={**_headers(), "Prefer": "resolution=merge-duplicates,return=minimal"},
@@ -553,7 +635,8 @@ def teste_disponivel() -> bool:
 
 
 def carregar_todos_planos() -> list[dict]:
-    """Todas as linhas de planos_usuario (uid, plano, teste_ate, teste_auto) — painel do dono.
+    """Todas as linhas de planos_usuario (uid, plano, teste_ate, teste_auto,
+    assinatura_ate) — painel do dono.
 
     Se uma coluna ainda não existir (ALTER TABLE pendente), o PostgREST
     responde 400 no select — então refaz sem ela e preenche o campo ausente
@@ -562,8 +645,8 @@ def carregar_todos_planos() -> list[dict]:
     config = _config()
     if not config:
         return []
-    campos = ["uid", "plano", "teste_ate", "teste_auto"]
-    for tentativa in range(3):
+    campos = ["uid", "plano", "teste_ate", "teste_auto", "assinatura_ate"]
+    for tentativa in range(len(campos)):
         try:
             if tentativa >= len(campos):
                 break
@@ -579,6 +662,7 @@ def carregar_todos_planos() -> list[dict]:
             for doc in docs:
                 doc.setdefault("teste_ate", None)
                 doc.setdefault("teste_auto", None)
+                doc.setdefault("assinatura_ate", None)
             return docs
         except Exception:
             continue

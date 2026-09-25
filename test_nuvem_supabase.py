@@ -499,6 +499,6 @@ def test_carregar_todos_planos_degrada_sem_coluna_teste_auto(monkeypatch):
 
     monkeypatch.setattr(nuvem_supabase.requests, "get", _fake_get)
     docs = nuvem_supabase.carregar_todos_planos()
-    assert docs == [{"uid": "u-1", "plano": "free", "teste_ate": "x", "teste_auto": None}]
+    assert docs == [{"uid": "u-1", "plano": "free", "teste_ate": "x", "teste_auto": None, "assinatura_ate": None}]
     # tentou "uid,plano,teste_ate" depois (sem a coluna nova) e funcionou
     assert "uid,plano,teste_ate" in chamadas

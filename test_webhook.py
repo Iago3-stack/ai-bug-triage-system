@@ -249,9 +249,9 @@ def test_analisar_pagamento_confirma_quando_paid(tmp_path, monkeypatch):
     cobranca["pagbank_order_id"] = "ORDE_ABC"
     pixbilling._atualizar_local(cobranca)
 
-    confirmado = {}
+    renovado = {}
     monkeypatch.setattr(
-        "pixbilling.plano.definir_plano_no_banco", lambda uid, p: confirmado.update(uid=uid, p=p) or True
+        "pixbilling.plano.renovar_assinatura", lambda uid: renovado.update(uid=uid) or True
     )
     pedido_pago = {"charges": [{"id": "CHAR_1", "status": "PAID"}]}
     monkeypatch.setattr(pagbank, "consultar_pedido", lambda oid: pedido_pago)
@@ -260,7 +260,7 @@ def test_analisar_pagamento_confirma_quando_paid(tmp_path, monkeypatch):
     status, resp = webhook.analisar_pagamento({"reference_id": cobranca["id"], "id": "ORDE_ABC"})
     assert status == 200
     assert resp["acao"] == "confirmado"
-    assert confirmado == {"uid": "u-um", "p": "pago"}
+    assert renovado == {"uid": "u-um"}
     assert pixbilling.buscar_cobranca(cobranca["id"])["status"] == "confirmado"
 
 

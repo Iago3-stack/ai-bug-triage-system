@@ -136,8 +136,9 @@ def test_definir_plano_no_banco_delega_upsert(monkeypatch):
     gravado = {}
     _mock_login(monkeypatch, uid="u-abc")
 
-    def _falso(uid, plano):
+    def _falso(uid, plano, clear_teste=False):
         gravado[uid] = plano
+        gravado["clear"] = clear_teste
         return True
 
     monkeypatch.setattr(plano, "nuvem_supabase", type("NS", (), {
@@ -145,7 +146,7 @@ def test_definir_plano_no_banco_delega_upsert(monkeypatch):
         "carregar_plano_banco": lambda uid: None,
     }))
     assert plano.definir_plano_no_banco("u-abc", "pago")
-    assert gravado == {"u-abc": "pago"}
+    assert gravado["u-abc"] == "pago"
     # valor inválido vira free
     assert plano.definir_plano_no_banco("u-abc", "luxo")
     assert gravado["u-abc"] == "free"
@@ -156,11 +157,146 @@ def test_definir_plano_offline_nao_levanta(monkeypatch):
 
     class Falso:
         @staticmethod
-        def gravar_plano_banco(uid, plano):
+        def gravar_plano_banco(uid, plano, clear_teste=False):
             raise RuntimeError("offline")
 
     monkeypatch.setattr(plano, "nuvem_supabase", Falso)
     assert plano.definir_plano_no_banco("u-abc", "pago") is False
+
+
+# ─── Assinatura Premium mensal (Passo 7 — 30 dias, expira sozinho) ────────────
+
+def _mock_nuvem_assinatura(monkeypatch, plano_b="free", vencimento=None, coluna=True, registra=None):
+    """Fake da nuvem com suporte a assinatura_ate (graça quando coluna ausente)."""
+    class NS:
+        @staticmethod
+        def disponivel():
+            return True
+
+        @staticmethod
+        def carregar_plano_banco(uid):
+            return plano_b
+
+        @staticmethod
+        def carregar_assinatura_banco(uid):
+            return vencimento
+
+        @staticmethod
+        def assinatura_disponivel():
+            return coluna
+
+        @staticmethod
+        def gravar_assinatura_banco(uid, ate_iso):
+            registra["ate"] = ate_iso
+            return True
+
+        @staticmethod
+        def gravar_plano_banco(uid, p_novo, clear_teste=False, clear_assinatura=False):
+            registra["plano"] = p_novo
+            registra["clear"] = clear_teste
+            registra["clear_assinatura"] = clear_assinatura
+            return True
+
+    registra.clear()
+    monkeypatch.setattr(plano, "nuvem_supabase", NS)
+    return registra
+
+
+def test_pago_com_assinatura_ativa_vira_pago(monkeypatch):
+    _mock_login(monkeypatch, uid="u-s")
+    _mock_nuvem_assinatura(monkeypatch, plano_b="pago",
+                           vencimento=(datetime.now(timezone.utc) + timedelta(days=20)).isoformat(),
+                           registra={})
+    assert plano.plano_atual() == "pago"
+    assert plano.pago()
+
+
+def test_pago_com_assinatura_expirada_vira_free(monkeypatch):
+    _mock_login(monkeypatch, uid="u-s")
+    _mock_nuvem_assinatura(monkeypatch, plano_b="pago",
+                           vencimento=(datetime.now(timezone.utc) - timedelta(days=1)).isoformat(),
+                           registra={})
+    assert plano.plano_atual() == "free"
+    assert not plano.pago()
+
+
+def test_legado_pago_sem_vencimento_ganha_30_dias_de_hoje(monkeypatch):
+    _mock_login(monkeypatch, uid="u-s")
+    chamadas = {}
+    _mock_nuvem_assinatura(monkeypatch, plano_b="pago", vencimento=None, coluna=True, registra=chamadas)
+    assert plano.plano_atual() == "pago"
+    assert chamadas["plano"] == "pago"
+    assert chamadas["clear"] is True
+    ate = datetime.fromisoformat(chamadas["ate"].replace("Z", "+00:00"))
+    assert datetime.now(timezone.utc) <= ate <= datetime.now(timezone.utc) + timedelta(days=30, minutes=1)
+
+
+def test_sem_coluna_no_supabase_concede_grace_pago(monkeypatch):
+    _mock_login(monkeypatch, uid="u-s")
+    chamadas = {}
+    _mock_nuvem_assinatura(monkeypatch, plano_b="pago", vencimento=None, coluna=False, registra=chamadas)
+    assert plano.assinatura_vigente("u-s") is True
+    assert plano.plano_atual() == "pago"
+    assert chamadas == {}  # graça: nada é gravado antes do ALTER TABLE
+
+
+def test_renovar_assinatura_ativa_30_dias(monkeypatch):
+    chamadas = {}
+    _mock_nuvem_assinatura(monkeypatch, plano_b="free", vencimento=None, coluna=True, registra=chamadas)
+    assert plano.renovar_assinatura("u-s") is True
+    assert chamadas["plano"] == "pago"
+    assert chamadas["clear"] is True
+    ate = datetime.fromisoformat(chamadas["ate"].replace("Z", "+00:00"))
+    assert datetime.now(timezone.utc) <= ate <= datetime.now(timezone.utc) + timedelta(days=30, minutes=1)
+
+
+def test_renovar_sem_empilhar_mantem_vencimento_maior(monkeypatch):
+    maior = datetime.now(timezone.utc) + timedelta(days=40)
+    chamadas = {}
+    _mock_nuvem_assinatura(monkeypatch, plano_b="pago", vencimento=maior.isoformat(), coluna=True, registra=chamadas)
+    assert plano.renovar_assinatura("u-s") is True
+    assert datetime.fromisoformat(chamadas["ate"].replace("Z", "+00:00")) == maior  # não encurta
+
+
+def test_renovar_redefine_assinatura_expirada(monkeypatch):
+    chamadas = {}
+    _mock_nuvem_assinatura(monkeypatch, plano_b="free",
+                           vencimento=(datetime.now(timezone.utc) - timedelta(days=5)).isoformat(),
+                           coluna=True, registra=chamadas)
+    assert plano.renovar_assinatura("u-s") is True
+    ate = datetime.fromisoformat(chamadas["ate"].replace("Z", "+00:00"))
+    assert datetime.now(timezone.utc) <= ate <= datetime.now(timezone.utc) + timedelta(days=30, minutes=1)
+
+
+def test_renovar_sem_coluna_cai_no_pago_simples(monkeypatch):
+    chamadas = {}
+    _mock_nuvem_assinatura(monkeypatch, plano_b="free", vencimento=None, coluna=False, registra=chamadas)
+    assert plano.renovar_assinatura("u-s") is True
+    assert chamadas == {"plano": "pago", "clear": True, "clear_assinatura": False}  # nada de vencimento
+
+
+def test_encerrar_assinatura_limpa_ciclo(monkeypatch):
+    chamadas = {}
+    _mock_nuvem_assinatura(monkeypatch, plano_b="pago",
+                           vencimento=(datetime.now(timezone.utc) + timedelta(days=10)).isoformat(),
+                           coluna=True, registra=chamadas)
+    assert plano.encerrar_assinatura("u-s") is True
+    assert chamadas == {"plano": "free", "clear": True, "clear_assinatura": True}
+
+
+def test_assinatura_dias_restantes_zero_quando_expirada(monkeypatch):
+    _mock_login(monkeypatch, uid="u-s")
+    _mock_nuvem_assinatura(monkeypatch, plano_b="free",
+                           vencimento=(datetime.now(timezone.utc) - timedelta(hours=1)).isoformat(),
+                           registra={})
+    assert plano.assinatura_dias_restantes("u-s") == 0
+
+
+def test_assinatura_sem_coluna_renovar_nao_levanta(monkeypatch):
+    monkeypatch.setattr(plano, "nuvem_supabase", type("NS", (), {
+        "gravar_plano_banco": lambda *a, **k: (_ for _ in ()).throw(RuntimeError("offline")),
+    }))
+    assert plano.renovar_assinatura("u-s") is False
 
 
 def test_plano_no_banco_offline_cai_no_env(monkeypatch):

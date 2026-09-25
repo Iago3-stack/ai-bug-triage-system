@@ -75,11 +75,20 @@ def render():
             _frase = ("Você está no <b style='color:#60a5fa'>Teste Premium 7 dias</b> — acesso completo liberado "
                       "até esta data expirar. Depois disso, a conta volta ao Basic.")
         else:
+            _assinatura = plano.assinatura_dias_restantes(uid)
             _badge = (
                 '<span style="background:rgba(251,191,36,.16);color:#fde68a;border:1px solid rgba(251,191,36,.5);'
                 'border-radius:999px;padding:4px 14px;font-size:12px;font-weight:800;letter-spacing:.03em">⭐ Plano Premium</span>'
             )
-            _frase = "Você está no <b style='color:#86efac'>plano Premium</b> — histórico completo, RAG \u201ccomo foi resolvido\u201d e múltiplos canais de alerta liberados."
+            if _assinatura is None:
+                _frase = "Você está no <b style='color:#86efac'>plano Premium</b> — histórico completo, RAG \u201ccomo foi resolvido\u201d e múltiplos canais de alerta liberados."
+            elif _assinatura <= 0:
+                _frase = ("<b style='color:#fde68a'>Sua assinatura Premium venceu hoje.</b> A conta já voltou "
+                          "ao Basic — renove abaixo para liberar tudo de novo na hora.")
+            else:
+                _frase = (f"Você está no <b style='color:#86efac'>plano Premium</b> — histórico completo, RAG "
+                          f"\u201ccomo foi resolvido\u201d e múltiplos canais de alerta liberados. "
+                          f"<b style='color:#fde68a'>Assinatura válida por {_assinatura} dia(s).</b>")
     else:
         _badge = (
             '<span style="background:rgba(37,211,102,.16);color:#86efac;border:1px solid rgba(37,211,102,.5);'
@@ -185,22 +194,28 @@ def render():
                     "Pague o Pix abaixo e clique em **✅ Já paguei**."
                 )
             _exibir_checkout_pix(aberta, uid)
-        elif atual == "pago" and paga:
-            st.success(f"Seu **Premium** está ativo — pago em **{pixbilling.preco_texto()}/mês**.")
-            _marcador("marca-plano-estorno")
-            if st.button("↩️ Solicitar estorno", key="btn_solicitar_estorno"):
-                pedido = pixbilling.solicitar_estorno(paga["id"], motivo="Solicitado pelo usuário")
-                if pedido:
-                    _avisar_admin(
-                        f"Estorno solicitado: cobrança {pedido['id']} de {pedido.get('uid')} "
-                        f"({pixbilling.preco_texto()})"
-                    )
-                    _lembrete_refresh("↩️ Pedido de estorno enviado ao responsável!")
-                    st.rerun()
-            if estornadas:
-                st.caption("Últimos estornos desta conta:")
-                for e in estornadas[:3]:
-                    st.caption(f"• {e.get('id')} — {pixbilling.status_rotulo('estornado')} ({e.get('motivo') or '—'})")
+        elif atual == "pago":
+            _restantes = plano.assinatura_dias_restantes(uid)
+            if _restantes is None:
+                st.success("Seu **Premium** está ativo (assinatura ativa).")
+                # sem cobrança confirmada no histórico (Premium legado) → sem botão de estorno
+            else:
+                _quanto = "vence hoje" if _restantes == 0 else f"válida por **{_restantes} dia(s)**"
+                st.success(f"Seu **Premium** está ativo — pago em **{pixbilling.preco_texto()}/mês**, assinatura {_quanto}.")
+                _marcador("marca-plano-estorno")
+                if paga and st.button("↩️ Solicitar estorno", key="btn_solicitar_estorno"):
+                    pedido = pixbilling.solicitar_estorno(paga["id"], motivo="Solicitado pelo usuário")
+                    if pedido:
+                        _avisar_admin(
+                            f"Estorno solicitado: cobrança {pedido['id']} de {pedido.get('uid')} "
+                            f"({pixbilling.preco_texto()})"
+                        )
+                        _lembrete_refresh("↩️ Pedido de estorno enviado ao responsável!")
+                        st.rerun()
+                if estornadas:
+                    st.caption("Últimos estornos desta conta:")
+                    for e in estornadas[:3]:
+                        st.caption(f"• {e.get('id')} — {pixbilling.status_rotulo('estornado')} ({e.get('motivo') or '—'})")
         else:
             st.caption(
                 f"Adquira o **Premium** por **{pixbilling.preco_texto()}/mês** — pague no Pix, "

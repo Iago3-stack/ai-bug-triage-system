@@ -90,11 +90,11 @@ def test_cobrancas_do_uid_filtra(tmp_path, monkeypatch):
 def test_confirmar_ativa_plano_pago(tmp_path, monkeypatch):
     _caminho_tmp(tmp_path, monkeypatch)
     doc = pixbilling.gerar_cobranca("u-um")
-    confirmado = {}
-    monkeypatch.setattr("pixbilling.plano.definir_plano_no_banco", lambda uid, p: confirmado.update(uid=uid, p=p) or True)
+    renovado = {}
+    monkeypatch.setattr("pixbilling.plano.renovar_assinatura", lambda uid: renovado.update(uid=uid) or True)
     novo = pixbilling.confirmar_cobranca(doc["id"])
     assert novo and novo["status"] == "confirmado"
-    assert confirmado == {"uid": "u-um", "p": "pago"}
+    assert renovado == {"uid": "u-um"}
     assert pixbilling.confirmar_cobranca(doc["id"]) is None  # já confirmada
 
 
@@ -110,7 +110,7 @@ def test_comprovante_enviado_na_confirmacao(tmp_path, monkeypatch):
     """Webhook OU confirmação manual: confirmar_cobranca sempre envia o comprovante."""
     _caminho_tmp(tmp_path, monkeypatch)
     doc = pixbilling.gerar_cobranca("u-um", nome="Titular", email="titular@exemplo.com")
-    monkeypatch.setattr("pixbilling.plano.definir_plano_no_banco", lambda uid, p: True)
+    monkeypatch.setattr("pixbilling.plano.renovar_assinatura", lambda uid: True)
     enviados = []
 
     def _fake_envia(para, assunto, corpo, corpo_html=None):
@@ -130,7 +130,7 @@ def test_comprovante_enviado_na_confirmacao(tmp_path, monkeypatch):
 def test_comprovante_sem_email_nao_quebra_confirmacao(tmp_path, monkeypatch):
     _caminho_tmp(tmp_path, monkeypatch)
     doc = pixbilling.gerar_cobranca("u-um")
-    monkeypatch.setattr("pixbilling.plano.definir_plano_no_banco", lambda uid, p: True)
+    monkeypatch.setattr("pixbilling.plano.renovar_assinatura", lambda uid: True)
     monkeypatch.setattr(
         "pixbilling.notificacoes.enviar_email",
         lambda *a, **k: (_ for _ in ()).throw(AssertionError("não deveria enviar")),
@@ -142,7 +142,7 @@ def test_comprovante_sem_email_nao_quebra_confirmacao(tmp_path, monkeypatch):
 def test_falha_no_envio_nao_quebra_confirmacao(tmp_path, monkeypatch):
     _caminho_tmp(tmp_path, monkeypatch)
     doc = pixbilling.gerar_cobranca("u-um", email="titular@exemplo.com")
-    monkeypatch.setattr("pixbilling.plano.definir_plano_no_banco", lambda uid, p: True)
+    monkeypatch.setattr("pixbilling.plano.renovar_assinatura", lambda uid: True)
     monkeypatch.setattr(
         "pixbilling.notificacoes.enviar_email",
         lambda *a, **k: (_ for _ in ()).throw(RuntimeError("SMTP fora do ar")),
@@ -167,10 +167,10 @@ def test_estorno_volta_a_basic(tmp_path, monkeypatch):
     assert pedido and pedido["status"] == "estorno"
     assert pixbilling.estornos()[0]["id"] == doc["id"]
     voltou = {}
-    monkeypatch.setattr("pixbilling.plano.definir_plano_no_banco", lambda uid, p: voltou.update(uid=uid, p=p) or True)
+    monkeypatch.setattr("pixbilling.plano.encerrar_assinatura", lambda uid: voltou.update(uid=uid) or True)
     estornado = pixbilling.estornar(doc["id"])
     assert estornado and estornado["status"] == "estornado"
-    assert voltou == {"uid": "u-um", "p": "free"}
+    assert voltou == {"uid": "u-um"}
     assert pixbilling.estornar(doc["id"]) is None  # já estornado
 
 

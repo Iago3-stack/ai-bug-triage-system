@@ -113,6 +113,7 @@ def render():
         por_uid.setdefault(p.get("uid"), {})["plano"] = p.get("plano") or "free"
         por_uid[p.get("uid")]["teste_ate"] = p.get("teste_ate")
         por_uid[p.get("uid")]["teste_auto"] = p.get("teste_auto")
+        por_uid[p.get("uid")].setdefault("assinatura_ate", p.get("assinatura_ate"))
     for pf in perfis:
         por_uid.setdefault(pf.get("uid"), {})["nome"] = pf.get("nome") or ""
         por_uid[pf.get("uid")]["empresa"] = pf.get("empresa") or ""
@@ -235,6 +236,7 @@ def render():
             f'<div style="color:#64748b;font-size:11px;margin-top:2px">'
             f'último acesso: {_fmt_data(dados.get("ultimo_login"))} · criado: {_fmt_data(dados.get("criado_em"))}'
             f'{" · 🎁 teste até " + _fmt_data(dados.get("teste_ate")) if dados.get("teste_ate") else ""}'
+            f'{" · ⭐ assinatura até " + _fmt_data(dados.get("assinatura_ate")) if dados.get("assinatura_ate") else ""}'
             f"</div></div>{_badge(_tipo, _tipo_teste)}"
             f'</div>',
             unsafe_allow_html=True,

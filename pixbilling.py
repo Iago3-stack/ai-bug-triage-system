@@ -248,7 +248,7 @@ def confirmar_cobranca(doc_id: str) -> dict | None:
     if not doc or doc.get("status") != _STATUS_ABERTO:
         return None
     atualizado = _transicao(doc, _STATUS_CONFIRMADO)
-    plano.definir_plano_no_banco(doc["uid"], "pago")
+    plano.renovar_assinatura(doc["uid"])  # +30 dias a partir de hoje (sem empilhar)
     _enviar_comprovante(atualizado or doc)
     telemetria.capturar("pagamento_confirmado", usuario=doc.get("uid"), plano="pago")
     return atualizado
@@ -340,7 +340,7 @@ def estornar(doc_id: str, motivo: str = "") -> dict | None:
     if not doc or doc.get("status") != _STATUS_ESTORNO:
         return None
     atualizado = _transicao(doc, _STATUS_ESTORNADO, {"motivo": motivo})
-    plano.definir_plano_no_banco(doc["uid"], "free")
+    plano.encerrar_assinatura(doc["uid"])
     return atualizado
 
 
