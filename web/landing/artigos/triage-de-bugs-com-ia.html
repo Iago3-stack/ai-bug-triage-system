@@ -313,6 +313,18 @@
     footer p { margin-top: 6px; }
     footer a { color: var(--texto-suave); }
     footer a:hover { color: #fff; text-decoration: none; }
+    /* Badge de status do serviço (instatus via summary.json) */
+    #link-status { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--borda); border-radius: 999px; padding: 5px 14px; }
+    #link-status:hover { border-color: #3b4750; }
+    #ponto-status { width: 9px; height: 9px; border-radius: 50%; background: var(--texto-suave); flex: none; }
+    #ponto-status.ok { background: #22c55e; animation: pulsar-status 2.4s infinite; }
+    #ponto-status.problema { background: #f59e0b; animation: pulsar-status 1.2s infinite; }
+    #ponto-status.manutencao { background: #38bdf8; }
+    @keyframes pulsar-status {
+      0% { box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.18); }
+      70% { box-shadow: 0 0 0 7px rgba(0, 0, 0, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(0, 0, 0, 0); }
+    }
 
     /* ---------------------------------------------------------------
        Animações (adicionadas para dar vida aos pontos estratégicos)
@@ -651,9 +663,29 @@
         <a href="https://ai-bug-triage.com.br/">Página inicial</a>
         <a href="https://ai-bug-triage-system-d6vigycbjt4qxez2wrvsxf.streamlit.app/legal?aba=termos" target="_blank" rel="noopener">Termos &amp; Privacidade</a>
         <a href="https://github.com/iago3-stack/ai-bug-triage-system" target="_blank" rel="noopener">Código aberto</a>
+        <a href="https://ai-bug-triage.instatus.com" target="_blank" rel="noopener" id="link-status"><span id="ponto-status"></span><span id="rotulo-status">Status do serviço</span></a>
       </div>
       <p>AI Bug Triage System · Triage de bugs de software com IA</p>
     </div>
   </footer>
+
+  <script>
+    // Badge de status do serviço no rodapé: consulta o summary.json da página
+    // pública de status do instatus (CORS aberto). Falha em silêncio.
+    (function () {
+      var ponto = document.getElementById('ponto-status');
+      var rotulo = document.getElementById('rotulo-status');
+      if (!ponto || !rotulo || !window.fetch) return;
+      fetch('https://ai-bug-triage.instatus.com/summary.json').then(function (r) {
+        if (!r.ok) throw new Error('sem status');
+        return r.json();
+      }).then(function (d) {
+        var st = (d && d.page && d.page.status) || '';
+        if (st === 'UP') { ponto.className = 'ok'; rotulo.textContent = 'Todos os sistemas operacionais'; }
+        else if (st === 'HASISSUES') { ponto.className = 'problema'; rotulo.textContent = 'Incidente em andamento'; }
+        else if (st === 'UNDERMAINTENANCE') { ponto.className = 'manutencao'; rotulo.textContent = 'Manutenção programada'; }
+      }).catch(function () {});
+    })();
+  </script>
 </body>
 </html>
