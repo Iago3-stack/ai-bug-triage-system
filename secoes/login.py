@@ -8,7 +8,6 @@
 import streamlit as st
 
 import auth_supabase
-import ui_tema
 import sessao_persist
 import telemetria
 

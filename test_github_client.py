@@ -7,7 +7,6 @@ import json
 
 import urllib.error
 
-import pytest
 
 import github_client
 

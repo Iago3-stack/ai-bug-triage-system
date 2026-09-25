@@ -2,7 +2,6 @@
 # Roda com: pytest -v
 # Confirma: severidade, negação, ausência de falso-positivo e sentimento.
 
-import pytest
 
 from triagem import triar, _aplicar_lexico, _aplicar_negacoes
 

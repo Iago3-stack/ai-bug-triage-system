@@ -2,7 +2,6 @@
 # Roda com: pytest -v
 # Confirma: fallback JSONL, nuvem ganha do local, nome exibição e fuso/avatar.
 
-import pytest
 
 import perfil
 import nuvem_supabase

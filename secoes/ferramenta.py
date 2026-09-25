@@ -1,7 +1,6 @@
 """Página Ferramenta — triagem de bugs (NLP + IA + RAG) com histórico e dashboard."""
 import re
 import json
-import io
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -191,7 +190,7 @@ def _gerar_pdf_relatorio(dados: dict) -> bytes:
         pdf.add_font("DejaVu", "B", _FONTE_NEGRITO)
 
     largura = pdf.w - pdf.l_margin - pdf.r_margin
-    azul, verde, cinza, escuro = (46, 124, 246), (37, 211, 102), (100, 116, 139), (15, 23, 42)
+    verde, cinza, escuro = (37, 211, 102), (100, 116, 139), (15, 23, 42)
 
     # Cabeçalho
     pdf.set_fill_color(*cinza)

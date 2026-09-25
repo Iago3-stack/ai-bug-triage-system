@@ -179,24 +179,6 @@ def _svg_gmail(tamanho: int = 17) -> str:
     )
 
 
-def _svg_postman(tamanho: int = 17, cor: str = "#FF6C37") -> str:
-    """Herói espacial voador (logo oficial do Postman) em SVG inline.
-
-    Path oficial do simple-icons (CC0) com o laranja da marca Postman.
-    """
-    return (
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" '
-        f'width="{tamanho}" height="{tamanho}" role="img" aria-label="Postman" '
-        f'style="display:inline-block;vertical-align:middle">'
-        f'<path fill="{cor}" d="M13.527.099C6.955-.744.942 3.9.099 10.473c-.843 6.572 3.8 '
-        "12.584 10.373 13.428 6.573.843 12.587-3.801 13.428-10.374C24.744 6.955 20.101.943 "
-        "13.527.099zm2.471 7.485a.855.855 0 0 0-.593.25l-4.453 4.453-.307-.307-.643-.643c4.389-4.376 "
-        "5.18-4.418 5.996-3.753zm-4.863 4.861l4.44-4.44a.62.62 0 1 1 .847.903l-4.699 4.125-.588-.588zm.33.694l-1.1.238a.06.06 0 0 1-.067-.032.06.06 0 0 1 .01-.073l.645-.645.512.512zm-2.803-.459l1.172-1.172.879.878-1.979.426a.074.074 0 0 1-.085-.039.072.072 0 0 1 .013-.093zm-3.646 6.058a.076.076 0 0 1-.069-.083.077.077 0 0 1 .022-.046h.002l.946-.946 1.222 1.222-2.123-.147zm2.425-1.256a.228.228 0 0 0-.117.256l.203.865a.125.125 0 0 1-.211.117h-.003l-.934-.934-.294-.295 3.762-3.758 1.82-.393.874.874c-1.255 1.102-2.971 2.201-5.1 3.268zm5.279-3.428h-.002l-.839-.839 4.699-4.125a.952.952 0 0 0 .119-.127c-.148 1.345-2.029 3.245-3.977 5.091zm3.657-6.46l-.003-.002a1.822 1.822 0 0 1 2.459-2.684l-1.61 1.613a.119.119 0 0 0 0 .169l1.247 1.247a1.817 1.817 0 0 1-2.093-.343zm2.578 0a1.714 1.714 0 0 1-.271.218h-.001l-1.207-1.207 1.533-1.533c.661.72.637 1.832-.054 2.522zM18.855 6.05a.143.143 0 0 0-.053.157.416.416 0 0 1-.053.45.14.14 0 0 0 .023.197.141.141 0 0 0 .084.03.14.14 0 0 0 .106-.05.691.691 0 0 0 .087-.751.138.138 0 0 0-.194-.033z"
-        "/>"
-        '</svg>'
-    )
-
-
 CONTATO_URLS = {
     "whatsapp": "https://wa.me/5598985914235?text=Ol%C3%A1%20Iago%2C%20vi%20seu%20portf%C3%B3lio%20de%20IA%20e%20QA%20e%20gostaria%20de%20conversar%20sobre%20uma%20oportunidade!",
     "linkedin": "https://www.linkedin.com/in/iago-nunes-897a5832b/?lipi=urn%3Ali%3Apage%3Ad_flagship3_profile_view_base_contact_details%3B%2F15y3S36T5SI8UZodVDXGw%3D%3D",
@@ -248,74 +230,6 @@ def _contato_icon(nome: str) -> str:
         )
     href = "data:image/svg+xml;base64," + _B64[nome]
     return f'<img src="{href}" width="17" height="17" style="vertical-align:middle; margin-right:9px"/>'
-
-TYPING_CSS = """
-<style>
-.type-stack {
-  font-family: 'Fira Code', 'Courier New', monospace;
-  font-size: 16px;
-  color: #2E7CF6;
-  text-align: center;
-  min-height: 80px;
-  padding: 6px 0;
-}
-.type-line {
-  display: block;
-  max-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  margin: 2px auto;
-}
-.tl1 { animation: type1 12s steps(28, end) 0s infinite; }
-.tl2 { animation: type2 12s steps(28, end) 0s infinite; }
-.tl3 { animation: type3 12s steps(28, end) 0s infinite; }
-.tl4 { animation: type4 16s steps(28, end) 0s infinite; }
-@keyframes type1 {
-  0% { max-width: 0; }
-  6% { max-width: 0; }
-  18% { max-width: 30em; }
-  96% { max-width: 30em; }
-  100% { max-width: 0; }
-}
-@keyframes type2 {
-  0% { max-width: 0; }
-  24% { max-width: 0; }
-  36% { max-width: 30em; }
-  96% { max-width: 30em; }
-  100% { max-width: 0; }
-}
-@keyframes type3 {
-  0% { max-width: 0; }
-  42% { max-width: 0; }
-  54% { max-width: 30em; }
-  96% { max-width: 30em; }
-  100% { max-width: 0; }
-}
-@keyframes type4 {
-  0% { max-width: 0; }
-  60% { max-width: 0; }
-  72% { max-width: 30em; }
-  96% { max-width: 30em; }
-  100% { max-width: 0; }
-}
-@media (max-width: 480px) {
-  /* frases curtas agora cabem no celular: mantém a digitação animada */
-  .type-line { white-space: nowrap; max-width: none; }
-  .type-stack { min-height: 0; }
-}
-</style>
-"""
-
-def typing_frases():
-    st.markdown(TYPING_CSS, unsafe_allow_html=True)
-    st.markdown("""
-<div class="type-stack">
-  <div class="type-line tl1">Bem-vindo ao meu site!</div>
-  <div class="type-line tl2">Informações sobre mim</div>
-  <div class="type-line tl3">e meus projetos</div>
-  <div class="type-line tl4">QA + IA construído no Lab Hack28</div>
-</div>
-""", unsafe_allow_html=True)
 
 def render_contato():
     st.markdown(CONTATO_CSS, unsafe_allow_html=True)

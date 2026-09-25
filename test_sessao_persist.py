@@ -4,7 +4,6 @@
 # pelo refresh_token salvo no navegador. Testamos o contrato de status, que
 # alimenta o motivo exibido na tela de login quando a restauração falha.
 
-import pytest
 import sessao_persist
 
 # ── _restaurar (reidratação da sessão) ───────────────────────────────────────

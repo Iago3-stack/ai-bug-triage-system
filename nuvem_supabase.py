@@ -94,7 +94,6 @@
 # A configuração per-tenant usada na Cloud NÃO precisa desta tabela: se ela não
 # existir ou a leitura falhar, o app cai no plano por variável de ambiente.
 
-import json
 import os
 import time
 from datetime import datetime, timezone

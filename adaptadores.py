@@ -144,7 +144,7 @@ def estruturar_playwright(evidencia: str) -> dict:
         "JavaScript" if any(f.group(1).endswith((".js", ".jsx")) for f in frame) else "Playwright"
     )
     titulo = f"Teste falhou: {nome}" if nome else f"Falha de teste: {erro or 'asserção não passou'}"
-    desc = f"Falha em teste automatizado (Playwright)" + (f" — `{nome}`" if nome else "")
+    desc = "Falha em teste automatizado (Playwright)" + (f" — `{nome}`" if nome else "")
     desc += f". Erro: {erro}" if erro else f". {_primeira_linha_util(texto)}"
     if esperado or recebido:
         desc += f". Esperado: {esperado.group('val').strip() if esperado else '—'} · Recebido: {recebido.group('val').strip() if recebido else '—'}"

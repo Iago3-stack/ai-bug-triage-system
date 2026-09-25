@@ -1,4 +1,3 @@
-import pytest
 
 from colar_falha import (
     _detectar_categoria,

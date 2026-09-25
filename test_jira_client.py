@@ -2,7 +2,6 @@
 # Roda com: pytest -v
 # Confirma: mapeamento de prioridade, montagem do payload e falta de credenciais.
 
-import pytest
 
 import jira_client
 

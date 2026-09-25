@@ -112,7 +112,7 @@ def saude_suite(registros: list[dict]) -> float:
         return 0.0
     total = len(registros)
     taxa = sum(1 for r in registros if r.get("usou_ia"))
-    score = saude = 5.0
+    saude = 5.0
     normal = sum(1 for r in registros if r.get("gravidade") == "NORMAL ✅")
     saude += (normal / total) * 2.0
     media_score = sum(float(r.get("score", 0.0)) for r in registros) / total
@@ -250,7 +250,7 @@ def render_dashboard(registros: list[dict]) -> None:
     c4.metric("✅ Normais", n_normal)
     c5.metric("📉 Score médio", f"{score_medio:.2f}")
 
-    fp_col, mask_col, ia_col = st.columns(3)
+    fp_col, mask_col = st.columns(2)
     fp_col.metric("🟫 Falso-positivo evitado (vocab. de teste)", fp)
     fp_col.caption(
         "Relatos NORMAL ✅ que citam 'erro/bug/falha/defeito'. Se está zerado, o guia abaixo explica o porquê."

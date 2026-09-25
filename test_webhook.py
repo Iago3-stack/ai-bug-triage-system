@@ -10,7 +10,6 @@ import time
 import pytest
 
 import pagbank
-import pixbilling
 import webhook
 
 PW = "1) chromium › login.spec.ts:18 › teste de login\n\n Error: expect(locator).toHaveText(expected)\n\n Expected: Bem-vindo\n Received: Erro"

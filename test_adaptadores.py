@@ -1,4 +1,3 @@
-import pytest
 
 from adaptadores import (
     _eh_postman,

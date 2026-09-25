@@ -17,7 +17,6 @@
 # Com "Confirm email" ativo, o cadastro exige confirmação antes do 1º login.
 
 import json
-import os
 
 import requests
 

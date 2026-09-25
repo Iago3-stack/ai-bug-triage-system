@@ -1,6 +1,12 @@
 """Partes comuns do app: versão, Pix, modal de configurações, sidebar e rodapé."""
+from __future__ import annotations
+
 import base64
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:  # só para anotação — PIL é importado lazy dentro da função
+    from PIL import Image
 
 import streamlit as st
 import streamlit.components.v1 as components
@@ -456,7 +462,7 @@ def _tem_magia_de_imagem(dados: bytes) -> bool:
     return False
 
 
-def _abrir_imagem_enviada(origem) -> "Image.Image":
+def _abrir_imagem_enviada(origem) -> Image.Image:
     """Abre JPG/PNG/WebP/HEIC do upload ou da câmera (celular incluído)."""
     import io
 
@@ -487,7 +493,6 @@ def _modal_perfil(uid: str, email: str) -> None:
     import base64
     import io
 
-    from PIL import Image
 
     import perfil
 

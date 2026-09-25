@@ -4,7 +4,6 @@ import streamlit as st
 import plano
 import hero_animado
 import ui_comum
-import ui_tema
 
 
 def render():
@@ -114,7 +113,7 @@ def render():
     with st.container(border=True):
         c_tit, c_b1, c_b2 = st.columns([1.6, 1, 1], vertical_alignment="center")
         with c_tit:
-            st.markdown(f"""
+            st.markdown("""
 <div class="marca-cta">
   <div class="marca-cta-título">🤖 Pronto para triar bugs?</div>
   <div class="marca-cta-sub">🛠️ O que a Ferramenta de QA faz</div>
