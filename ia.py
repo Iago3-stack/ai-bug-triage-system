@@ -13,6 +13,8 @@ import re
 
 import requests
 
+import telemetria
+
 MODELO = "gemini-3.5-flash"
 
 # Ordem de preferência: caso o primário caia com 503 (alta demanda),
@@ -367,7 +369,15 @@ def _chamar_llm(conteudo, temperatura=0.2, max_output_tokens=4096, provedor=None
         return dados, None
     dados2, erro2 = _chamar_groq(conteudo, temperatura, max_output_tokens)
     if dados2 is not None:
+        telemetria.capturar(
+            "ia_fallback",
+            de="gemini",
+            para="groq",
+            provedor=ULTIMO_PROVEDOR,
+            modelo=ULTIMO_MODELO,
+        )
         return dados2, None
+    telemetria.capturar("ia_falha")
     return None, f"{erro} | {erro2}"
 
 
@@ -376,7 +386,15 @@ def analisar_llm(relato, provedor=None):
 
     dict com chaves: severidade, categoria, causa_raiz, passos_repro, resumo_tecnico
     """
-    return _chamar_llm(PROMPT.replace("{relato}", relato[:2000]), provedor=provedor)
+    dados, erro = _chamar_llm(PROMPT.replace("{relato}", relato[:2000]), provedor=provedor)
+    if dados is not None:
+        telemetria.capturar(
+            "ia_resposta",
+            rag=False,
+            provedor=ULTIMO_PROVEDOR or "desconhecido",
+            modelo=ULTIMO_MODELO or MODELO,
+        )
+    return dados, erro
 
 
 # Modelo de embedding default do Gemini (dimensões 768). Sobrescrevível via env.
@@ -427,7 +445,15 @@ def analisar_llm_rag(relato, contexto, provedor=None):
         .replace("{relato}", relato[:2000])
         .replace("{contexto}", (contexto or "")[:6000])
     )
-    return _chamar_llm(prompt, provedor=provedor)
+    dados, erro = _chamar_llm(prompt, provedor=provedor)
+    if dados is not None:
+        telemetria.capturar(
+            "ia_resposta",
+            rag=True,
+            provedor=ULTIMO_PROVEDOR or "desconhecido",
+            modelo=ULTIMO_MODELO or MODELO,
+        )
+    return dados, erro
 
 
 def _chamar_groq(conteudo, temperatura=0.2, max_output_tokens=4096):

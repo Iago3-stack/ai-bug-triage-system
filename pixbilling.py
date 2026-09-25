@@ -28,6 +28,7 @@ import notificacoes  # envio do comprovante (best-effort)
 
 import nuvem_supabase
 import pagbank
+import telemetria
 import pix
 import plano
 
@@ -249,6 +250,7 @@ def confirmar_cobranca(doc_id: str) -> dict | None:
     atualizado = _transicao(doc, _STATUS_CONFIRMADO)
     plano.definir_plano_no_banco(doc["uid"], "pago")
     _enviar_comprovante(atualizado or doc)
+    telemetria.capturar("pagamento_confirmado", usuario=doc.get("uid"), plano="pago")
     return atualizado
 
 

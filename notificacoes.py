@@ -15,6 +15,8 @@ import urllib.parse
 import urllib.request
 import urllib.error
 
+import telemetria
+
 _SOPADRA = "***"
 
 # O Discord (via Cloudflare) bloqueia o User-Agent padrão do urllib do Python
@@ -189,7 +191,10 @@ def notificar_discord(prioridade_final: str, resumo: str, provedor: str | None =
             method="POST",
         )
         with urllib.request.urlopen(req, timeout=5) as resp:
-            return resp.status == 204
+            if resp.status == 204:
+                telemetria.capturar("alerta_enviado", canal="discord", prioridade=prioridade_final)
+                return True
+            return False
     except Exception:
         return False
 
@@ -357,7 +362,7 @@ def notificar_email(prioridade_final: str, resumo: str, provedor: str | None = N
     para = cfg["para"]
     if not para or not cfg["user"] or not cfg["senha"]:
         return False
-    return _enviar_email(
+    ok = _enviar_email(
         cfg,
         para,
         f"🚨 [AI Bug Triage] {prioridade_final} — {resumo[:60]}",
@@ -367,3 +372,6 @@ def notificar_email(prioridade_final: str, resumo: str, provedor: str | None = N
         f"Motor: {provedor or 'offline (léxico)'}\n\n"
         "Abra o app para ver a triagem completa.",
     )
+    if ok:
+        telemetria.capturar("alerta_enviado", canal="email", prioridade=prioridade_final)
+    return ok

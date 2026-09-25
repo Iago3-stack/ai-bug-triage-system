@@ -10,6 +10,7 @@ import streamlit as st
 import auth_supabase
 import ui_tema
 import sessao_persist
+import telemetria
 
 
 def render() -> bool:
@@ -96,6 +97,7 @@ def render() -> bool:
                 if ok:
                     auth_supabase.guardar_sessao(dados)
                     sessao_persist.salvar(dados)  # permanece logado ao recarregar (F5)
+                    telemetria.capturar("login_realizado", usuario=(dados or {}).get("user", {}).get("id") or email)
                     st.rerun()
                 else:
                     st.error(msg)

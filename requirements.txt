@@ -19,3 +19,6 @@ qrcode==8.2
 fpdf2==2.8.8
 # V2.9.0 — perfil do usuário (avatar redimensionado via Pillow na UI).
 pillow==12.3.0
+# V3.0 — telemetria de produto (PostHog, server-side). Sem POSTHOG_API_KEY nos
+# Secrets/.env, tudo é no-op (nada enviado, zero custo). Host default EU (LGPD).
+posthog==7.60.0

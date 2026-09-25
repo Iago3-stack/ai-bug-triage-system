@@ -21,6 +21,7 @@ import persistencia
 import guardrails
 import notificacoes
 import plano
+import telemetria
 
 _FPDF_ERRO = ""
 try:
@@ -739,6 +740,22 @@ def render():
                 # alimentar o RAG ("como foi resolvido da última vez").
                 st.session_state["ultimo_registro_id"] = persistencia.registrar_triagem(snapshot).get("id", "")
 
+                # Telemetria de produto (no-op sem POSTHOG_API_KEY): métricas do
+                # funil — nunca conteúdo do relato nem dados pessoais.
+                _uid, _email = _fb_identidade()
+                telemetria.capturar(
+                    "triagem_realizada",
+                    usuario=_uid or _email,
+                    gravidade=gravidade,
+                    prioridade_final=prioridade_final or gravidade,
+                    motor=motor,
+                    usou_ia=bool(snapshot["usou_ia"]),
+                    provedor=snapshot.get("provedor_ia"),
+                    divergente=divergente,
+                    plano="pago" if plano.pago() else "free",
+                    duracao_ms=snapshot["duracao_ms"],
+                )
+
                 # --- 3.6 ALERTA (e-mail/Discord) para prioridades CRÍTICA/ALTA ---
                 # Roda em background silencioso: sem canal configurado ou em falha
                 # de rede, a triagem segue normalmente (nunca levanta exceção).
@@ -899,6 +916,13 @@ def render():
                     )
                 if ok_gh:
                     st.session_state["github_issue"] = (True, res_gh["html_url"], res_gh["number"])
+                    _uid, _email = _fb_identidade()
+                    telemetria.capturar(
+                        "exportacao_github",
+                        usuario=_uid or _email,
+                        repo=_gh_config.get("repo"),
+                        numero=res_gh["number"],
+                    )
                 else:
                     st.session_state["github_issue"] = (False, None, err_gh)
         else:
@@ -926,6 +950,13 @@ def render():
                 if ok_export:
                     st.session_state["exportacao_jira"] = (True, resultado_jira["key"], resultado_jira["url"])
                     persistencia.registrar_exportacao_jira(resultado_jira["key"], resultado_jira["url"])
+                    _uid, _email = _fb_identidade()
+                    telemetria.capturar(
+                        "exportacao_jira",
+                        usuario=_uid or _email,
+                        prioridade=gravidade,
+                        chave=resultado_jira["key"],
+                    )
                 else:
                     st.session_state["exportacao_jira"] = (False, None, erro_jira)
             else:

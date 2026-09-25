@@ -40,6 +40,7 @@ import ui_tema
 import roteador
 import ui_comum
 import sessao_persist
+import telemetria
 from secoes import login as pagina_login
 
 
@@ -141,6 +142,10 @@ def _processar_link_email() -> None:
                 st.session_state["_link_email_consumido"] = token_hash
                 auth_supabase.guardar_sessao(sessao)
                 sessao_persist.salvar(sessao)
+                telemetria.capturar(
+                    "cadastro_confirmado",
+                    usuario=sessao.get("user", {}).get("id") or sessao.get("user", {}).get("email"),
+                )
                 st.success("E-mail confirmado! Bem-vindo(a).")
             elif ok:
                 st.session_state["_link_email_consumido"] = token_hash
