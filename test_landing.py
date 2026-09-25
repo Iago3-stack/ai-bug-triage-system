@@ -195,9 +195,21 @@ def test_contador_triagens_no_hero():
 
 
 def test_contador_so_faz_fetch_local():
-    """O único fetch da landing é o stats.json local — nenhuma chamada externa."""
+    """Fetches da landing: apenas stats.json local + summary.json do instatus.
+
+    O único endpoint externo permitido é a página pública de status (URL fixa do
+    serviço, sem chave nenhuma) — garante que NENHUM outro fetch externo entre.
+    Vale para a index e para o artigo (badge do rodapé).
+    """
     ocorrencias = re.findall(r"fetch\(\s*['\"]([^'\"]+)['\"]", _HTML)
-    assert ocorrencias == ["stats.json"], f"fetch inesperado: {ocorrencias}"
+    assert ocorrencias == [
+        "stats.json",
+        "https://ai-bug-triage.instatus.com/summary.json",
+    ], f"fetch inesperado: {ocorrencias}"
+    artigo = re.findall(r"fetch\(\s*['\"]([^'\"]+)['\"]", _ARTIGO)
+    assert artigo == [
+        "https://ai-bug-triage.instatus.com/summary.json",
+    ], f"fetch inesperado no artigo: {artigo}"
 
 
 def test_metricas_do_produto_presentes():
