@@ -5,6 +5,14 @@ mockada quando necessário. Nunca tocam data/ real nem a rede.
 """
 import pixbilling
 import pix
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _sem_env_local(monkeypatch):
+    """Hermeticidade: o .env do desenvolvedor (ex.: PAGBANK de sandbox local)
+    não pode decidir se o PagBank está 'configurado' nos testes."""
+    monkeypatch.setattr(pix, "_ler_env", lambda nome: "")
 
 
 def _caminho_tmp(tmp_path, monkeypatch):

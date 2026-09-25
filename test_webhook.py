@@ -9,8 +9,16 @@ import time
 
 import pytest
 
+import pix
 import pagbank
 import webhook
+
+
+@pytest.fixture(autouse=True)
+def _sem_env_local(monkeypatch):
+    """Hermeticidade: o .env do desenvolvedor (ex.: PAGBANK de sandbox local)
+    não pode decidir se o PagBank está 'configurado' nos testes."""
+    monkeypatch.setattr(pix, "_ler_env", lambda nome: "")
 
 PW = "1) chromium › login.spec.ts:18 › teste de login\n\n Error: expect(locator).toHaveText(expected)\n\n Expected: Bem-vindo\n Received: Erro"
 PM = "❌ POST https://api.exemplo.com/v1/pagamento [500 Internal Server Error, 412B, 150ms]\nAssertionError: expected response to have status code 200, but got 500\n→ response body: {\"error\": \"database timeout\"}"

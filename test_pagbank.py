@@ -4,6 +4,7 @@ Nunca tocam a rede: requests.post/get são mockados. As envs de configuração
 (PAGBANK_*) também são isoladas por monkeypatch.
 """
 import pytest
+import pix
 
 import pagbank
 
@@ -13,6 +14,13 @@ def _configurar(monkeypatch):
     monkeypatch.delenv("PAGBANK_API", raising=False)
     monkeypatch.delenv("PAGBANK_WEBHOOK_URL", raising=False)
     monkeypatch.delenv("PAGBANK_VALIDADE_HORAS", raising=False)
+
+
+@pytest.fixture(autouse=True)
+def _sem_env_local(monkeypatch):
+    """Hermeticidade: config só via os.environ — o .env do desenvolvedor
+    (ex.: PAGBANK_TOKEN/PAGBANK_API de sandbox local) não vaza para os testes."""
+    monkeypatch.setattr(pix, "_ler_env", lambda nome: "")
 
 
 def test_sem_token_nao_configurado(monkeypatch):
@@ -134,6 +142,13 @@ def test_criar_cobranca_cpf_invalido_falha(monkeypatch):
         pagbank.criar_cobranca(19.99, "cob-123", cpf="11111111111")
 
 
+def test_criar_cobranca_sem_email_falha(monkeypatch):
+    _configurar(monkeypatch)
+    monkeypatch.setenv("PAGBANK_WEBHOOK_URL", "https://x.onrender.com/webhook/pagamento")
+    with pytest.raises(pagbank.PagbankErro, match="E-mail"):
+        pagbank.criar_cobranca(19.99, "cob-123", cpf="52998224725")
+
+
 def test_criar_cobranca_lê_qr_top_level_como_fallback(monkeypatch):
     """Respostas que ainda trazem o campo antigo qr_codes seguem funcionando."""
     _configurar(monkeypatch)
@@ -146,7 +161,7 @@ def test_criar_cobranca_lê_qr_top_level_como_fallback(monkeypatch):
         })
 
     monkeypatch.setattr(pagbank.requests, "post", fake_post)
-    resultado = pagbank.criar_cobranca(19.99, "cob-123", cpf="52998224725")
+    resultado = pagbank.criar_cobranca(19.99, "cob-123", cpf="52998224725", email="jose@test.com")
     assert resultado == {"order_id": "ORDE_ABC", "qr_id": "QRCO_LEGADO", "pix_copia": "0002010..."}
 
 
@@ -171,7 +186,7 @@ def test_criar_cobranca_erro_http(monkeypatch):
 
     monkeypatch.setattr(pagbank.requests, "post", fake_post)
     with pytest.raises(pagbank.PagbankErro, match="unauthorized"):
-        pagbank.criar_cobranca(19.99, "cob-123", cpf="52998224725")
+        pagbank.criar_cobranca(19.99, "cob-123", cpf="52998224725", email="jose@test.com")
 
 
 def test_criar_cobranca_erro_rede(monkeypatch):

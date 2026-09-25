@@ -151,8 +151,14 @@ def criar_cobranca(
             "CPF obrigatório e inválido — informe os 11 números do titular "
             "(a API de Pedidos exige o customer.tax_id)."
         )
+    email = str(email or "").strip()
+    if not email or "@" not in email:
+        raise PagbankErro(
+            "E-mail do titular é obrigatório para o Pix do PagBank "
+            "(a API de Pedidos exige o customer.email)."
+        )
 
-    cliente = {"tax_id": taxid}
+    cliente = {"tax_id": taxid, "email": email[:80]}
     if nome:
         cliente["name"] = str(nome).strip()[:80]
     if email:
