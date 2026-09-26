@@ -20,7 +20,7 @@ sessão com decisões novas. Fica no repositório (pode commitar).
 - Tabelas reais (schema): `usuarios`, `perfis_usuario`, `planos_usuario`, `solicitacoes_pagamento`, `triagens`, `feedbacks`.
 - `planos_usuario` colunas: `uid`, `plano`, `atualizado_em`, `teste_ate`, `teste_auto`, `assinatura_ate` (NÃO tem coluna `id`).
 - Consultas ao vivo: MCP `supabase` (ferramentas `db_list_tables`, `db_describe`, `db_query` read-only), servidor `mcp_supabase.py` (raiz).
-- **SEGURANÇA (Rota B — implementada no código):** REST roda com **service_role** (`SUPABASE_SERVICE_ROLE_KEY`; `nuvem_supabase._headers()` prefere service, fallback anon). `_config()`/anon continua só pro `/auth/v1`. Pendente: configurar a service key em **Local (.env) + Streamlit Secrets + Render env**, **deployar**, e aplicar `migrations/fechar_anon_rest.sql` (drop policies anon das 6 tabelas; mantém `mcp_readonly` com SELECT). Não aplicar antes de ter a service key rodando em produção.
+- **SEGURANÇA (Rota B — FEITA/CONCLUÍDA):** REST roda com **service_role** (`SUPABASE_SERVICE_ROLE_KEY`; `nuvem_supabase._headers()` prefere service, fallback anon). `_config()`/anon continua só pro `/auth/v1`. Migração `migrations/fechar_anon_rest.sql` **aplicada** (SQL Editor): policies `anon` dropadas nas 6 tabelas; RLS segue ON (defesa em profundidade); role `mcp_readonly` com SELECT para diagnóstico. Validado (2026-09): anon SELECT → 0 linhas silencioso; anon INSERT → erro 42501 (não grava); service SELECT 200 nas 6 tabelas (app vivo); MCP `supabase` funcionando.
 - App usa **Supabase Auth** (email/password, anon key em `/auth/v1`) — `auth.uid()` existe nas sessions, mas REST hoje não manda bearer do usuário (fica backend-only com service).
 
 ## Testes / hermeticidade
@@ -41,7 +41,7 @@ sessão com decisões novas. Fica no repositório (pode commitar).
 
 ## Pendências (follow-ups)
 1. **PagBank**: aguardar resposta da homologação (~4 dias úteis). Ao liberar: revalidar `POST /orders` (201) + regenerar/trocar token de produção (sem colar no chat).
-2. **Rota B (segurança Supabase)**: pegar `SUPABASE_SERVICE_ROLE_KEY` (Settings → API Keys) e configurar em **.env local, Streamlit Secrets e Render env**; commit+push (deploy Render/Streamlit); aplicar `migrations/fechar_anon_rest.sql` no SQL Editor; conferir `pg_policies` com 0 policies anon e MCP `supabase` seguindo funcionando.
+2. ~~**Rota B (segurança Supabase)**~~ ✅ concluída (chaves nos 3 ambientes, deploy no ar, `fechar_anon_rest.sql` aplicado, auditado).
 3. `POSTHOG_API_KEY` ainda não no Secrets.
 4. Remover monitor duplicado no instatus.
 5. Subir `model_int8.onnx` + `tokenizer.json` no bucket `modelos`.
