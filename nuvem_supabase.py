@@ -100,6 +100,12 @@
 #
 # A configuração per-tenant usada na Cloud NÃO precisa desta tabela: se ela não
 # existir ou a leitura falhar, o app cai no plano por variável de ambiente.
+#
+# ─── SEGURANÇA (Rota B) ─────────────────────────────────────────────────────
+# O REST roda SOBR service_role (bypassa RLS) — anon NÃO tem mais acesso.
+# Aplicar migrations/fechar_anon_rest.sql (drop das policies "anon ...") no
+# SQL Editor DEPOIS de configurar SUPABASE_SERVICE_ROLE_KEY em todos os
+# ambientes. /auth/v1 (login) continua usando a anon key — inalterado.
 
 import os
 import time
@@ -148,8 +154,32 @@ def _config():
     return (url, chave) if url and chave else None
 
 
+def _config_service():
+    """(url, service_role_key) se configurado, senão None. Prioridade: st.secrets → .env → os.environ.
+
+    A service_role bypassa a RLS: é quem faz TODAS as operações no REST (Rota B).
+    Nunca expor essa chave em client público.
+    """
+    url = None
+    chave = None
+    try:
+        import streamlit as st
+
+        url = st.secrets.get("SUPABASE_URL")
+        chave = st.secrets.get("SUPABASE_SERVICE_ROLE_KEY")
+    except Exception:
+        pass
+    if not url or not chave:
+        env = _carregar_env()
+        url = url or env.get("SUPABASE_URL")
+        chave = chave or env.get("SUPABASE_SERVICE_ROLE_KEY")
+    url = url or os.environ.get("SUPABASE_URL")
+    chave = chave or os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+    return (url, chave) if url and chave else None
+
+
 def disponivel() -> bool:
-    return _config() is not None
+    return _config() is not None or _config_service() is not None
 
 
 # Cache de leitura com TTL: evita que cada rerun de página dispare as 3 chamadas
@@ -185,12 +215,14 @@ def _invalidar_leitura(chaves: tuple[str, ...] | None = None) -> None:
 
 
 def _base_url() -> str:
-    url, _ = _config()
+    cfg = _config() or _config_service()
+    url, _ = cfg
     return str(url).rstrip("/") + "/rest/v1"
 
 
 def _headers() -> dict:
-    _url, chave = _config()
+    cfg = _config_service() or _config()
+    _, chave = cfg
     return {
         "apikey": chave,
         "Authorization": f"Bearer {chave}",

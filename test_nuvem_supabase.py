@@ -43,6 +43,32 @@ def test_config_lida_secrets_e_env(monkeypatch):
     assert chave == "anon-teste"
 
 
+def test_headers_fallback_anon_sem_service_role(monkeypatch):
+    _sem_config(monkeypatch)
+    monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-teste")
+    h = nuvem_supabase._headers()
+    assert h["apikey"] == "anon-teste"
+    assert h["Authorization"] == "Bearer anon-teste"
+
+
+def test_headers_usam_service_role_quando_disponivel(monkeypatch):
+    _sem_config(monkeypatch)
+    monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-teste")
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "service-teste")
+    h = nuvem_supabase._headers()
+    assert h["apikey"] == "service-teste"
+    assert h["Authorization"] == "Bearer service-teste"
+
+
+def test_headers_nao_vazam_service_role_sem_url(monkeypatch):
+    _sem_config(monkeypatch)
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-teste")
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "service-teste")
+    assert nuvem_supabase._config_service() is None
+
+
 # --- Conversão linha <-> doc (formato do app) -------------------------
 def test_linha_para_doc_extrai_colunas():
     registro = {
