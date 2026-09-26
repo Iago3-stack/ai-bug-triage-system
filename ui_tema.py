@@ -317,6 +317,50 @@ body:has([data-st-tema="escuro"]) [data-testid="stAppViewContainer"] { backgroun
 body:has([data-st-tema="escuro"]) [data-testid="stHeader"] { background:#0a0c0f !important; border-bottom:1px solid rgba(255,255,255,.07) !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stMainMenuButton"] { color:#e5e7eb !important; }
 body:has([data-st-tema="escuro"]) [data-testid="stMainMenuPopover"] { background:#161b22 !important; }
+/* Chevron da sidebar no escuro: o ícone Material é um span/ligadura de fonte colorido
+   pelo prop `color` (não é <svg> — por isso cor no `svg` não cascateava). Pintar o
+   botão e TODO descendente (universal) no tom vermelho.
+   Obs.: regra só vale com servidor recarregado — módulo ui_tema fica em memória. */
+body:has([data-st-tema="escuro"]) [data-testid="stSidebarCollapseButton"],
+body:has([data-st-tema="escuro"]) [data-testid="stSidebarCollapseButton"] * {
+    color:#f87171 !important;
+    -webkit-text-fill-color:#f87171 !important;
+    fill:#f87171 !important;
+    stroke:#f87171 !important;
+}
+/* Caixinha de hover do botão: o padrão Streamlit é cinza (rgba(153,173,194,.15)) —
+   o usuário quer VERMELHA; no hover o chevron vira branco pro contraste. */
+body:has([data-st-tema="escuro"]) [data-testid="stSidebarCollapseButton"]:hover,
+body:has([data-st-tema="escuro"]) [data-testid="stSidebarCollapseButton"] [data-testid="stBaseButton-headerNoPadding"]:hover {
+    background:#f87171 !important;
+}
+body:has([data-st-tema="escuro"]) [data-testid="stSidebarCollapseButton"]:hover,
+body:has([data-st-tema="escuro"]) [data-testid="stSidebarCollapseButton"]:hover * {
+    color:#ffffff !important;
+    -webkit-text-fill-color:#ffffff !important;
+    fill:#ffffff !important;
+    stroke:#ffffff !important;
+}
+/* >> = botão flutuante de EXPANDIR quando a sidebar está recolhida (stExpandSidebarButton):
+   mesmo tratamento vermelho do << (recolher). */
+body:has([data-st-tema="escuro"]) [data-testid="stExpandSidebarButton"],
+body:has([data-st-tema="escuro"]) [data-testid="stExpandSidebarButton"] * {
+    color:#f87171 !important;
+    -webkit-text-fill-color:#f87171 !important;
+    fill:#f87171 !important;
+    stroke:#f87171 !important;
+}
+body:has([data-st-tema="escuro"]) [data-testid="stExpandSidebarButton"]:hover,
+body:has([data-st-tema="escuro"]) [data-testid="stExpandSidebarButton"] [data-testid="stBaseButton-headerNoPadding"]:hover {
+    background:#f87171 !important;
+}
+body:has([data-st-tema="escuro"]) [data-testid="stExpandSidebarButton"]:hover,
+body:has([data-st-tema="escuro"]) [data-testid="stExpandSidebarButton"]:hover * {
+    color:#ffffff !important;
+    -webkit-text-fill-color:#ffffff !important;
+    fill:#ffffff !important;
+    stroke:#ffffff !important;
+}
 
 /* Sidebar */
 body:has([data-st-tema="escuro"]) [data-testid="stSidebar"],

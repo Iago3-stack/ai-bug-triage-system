@@ -8,6 +8,7 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 
 ### Corrigido
 - **Sidebar volta a recolher no desktop (v3.0.1)** — revertida a "sidebar fixa" (v2.6.20/v2.6.23) que travava o painel aberto com 300px fixos, sem botão de recolher. **Causa raiz** (rastreada no git): o Streamlit esconde o botão `stSidebarCollapseButton` com `visibility:hidden` por padrão; se a sidebar recolhia (janela estreita ~768-820px, re-render ou iframe do Cloud), não havia como expandir de volta — daí "a sidebar não abre". O antídoto do v2.6.17 (botão sempre visível) já resolvia o travamento; o v2.6.20 foi uma apelação que substituiu o bug pelo incômodo da barra eternamente aberta. Agora: botão recolher/expandir sempre visível + `initial_sidebar_state="expanded"` (desktop abre expandida, como antes) e o comportamento nativo recolhível de volta.
+- **Chevron (`<<`/`>>`) da sidebar no tema escuro (v3.0.2)** — o ícone Material (span/ligadura de fonte, não é svg) vinha `rgba(29,29,31,.6)` (quase preto) sobre o fundo `#0f1217`; agora o botão `stSidebarCollapseButton` (recolher, `<<`) e o `stExpandSidebarButton` (expandir, `>>`) são pintados de **vermelho** (`#f87171`). Além disso, a **caixinha de hover** do botão (cinza padrão do Streamlit) agora fica **vermelha**, com o chevron **branco** por contraste. No tema claro continuou como estava (já era visível).
 
 ## [v3.0.0] - 2026-09-19
 
