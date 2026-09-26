@@ -4,9 +4,11 @@ import streamlit as st
 _BASE_CSS = """
 <style>
     [data-testid="stMainMenuButton"] {visibility: hidden;}
-    /* Botão de recolher/expandir a sidebar: o Streamlit o mantém visibility:hidden
-       por padrão; se a sidebar recolher (re-render, iframe do Cloud, viewport), não
-       há como expandi-la de volta. Forçamos sempre visível. */
+    /* Causa raiz (v2.6.17): o Streamlit mantém o botão recolher/expandir da sidebar
+       (stSidebarCollapseButton) com visibility:hidden no CSS padrão. Se a sidebar
+       recolhia (janela estreita ~768-820px, re-render ou iframe do Cloud), ficava sem
+       botão para expandir de volta — o sintoma "a sidebar não quer abrir". Forçamos
+       sempre visível: é isso que torna o recolhimento um recurso, não um lockdown. */
     [data-testid="stSidebarCollapseButton"] { visibility: visible !important; opacity: 1 !important; }
     footer {visibility: hidden;}
     .stDeployButton {display: none;}
@@ -26,23 +28,13 @@ _BASE_CSS = """
     [data-testid="stMetricLabel"] { color: #64748b !important; }
     [data-testid="stMetricValue"] { color: #0f172a !important; }
 
-    /* Sidebar sempre aberta no desktop: o Streamlit pode colapsar sozinho em larguras
-       ~768-820px (flutuação entre desktop e modo hambúrguer) — força 300px fixos e
-       corta a transição que dava o efeito "aparece e some". (<769px segue hambúrguer.) */
+    /* Desktop: a navegação nativa (Início/Triagem/Dashboard) vive na barra do topo
+       (menu_top) — sai da sidebar para não duplicar. No mobile (<768px) a barra
+       nativa volta (hambúrguer). A sidebar em si segue o comportamento padrão do
+       Streamlit (expande/recolhe); o botão recolher/expandir está sempre visível
+       pela regra global acima — o antídoto do bug "não abria". */
     @media (min-width: 769px) {
-        /* A navegação nativa (Início/Triagem/Dashboard) sai da sidebar: ela agora
-           vive na barra do topo. No mobile (<768px) volta a aparecer (hambúrguer). */
         [data-testid="stSidebarNav"] { display: none !important; }
-        [data-testid="stSidebar"] {
-            width: 300px !important;
-            min-width: 300px !important;
-            max-width: 300px !important;
-            transform: none !important;
-            transition: none !important;
-        }
-        /* Com a sidebar forçada aberta, o botão ">>" (recolher) vira controle morto —
-           escondemos no desktop para não aparecer um controle que não faz nada. */
-        [data-testid="stSidebarCollapseButton"] { display: none !important; }
     }
 
     /* Conteúdo do main sobe para ficar paralelo ao topo do sidebar (botão Configurações);
@@ -589,7 +581,7 @@ _PROVID_CSS = """
 
 
 def config_pagina():
-    st.set_page_config(page_title="Triagem de bugs com IA para QA | Iago Nunes - AI Bug Triage System", page_icon="assets/logos/logo7_robo.png", layout="wide")
+    st.set_page_config(page_title="Triagem de bugs com IA para QA | Iago Nunes - AI Bug Triage System", page_icon="assets/logos/logo7_robo.png", layout="wide", initial_sidebar_state="expanded")
 
 
 def tema_atual() -> str:

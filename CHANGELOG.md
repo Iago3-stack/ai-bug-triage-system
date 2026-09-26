@@ -4,6 +4,11 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [Não lançado]
+
+### Corrigido
+- **Sidebar volta a recolher no desktop (v3.0.1)** — revertida a "sidebar fixa" (v2.6.20/v2.6.23) que travava o painel aberto com 300px fixos, sem botão de recolher. **Causa raiz** (rastreada no git): o Streamlit esconde o botão `stSidebarCollapseButton` com `visibility:hidden` por padrão; se a sidebar recolhia (janela estreita ~768-820px, re-render ou iframe do Cloud), não havia como expandir de volta — daí "a sidebar não abre". O antídoto do v2.6.17 (botão sempre visível) já resolvia o travamento; o v2.6.20 foi uma apelação que substituiu o bug pelo incômodo da barra eternamente aberta. Agora: botão recolher/expandir sempre visível + `initial_sidebar_state="expanded"` (desktop abre expandida, como antes) e o comportamento nativo recolhível de volta.
+
 ## [v3.0.0] - 2026-09-19
 
 ### Adicionado
