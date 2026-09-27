@@ -6,6 +6,10 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 
 ## [Não lançado]
 
+### Adicionado
+- **Benchmark local de embeddings + classificador simples (experimento, sem mudança no app)** — `avaliar_embeddings.py` roda **fora** do app (venv própria em `/tmp/opencode/venv-embed`, sem tocar no `.venv` nem no `requirements.txt`) e compara o `tardellirs/brazembed-pt-br` (BERT 12×768, mean pooling, MIT) com o léxico nos mesmos 30 casos e mesmas métricas de sempre. **Resultado:** léxico **96,7% / 95,7%** · protótipos (zero-shot) **53,3% / 43,5%** · 1-NN **66,7% / 60,9%** · logreg **56,7% / 47,8%** · TF-IDF+logreg **56,7% / 47,8%** · TF-IDF+centroide **53,3% / 39,1%** (tolerante/estrito; os últimos 4 em leave-one-out, logo não comparáveis ao léxico). **Nenhum encoder entra no app:** o melhor modelo treinado fica 30 pontos abaixo do léxico e o classificador **sem transformer** empata com o transformer — o gargalo é o dado (30 casos sintéticos, classe NORMAL com 4 exemplos), não o modelo. Confirmada a mesma patologia do v3.1.0 mesmo com mean pooling e treino em português: os protótipos de severidade ficam quase equidistantes de qualquer entrada (margem top1−top2 média 0,058) e o modelo superprediz CRÍTICA (16/30) — **severidade é impacto de negócio, não similaridade semântica**.
+- **`casos_qa.py` como fonte única do ground truth** — os 30 casos rotulados e as regras de métrica saíram de dentro de `avaliar_motores.py` (que exige `onnxruntime` só para importar) para um módulo próprio, agora importável por qualquer harness. `avaliar_motores.py` passa a importar de lá — resultado idêntico (léxico 29/30 e 22/23, sem mudança de comportamento). 36 testes travam os invariantes do corpus (30 casos, 23 estritos, rótulos canônicos, textos únicos, 3 classes no treino, ambiguidade sempre entre níveis adjacentes).
+
 ## [v3.3.0] - 2026-09-27
 
 ### Adicionado
