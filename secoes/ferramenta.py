@@ -10,6 +10,7 @@ import pandas as pd
 from urllib.parse import quote
 
 import triagem
+import avaliacao
 import ia
 import rag
 import colar_falha
@@ -989,6 +990,55 @@ def render():
                     st.success("✅ Resolução gravada! Este aprendizado passou a integrar o histórico consultado pelo RAG.")
                 else:
                     st.warning("Nada foi registrado — descreva a solução ou confira se a triagem foi persistida.")
+
+        with st.expander("🏷️ Avaliar a severidade real (vira rótulo de verdade)", key="ex_avaliacao"):
+            st.markdown('<div class="marca-avaliacao" style="display:none"></div>', unsafe_allow_html=True)
+            st.caption(
+                "O motor chuta a severidade por palavras-chave. Se você sabe a severidade "
+                "real do problema, marque aqui: esse rótulo fica salvo na triagem e é a base "
+                "de medição dos motores. Hoje só temos 30 casos de teste sintéticos — foi "
+                "justamente porque eles não representavam a realidade que um motor ruim "
+                "chegou perto de ir para produção."
+            )
+            registro_id = st.session_state.get("ultimo_registro_id", "")
+            if not registro_id or not persistencia._usar_nuvem():
+                st.info("ℹ️ O rótulo só é salvo quando a triagem vai para a nuvem (Supabase).")
+            else:
+                prog = avaliacao.progresso()
+                if not prog.get("erro") and prog.get("total"):
+                    st.caption(
+                        f"📊 Rótulo: **{prog['rotuladas']} de {prog['total']}** triagens "
+                        f"(pendentes: {prog['pendentes']})."
+                    )
+                estado = avaliacao.estado_de(registro_id)
+                if estado.get("rotulo"):
+                    st.info(f"🏷️ Rótulo atual desta triagem: **{estado['rotulo']}** — dá para corrigir abaixo.")
+                # Prioridade que o usuário viu: a reconciliada (léxico x IA) que o
+                # app salvou no payload; se não houver, a do léxico.
+                prioridade_mostrada = estado.get("prioridade") or avaliacao.normalizar(gravidade)
+                st.caption(f"Prioridade exibida nesta triagem: **{prioridade_mostrada or '—'}**")
+                comentario = st.text_area(
+                    "Comentário (opcional): por que a severidade é essa?",
+                    key="avaliacao_comentario",
+                    placeholder="ex.: cliente ficou sem acesso ao banco por 3 dias — bloqueio total",
+                )
+                _, email_autor = _fb_identidade()
+                acoes = [
+                    ("✅ Estava certa", "", "primary"),
+                    ("🚨 Era CRÍTICA", "CRÍTICA", "secondary"),
+                    ("⚠️ Era MÉDIA", "MÉDIA", "secondary"),
+                    ("✅ Era NORMAL", "NORMAL", "secondary"),
+                ]
+                for col, (titulo, valor, tipo) in zip(st.columns(len(acoes)), acoes):
+                    if col.button(titulo, key=f"btn_aval_{valor or 'ok'}",
+                                   use_container_width=True, type=tipo):
+                        alvo = valor or prioridade_mostrada
+                        if not alvo:
+                            st.warning("Não sei a prioridade exibida para marcar 'estava certa' — use um dos botões de severidade.")
+                        elif avaliacao.registrar(registro_id, alvo, comentario, email_autor):
+                            st.success(f"✅ Rótulo **{alvo}** salvo nesta triagem. Obrigado — é isso que deixa o motor honesto.")
+                        else:
+                            st.warning("Não foi possível salvar o rótulo (nuvem indisponível?). Tentar de novo em instantes.")
 
         st.info("📋 O relatório também pode ser copiado direto da caixa acima para o Jira ou GitHub!")
         st.success("Triagem finalizada com sucesso! ✅")

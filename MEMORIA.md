@@ -48,14 +48,21 @@ sessão com decisões novas. Fica no repositório (pode commitar).
 - Skill do projeto: `.opencode/skills/ai-bug-triage/SKILL.md` + **skills oficiais do Supabase** em `~/.agents/skills/` (`supabase`, `supabase-postgres-best-practices`) — auto-carregadas.
 - **Máquina:** `node` **v24.21.0** instalado sem sudo em `~/.local/node` + symlinks em `~/.local/bin` (no PATH) → `npx`/plugins npm funcionam agora. `psql` ainda não existe. `bun` está no `.zshrc`. Supermemory: descartado (binário local crasha/SIGILL; nuvem exigiria conta) → memória local = este arquivo.
 
+## Rótulo humano de severidade (v3.3.0)
+- `avaliacao.py` grava `payload->avaliacao = {rotulo, comentario, em, autor}` via GET + PATCH (mesmo caminho do `registrar_resolucao`), **sem migration**. Rótulos canônicos: CRÍTICA / MÉDIA / NORMAL.
+- O app mostra 4 botões; "Estava certa" usa a **prioridade reconciliada** (`payload->prioridade_final`), porque é o que o usuário viu. IA tem 4 níveis → `ALTA→CRÍTICA`, `BAIXA→NORMAL`.
+- `carregar_rotulados()` é **ferramenta do dono/admin** (contém texto de relato de terceiros): a UI comum só mostra a contagem, nunca o texto.
+- PostgREST **aceita** `payload->avaliacao->>rotulo=not.is.null` como filtro de servidor (validado na API real, só leitura) — usar isso, não varrer a tabela.
+- Cobertura: 21 testes herméticos em `test_avaliacao.py` (mockam o REST).
+
 ## Pendências (follow-ups)
 1. **PagBank**: aguardar resposta da homologação (~4 dias úteis). Ao liberar: revalidar `POST /orders` (201) + regenerar/trocar token de produção (sem colar no chat).
 2. ~~**Rota B (segurança Supabase)**~~ ✅ concluída (chaves nos 3 ambientes, deploy no ar, `fechar_anon_rest.sql` aplicado, auditado).
 3. `POSTHOG_API_KEY` ainda não no Secrets.
 4. Remover monitor duplicado no instatus (precisa de `INSTATUS_API_KEY` ou ação manual no dashboard).
 5. ~~Subir `model_int8.onnx` no bucket `modelos`~~ ✅ resolvido: **GitHub Release `modelo-semantico-v1`** (bucket do Supabase nem foi usado).
-6. **Encoder do semântico (só depois de rótulo real)** — o experimento vive fora do app (v3.2.0). Candidatos: `tardellirs/brazembed-pt-br`, `tardellirs/colibri-embed-ptbr`, `serafim-100m`, ou MiniLM pt-BR (~25–30MB int8) com mean pooling — **confirmar licença** e exigir 100+ casos rotulados antes de mexer.
-7. **Rotular 100+ relatos** — é o bloqueio de qualquer ganho de qualidade em triagem: o corpus de 30 é pequeno e não representativo do histórico (que é dominado por fixture de teste).
+6. **Encoder do semântico (só depois de rótulo real)** — o experimento vive fora do app (v3.2.0). Candidatos: `tardellirs/brazembed-pt-br`, `tardellirs/colibri-embed-ptbr`, `serafim-100m`, ou MiniLM pt-BR com mean pooling — **confirmar licença** e exigir 100+ casos rotulados antes de mexer. ⚠️ *MiniLM multilíngue L12 tem ~118M params (~120MB int8), não 25–30MB; o `all-MiniLM-L6-v2` (23MB int8) é inglês.* Benchmark **local**, sem subir para o app; referência a bater: léxico v3.2.0 em 96,7% tolerante / 95,7% estrito.
+7. **Rotular 100+ relatos** — é o bloqueio de qualquer ganho de qualidade em triagem: o corpus de 30 é pequeno e não representativo do histórico (que é dominado por fixture de teste). O fluxo de rótulo por triagem (**v3.3.0**, `avaliacao.py`) existe para isso: `payload->avaliacao` + `carregar_rotulados()` para o dono/admin medir.
 
 ## Rituais de fim de sessão
 - Atualizar este `MEMORIA.md` (e a skill, se mudar convenção).
