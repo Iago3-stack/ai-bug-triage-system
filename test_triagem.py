@@ -459,3 +459,71 @@ def test_erro_401_eh_media():
 def test_tempo_esgotado_eh_media():
     r = triar("deu tempo esgotado ao esperar a resposta do sistema")
     assert "MÉDIA" in r["gravidade"]
+
+
+# --- v3.2.0: lacunas de vocabulário fechadas com a métrica (30 relatos
+#     rotulados). Antes These texts scored 0.0 (léxico não disparava). ---
+def test_instalacao_que_falha_eh_media():
+    r = triar("o aplicativo não instala no meu celular, dá erro de instalação")
+    assert r["gravidade"] == "MÉDIA ⚠️"
+
+
+def test_busca_que_nao_retorna_eh_media():
+    r = triar("a busca não retorna resultado nenhum, mesmo digitando o nome certo")
+    assert r["gravidade"] == "MÉDIA ⚠️"
+
+
+def test_push_que_nao_chega_eh_media():
+    r = triar("a notificação push não chega no celular depois que atualizo o cadastro")
+    assert r["gravidade"] == "MÉDIA ⚠️"
+
+
+def test_registro_duplicado_eh_media():
+    r = triar("a tabela de pedidos aparece duplicada quando filtro por data de hoje")
+    assert r["gravidade"] == "MÉDIA ⚠️"
+
+
+def test_layout_cortado_eh_media():
+    r = triar("o relatório PDF vem com a logo cortada e as margens erradas")
+    assert r["gravidade"] == "MÉDIA ⚠️"
+
+
+def test_pagina_em_branco_eh_media():
+    r = triar("exportei o relatório e o arquivo saiu com a página em branco")
+    assert r["gravidade"] == "MÉDIA ⚠️"
+
+
+def test_cobranca_a_mais_no_presente_eh_critica():
+    r = triar("o valor do imposto calculado está errado, cobra a mais em todas as notas")
+    assert r["gravidade"] == "CRÍTICA 🚨"
+
+
+def test_conexao_que_cai_no_meio_eh_critica():
+    r = triar("o envio do relatório trava no meio e diz que a conexão caiu")
+    assert r["gravidade"] == "CRÍTICA 🚨"
+
+
+def test_app_que_fecha_sozinho_eh_critica():
+    r = triar("o aplicativo fecha sozinho quando tento anexar uma imagem de erro")
+    assert r["gravidade"] == "CRÍTICA 🚨"
+
+
+# --- Guardas: os padrões novos NÃO podem estourar severidade ---
+def test_lentidao_com_booster_nao_vira_critica():
+    """Regressão do caso #5: "extremamente lento" + "demora" ficava CRÍTICA."""
+    r = triar("o site ficou extremamente lento depois da última atualização, "
+              "tudo demora demais para carregar")
+    assert r["gravidade"] == "MÉDIA ⚠️"
+
+
+def test_valor_errado_no_carrinho_nao_vira_critica():
+    """Regressão do caso #11: "valor fica errado" no carrinho ficava CRÍTICA."""
+    r = triar("o carrinho de compras não atualiza quando adiciono um produto, "
+              "o valor fica errado")
+    assert r["gravidade"] == "MÉDIA ⚠️"
+
+
+def test_erro_de_digitacao_permanece_normal():
+    """Bug cosmético é NORMAL: o motor semático escalava isso (foi revertido)."""
+    r = triar("achei um erro de digitação no rodapé da página")
+    assert r["gravidade"] == "NORMAL ✅"

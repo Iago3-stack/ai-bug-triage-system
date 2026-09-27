@@ -14,12 +14,14 @@ sessão com decisões novas. Fica no repositório (pode commitar).
 - Regras da API: `customer.email` **obrigatório** (guard em `pagbank.py`); e-mail do comprador **não pode ser igual** ao do vendedor (erro 40002). `PAGBANK_API` default = produção; local usa sandbox no `.env`.
 - Pós-liberação: `POST /orders` deve voltar **201**. **Regenerar o token de produção** e trocar em Streamlit Secrets + Render (nunca colar o token novo no chat).
 
-## Motor de triagem (léxico + semântico)
-- `triagem.py` = léxico (contagem de palavras/emoções), **Basic 100% nele**; `semantico.py` = BERTabaporu ONNX int8 (embedding real, offline/determinístico).
-- **Gate Premium:** `plano.pago()` (Premium + trial) chama `semantico.ensemble(descricao, triagem.triar(...))` — **média dos scores**, preservando sentimento/fatores do léxico. O semântico **nunca substitui** o léxico (medido: semântico sozinho é regressão).
-- Medido em 30 relatos rotulados (`avaliar_motores.py`, 23 sem ambiguidade): léxico **60,9%** · semântico **39,1%** · ensemble **73,9%** estrito. Custo: 1ª carga ~4s, ~185ms/relato, 135MB 1x por instância Cloud.
-- Modelo **não** está no repo (GitHub >100MB): **Release `modelo-semantico-v1`**, URL **fixada por tag** + **tamanho exato conferido** antes de instalar no cache (`~/.cache/abt/`); download truncado é apagado e o app fica no léxico. Ordem de resolução: `SEMANTICO_DIR` → `~/Documentos/semantico_nlp/modelo/onnx` (dev) → cache. Cache é efêmero no Streamlit Cloud.
-- Deps: `onnxruntime`, `tokenizers`, `numpy`. Testes de `semantico.py` são **herméticos** (nunca rede/ONNX real).
+## Motor de triagem (100% léxico desde v3.2.0)
+- `triagem.py` = **motor único do app** (Basic e Premium), local/deterministico/instantâneo. Não há mais download de modelo nem gate por plano.
+- **v3.1.0 (motor semático BERTabaporu no Premium) foi revertido no v3.2.0.** Lição: no corpus de 30 casos ele parecia ganhar (+13 pts), mas no histórico real (38 textos únicos) só escalava bug cosmético para MÉDIA, com zero resgates. **Lição maior: corpus pequeno e não representativo engana — medir sempre nos dados reais também.**
+- Por que o semântico falhou: usa só o `[CLS]` de um MLM sem ajuste contrastivo → o vetor não discrimina severidade (similaridade máx. praticamente igual nos acertos e nos erros, distribuições sobrepostas) → nenhum threshold OOD resolve. Precisaria de um encoder de sentence-embeddings com mean pooling (MiniLM/brazembed) **e** de 100+ casos rotulados.
+- **Gate para qualquer motor novo entrar em produção:** bater o léxico no corpus de 30 (`avaliar_motores.py`) **e** no teste de texto real (concordância com a gravidade já gravada, que vem da camada de IA/Gemini — hoje o léxico concorda em 37/38).
+- Experimento fica no repo, fora do app: `semantico.py`, `avaliar_motores.py`, `test_semantico.py`, `requirements-semantico.txt` (rode `pip install -r requirements-semantico.txt`). Modelo no GitHub Release `modelo-semantico-v1` (URL fixada por tag + tamanho conferido).
+- **Corpus de avaliação:** 30 relatos rotulados em `~/Documentos/relatos-teste-dashboard-qa.md` (23 sem ambiguidade; "ALTA"→CRÍTICA). Léxico v3.2.0: **96,7% tolerante / 95,7% estrito** (era 66,7%/60,9%). Erro restante Known: #30 (`página em branco` = -1,95, rótulo CRÍTICA) — não forçado de propósito.
+- Ground truth real **não existe** ainda: `feedbacks` tem 4 linhas de estrelas (satisfação, não severidade). Para avançar com qualidade de triagem, o passo certo é rotular 100+ relatos.
 
 ## Supabase (banco real)
 - Ref: `hwjmuqmgjfkxhpesxcsk` (projeto). Acesso read-only via role `mcp_readonly` (DSN em `PG_READONLY_DSN` no `.env`, gitignored).
@@ -52,7 +54,8 @@ sessão com decisões novas. Fica no repositório (pode commitar).
 3. `POSTHOG_API_KEY` ainda não no Secrets.
 4. Remover monitor duplicado no instatus (precisa de `INSTATUS_API_KEY` ou ação manual no dashboard).
 5. ~~Subir `model_int8.onnx` no bucket `modelos`~~ ✅ resolvido: **GitHub Release `modelo-semantico-v1`** (bucket do Supabase nem foi usado).
-6. **Encoder do semântico (próximo sprint de qualidade)** — o BERTabaporu atual (`[CLS]` de MLM sem ajuste contrastivo) faz **39% estrito sozinho** (pior que o léxico, 61%); só rende como 2º sinal no ensemble (**73,9%**, 30 casos em `avaliar_motores.py`). Candidatos: `tardellirs/brazembed-pt-br`, `tardellirs/colibri-embed-ptbr`, `serafim-100m`, ou MiniLM pt-BR (~25–30MB int8) — **confirmar licença** antes de trocar.
+6. **Encoder do semântico (só depois de rótulo real)** — o experimento vive fora do app (v3.2.0). Candidatos: `tardellirs/brazembed-pt-br`, `tardellirs/colibri-embed-ptbr`, `serafim-100m`, ou MiniLM pt-BR (~25–30MB int8) com mean pooling — **confirmar licença** e exigir 100+ casos rotulados antes de mexer.
+7. **Rotular 100+ relatos** — é o bloqueio de qualquer ganho de qualidade em triagem: o corpus de 30 é pequeno e não representativo do histórico (que é dominado por fixture de teste).
 
 ## Rituais de fim de sessão
 - Atualizar este `MEMORIA.md` (e a skill, se mudar convenção).

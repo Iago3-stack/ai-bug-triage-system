@@ -18,7 +18,9 @@ LE_XICO = {
     "perda de dados": -2.0, "perda total": -2.0, "vazamento": -2.0, "inseguro": -2.0,
     "apagou": -2.0, "corrompeu": -2.0, "perdi": -1.5, "sumiu": -1.5,
     "duplicou": -1.2, "resetou": -1.2, "reinicia sozinho": -1.8,
-    "fecha sozinho": -1.8, "fora do ar": -1.8, "indisponível": -1.5,
+    # Fechar/travar sozinho (sem ação do usuário) é a mesma gravidade de crash:
+    # o app morre no meio da tarefa. Medido no corpus: erro de anexar imagem.
+    "fecha sozinho": -2.0, "fora do ar": -1.8, "indisponível": -1.5,
     "falhou": -1.2, "bugou": -1.5, "bugado": -1.2, "defeituoso": -1.2,
     "pagamento": -1.5, "pagando": -1.5,
     "segurança": -1.5, "senha": -1.0, "login": -1.0, "logado": -1.0,
@@ -103,6 +105,39 @@ PADROES_LEXICO = [
     (re.compile(r"\b(?:pix|transfer[eê]ncia|dinheiro)\b[^.;\n]{0,40}\bn[ãa]o\b[^.;\n]{0,40}\bcaiu\b", re.UNICODE), -1.5),
     # "débito ... em dobro / veio em dobro / duplo" — tolera verbos no meio.
     (re.compile(r"\bd[ée]bit[oa]\b[^.;\n]{0,30}\b(?:em\s+dobro|dobro|duplo|em\s+duplo)\b", re.UNICODE), -1.8),
+    # --- v3.2.0: lacunas de vocabulário apontadas pela métrica (30 relatos
+    # rotulados em avaliar_motores.py). São padrões GERAIS de classe de bug,
+    # não frases do corpus. Cada padrão soma UMA vez, como os de cima.
+    # Instalação/atualização que não conclui.
+    (re.compile(r"\bn[ãa]o\s+(?:instala|instala(?:u|ram)|instalou|atualizou)\b"
+                r"|\b(?:erro|falha)\s+(?:n[ao]\s+|d[ae]\s+)?instala[çc][ãa]o\b", re.UNICODE), -1.5),
+    # Busca/consulta que não devolve resultado.
+    (re.compile(r"\bn[ãa]o\s+(?:retorna|retornou|devolve|encontra|achou)\b[^.;\n]{0,20}\bresultado"
+                r"|\bbusca\s+(?:n[ãa]o\s+)?(?:funciona|funcionou|retorna|retornou|encontra)\b", re.UNICODE), -1.2),
+    # Notificação/push que não chega.
+    (re.compile(r"\bnotifica[çc][ãa]o\w*\b[^.;\n]{0,40}\bn[ãa]o\s+(?:chega|chegou|aparece|apareceu|receb)"
+                r"|\bpush\s+n[ãa]o\s+(?:chega|chegou|funciona)\b", re.UNICODE), -1.2),
+    # Dado repetido na tela (registro/linha duplicada).
+    (re.compile(r"\bduplicad[oa]s?\b", re.UNICODE), -1.2),
+    # Renderização/ layout: conteúdo cortado, logo cortada, margem errada.
+    (re.compile(r"\b(?:cortad[oa]s?|recortad[oa]s?|logo\s+cortad[oa])\b"
+                r"|\bmargens?\s+(?:erradas|incorretas|errada|zoadas)\b", re.UNICODE), -1.2),
+    # Saída em branco: arquivo/página exportada sem conteúdo.
+    (re.compile(r"\b(?:p[áa]gina|arquivo|documento|relat[óo]rio)\s+"
+                r"(?:saiu\s+|sai\s+|ficou\s+|fic[aá]\s+|est[áa]\s+)?em\s+branco\b", re.UNICODE), -1.5),
+    # Demora/latência ("lent*" já é coberto acima; falta a raiz "demor*").
+    # Peso baixo de propósito: "muito lento" + "demora" no mesmo relato não pode
+    # vira CRÍTICA (medido no caso "site extremamente lento… tudo demora").
+    (re.compile(r"\bdemor\w*", re.UNICODE), -0.5),
+    # Conexão cai no meio da operação (envio/relatório interrompido).
+    (re.compile(r"\bconex[ãa]o\s+(?:cai|caiu|cai\s+no\s+meio|perde|perdeu|foi\s+cortada)\b", re.UNICODE), -1.2),
+    # Financeiro: o léxico fixo só pegava "cobrou a mais" (passado); falta o
+    # presente. E cálculo fiscal/financeiro errado — restrito a contexto fiscal
+    # (imposto/fatura/boleto/parcela), senão "o valor fica errado" no carrinho
+    # escalava pra CRÍTICA sem ser (medido no caso do carrinho).
+    (re.compile(r"\bcobra\s+(?:a\s+)?mais\b|\bcobra\s+indevidamente\b", re.UNICODE), -1.8),
+    (re.compile(r"\b(?:imposto|fatura|boleto|cobran[çc]a|parcela|encargo)\b[^.;\n]{0,40}\berrad[oa]\b",
+                re.UNICODE), -1.5),
 ]
 
 # Termos puramente técnicos que NÃO devem escalar severidade sozinhos

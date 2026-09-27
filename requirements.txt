@@ -22,10 +22,9 @@ pillow==12.3.0
 # V3.0 — telemetria de produto (PostHog, server-side). Sem POSTHOG_API_KEY nos
 # Secrets/.env, tudo é no-op (nada enviado, zero custo). Host default EU (LGPD).
 posthog==7.60.0
-# V3.1 — motor semântico (BERTabaporu ONNX int8, 135MB) para triagem Premium.
-# O modelo NÃO vai para o repo (GitHub limita 100MB/arquivo) — é baixado do
-# GitHub Release (modelo-semantico-v1) na 1ª execução e cacheado em ~/.cache/abt/.
-# Basic segue no léxico (triagem.py); semântico é o motor sênior do plan plano.pago().
-onnxruntime==1.30.0
-tokenizers==0.22.2
+# V3.1 — experimento de NLP semântico (BERTabaporu ONNX int8, 135MB).
+# RETIRADO do app em v3.2.0: medido no histórico real, o motor escalava bug
+# cosmético para MÉDIA (7/39 textos) sem nenhum resgate. semantico.py e
+# avaliar_motores.py continuam no repo como experimento; para rodar local:
+#   pip install -r requirements-semantico.txt
 numpy==2.5.3

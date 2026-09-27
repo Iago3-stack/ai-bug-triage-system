@@ -10,7 +10,6 @@ import pandas as pd
 from urllib.parse import quote
 
 import triagem
-import semantico
 import ia
 import rag
 import colar_falha
@@ -577,22 +576,10 @@ def render():
                 # --- 1. TRIAGEM NLP (MOTOR LOCAL, DETERMINÍSTICO E OFFLINE) ---
                 # O motor triagem.py analisa léxico PT + padrões de negação,
                 # sem depender de internet nem de API de tradução.
-                # Premium (plano.pago()) usa também o motor semântico (BERTabaporu
-                # ONNX int8): modelo entra no cache na 1ª execução (GitHub Release)
-                # e, se falhar o download/carga, o app segue no léxico sem quebrar.
+                # Triagem: 100% léxico local (determinístico, offline, instantâneo).
+                # O experimento de NLP semântico (semantico.py + avaliar_motores.py)
+                # fica no repo, mas fora do app: ver CHANGELOG v3.2.0.
                 resultado = triagem.triar(descricao_bug)
-                if plano.pago():
-                    if not semantico.modelo_ja_pronto():
-                        with st.spinner("⏳ 1ª execução: baixando o motor semântico (~135MB)…"):
-                            _sem_pronto = semantico.garantir_modelo()
-                    else:
-                        _sem_pronto = semantico.garantir_modelo()
-                    if _sem_pronto:
-                        # Ensemble (semântico + léxico): medido nos 30 relatos
-                        # rotulados — léxico 61%, semântico sozinho 39%,
-                        # ensemble 74% de acerto. O semântico complementa o
-                        # léxico, nunca o substitui.
-                        resultado = semantico.ensemble(descricao_bug, resultado)
                 gravidade = resultado["gravidade"]
                 sentimento = resultado["sentimento"]
                 polaridade = resultado["score"]
