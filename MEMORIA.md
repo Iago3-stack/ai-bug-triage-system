@@ -56,12 +56,18 @@ sessão com decisões novas. Fica no repositório (pode commitar).
 - Cobertura: 21 testes herméticos em `test_avaliacao.py` (mockam o REST).
 
 ## Benchmark local de embeddings (2026-09-27) — 2º candidato, resultado
-- `avaliar_embeddings.py` (venv à parte em `/tmp/opencode/venv-embed`, **fora** do app) comparou `tardellirs/brazembed-pt-br` (BERT 12×768, mean pooling, MIT, 436MB fp32) com o léxico nos 30 casos de `casos_qa.py`.
+- `avaliar_embeddings.py` (venv à parte em `/tmp/opencode/venv-embed`, **fora** do app; **venv e cache do modelo já foram apagados** — recriar com os 3 comandos no docstring do script) comparou `tardellirs/brazembed-pt-br` (BERT 12×768, mean pooling, MIT, 436MB fp32) com o léxico nos 30 casos de `casos_qa.py`.
 - **Resultado:** léxico **96,7% / 95,7%** · protótipos (zero-shot) **53,3% / 43,5%** · 1-NN **66,7% / 60,9%** · logreg **56,7% / 47,8%** · tfidf+logreg **56,7% / 47,8%** · tfidf+centro **53,3% / 39,1%** (tolerante/estrito; os 4 últimos são leave-one-out, não comparáveis ao léxico).
 - **Decisão: nenhum encoder entra no app.** O melhor modelo treinado (1-NN) fica 30 pontos abaixo do léxico, e o classificador simples sem transformer (tf-idf) é tão ruim quanto o transformer — ou seja, **o gargalo não é o modelo, é o dado**: 30 casos sintéticos, classe NORMAL com 4 exemplos.
 - Mesma patologia do BERTabaporu, agora com mean pooling e treino em português: os 3 protótipos de severidade ficam quase equidistantes de qualquer entrada (margem top1−top2 média 0,058, máx 0,247) e o modelo superprediz CRÍTICA (16 de 30). **Severidade não é propriedade de similaridade semântica**, é impacto de negócio.
 - Protótipos foram escritos pela *definição* de severidade antes de medir; não foram ajustados contra os 30 casos (isso daria número otimista na própria base).
 - **Reaproveitar:** `casos_qa.py` virou a fonte única do ground truth (antes estava preso dentro de `avaliar_motores.py`, que exige onnxruntime). Quando houver 100+ rótulos reais (v3.3.0), é só rodar `avaliar_embeddings.py` de novo — sem mexer em código — para saber se um modelo treinado finalmente passa do léxico.
+
+## Disco: material de experimento já removido (2026-09-27)
+- Apagado: cache HF do **brazembed** (417MB) + venv do benchmark (1,3GB) + cache HF do **BERTabaporu** (1,1GB) + `model.onnx` fp32 (514MB) + `.venv` da exportação em `~/Documentos/semantico_nlp/` (1,3GB) = **~4,6GB liberados**.
+- **Sobrou de propósito** em `~/Documentos/semantico_nlp/modelo/onnx/`: `model_int8.onnx` (130MB) + `tokenizer.json` + `config.json`/`vocab.txt`/`*_config.json` — é a fonte do asset publicado no Release `modelo-semantico-v1` (URL fixada por tag em `semantico.py`).
+- Nenhum modelo é cacheado pelo app em produção: o ONNX é baixado do GitHub Release em `~/.cache/abt/` no 1º uso (e o motor semântico está fora do app desde o v3.2.0).
+- `~/.cache/huggingface/` foi removido; se for preciso re-exportar o ONNX, o `transformers` re-baixa o BERTabaporu do HF.
 
 ## Pendências (follow-ups)
 1. **PagBank**: aguardar resposta da homologação (~4 dias úteis). Ao liberar: revalidar `POST /orders` (201) + regenerar/trocar token de produção (sem colar no chat).
