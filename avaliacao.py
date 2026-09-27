@@ -120,21 +120,27 @@ def estado_de(registro_id: str) -> dict:
         return dict(vazio)
 
 
-def _linhas_rotuladas(limite: int = 1000) -> list[dict]:
-    """Linhas com `payload->avaliacao->>rotulo` presente.
+def _linhas(limite: int = 1000, deslocamento: int = 0, apenas_rotuladas: bool = True) -> list[dict]:
+    """Linhas com (ou sem) `payload->avaliacao->>rotulo`, filtradas no servidor.
 
-    O filtro é no servidor (PostgREST aceita a chave `payload->avaliacao->>rotulo`),
-    então não varreram as triagens sem rótulo. Ainda assim normalizamos e pulamos
-    linha sem texto/rótulo: dado velho ou escrito à mão não entra na base.
+    PostgREST aceita `payload->avaliacao->>rotulo` com `not.is.null` / `is.null`,
+    então nunca varramos a tabela inteira. Ainda assim normalizamos e pulamos
+    linha sem texto (pendente) ou sem rótulo canônico (rotulada): dado velho ou
+    escrito à mão não entra na base.
+
+    Devolve as DUAS previsões do app, porque elas respondem perguntas diferentes:
+      gravidade  — o que o léxico (triagem.py) previu
+      prioridade — o que o usuário viu (léxico x IA reconciliados em ferramenta.py)
     """
     resp = nuvem_supabase.requests.get(
         f"{nuvem_supabase._base_url()}/{nuvem_supabase._TABELA_PADRAO}",
         headers=nuvem_supabase._headers(),
         params={
             "select": "id,data_hora,payload",
-            "payload->avaliacao->>rotulo": "not.is.null",
+            "payload->avaliacao->>rotulo": "not.is.null" if apenas_rotuladas else "is.null",
             "order": "data_hora.desc",
             "limit": str(limite),
+            "offset": str(deslocamento),
         },
         timeout=20,
     )
@@ -144,30 +150,110 @@ def _linhas_rotuladas(limite: int = 1000) -> list[dict]:
         payload = linha.get("payload") or {}
         aval = payload.get("avaliacao") or {}
         rotulo = normalizar(aval.get("rotulo", ""))
-        if not rotulo:
+        descricao = (payload.get("descricao") or "").strip()
+        if not descricao:
             continue
-        saida.append(
-            {
-                "id": linha.get("id", ""),
-                "data_hora": linha.get("data_hora", ""),
-                "descricao": (payload.get("descricao") or "").strip(),
-                "gravidade": _GRAVIDADE_PARA_ROTULO.get(
-                    (payload.get("gravidade") or "").split(" ")[0], ""
-                ),
+        if apenas_rotuladas and not rotulo:
+            continue
+        linha_saida = {
+            "id": linha.get("id", ""),
+            "data_hora": linha.get("data_hora", ""),
+            "descricao": descricao,
+            "gravidade": _GRAVIDADE_PARA_ROTULO.get(
+                (payload.get("gravidade") or "").split(" ")[0], ""
+            ),
+            "prioridade": normalizar(payload.get("prioridade_final") or "")
+            or _GRAVIDADE_PARA_ROTULO.get(
+                (payload.get("gravidade") or "").split(" ")[0], ""
+            ),
+        }
+        if apenas_rotuladas:
+            linha_saida.update({
                 "rotulo": rotulo,
                 "comentario": (aval.get("comentario") or "").strip(),
                 "em": aval.get("em", ""),
-            }
-        )
+            })
+        saida.append(linha_saida)
     return saida
 
 
 def carregar_rotulados(limite: int = 1000) -> list[dict]:
     """Triagens com rótulo humano (texto + rótulo). Vazio lista se a nuvem falhar."""
     try:
-        return [r for r in _linhas_rotuladas(limite) if r["descricao"]]
+        return _linhas(limite, apenas_rotuladas=True)
     except Exception:
         return []
+
+
+def _chave_texto(texto: str) -> str:
+    """Chave de agrupamento: minúsculas, sem acento, espaços normalizados."""
+    sem_acento = "".join(
+        c for c in unicodedata.normalize("NFKD", (texto or "").lower())
+        if not unicodedata.combining(c)
+    )
+    return " ".join(sem_acento.split())
+
+
+def carregar_pendentes(limite: int = 50, deslocamento: int = 0, unicos: bool = True) -> list[dict]:
+    """Triagens sem rótulo, com texto e a prioridade prevista (para rotular).
+
+    Ordena da mais recente para a mais antiga. `deslocamento` pagina a fila.
+
+    `unicos=True` (padrão) agrupa por texto: o histórico real é dominado por
+    repetição (a mesma fixture de API aparece dezenas de vezes), e rotular cada
+    cópia é esforço jogado fora — além de inflar a métrica, fazendo um único bug
+    pesar várias vezes. Cada item ganha `repeticoes` (quantas linhas têm esse
+    texto). A janela lida do servidor é maior que o pedido porque a deduplicação
+    acontece depois da consulta.
+    """
+    try:
+        janela = max(limite * 10, 200) if unicos else limite
+        linhas = _linhas(janela, 0, apenas_rotuladas=False)
+        if not unicos:
+            return linhas[deslocamento:deslocamento + limite]
+
+        vistos: dict[str, dict] = {}
+        for linha in linhas:
+            chave = _chave_texto(linha["descricao"])
+            if chave in vistos:
+                vistos[chave]["repeticoes"] += 1
+                vistos[chave]["ids_irmaos"].append(linha["id"])
+                continue
+            item = dict(linha)
+            item["repeticoes"] = 1
+            item["ids_irmaos"] = [linha["id"]]
+            vistos[chave] = item
+        fila = list(vistos.values())
+        return fila[deslocamento:deslocamento + limite]
+    except Exception:
+        return []
+
+
+def registrar_varios(registro_ids: list[str], rotulo: str, comentario: str = "",
+                     autor: str = "") -> int:
+    """Rotula várias triagens de uma vez. Devolve quantas foram gravadas.
+
+    O rótulo é propriedade do bug descrito, não da linha que o gravou: o mesmo
+    relato repetido 20× no histórico recebe o mesmo rótulo nas 20. Chamar
+    `registrar` em laço porque cada linha tem payload próprio (o PATCH do
+    PostgREST substitui o jsonb inteiro, não dá para fazer numa tacada só).
+    """
+    return sum(1 for rid in registro_ids if registrar(rid, rotulo, comentario, autor))
+
+
+def base_para_csv() -> str:
+    """Base rotulada em CSV (id, data, texto, léxico, prioridade vista, rótulo)."""
+    import csv
+    import io
+
+    buf = io.StringIO()
+    colunas = ["id", "data_hora", "descricao", "gravidade", "prioridade",
+               "rotulo", "comentario", "em"]
+    w = csv.DictWriter(buf, fieldnames=colunas, extrasaction="ignore")
+    w.writeheader()
+    for linha in carregar_rotulados():
+        w.writerow(linha)
+    return buf.getvalue()
 
 
 def progresso() -> dict:
@@ -184,7 +270,7 @@ def progresso() -> dict:
         total = len(resp.json() or [])
     except Exception:
         return {**vazio, "total": 0, "rotuladas": 0, "pendentes": 0, "erro": True}
-    rotuladas = len(_linhas_rotuladas())
+    rotuladas = len(_linhas(apenas_rotuladas=True))
     return {
         "total": total,
         "rotuladas": rotuladas,

@@ -76,6 +76,16 @@ sessão com decisões novas. Fica no repositório (pode commitar).
 - **Como evoluir o léxico a partir de agora:** (1) rotular relatos reais pelo fluxo do v3.3.0, (2) `python3 avaliar_lexico.py` para ver os erros com o fator que disparou, (3) mexer em `triagem.py`, (4) rodar de novo + `pytest test_triagem.py` (tem 3 guardas de regressão) e `--falhar-abaixo 95`. Sem modelo, sem download, sem latência.
 - **Não reabrir** a conversa de encoder sem 100+ rótulos reais medidos por esse mesmo harness.
 
+## Tela de rotulamento no painel do dono (v3.5.0)
+- **Onde:** `secoes/painel_dono.py` → `_secao_rotulagem()` (chamada no fim de `render()`, só depois do gate `admin.eh_dono()`), com `_metricas_de_concordancia()`, `_registrar_grupo()`, `_campo_atalho()` e `_cartao()`.
+- **Fila:** `avaliacao.carregar_pendentes(limite, deslocamento, unicos=True)` — filtra no servidor (`payload->avaliacao->>rotulo=is.null`) e **dedup por texto** (`_chave_texto()`: minúsculas, sem acento, espaços normalizados). Cada item traz `repeticoes` e `ids_irmaos`.
+- **Regra de produto:** o rótulo é do **bug**, não da linha. Um clique grava todas as cópias (`registrar_varios` faz GET+PATCH por linha, porque o PATCH do PostgREST substitui o jsonb inteiro e não dá para fazer em uma tacada).
+- **Atalhos:** `1`=CRÍTICA, `2`=MÉDIA, `3`=NORMAL, `0`=pular, via `st.text_input(max_chars=1, on_change=...)` — não existe `st.keyboard` no Streamlit 1.64.
+- **Métrica:** por **texto único**, nunca por linha (senão a fixture que aparece 20× pesa mais que todo o resto). Mostra léxico × rótulo, prioridade vista × rótulo, e a contagem de quantas vezes a reconciliação deixou a prioridade **mais severa** que o léxico — é o indicador do `max(sev_local, sev_ia)` em `secoes/ferramenta.py:669` estar inflando CRÍTICA.
+- **Identidade do autor:** `admin.email_logado()` (fonte única de verdade, mesma de `eh_dono()`) — não replicar a leitura de `auth_supabase.sessao()` nem importar o `_fb_identidade()` privado de `ferramenta.py`.
+- **Export:** `avaliacao.base_para_csv()` + `st.download_button` para análise fora do app.
+- **Testado** com `streamlit.testing.v1.AppTest` (mock de `nuvem_supabase.requests`): render sem exceção, dedup exibindo `×2`, matriz de confusão correta, 1 clique → 2 PATCH (`id=eq.a`, `id=eq.b`) e atalhos `2`/`0`/`x` com o efeito esperado. 9 testes herméticos novos (706 no total).
+
 ## Pendências (follow-ups)
 1. **PagBank**: aguardar resposta da homologação (~4 dias úteis). Ao liberar: revalidar `POST /orders` (201) + regenerar/trocar token de produção (sem colar no chat).
 2. ~~**Rota B (segurança Supabase)**~~ ✅ concluída (chaves nos 3 ambientes, deploy no ar, `fechar_anon_rest.sql` aplicado, auditado).
@@ -83,7 +93,8 @@ sessão com decisões novas. Fica no repositório (pode commitar).
 4. Remover monitor duplicado no instatus (precisa de `INSTATUS_API_KEY` ou ação manual no dashboard).
 5. ~~Subir `model_int8.onnx` no bucket `modelos`~~ ✅ resolvido: **GitHub Release `modelo-semantico-v1`** (bucket do Supabase nem foi usado).
 6. ~~**Encoder do semântico**~~ ✅ **descartado no benchmark local (2026-09-27)**: `brazembed-pt-br` (o 2º candidato) deu 43,5% estrito zero-shot e 60,9% com 1-NN, contra 95,7% do léxico — e tf-idf sem transformer deu o mesmo. Só reabrir a conversa com **100+ rótulos reais**, e medir com `avaliar_embeddings.py`.
-7. **Rotular 100+ relatos** — é o bloqueio de qualquer ganho de qualidade em triagem: o corpus de 30 é pequeno e não representativo do histórico (que é dominado por fixture de teste). O fluxo de rótulo por triagem (**v3.3.0**, `avaliacao.py`) existe para isso: `payload->avaliacao` + `carregar_rotulados()` para o dono/admin medir.
+7. **Rotular 100+ relatos** — é o bloqueio de qualquer ganho de qualidade em triagem: o corpus de 30 é pequeno e não representativo do histórico (que é dominado por fixture de teste). A tela do **v3.5.0** é o instrumento: 🛠️ Painel do Administrador → 🏷️ Rótulo de severidade. Começar por ela e deixar rodando; a base exporta em CSV.
+8. **Auditar a reconciliação "o mais grave vence"** (`secoes/ferramenta.py:669`, `max(sev_local, sev_ia)`) — ainda não medido. A tela do v3.5.0 dá o indicador de graça: a métrica "prioridade vista × rótulo" vs "léxico × rótulo" já separa o dano do léxico do dano da IA.
 
 ## Rituais de fim de sessão
 - Atualizar este `MEMORIA.md` (e a skill, se mudar convenção).

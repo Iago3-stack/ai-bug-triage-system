@@ -4,6 +4,17 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v3.5.0] - 2026-09-27
+
+### Adicionado
+- **Tela de rotulamento no painel do dono (v3.5.0)** — o gargalo do projeto deixou de ser o modelo e passou a ser o dado: os 30 casos do corpus são sintéticos (texto de QA, não relato de cliente), e foi por isso que um motor ruim passou na métrica e quase foi para produção. Agora o dono tem uma fila de triagens reais para rotular, e a métrica passa a medir o léxico contra julgamento humano de verdade. Um clique grava o rótulo no `payload->avaliacao` de todas as cópias daquele texto, com atalhos **1** CRÍTICA / **2** MÉDIA / **3** NORMAL / **0** pular e campo para o motivo da escolha.
+- **Deduplicação por texto na fila** — o histórico real é dominado por repetição (uma única fixture de teste de API aparece 20 vezes), então rotular linha a linha desperdiça esforço e, pior, infla a métrica: um bug só passaria a pesar mais que todos os outros juntos. A fila agrupa por texto normalizado (minúsculas, sem acento, espaços colapsados) e mostra `×20 no histórico`; o rótulo é propriedade do bug, não da linha que o gravou.
+- **Métrica de concordância léxico × seu rótulo** — quantos textos o léxico acertou e quantos o usuário *enxergou*, lado a lado, mais uma matriz de confusão (linhas = o que o léxico previu, colunas = o seu rótulo). As duas colunas existem porque a tela mostra `prioridade_final` (léxico x IA reconciliados) e não a saída crua do léxico: são coisas diferentes e é justamente a diferença entre elas que revela se a reconciliação "o mais grave vence" está empurrando tudo para CRÍTICA. A métrica conta por **texto único**, não por linha, pelo mesmo motivo da dedup.
+- **`avaliacao.carregar_pendentes()`** — listagem server-side das triagens sem rótulo (`payload->avaliacao->>rotulo=is.null`, paginada), devolvendo texto, `gravidade` (léxico) e `prioridade` (o que o usuário viu).
+- **`avaliacao.registrar_varios()`** — grava o mesmo rótulo em várias linhas de uma vez, devolvendo quantas foram gravadas.
+- **Export da base rotulada em CSV** (`avaliacao.base_para_csv()`) — a base sai com `id, data_hora, descricao, gravidade, prioridade, rotulo, comentario, em`, pronta para análise fora do app.
+- **9 testes** para a fila (filtro `is.null`, dedup ignorando caixa/acento, descarte de linha sem texto, paginação, gravação em grupo com falha parcial, CSV, `prioridade` vista) — total de 706 testes, todos passando.
+
 ## [v3.4.0] - 2026-09-27
 
 ### Removido

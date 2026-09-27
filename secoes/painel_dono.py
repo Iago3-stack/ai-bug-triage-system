@@ -10,9 +10,15 @@ import datetime as _dt
 import streamlit as st
 
 import admin
+import avaliacao
+import nuvem_supabase
 import pixbilling
 import plano
-import nuvem_supabase
+
+# Ordem de severidade canônica: NORMAL < MÉDIA < CRÍTICA.
+_ORDEM_ROTULO = ("NORMAL", "MÉDIA", "CRÍTICA")
+_ORDEM = {"NORMAL": 0, "MÉDIA": 1, "CRÍTICA": 2}
+_PAGINA = 5
 
 
 def _fmt_data(iso: str | None) -> str:
@@ -272,7 +278,196 @@ def render():
                 else:
                     st.error("Falha (offline/Supabase).")
 
+    _secao_rotulagem()
+
     st.caption(f"Versão {ui_comum.VERSAO} · o cadastro das contas é feito automaticamente a cada login.")
+
+
+# ─── Rótulo de severidade (ground truth) ─────────────────────────────────────
+def _cartao(texto: str, rotulo: str, cor: str) -> str:
+    return (
+        f'<div style="border:1px solid {cor}44;border-radius:12px;background:{cor}0f;'
+        f'padding:10px 12px;margin:4px 0">'
+        f'<div style="color:#e2e8f0;font-size:14px;line-height:1.5">{texto}</div></div>'
+    )
+
+
+def _metricas_de_concordancia(rotulados: list[dict]) -> None:
+    """Léxico e prioridade vista × rótulo humano, medidos por texto ÚNICO.
+
+    Métrica por texto e não por linha: a mesma fixture aparece dezenas de vezes
+    no histórico e, se contasse tudo, um único bug pesaria mais que todos os
+    outros juntos.
+    """
+    unicos: dict[str, dict] = {}
+    for linha in rotulados:
+        chave = avaliacao._chave_texto(linha.get("descricao", ""))
+        if chave not in unicos:
+            unicos[chave] = linha
+    itens = list(unicos.values())
+    n = len(itens)
+    if n < 3:
+        st.info(
+            f"São **{n}** texto(s) rotulado(s) até agora — abaixo de 3 qualquer "
+            "percentual é ruído. Marque mais alguns para a métrica valer."
+        )
+        return
+
+    acertos_lex = sum(1 for i in itens if i.get("gravidade") == i.get("rotulo"))
+    acertos_visto = sum(1 for i in itens if i.get("prioridade") == i.get("rotulo"))
+    # Quantas vezes a reconciliação "o mais grave vence" deixou a prioridade
+    # mais severa que o léxico: sinal de que a IA está inflando a severidade.
+    subiu = sum(1 for i in itens
+                if i.get("prioridade") and i.get("gravidade")
+                and _ORDEM.get(i["prioridade"], 0) > _ORDEM.get(i["gravidade"], 0))
+    caiu = sum(1 for i in itens
+               if i.get("prioridade") and i.get("gravidade")
+               and _ORDEM.get(i["prioridade"], 0) < _ORDEM.get(i["gravidade"], 0))
+
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Textos rotulados", f"{n}")
+    c2.metric("Léxico acerta", f"{acertos_lex}/{n}", f"{acertos_lex/n:.0%}")
+    c3.metric("O que o usuário viu", f"{acertos_visto}/{n}", f"{acertos_visto/n:.0%}")
+    st.caption(
+        f"A reconciliação léxico × IA ({_ORDEM_ROTULO}) deixou a prioridade "
+        f"**{subiu}** texto(s) mais severo(s) e **{caiu}** mais leve(s) que o léxico."
+        + (" Subir sempre é sinal de que a IA empurra para CRÍTICA." if subiu > caiu else "")
+    )
+    st.markdown(
+        "<div style='font-size:12px;color:#94a3b8;margin-top:6px'>"
+        "linhas = o que o <b>léxico</b> previu · "
+        "colunas = o <b>seu rótulo</b></div>",
+        unsafe_allow_html=True,
+    )
+    st.dataframe(
+        [
+            {"linha": prev, **{rot: sum(1 for i in itens
+                                        if i.get("gravidade") == prev and i.get("rotulo") == rot)
+                                for rot in _ORDEM_ROTULO}}
+            for prev in _ORDEM_ROTULO
+        ],
+        hide_index=True, use_container_width=True,
+    )
+
+
+def _secao_rotulagem() -> None:
+    st.divider()
+    st.markdown("### 🏷️ Rótulo de severidade")
+    st.caption(
+        "A única métrica honesta do projeto nasce aqui. Os 30 casos do corpus são "
+        "sintéticos (texto de QA, não relato de cliente) — foi justamente porque "
+        "eles não representavam a realidade que um motor ruim passou na métrica e "
+        "quase foi para produção. **Marque a severidade real** de cada relato: o "
+        "app passa a medir o léxico contra o seu julgamento, e não contra uma "
+        "legenda de teste."
+    )
+
+    prog = avaliacao.progresso()
+    if prog.get("erro"):
+        st.info("Não consegui ler as triagens agora (Supabase fora do ar?). Tente de novo em instantes.")
+        return
+    if not prog.get("total"):
+        st.info("Nenhuma triagem na nuvem ainda — o rótulo aparece depois da primeira triagem de um usuário.")
+        return
+
+    fracao = prog["rotuladas"] / prog["total"]
+    st.progress(min(fracao, 1.0))
+    st.caption(
+        f"**{prog['rotuladas']} de {prog['total']}** triagens com rótulo "
+        f"({fracao:.0%}) · {prog['pendentes']} pendentes."
+    )
+
+    rotulados = avaliacao.carregar_rotulados()
+    if rotulados:
+        with st.expander("📈 Concordância léxico × seu rótulo", expanded=True):
+            _metricas_de_concordancia(rotulados)
+        st.download_button(
+            "⬇️ Baixar base rotulada (CSV)", avaliacao.base_para_csv(),
+            file_name=f"base_rotulada_{len(rotulados)}.csv", mime="text/csv",
+        )
+
+    st.markdown("#### Fila para rotular")
+    fila = avaliacao.carregar_pendentes(limite=_PAGINA)
+    if not fila:
+        st.success("🎉 Tudo rotulado. Não tem mais nada na fila.")
+        return
+
+    st.caption(
+        "Texto repetido no histórico aparece **uma vez**, com o número de cópias: o "
+        "rótulo é do bug, não da linha, então um clique grava todas as cópias. "
+        "Atalhos: **1** CRÍTICA · **2** MÉDIA · **3** NORMAL · **0** pular."
+    )
+    _campo_atalho(fila[0])
+
+    autor = admin.email_logado() or ""
+    for item in fila:
+        previa = avaliacao.normalizar(item.get("prioridade") or item.get("gravidade")) or "—"
+        copias = f" · ×{item['repeticoes']} no histórico" if item.get("repeticoes", 1) > 1 else ""
+        st.markdown(
+            f'<div style="color:#94a3b8;font-size:11.5px;margin:10px 0 2px">'
+            f'léxico: <b style="color:#cbd5e1">{item.get("gravidade") or "—"}</b> · '
+            f'visto pelo usuário: <b style="color:#c4b5fd">{previa}</b>{copias}</div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown(_cartao(item["descricao"][:600], item.get("rotulo", ""), "#7c3aed"),
+                    unsafe_allow_html=True)
+
+        comentario = st.text_area(
+            "Por que essa severidade? (opcional)", key=f"rot_com_{item['id']}",
+            placeholder="ex.: cliente 3 dias sem acesso ao extrato — bloqueio total",
+        )
+        b1, b2, b3, b4 = st.columns(4)
+        acoes = (
+            (b1, "🚨 CRÍTICA", "CRÍTICA", "primary"),
+            (b2, "⚠️ MÉDIA", "MÉDIA", "secondary"),
+            (b3, "✅ NORMAL", "NORMAL", "secondary"),
+        )
+        for coluna, titulo, rotulo, tipo in acoes:
+            if coluna.button(titulo, key=f"rot_{item['id']}_{rotulo}",
+                             use_container_width=True, type=tipo):
+                _registrar_grupo(item, rotulo, comentario, autor)
+        if b4.button("⏭️ Pular", key=f"rot_{item['id']}_skip", use_container_width=True):
+            st.session_state["_rot_pular"] = item["id"]
+            st.rerun()
+
+    mais = len(avaliacao.carregar_pendentes(limite=_PAGINA + 1)) > _PAGINA
+    if mais:
+        if st.button(f"Ver mais {_PAGINA} →", key="rot_mais", use_container_width=True):
+            st.session_state["_rot_offset"] = st.session_state.get("_rot_offset", 0) + _PAGINA
+            st.rerun()
+    elif st.session_state.get("_rot_offset"):
+        st.button("⬅️ Voltar ao início", key="rot_voltar", use_container_width=True,
+                  on_click=lambda: st.session_state.__setitem__("_rot_offset", 0))
+
+
+def _registrar_grupo(item: dict, rotulo: str, comentario: str, autor: str) -> None:
+    ids = item.get("ids_irmaos") or [item["id"]]
+    quantas = avaliacao.registrar_varios(ids, rotulo, comentario, autor)
+    if quantas:
+        copias = f" ({quantas} linhas)" if quantas > 1 else ""
+        st.session_state["dono_aviso"] = f"✅ Rótulo **{rotulo}** gravado{copias}."
+    else:
+        st.session_state["dono_aviso"] = "⚠️ Não consegui gravar o rótulo (Supabase?). Tente de novo."
+    st.rerun()
+
+
+def _campo_atalho(primeiro: dict) -> None:
+    """Caixa de atalho: digitar 1/2/3/0 rotula o primeiro item da fila."""
+    def _trata():
+        tecla = (st.session_state.get("_rot_tecla") or "").strip().lower()[:1]
+        st.session_state["_rot_tecla"] = ""
+        mapa = {"1": "CRÍTICA", "2": "MÉDIA", "3": "NORMAL"}
+        if tecla in mapa:
+            _registrar_grupo(primeiro, mapa[tecla], "", admin.email_logado() or "")
+        elif tecla == "0":
+            st.rerun()
+
+    st.text_input("⌨️ atalho", key="_rot_tecla", on_change=_trata, max_chars=1,
+                  label_visibility="collapsed",
+                  placeholder="⌨️ 1/2/3/0",
+                  help="Digite 1 (CRÍTICA), 2 (MÉDIA), 3 (NORMAL) ou 0 (pular).")
+
+
 
 
 def _marca(classe: str) -> None:

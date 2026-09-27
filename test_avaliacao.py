@@ -220,3 +220,124 @@ def test_progresso_e_carregar_nao_quebram_sem_nuvem(monkeypatch):
     assert avaliacao.carregar_rotulados() == []
     assert avaliacao.progresso()["erro"] is True
     assert avaliacao.estado_de("abc")["rotulo"] == ""
+
+
+# --- fila de rotulagem: pendentes, dedup e gravação em grupo ------------------
+def _linha(id, texto, prioridade="CRÍTICA"):
+    return {"id": id, "data_hora": "", "payload": {"descricao": texto, "prioridade_final": prioridade}}
+
+
+def _mock(monkeypatch, respostas):
+    fake = _FakeRequests(get=lambda *a, **k: respostas.pop(0))
+    monkeypatch.setattr(nuvem_supabase, "requests", fake)
+    monkeypatch.setattr(nuvem_supabase, "_base_url", lambda: "http://api")
+    monkeypatch.setattr(nuvem_supabase, "_headers", lambda: {})
+    monkeypatch.setattr(nuvem_supabase, "_TABELA_PADRAO", "triagens")
+    return fake
+
+
+def test_carregar_pendentes_filtra_is_null_no_servidor(monkeypatch):
+    fake = _mock(monkeypatch, [_Resposta([_linha("a", "app caiu")])])
+
+    out = avaliacao.carregar_pendentes()
+
+    assert out[0]["id"] == "a"
+    assert out[0]["prioridade"] == "CRÍTICA"
+    assert out[0]["repeticoes"] == 1
+    # Sem rótulo é o que define "pendente": o filtro tem que ser is.null, e
+    # não varrer a tabela, senão a fila do dono carrega tudo.
+    assert fake.chamadas[0][2]["payload->avaliacao->>rotulo"] == "is.null"
+    assert "rotulo" not in out[0]
+
+
+def test_carregar_pendentes_agrupa_texto_repetido(monkeypatch):
+    _mock(monkeypatch, [_Resposta([
+        _linha("a", "Falha em POST /v1/pagamento"),
+        _linha("b", "Falha em POST /v1/pagamento"),
+        _linha("c", "outro bug"),
+    ])])
+
+    out = avaliacao.carregar_pendentes()
+
+    assert [i["id"] for i in out] == ["a", "c"]
+    assert out[0]["repeticoes"] == 2
+    assert out[0]["ids_irmaos"] == ["a", "b"]  # rotular uma grava as cópias
+    assert out[1]["repeticoes"] == 1
+
+
+def test_carregar_pendentes_dedup_ignora_caixa_e_acento(monkeypatch):
+    _mock(monkeypatch, [_Resposta([
+        _linha("a", "Extrato  Não abre"),
+        _linha("b", "extrato nao abre"),
+    ])])
+
+    out = avaliacao.carregar_pendentes()
+
+    assert len(out) == 1
+    assert out[0]["repeticoes"] == 2
+
+
+def test_carregar_pendentes_pula_sem_texto_e_pagina(monkeypatch):
+    _mock(monkeypatch, [_Resposta([
+        _linha("a", "   "),
+        _linha("b", "bug 1"),
+        _linha("c", "bug 2"),
+        _linha("d", "bug 3"),
+    ])])
+
+    pagina = avaliacao.carregar_pendentes(limite=2, deslocamento=1)
+
+    assert [i["id"] for i in pagina] == ["c", "d"]  # "a" sem texto nunca entra
+
+
+def test_carregar_pendentes_nao_quebra_sem_nuvem(monkeypatch):
+    def _boom(*a, **k):
+        raise OSError("sem rede")
+
+    _mock(monkeypatch, [])
+    monkeypatch.setattr(nuvem_supabase, "requests", _FakeRequests(get=_boom))
+
+    assert avaliacao.carregar_pendentes() == []
+
+
+def test_registrar_varios_grava_todas_as_copias(monkeypatch):
+    monkeypatch.setattr(avaliacao, "registrar", lambda *a, **k: True)
+
+    assert avaliacao.registrar_varios(["a", "b", "c"], "CRÍTICA", "x", "dono@exemplo.com") == 3
+
+
+def test_registrar_varios_conta_apenas_os_gravados(monkeypatch):
+    def _fake(rid, *a, **k):
+        return rid != "b"  # a linha "b" falhou
+
+    monkeypatch.setattr(avaliacao, "registrar", _fake)
+
+    assert avaliacao.registrar_varios(["a", "b", "c"], "MÉDIA") == 2
+
+
+def test_base_para_csv_tem_cabecalho_e_uma_linha_por_texto(monkeypatch):
+    monkeypatch.setattr(avaliacao, "carregar_rotulados", lambda: [
+        {"id": "a", "data_hora": "2026-01-01", "descricao": "app caiu", "gravidade": "CRÍTICA",
+         "prioridade": "CRÍTICA", "rotulo": "MÉDIA", "comentario": "só no login",
+         "em": "2026-01-02"},
+    ])
+
+    linhas = avaliacao.base_para_csv().splitlines()
+
+    assert linhas[0] == "id,data_hora,descricao,gravidade,prioridade,rotulo,comentario,em"
+    assert "app caiu" in linhas[1]
+    assert "só no login" in linhas[1]
+
+
+def test_carregar_rotulados_expoe_prioridade_vista(monkeypatch):
+    _mock(monkeypatch, [_Resposta([
+        {"id": "1", "data_hora": "", "payload": {
+            "descricao": "app travou", "gravidade": "MÉDIA",
+            "prioridade_final": "ALTA 🚨",  # a IA subiu; o léxico não subiu
+            "avaliacao": {"rotulo": "MÉDIA"}}},
+    ])])
+
+    out = avaliacao.carregar_rotulados()
+
+    assert out[0]["gravidade"] == "MÉDIA"   # léxico
+    assert out[0]["prioridade"] == "CRÍTICA"  # o que o usuário viu
