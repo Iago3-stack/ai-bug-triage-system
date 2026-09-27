@@ -219,6 +219,37 @@ def analisar(descricao):
     }
 
 
+def ensemble(descricao, resultado_lexico):
+    """Soma o semântico ao léxico (média dos scores) — o Premium usa este caminho.
+
+    Medido nos 30 relatos rotulados (avaliar_motores.py): léxico 61% estrito,
+    semântico sozinho 39%, ensemble 74%. Então o semântico NUNCA substitui o
+    léxico — ele entra como segundo sinal. Se o semântico estiver indisponível,
+    devolve o léxico intacto (fallback).
+    """
+    sem = analisar(descricao)
+    if sem["motor"].endswith("(indisponível)"):
+        return resultado_lexico
+
+    score_lexico = float(resultado_lexico.get("score", 0.0))
+    score = (score_lexico + float(sem["score"])) / 2
+
+    if score <= -2.0:
+        gravidade = "CRÍTICA 🚨"
+    elif score <= -0.5:
+        gravidade = "MÉDIA ⚠️"
+    else:
+        gravidade = "NORMAL ✅"
+
+    return {
+        "score": score,
+        "gravidade": gravidade,
+        "sentimento": resultado_lexico.get("sentimento", "Neutro/Calmo"),
+        "fatores": list(resultado_lexico.get("fatores", [])) + sem["fatores"],
+        "motor": f"{MOTOR} + léxico (ensemble)",
+    }
+
+
 if __name__ == "__main__":
     casos = [
         "O usuário está tentando pagar e a tela fica carregando para sempre",

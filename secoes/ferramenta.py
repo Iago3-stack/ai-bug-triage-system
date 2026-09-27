@@ -588,7 +588,11 @@ def render():
                     else:
                         _sem_pronto = semantico.garantir_modelo()
                     if _sem_pronto:
-                        resultado = semantico.analisar(descricao_bug)
+                        # Ensemble (semântico + léxico): medido nos 30 relatos
+                        # rotulados — léxico 61%, semântico sozinho 39%,
+                        # ensemble 74% de acerto. O semântico complementa o
+                        # léxico, nunca o substitui.
+                        resultado = semantico.ensemble(descricao_bug, resultado)
                 gravidade = resultado["gravidade"]
                 sentimento = resultado["sentimento"]
                 polaridade = resultado["score"]

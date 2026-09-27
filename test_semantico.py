@@ -139,3 +139,49 @@ def test_analisar_usa_vectores_semanticos(monkeypatch):
     assert r["score"] == -2.0
     assert r["gravidade"] == "CRÍTICA 🚨"
     assert "semântica ≈ 1.00" in r["fatores"][0]
+
+
+# --- ensemble: o caminho de produção do Premium -------------------------------
+def test_ensemble_media_lexico_e_semantico(monkeypatch):
+    import semantico
+
+    monkeypatch.setattr(semantico, "analisar", lambda texto: {
+        "score": -2.0,
+        "gravidade": "CRÍTICA 🚨",
+        "sentimento": "Frustrado/Urgente",
+        "fatores": ["semântica ≈ 0.95"],
+        "motor": semantico.MOTOR,
+    })
+    lex = {"score": -1.0, "gravidade": "MÉDIA ⚠️", "sentimento": "X",
+           "fatores": ["trava"], "motor": "Léxico"}
+    r = semantico.ensemble("qualquer relato", lex)
+
+    assert r["score"] == -1.5
+    assert r["gravidade"] == "MÉDIA ⚠️"
+    assert r["sentimento"] == "X"  # o sentimento do léxico é preservado
+    assert r["fatores"] == ["trava", "semântica ≈ 0.95"]
+    assert "ensemble" in r["motor"]
+
+
+def test_ensemble_critica_no_limite(monkeypatch):
+    import semantico
+
+    monkeypatch.setattr(semantico, "analisar", lambda texto: {
+        "score": -2.0, "gravidade": "CRÍTICA 🚨", "sentimento": "F",
+        "fatores": [], "motor": semantico.MOTOR,
+    })
+    lex = {"score": -2.0, "gravidade": "CRÍTICA 🚨", "sentimento": "X",
+           "fatores": [], "motor": "Léxico"}
+    assert semantico.ensemble("x", lex)["gravidade"] == "CRÍTICA 🚨"
+
+
+def test_ensemble_devolve_lexico_quando_semantico_indisponivel(monkeypatch):
+    import semantico
+
+    monkeypatch.setattr(semantico, "analisar", lambda texto: {
+        "score": 0.0, "gravidade": "NORMAL ✅", "sentimento": "Neutro/Fallback",
+        "fatores": [], "motor": f"{semantico.MOTOR} (indisponível)",
+    })
+    lex = {"score": -1.2, "gravidade": "MÉDIA ⚠️", "sentimento": "X",
+           "fatores": ["trava"], "motor": "Léxico"}
+    assert semantico.ensemble("x", lex) is lex
