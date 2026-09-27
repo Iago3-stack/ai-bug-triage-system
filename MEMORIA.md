@@ -65,7 +65,7 @@ sessão com decisões novas. Fica no repositório (pode commitar).
 
 ## Disco: material de experimento já removido (2026-09-27)
 - Apagado: cache HF do **brazembed** (417MB) + venv do benchmark (1,3GB) + cache HF do **BERTabaporu** (1,1GB) + `model.onnx` fp32 (514MB) + `.venv` da exportação em `~/Documentos/semantico_nlp/` (1,3GB) = **~4,6GB liberados**.
-- **Release `modelo-semantico-v1` removido do GitHub** (v3.4.0) e o motor `semantico.py` apagado do repo. Sobrou de propósito em `~/Documentos/semantico_nlp/modelo/onnx/`: `model_int8.onnx` (130MB) + tokenizer/configs — **última cópia do artefato**; recriá-lo exigiria refazer a exportação do BERTabaporu do zero (pesos do HF e venv de exportação já foram apagados).
+- **Release `modelo-semantico-v1` removido do GitHub** (v3.4.0), motor `semantico.py` apagado do repo e **a pasta `~/Documentos/semantico_nlp/` deletada por completo** (o `model_int8.onnx` de 130MB era a última cópia do artefato). ⚠️ Consequência: recriar o ONNX exigiria re-baixar o BERTabaporu do HF e refazer a exportação + quantização int8 do zero. Não recomeçar esse experimento.
 - O app não baixa nem cacheia modelo nenhum: é 100% léxico local (`triagem.py`), sem ONNX, sem `~/.cache/abt/`, sem dependência de rede.
 - `~/.cache/huggingface/` foi removido; se for preciso re-exportar o ONNX, o `transformers` re-baixa o BERTabaporu do HF.
 
