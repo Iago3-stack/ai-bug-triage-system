@@ -10,9 +10,9 @@ Casos ambíguos ("MÉDIA ou ALTA") aceitam qualquer um dos rótulos listados —
 isso existem duas métricas: tolerante (30 casos) e estrita (23 sem ambiguidade).
 
 Fica num módulo próprio (e não dentro de um harness) porque é a referência de
-qualquer motor novo: `avaliar_motores.py` (léxico x semântico) e
-`avaliar_embeddings.py` (brazembed x classificador simples) medem exatamente
-estes casos, com estas definições.
+qualquer motor novo: `avaliar_lexico.py` (o léxico de produção) e
+`avaliar_embeddings.py` (brazembed x classificadores simples, guardado como evidência
+do experimento descartado) medem exatamente estes casos, com estas definições.
 
 ⚠️ Estes 30 casos são sintéticos (texto de QA, não relato de cliente) — servem
 para filtrar candidatos, não para aprovar um motor. Ver `MEMORIA.md`.

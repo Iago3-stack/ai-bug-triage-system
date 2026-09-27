@@ -65,9 +65,16 @@ sessão com decisões novas. Fica no repositório (pode commitar).
 
 ## Disco: material de experimento já removido (2026-09-27)
 - Apagado: cache HF do **brazembed** (417MB) + venv do benchmark (1,3GB) + cache HF do **BERTabaporu** (1,1GB) + `model.onnx` fp32 (514MB) + `.venv` da exportação em `~/Documentos/semantico_nlp/` (1,3GB) = **~4,6GB liberados**.
-- **Sobrou de propósito** em `~/Documentos/semantico_nlp/modelo/onnx/`: `model_int8.onnx` (130MB) + `tokenizer.json` + `config.json`/`vocab.txt`/`*_config.json` — é a fonte do asset publicado no Release `modelo-semantico-v1` (URL fixada por tag em `semantico.py`).
-- Nenhum modelo é cacheado pelo app em produção: o ONNX é baixado do GitHub Release em `~/.cache/abt/` no 1º uso (e o motor semântico está fora do app desde o v3.2.0).
+- **Release `modelo-semantico-v1` removido do GitHub** (v3.4.0) e o motor `semantico.py` apagado do repo. Sobrou de propósito em `~/Documentos/semantico_nlp/modelo/onnx/`: `model_int8.onnx` (130MB) + tokenizer/configs — **última cópia do artefato**; recriá-lo exigiria refazer a exportação do BERTabaporu do zero (pesos do HF e venv de exportação já foram apagados).
+- O app não baixa nem cacheia modelo nenhum: é 100% léxico local (`triagem.py`), sem ONNX, sem `~/.cache/abt/`, sem dependência de rede.
 - `~/.cache/huggingface/` foi removido; se for preciso re-exportar o ONNX, o `transformers` re-baixa o BERTabaporu do HF.
+
+## Decisão: só léxico, evoluindo (v3.4.0)
+- **Saem do repo:** `semantico.py`, `test_semantico.py`, `requirements-semantico.txt`, o Release `modelo-semantico-v1` e o `avaliar_motores.py` (léxico x semântico x ensemble).
+- **Ficam:** `triagem.py` (o motor), **`avaliar_lexico.py`** (medição do léxico com score/fatores por erro + `--falhar-abaixo` como trava de regressão), `casos_qa.py` (ground truth) e `avaliar_embeddings.py` (evidência do benchmark negativo — só roda fora do app, sem dep no build).
+- **Por quê:** dois experimentos, mesma conclusão. v3.1.0 (BERTabaporu) escalava bug cosmético; v3.3.0 (brazembed + classificadores) deu 43,5% estrito zero-shot e 60,9% no melhor caso treinado, contra **95,7% do léxico** — e o tf-idf **sem transformer** empatou, provando que o gargalo é o dado, não o modelo. Severidade é impacto de negócio, não similaridade semântica.
+- **Como evoluir o léxico a partir de agora:** (1) rotular relatos reais pelo fluxo do v3.3.0, (2) `python3 avaliar_lexico.py` para ver os erros com o fator que disparou, (3) mexer em `triagem.py`, (4) rodar de novo + `pytest test_triagem.py` (tem 3 guardas de regressão) e `--falhar-abaixo 95`. Sem modelo, sem download, sem latência.
+- **Não reabrir** a conversa de encoder sem 100+ rótulos reais medidos por esse mesmo harness.
 
 ## Pendências (follow-ups)
 1. **PagBank**: aguardar resposta da homologação (~4 dias úteis). Ao liberar: revalidar `POST /orders` (201) + regenerar/trocar token de produção (sem colar no chat).

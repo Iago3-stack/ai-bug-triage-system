@@ -11,7 +11,7 @@ nova; o PATCH reescreve o objeto inteiro, mesmo padrão de `registrar_resolucao`
 O rótulo é a severidade REAL do problema, não o texto: quem rotulou já sabe.
 
 Leitura agregada (`carregar_rotulados`) é ferramenta do dono/admin: devolve os
-textos para o harness `avaliar_motores.py`; a UI do app só mostra contagem.
+textos para o harness `avaliar_lexico.py`; a UI do app só mostra contagem.
 """
 
 from datetime import datetime, timezone

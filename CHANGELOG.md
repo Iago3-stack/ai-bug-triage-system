@@ -4,7 +4,10 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
-## [Não lançado]
+## [v3.4.0] - 2026-09-27
+
+### Removido
+- **Experimento de NLP semântico sai do repositório (v3.4.0)** — decisão: **ficar só com o léxico, evoluindo**. O motor (`semantico.py`), seus 19 testes e o `requirements-semantico.txt` foram apagados, junto com o Release `modelo-semantico-v1` (135MB). O `avaliar_motores.py` (léxico x semântico x ensemble) virou **`avaliar_lexico.py`**, que mede só o léxico — que é o instrumento de trabalho para evoluí-lo: mostra o acerto por severidade prevista e, para cada erro, o **score e os fatores que dispararam** (é assim que se descobre que o caso #30 para em -1,95 por causa do padrão "página em branco"). Ganhou `--falhar-abaixo PCT`, que sai com código 1 se o acerto estrito cair abaixo do limite — dá para usar como trava ao mexer em `triagem.py`. Nenhuma mudança de comportamento no app: o semântico já estava fora desde o v3.2.0.
 
 ### Adicionado
 - **Benchmark local de embeddings + classificador simples (experimento, sem mudança no app)** — `avaliar_embeddings.py` roda **fora** do app (venv própria em `/tmp/opencode/venv-embed`, sem tocar no `.venv` nem no `requirements.txt`) e compara o `tardellirs/brazembed-pt-br` (BERT 12×768, mean pooling, MIT) com o léxico nos mesmos 30 casos e mesmas métricas de sempre. **Resultado:** léxico **96,7% / 95,7%** · protótipos (zero-shot) **53,3% / 43,5%** · 1-NN **66,7% / 60,9%** · logreg **56,7% / 47,8%** · TF-IDF+logreg **56,7% / 47,8%** · TF-IDF+centroide **53,3% / 39,1%** (tolerante/estrito; os últimos 4 em leave-one-out, logo não comparáveis ao léxico). **Nenhum encoder entra no app:** o melhor modelo treinado fica 30 pontos abaixo do léxico e o classificador **sem transformer** empata com o transformer — o gargalo é o dado (30 casos sintéticos, classe NORMAL com 4 exemplos), não o modelo. Confirmada a mesma patologia do v3.1.0 mesmo com mean pooling e treino em português: os protótipos de severidade ficam quase equidistantes de qualquer entrada (margem top1−top2 média 0,058) e o modelo superprediz CRÍTICA (16/30) — **severidade é impacto de negócio, não similaridade semântica**.

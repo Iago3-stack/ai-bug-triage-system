@@ -22,9 +22,8 @@ pillow==12.3.0
 # V3.0 — telemetria de produto (PostHog, server-side). Sem POSTHOG_API_KEY nos
 # Secrets/.env, tudo é no-op (nada enviado, zero custo). Host default EU (LGPD).
 posthog==7.60.0
-# V3.1 — experimento de NLP semântico (BERTabaporu ONNX int8, 135MB).
-# RETIRADO do app em v3.2.0: medido no histórico real, o motor escalava bug
-# cosmético para MÉDIA (7/39 textos) sem nenhum resgate. semantico.py e
-# avaliar_motores.py continuam no repo como experimento; para rodar local:
-#   pip install -r requirements-semantico.txt
+# O experimento de NLP semântico (BERTabaporu ONNX, v3.1.0) saiu do app em
+# v3.2.0 e foi REMOVIDO do repo em v3.4.0: no histórico real ele só escalava bug
+# cosmético, e o benchmark local do brazembed-pt-br deu 43,5% estrito contra
+# 95,7% do léxico. O app é 100% léxico local, sem modelo e sem download.
 numpy==2.5.3

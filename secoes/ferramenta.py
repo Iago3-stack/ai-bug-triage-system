@@ -578,8 +578,8 @@ def render():
                 # O motor triagem.py analisa léxico PT + padrões de negação,
                 # sem depender de internet nem de API de tradução.
                 # Triagem: 100% léxico local (determinístico, offline, instantâneo).
-                # O experimento de NLP semântico (semantico.py + avaliar_motores.py)
-                # fica no repo, mas fora do app: ver CHANGELOG v3.2.0.
+                # O experimento de NLP semântico foi medido e removido do repo
+                # (v3.2.0 no app, v3.4.0 no repo): ver CHANGELOG.
                 resultado = triagem.triar(descricao_bug)
                 gravidade = resultado["gravidade"]
                 sentimento = resultado["sentimento"]

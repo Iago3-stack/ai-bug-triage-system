@@ -3,7 +3,7 @@
 
 Compara o léxico de produção (zero-shot) com o `tardellirs/brazembed-pt-br`
 (BERT português, mean pooling) e com classificadores simples, nos mesmos casos
-e com as mesmas métricas de `avaliar_motores.py` (via `casos_qa.py`).
+e com as mesmas métricas de `avaliar_lexico.py` (via `casos_qa.py`).
 
 Estratégias
     léxico        triagem.triar — referência de produção, não treina nada
@@ -94,7 +94,7 @@ def _matriz(frases: list[str]) -> np.ndarray:
     )
 
 
-# --- métricas (idênticas às do avaliar_motores.py) ---------------------------
+# --- métricas (idênticas às do avaliar_lexico.py) ----------------------------
 def medir(previsoes: list[str]) -> tuple[int, int]:
     """(acertos tolerantes nos 30, acertos estritos nos 23 sem ambiguidade)."""
     tol = sum(1 for p, (_, esp) in zip(previsoes, CASOS) if p in esp)

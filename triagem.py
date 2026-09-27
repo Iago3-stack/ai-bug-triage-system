@@ -106,7 +106,7 @@ PADROES_LEXICO = [
     # "débito ... em dobro / veio em dobro / duplo" — tolera verbos no meio.
     (re.compile(r"\bd[ée]bit[oa]\b[^.;\n]{0,30}\b(?:em\s+dobro|dobro|duplo|em\s+duplo)\b", re.UNICODE), -1.8),
     # --- v3.2.0: lacunas de vocabulário apontadas pela métrica (30 relatos
-    # rotulados em avaliar_motores.py). São padrões GERAIS de classe de bug,
+    # rotulados em avaliar_lexico.py). São padrões GERAIS de classe de bug,
     # não frases do corpus. Cada padrão soma UMA vez, como os de cima.
     # Instalação/atualização que não conclui.
     (re.compile(r"\bn[ãa]o\s+(?:instala|instala(?:u|ram)|instalou|atualizou)\b"
