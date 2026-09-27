@@ -23,9 +23,16 @@ except Exception:  # pragma: no cover - ambiente sem as libs
 
 MOTOR = "Semântico BERTabaporu (ONNX int8, local)"
 
-_BASE_URL = "https://github.com/Iago3-stack/ai-bug-triage-system/releases/latest/download"
-_MODELO_URL = _BASE_URL + "/model_int8.onnx"
-_TOKENIZER_URL = _BASE_URL + "/tokenizer.json"
+_TAG = "modelo-semantico-v1"
+_BASE_URL = f"https://github.com/Iago3-stack/ai-bug-triage-system/releases/download/{_TAG}"
+# nome -> (url, tamanho exato em bytes). O tamanho é conferido antes de instalar
+# o arquivo: download truncado/corrompido é apagado e o app fica no léxico.
+_ARQUIVOS = {
+    "model_int8.onnx": (_BASE_URL + "/model_int8.onnx", 135_328_214),
+    "tokenizer.json": (_BASE_URL + "/tokenizer.json", 1_519_999),
+}
+_MODELO_URL = _ARQUIVOS["model_int8.onnx"][0]
+_TOKENIZER_URL = _ARQUIVOS["tokenizer.json"][0]
 
 _CACHE_DIR = Path(os.path.expanduser("~/.cache/abt"))
 _DEV_DIR = Path(os.path.expanduser("~/Documentos/semantico_nlp/modelo/onnx"))
@@ -65,16 +72,28 @@ def _dir_modelo() -> Path:
     return _CACHE_DIR
 
 
-def _baixar(cache_dir: Path) -> None:
-    """Baixa model_int8.onnx + tokenizer.json do Release para o cache (uma vez)."""
+def _baixar(cache_dir: Path) -> bool:
+    """Baixa model_int8.onnx + tokenizer.json do Release (tag fixada) p/ o cache.
+
+    Só instala o arquivo se o tamanho bater exatamente com o do Release; um
+    download truncado é apagado e devolve False (o chamador segue no léxico).
+    """
     cache_dir.mkdir(parents=True, exist_ok=True)
-    for nome, url in (("model_int8.onnx", _MODELO_URL), ("tokenizer.json", _TOKENIZER_URL)):
+    for nome, (url, esperado) in _ARQUIVOS.items():
         destino = cache_dir / nome
-        if destino.exists() and destino.stat().st_size > 0:
+        if destino.exists() and destino.stat().st_size == esperado:
             continue
         temporario = destino.with_suffix(destino.suffix + ".part")
-        urllib.request.urlretrieve(url, temporario)
-        temporario.replace(destino)
+        try:
+            urllib.request.urlretrieve(url, temporario)
+            if temporario.stat().st_size != esperado:
+                temporario.unlink(missing_ok=True)
+                return False
+            temporario.replace(destino)
+        except Exception:
+            temporario.unlink(missing_ok=True)
+            raise
+    return True
 
 
 def modelo_ja_pronto() -> bool:
@@ -94,7 +113,7 @@ def garantir_modelo() -> bool:
             return True
         pasta = _dir_modelo()
         if pasta == _CACHE_DIR:
-            _baixar(_CACHE_DIR)
+            _baixar(_CACHE_DIR)  # valida o tamanho e apaga o que vier truncado
             return modelo_ja_pronto()
         return False
     except Exception:

@@ -1,7 +1,10 @@
 # Testes do motor semântico (semantico.py). Herméticos: nunca tocam rede nem
 # carregam o ONNX real (135MB) — simulam dependências ausentes, caminhos e cache.
 
+from pathlib import Path
+
 import numpy as np
+import pytest
 
 
 # --- Fallback sem dependências ----------------------------------------------
@@ -185,3 +188,99 @@ def test_ensemble_devolve_lexico_quando_semantico_indisponivel(monkeypatch):
     lex = {"score": -1.2, "gravidade": "MÉDIA ⚠️", "sentimento": "X",
            "fatores": ["trava"], "motor": "Léxico"}
     assert semantico.ensemble("x", lex) is lex
+
+
+def test_ensemble_fallback_no_caminho_real_sem_libs(monkeypatch):
+    """Fallback testado no caminho de verdade: sem onnxruntime instalado.
+
+    analisar() devolve o marcador "(indisponível)" e o ensemble devolve o
+    léxico intacto — é o que mantém o Premium funcionando se o modelo ou as
+    libs quebrarem na nuvem.
+    """
+    import semantico
+
+    monkeypatch.setattr(semantico, "ort", None)
+    monkeypatch.setattr(semantico, "_ORT_SESSION", None)
+    monkeypatch.setattr(semantico, "_VETORES_PROTOTIPOS", None)
+    assert semantico.analisar("qualquer relato")["motor"].endswith("(indisponível)")
+
+    lex = {"score": -1.2, "gravidade": "MÉDIA ⚠️", "sentimento": "X",
+           "fatores": ["trava"], "motor": "Léxico"}
+    assert semantico.ensemble("qualquer relato", lex) is lex
+
+
+# --- download do Release: tag fixada + tamanho exato ---------------------------
+def test_url_do_release_fixa_por_tag():
+    import semantico
+
+    for nome, (url, tamanho) in semantico._ARQUIVOS.items():
+        assert f"/releases/download/{semantico._TAG}/" in url
+        assert "/latest/" not in url  # latest poderia apontar p/ outro release
+        assert url.endswith(f"/{nome}")
+        assert tamanho > 0
+
+
+def test_baixar_instalar_e_reusar_arquivo_do_tamanho_certo(monkeypatch, tmp_path):
+    import semantico
+
+    baixados = []
+
+    def _fake_urlretrieve(url, destino):
+        baixados.append(url)
+        Path(destino).write_bytes(b"x" * 10)
+
+    monkeypatch.setattr(semantico, "_ARQUIVOS", {"modelo.onnx": ("http://x/modelo.onnx", 10)})
+    monkeypatch.setattr(semantico.urllib.request, "urlretrieve", _fake_urlretrieve)
+
+    assert semantico._baixar(tmp_path) is True
+    assert (tmp_path / "modelo.onnx").read_bytes() == b"x" * 10
+    assert semantico._baixar(tmp_path) is True  # já está no tamanho: não rebaixa
+    assert len(baixados) == 1
+
+
+def test_baixar_rejeita_tamanho_divergente(monkeypatch, tmp_path):
+    """Download truncado não pode ser instalado: some e devolve False."""
+    import semantico
+
+    def _fake_urlretrieve(url, destino):
+        Path(destino).write_bytes(b"x" * 3)  # tamanho errado
+
+    monkeypatch.setattr(semantico, "_ARQUIVOS", {"modelo.onnx": ("http://x/modelo.onnx", 10)})
+    monkeypatch.setattr(semantico.urllib.request, "urlretrieve", _fake_urlretrieve)
+
+    assert semantico._baixar(tmp_path) is False
+    assert not (tmp_path / "modelo.onnx").exists()
+    assert not (tmp_path / "modelo.onnx.part").exists()
+
+
+def test_baixar_limpa_parcial_quando_rede_quebra(monkeypatch, tmp_path):
+    import semantico
+
+    def _fake_urlretrieve(url, destino):
+        Path(destino).write_bytes(b"x" * 5)  # began a escrever...
+        raise OSError("conexão caiu")
+
+    monkeypatch.setattr(semantico, "_ARQUIVOS", {"modelo.onnx": ("http://x/modelo.onnx", 10)})
+    monkeypatch.setattr(semantico.urllib.request, "urlretrieve", _fake_urlretrieve)
+
+    with pytest.raises(OSError):
+        semantico._baixar(tmp_path)
+    assert not (tmp_path / "modelo.onnx.part").exists()
+    assert not (tmp_path / "modelo.onnx").exists()
+
+
+def test_garantir_modelo_cache_nao_instala_arquivo_truncado(monkeypatch, tmp_path):
+    """Caminho completo: download truncado -> app fica no léxico (retorna False)."""
+    import semantico
+
+    def _fake_urlretrieve(url, destino):
+        Path(destino).write_bytes(b"x" * 7)
+
+    monkeypatch.delenv("SEMANTICO_DIR", raising=False)
+    monkeypatch.setattr(semantico, "_DEV_DIR", tmp_path / "inexistente")
+    monkeypatch.setattr(semantico, "_CACHE_DIR", tmp_path)
+    monkeypatch.setattr(semantico, "_ARQUIVOS", {"modelo.onnx": ("http://x/modelo.onnx", 10)})
+    monkeypatch.setattr(semantico.urllib.request, "urlretrieve", _fake_urlretrieve)
+
+    assert semantico.garantir_modelo() is False
+    assert not (tmp_path / "modelo.onnx").exists()
