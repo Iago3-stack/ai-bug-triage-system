@@ -8,9 +8,13 @@ updates:
       time: "08:00"
       timezone: "America/Sao_Paulo"
     open-pull-requests-limit: 10
+    # Os labels precisam existir no repo, senão o Dependabot comenta em TODO
+    # PR reclamando ("The following labels could not be found") e nenhum label
+    # é aplicado. O repo usa labels em inglês: `dependencies` já existe,
+    # `security` foi criado junto com esta correção.
     labels:
-      - dependências
-      - segurança
+      - dependencies
+      - security
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
