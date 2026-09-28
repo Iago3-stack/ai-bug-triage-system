@@ -216,9 +216,9 @@ def test_contador_so_faz_fetch_local():
     # Badge por componente: só acessa componentes.json e mostra nome+estado por comp
     assert "v3/components.json" in _HTML and 'id="rotulo-detalhe"' in _HTML
     assert "OPERATIONAL" in _HTML
-    # Página pública de histórico de incidentes (legível) linkada no rodapé
-    assert "https://ai-bug-triage.instatus.com/history" in _HTML
-    assert "https://ai-bug-triage.instatus.com/history" in _ARTIGO
+    # Página pública de status (status dos componentes + incidentes na mesma tela) no rodapé
+    assert "https://ai-bug-triage.instatus.com/" in _HTML
+    assert "https://ai-bug-triage.instatus.com/" in _ARTIGO
 
 
 def test_metricas_do_produto_presentes():
