@@ -86,6 +86,13 @@ sessão com decisões novas. Fica no repositório (pode commitar).
 - **Export:** `avaliacao.base_para_csv()` + `st.download_button` para análise fora do app.
 - **Testado** com `streamlit.testing.v1.AppTest` (mock de `nuvem_supabase.requests`): render sem exceção, dedup exibindo `×2`, matriz de confusão correta, 1 clique → 2 PATCH (`id=eq.a`, `id=eq.b`) e atalhos `2`/`0`/`x` com o efeito esperado. 9 testes herméticos novos (706 no total).
 
+### Correções de tema da tela (v3.5.1)
+- **Regra da casa para cor:** nunca `style="color:#xxx"` inline em painel. Vai para `ui_tema.py` como classe, com variante por tema. A tela de rotulagem nasceu com `#e2e8f0`/`#94a3b8` fixos e o texto ficou invisível no tema claro — erro já cometido antes no app, não repetir.
+- **Botão sem hover:** o `:hover`/`:active`/`:focus` **repete a mesma cor de fundo** do estado normal e zera `filter`/`box-shadow`. Só isso desliga o hover nativo do Streamlit (o `.marca-jira` é o exemplo canônico).
+- **Marcador precisa estar DENTRO da coluna:** o CSS casa por `[data-testid="stColumn"]:has(.marca-rot-*)`, então a `_marca()` tem de sair dentro do `with coluna:`. Fora dela a regra não pega e o botão volta ao estilo nativo **sem nenhum erro** — falha silenciosa.
+- **Contraste:** tons -600 com texto branco reprovam em WCAG AA (`#d97706` 3,19:1, `#059669` 3,77:1). Usar os -700 (`#b45309` 5,02:1, `#047857` 5,48:1, `#dc2626` 4,83:1, `#475569` 7,58:1). `test_contraste()` em `test_painel_dono.py` trava isso.
+- **Armadilha do `with`:** ao converter `coluna.button(...)` para `with coluna:`, conferir a indentação do `st.rerun()` que vem logo abaixo — dentro do `with` ele vira incondicional e trava a página em loop de rerun. O teste de render com `AppTest` pegou isso; `pytest` puro não pega.
+
 ## Pendências (follow-ups)
 1. **PagBank**: aguardar resposta da homologação (~4 dias úteis). Ao liberar: revalidar `POST /orders` (201) + regenerar/trocar token de produção (sem colar no chat).
 2. ~~**Rota B (segurança Supabase)**~~ ✅ concluída (chaves nos 3 ambientes, deploy no ar, `fechar_anon_rest.sql` aplicado, auditado).

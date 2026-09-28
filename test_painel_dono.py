@@ -474,3 +474,69 @@ def test_teste_disponivel_true_quando_coluna_existe(monkeypatch):
 def test_teste_disponivel_sem_config_false(monkeypatch):
     monkeypatch.setattr(nuvem_supabase, "_config", lambda: None)
     assert nuvem_supabase.teste_disponivel() is False
+
+# ─── Rótulo de severidade: contrato de tema claro/escuro (v3.5.0) ────────────
+# A tela nasceu com cor CLARA fixa (pensada só para o tema escuro) e o texto
+# sumia no tema claro; os botões ainda herdavam o hover nativo do Streamlit.
+# Estes testes existem para ninguém reintroduzir os dois defeitos.
+
+import re  # noqa: E402  (no topo do arquivo, junto dos demais imports)
+
+import ui_tema  # noqa: E402
+from secoes import painel_dono  # noqa: E402
+
+
+def _contraste(cor: str, fundo: str = "#ffffff") -> float:
+    """Razão de contraste WCAG entre duas cores hex."""
+    def _l(h):
+        canais = [int(h[i:i + 2], 16) / 255 for i in (1, 3, 5)]
+        canais = [c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4 for c in canais]
+        return 0.2126 * canais[0] + 0.7152 * canais[1] + 0.0722 * canais[2]
+    a, b = _l(cor), _l(fundo)
+    return (max(a, b) + 0.05) / (min(a, b) + 0.05)
+
+
+def test_cartao_nao_usa_cor_fixa():
+    html = painel_dono._cartao("app caiu")
+    assert 'class="rot-cartao"' in html
+    assert "color:#" not in html  # cor fixa = invisível no tema claro
+
+
+def test_css_da_rotulagem_tem_as_duas_variantes_de_tema():
+    css = ui_tema._ROTULAGEM_CSS
+    for seletor in (".rot-cartao", ".rot-topo", ".rot-nota"):
+        assert f'body:has([data-st-tema="escuro"]) {seletor}' in css, (
+            f"{seletor} não tem variante escura: some quando o tema é claro"
+        )
+        assert seletor in css
+
+
+def test_botoes_da_fila_sao_solidos_e_nao_mudam_no_hover():
+    css = ui_tema._ROTULAGEM_CSS
+    for marca, fundo in (("crit", "#dc2626"), ("med", "#b45309"),
+                         ("norm", "#047857"), ("pular", "#475569")):
+        base = f"[data-testid=\"stColumn\"]:has(.marca-rot-{marca}) [data-testid=\"stButton\"] button {{"
+        normal = css.split(base)[1].split("}")[0]
+        assert f"background:{fundo} !important" in normal
+        assert "color:#ffffff !important" in normal
+        # O truque do app para desligar o hover nativo é repetir a MESMA cor
+        # de fundo na regra :hover — se sumir, o botão volta a mudar de cor.
+        hover = f".marca-rot-{marca}) [data-testid=\"stButton\"] button:hover"
+        assert hover in css
+        assert f"background:{fundo} !important" in css.split(hover)[1].split("}")[0]
+
+
+def test_cores_dos_botoes_passam_contraste_aa_com_texto_branco():
+    # Tons -600 reprovam: #d97706 = 3,19:1 e #059669 = 3,77:1 (mínimo AA: 4,5).
+    for fundo in ("#dc2626", "#b45309", "#047857", "#475569", "#334155"):
+        assert _contraste(fundo) >= 4.5, f"{fundo} reprova em contraste AA"
+
+
+def test_toda_marca_usada_no_painel_existe_no_css():
+    """Trava o modo de falha real: marca no código com nome diferente do CSS
+    deixa o botão sem estilo nenhum, sem erro nenhum."""
+    css = ui_tema._ROTULAGEM_CSS
+    usadas = set(re.findall(r"marca-rot-\w+", __import__("inspect").getsource(painel_dono)))
+    assert usadas, "esperava marcas de rotulamento no painel"
+    for marca in usadas:
+        assert marca in css, f"{marca} é usada no painel mas não existe no CSS"

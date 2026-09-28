@@ -284,12 +284,10 @@ def render():
 
 
 # ─── Rótulo de severidade (ground truth) ─────────────────────────────────────
-def _cartao(texto: str, rotulo: str, cor: str) -> str:
-    return (
-        f'<div style="border:1px solid {cor}44;border-radius:12px;background:{cor}0f;'
-        f'padding:10px 12px;margin:4px 0">'
-        f'<div style="color:#e2e8f0;font-size:14px;line-height:1.5">{texto}</div></div>'
-    )
+def _cartao(texto: str) -> str:
+    """Card do relato. As cores vivem em `.rot-cartao` (ui_tema._ROTULAGEM_CSS),
+    que tem uma variante por tema — cor fixa aqui sumia no tema claro."""
+    return f'<div class="rot-cartao"><div>{texto}</div></div>'
 
 
 def _metricas_de_concordancia(rotulados: list[dict]) -> None:
@@ -334,8 +332,7 @@ def _metricas_de_concordancia(rotulados: list[dict]) -> None:
         + (" Subir sempre é sinal de que a IA empurra para CRÍTICA." if subiu > caiu else "")
     )
     st.markdown(
-        "<div style='font-size:12px;color:#94a3b8;margin-top:6px'>"
-        "linhas = o que o <b>léxico</b> previu · "
+        '<div class="rot-nota">linhas = o que o <b>léxico</b> previu · '
         "colunas = o <b>seu rótulo</b></div>",
         unsafe_allow_html=True,
     )
@@ -381,6 +378,7 @@ def _secao_rotulagem() -> None:
     if rotulados:
         with st.expander("📈 Concordância léxico × seu rótulo", expanded=True):
             _metricas_de_concordancia(rotulados)
+        _marca("marca-rot-dl")
         st.download_button(
             "⬇️ Baixar base rotulada (CSV)", avaliacao.base_para_csv(),
             file_name=f"base_rotulada_{len(rotulados)}.csv", mime="text/csv",
@@ -404,13 +402,12 @@ def _secao_rotulagem() -> None:
         previa = avaliacao.normalizar(item.get("prioridade") or item.get("gravidade")) or "—"
         copias = f" · ×{item['repeticoes']} no histórico" if item.get("repeticoes", 1) > 1 else ""
         st.markdown(
-            f'<div style="color:#94a3b8;font-size:11.5px;margin:10px 0 2px">'
-            f'léxico: <b style="color:#cbd5e1">{item.get("gravidade") or "—"}</b> · '
-            f'visto pelo usuário: <b style="color:#c4b5fd">{previa}</b>{copias}</div>',
+            f'<div class="rot-topo">'
+            f'léxico: <b>{item.get("gravidade") or "—"}</b> · '
+            f'visto pelo usuário: <b class="rot-visto">{previa}</b>{copias}</div>',
             unsafe_allow_html=True,
         )
-        st.markdown(_cartao(item["descricao"][:600], item.get("rotulo", ""), "#7c3aed"),
-                    unsafe_allow_html=True)
+        st.markdown(_cartao(item["descricao"][:600]), unsafe_allow_html=True)
 
         comentario = st.text_area(
             "Por que essa severidade? (opcional)", key=f"rot_com_{item['id']}",
@@ -418,24 +415,34 @@ def _secao_rotulagem() -> None:
         )
         b1, b2, b3, b4 = st.columns(4)
         acoes = (
-            (b1, "🚨 CRÍTICA", "CRÍTICA", "primary"),
-            (b2, "⚠️ MÉDIA", "MÉDIA", "secondary"),
-            (b3, "✅ NORMAL", "NORMAL", "secondary"),
+            (b1, "🚨 CRÍTICA", "CRÍTICA", "marca-rot-crit", "primary"),
+            (b2, "⚠️ MÉDIA", "MÉDIA", "marca-rot-med", "secondary"),
+            (b3, "✅ NORMAL", "NORMAL", "marca-rot-norm", "secondary"),
         )
-        for coluna, titulo, rotulo, tipo in acoes:
-            if coluna.button(titulo, key=f"rot_{item['id']}_{rotulo}",
+        for coluna, titulo, rotulo, marca, tipo in acoes:
+            # A marca precisa sair DEPOIS de `with coluna:`: o CSS casa por
+            # [data-testid="stColumn"]:has(.marca-rot-*), ou seja, o marcador
+            # tem de ser filho da coluna. Fora dela a regra não pega e o botão
+            # volta ao estilo nativo (com hover).
+            with coluna:
+                _marca(marca)
+                if st.button(titulo, key=f"rot_{item['id']}_{rotulo}",
                              use_container_width=True, type=tipo):
-                _registrar_grupo(item, rotulo, comentario, autor)
-        if b4.button("⏭️ Pular", key=f"rot_{item['id']}_skip", use_container_width=True):
-            st.session_state["_rot_pular"] = item["id"]
-            st.rerun()
+                    _registrar_grupo(item, rotulo, comentario, autor)
+        with b4:
+            _marca("marca-rot-pular")
+            if st.button("⏭️ Pular", key=f"rot_{item['id']}_skip", use_container_width=True):
+                st.session_state["_rot_pular"] = item["id"]
+                st.rerun()
 
     mais = len(avaliacao.carregar_pendentes(limite=_PAGINA + 1)) > _PAGINA
     if mais:
+        _marca("marca-rot-pag")
         if st.button(f"Ver mais {_PAGINA} →", key="rot_mais", use_container_width=True):
             st.session_state["_rot_offset"] = st.session_state.get("_rot_offset", 0) + _PAGINA
             st.rerun()
     elif st.session_state.get("_rot_offset"):
+        _marca("marca-rot-pag")
         st.button("⬅️ Voltar ao início", key="rot_voltar", use_container_width=True,
                   on_click=lambda: st.session_state.__setitem__("_rot_offset", 0))
 

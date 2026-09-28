@@ -614,6 +614,74 @@ _PROVID_CSS = """
 </style>
 """
 
+_ROTULAGEM_CSS = """
+<style>
+    /* ── Tela de rótulo de severidade (painel do dono) ──
+       Duas armadilhas que o resto do app já resolve e esta tela repetia:
+       1) cor CLARA fixa (pensada só para o escuro) some no tema claro — o card
+          ficava quase branco sobre fundo branco;
+       2) botão sem `:hover` repetindo a MESMA cor continua com o hover nativo
+          do Streamlit, que troca a cor ao passar o mouse.
+       Por isso as cores vivem aqui, em classe, com uma variante por tema — e
+       não em style="..." dentro do painel. */
+    .rot-topo { font-size:11.5px; margin:10px 0 2px; color:#475569 !important; }
+    .rot-topo b { color:#0f172a !important; }
+    .rot-topo .rot-visto { color:#6d28d9 !important; }
+    body:has([data-st-tema="escuro"]) .rot-topo { color:#94a3b8 !important; }
+    body:has([data-st-tema="escuro"]) .rot-topo b { color:#e2e8f0 !important; }
+    body:has([data-st-tema="escuro"]) .rot-topo .rot-visto { color:#c4b5fd !important; }
+
+    .rot-cartao { border-radius:12px; padding:10px 12px; margin:4px 0; font-size:14px;
+        line-height:1.5; color:#0f172a !important;
+        background:rgba(124,58,237,.06) !important; border:1px solid rgba(124,58,237,.32) !important; }
+    .rot-cartao div { color:inherit !important; }
+    body:has([data-st-tema="escuro"]) .rot-cartao { color:#e5e7eb !important;
+        background:rgba(124,58,237,.16) !important; border-color:rgba(167,139,250,.38) !important; }
+
+    .rot-nota { font-size:12px; margin-top:6px; color:#64748b !important; }
+    .rot-nota b { color:#0f172a !important; }
+    body:has([data-st-tema="escuro"]) .rot-nota { color:#94a3b8 !important; }
+    body:has([data-st-tema="escuro"]) .rot-nota b { color:#e2e8f0 !important; }
+
+    /* Botões com cor SÓLIDA e sem mudança no hover: o `:hover` (e `:active`/
+    `:focus`) repete a MESMA cor — é assim que o app desliga o hover nativo
+    do Streamlit. Tons -700 porque com texto branco os -600 reprovam em
+    contraste AA (#d97706 = 3,19:1 e #059669 = 3,77:1; mínimo 4,5:1). */
+    [data-testid="stColumn"]:has(.marca-rot-crit) [data-testid="stButton"] button { background:#dc2626 !important; color:#ffffff !important; border:none !important; font-weight:700 !important; }
+    [data-testid="stColumn"]:has(.marca-rot-crit) [data-testid="stButton"] button:hover,
+    [data-testid="stColumn"]:has(.marca-rot-crit) [data-testid="stButton"] button:active,
+    [data-testid="stColumn"]:has(.marca-rot-crit) [data-testid="stButton"] button:focus { background:#dc2626 !important; color:#ffffff !important; filter:none !important; box-shadow:none !important; }
+
+    [data-testid="stColumn"]:has(.marca-rot-med) [data-testid="stButton"] button { background:#b45309 !important; color:#ffffff !important; border:none !important; font-weight:700 !important; }
+    [data-testid="stColumn"]:has(.marca-rot-med) [data-testid="stButton"] button:hover,
+    [data-testid="stColumn"]:has(.marca-rot-med) [data-testid="stButton"] button:active,
+    [data-testid="stColumn"]:has(.marca-rot-med) [data-testid="stButton"] button:focus { background:#b45309 !important; color:#ffffff !important; filter:none !important; box-shadow:none !important; }
+
+    [data-testid="stColumn"]:has(.marca-rot-norm) [data-testid="stButton"] button { background:#047857 !important; color:#ffffff !important; border:none !important; font-weight:700 !important; }
+    [data-testid="stColumn"]:has(.marca-rot-norm) [data-testid="stButton"] button:hover,
+    [data-testid="stColumn"]:has(.marca-rot-norm) [data-testid="stButton"] button:active,
+    [data-testid="stColumn"]:has(.marca-rot-norm) [data-testid="stButton"] button:focus { background:#047857 !important; color:#ffffff !important; filter:none !important; box-shadow:none !important; }
+
+    [data-testid="stColumn"]:has(.marca-rot-pular) [data-testid="stButton"] button { background:#475569 !important; color:#ffffff !important; border:none !important; font-weight:700 !important; }
+    [data-testid="stColumn"]:has(.marca-rot-pular) [data-testid="stButton"] button:hover,
+    [data-testid="stColumn"]:has(.marca-rot-pular) [data-testid="stButton"] button:active,
+    [data-testid="stColumn"]:has(.marca-rot-pular) [data-testid="stButton"] button:focus { background:#475569 !important; color:#ffffff !important; filter:none !important; box-shadow:none !important; }
+
+    /* Botões auxiliares da fila (export CSV, paginação): mesmos critérios —
+       sólido e sem hover. O marcador fica no element container IRMÃO do botão. */
+    [data-testid="stElementContainer"]:has(.marca-rot-dl) + [data-testid="stElementContainer"] [data-testid="stDownloadButton"] button,
+    [data-testid="stElementContainer"]:has(.marca-rot-pag) + [data-testid="stElementContainer"] [data-testid="stButton"] button {
+        background:#334155 !important; color:#ffffff !important; border:none !important;
+        font-weight:700 !important; }
+    [data-testid="stElementContainer"]:has(.marca-rot-dl) + [data-testid="stElementContainer"] [data-testid="stDownloadButton"] button:hover,
+    [data-testid="stElementContainer"]:has(.marca-rot-dl) + [data-testid="stElementContainer"] [data-testid="stDownloadButton"] button:focus,
+    [data-testid="stElementContainer"]:has(.marca-rot-pag) + [data-testid="stElementContainer"] [data-testid="stButton"] button:hover,
+    [data-testid="stElementContainer"]:has(.marca-rot-pag) + [data-testid="stElementContainer"] [data-testid="stButton"] button:focus {
+        background:#334155 !important; color:#ffffff !important;
+        filter:none !important; box-shadow:none !important; }
+</style>
+"""
+
 # Não usamos mais um bootstrap JS de tema. O antigo injetava/removia o marcador
 # [data-st-tema] no <body> (DOM gerenciado pelo React do Streamlit) e quebrava a
 # reconciliação do React:
@@ -643,5 +711,6 @@ def aplicar_css():
     st.markdown(_BASE_CSS, unsafe_allow_html=True)
     st.markdown(_TEMA_CSS, unsafe_allow_html=True)
     st.markdown(_PROVID_CSS, unsafe_allow_html=True)
+    st.markdown(_ROTULAGEM_CSS, unsafe_allow_html=True)
     if tema_atual() == "escuro":
         st.markdown('<div data-st-tema="escuro" style="display:none"></div>', unsafe_allow_html=True)

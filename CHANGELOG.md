@@ -4,6 +4,14 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v3.5.1] - 2026-09-27
+
+### Corrigido
+- **Texto da tela de rótulo sumia no tema claro** — os cards e a linha de cabeçalho da fila nasceram com cor clara fixa (`#e2e8f0`, `#94a3b8`, `#cbd5e1`), pensada só para o tema escuro: no tema claro o texto ficava quase branco sobre fundo branco, com cara de "brilho por cima". As cores foram para `ui_tema._ROTULAGEM_CSS`, em classe (`.rot-cartao`, `.rot-topo`, `.rot-nota`) com variante por tema, seguindo a convenção do resto do app (`body:has([data-st-tema="escuro"])`) em vez de `style="..."` inline no painel.
+- **Botões da fila com hover colorido no tema escuro** — os 4 botões de severidade herdavam o hover nativo do Streamlit, que troca a cor ao passar o mouse. Agora são sólidos em ambos os temas e o `:hover`/`:active`/`:focus` repete a mesma cor de fundo (é o truque que o app já usa em `.marca-jira`). Cores escolhidas por contraste: os tons que o app usa em outros botões **reprovam** em WCAG AA com texto branco (`#d97706` = 3,19:1 e `#059669` = 3,77:1), então foram para as variantes escuras `#b45309` (5,02:1) e `#047857` (5,48:1). Também knocking out `filter`/`box-shadow` no hover, e o export de CSV e a paginação receberam o mesmo tratamento.
+- **Loop infinito de rerun na fila (achado no teste de render)** — o `st.rerun()` do botão "Pular" tinha entrado dentro do `with` da coluna e passava a rodar a cada item, a cada render, travando a página. A marca de CSS também estava sendo emitida fora da coluna, o que faria a regra `stColumn:has(.marca-rot-*)` não casar e o botão voltar ao estilo nativo sem nenhum erro aparente. Ambos fixados e verificados com `AppTest` (marcador dentro da coluna, render e clique ok).
+- **5 testes de contrato de tema** em `test_painel_dono.py` travando os três defeitos: cor fixa no card, ausência de variante escura nas classes e botão que volta a mudar de cor no hover — mais um teste que garante que toda `marca-rot-*` usada no painel exista no CSS (o modo de falha silencioso) e um que valida o contraste AA das cores de botão. 711 testes, todos passando.
+
 ## [v3.5.0] - 2026-09-27
 
 ### Adicionado
