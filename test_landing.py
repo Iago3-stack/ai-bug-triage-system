@@ -195,21 +195,30 @@ def test_contador_triagens_no_hero():
 
 
 def test_contador_so_faz_fetch_local():
-    """Fetches da landing: apenas stats.json local + summary.json do instatus.
+    """Fetches da landing: apenas stats.json local + endpoints públicos do instatus.
 
-    O único endpoint externo permitido é a página pública de status (URL fixa do
-    serviço, sem chave nenhuma) — garante que NENHUM outro fetch externo entre.
-    Vale para a index e para o artigo (badge do rodapé).
+    Endpoints externos permitidos: summary.json (estado geral) e
+    v3/components.json (estado por componente) da página pública de status
+    (URL fixa do serviço, CORS aberto, sem chave nenhuma) — garante que NENHUM
+    outro fetch externo entre. Vale para a index e para o artigo.
     """
     ocorrencias = re.findall(r"fetch\(\s*['\"]([^'\"]+)['\"]", _HTML)
     assert ocorrencias == [
         "stats.json",
         "https://ai-bug-triage.instatus.com/summary.json",
+        "https://ai-bug-triage.instatus.com/v3/components.json",
     ], f"fetch inesperado: {ocorrencias}"
     artigo = re.findall(r"fetch\(\s*['\"]([^'\"]+)['\"]", _ARTIGO)
     assert artigo == [
         "https://ai-bug-triage.instatus.com/summary.json",
+        "https://ai-bug-triage.instatus.com/v3/components.json",
     ], f"fetch inesperado no artigo: {artigo}"
+    # Badge por componente: só acessa componentes.json e mostra nome+estado por comp
+    assert "v3/components.json" in _HTML and 'id="rotulo-detalhe"' in _HTML
+    assert "OPERATIONAL" in _HTML
+    # Feed público de incidentes (grátis) linkado no rodapé
+    assert "https://ai-bug-triage.instatus.com/feed" in _HTML
+    assert "https://ai-bug-triage.instatus.com/feed" in _ARTIGO
 
 
 def test_metricas_do_produto_presentes():
