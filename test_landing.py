@@ -59,7 +59,9 @@ def test_preco_exibido():
 
 
 def test_links_legais():
-    assert f"{APP_URL}legal?aba=termos" in _HTML
+    # Deep-link para a página Legal: aponta para a RAIZ com ?pag=legal (o
+    # Streamlit Cloud derruba subrotas como /legal na primeira carga).
+    assert f"{APP_URL}?pag=legal&amp;aba=termos" in _HTML
     assert "Termos &amp; Privacidade" in _HTML
     # Links de Termos e Privacidade unificados em um só (a página tem as abas).
     assert '<a href="https://ai-bug-triage-system-d6vigycbjt4qxez2wrvsxf.streamlit.app/legal?aba=privacidade"' not in _HTML

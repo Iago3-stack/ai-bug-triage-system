@@ -4,6 +4,15 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v3.5.2] - 2026-09-28
+
+### Corrigido
+- **Links externos de "Termos & Privacidade" abriam o Início do app** — a landing e o rodapé da status page apontavam para `legal?aba=termos`, mas o Streamlit Cloud, na primeira carga, redireciona qualquer subrota (`/legal`, `/triagem`) para a raiz `/`: quem clicava caía na página principal, não nos Termos. Os links agora apontam para a **raiz com `?pag=legal&aba=termos|privacidade`** (que sobrevive ao cold-start), e o `home.py` navega sozinho via `st.switch_page` para a página Legal já na aba pedida — mesmo caminho confiável dos botões do rodapé internos. O rodapé da status page ganhou link de **Privacidade** separado do de Termos, e a página de status como um todo manteve o `language: pt` e o `publicEmail`.
+
+### Adicionado
+- **Deep-link externo para subpáginas** — parâmetro `?pag=legal` na raiz do app, com helper `ui_comum._aba_para_deep_link` e testes de integração via `AppTest` (navega para o Legal já na aba termos/privacidade); a landing (`index.html` e o artigo) e o rodapé da status page usam o novo formato.
+- **716 testes** na suíte (5 a mais: deep-link termos/privacidade/padrão/lista/outras páginas em `test_ui_comum.py`), todos passando.
+
 ## [v3.5.1] - 2026-09-27
 
 ### Corrigido

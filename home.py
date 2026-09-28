@@ -238,6 +238,28 @@ if st.session_state.get("_definir_nova_senha"):
 pg = st.navigation(roteador.paginas_visiveis(), position="sidebar")
 st.session_state["_url_atual"] = pg.url_path
 
+# Deep-link externo para a página Legal (Termos & Privacidade): o Streamlit
+# Cloud, na primeira carga, redireciona qualquer subrota (`/legal`, `/triagem`)
+# para a raiz `/` — então um link externo para `legal?aba=...` abriria o Início.
+# A landing (e o rodapé da status page) apontam para a RAIZ com `?pag=legal`,
+# que sobrevive ao cold-start; aqui o app navega sozinho via `st.switch_page`
+# (mesma sessão, sem recarregar), já na aba pedida. Fora do clima de produção
+# (AppTest/streamlit.cache), query_params é seguro ler e `_ir_para_legal` cuida
+# de guardar `_aba_legal` antes do switch — mesmo caminho do botão do rodapé.
+_deep_pag = None
+try:
+    _deep_pag = st.query_params.get("pag", "inicio")
+except Exception:
+    _deep_pag = None
+try:
+    _deep_aba_param = st.query_params.get("aba", "termos")
+except Exception:
+    _deep_aba_param = "termos"
+_deep_aba = ui_comum._aba_para_deep_link(_deep_pag, _deep_aba_param)
+if _deep_aba is not None and pg.url_path != "legal":
+    ui_comum._ir_para_legal(_deep_aba)
+    st.stop()
+
 ui_tema.aplicar_css()
 
 with st.sidebar:

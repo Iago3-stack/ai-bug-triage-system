@@ -62,3 +62,25 @@ def test_abrir_rejeita_imagem_grande():
     Image.new("RGB", (ui_comum._MAX_AVATAR_LADO + 1, 2)).save(buf, format="PNG")
     with pytest.raises(ValueError, match="dimens"):
         ui_comum._abrir_imagem_enviada(_arquivo("gigante.png", buf.getvalue()))
+
+
+def test_deep_link_aba_termos():
+    assert ui_comum._aba_para_deep_link("legal", "termos") == "termos"
+
+
+def test_deep_link_aba_privacidade():
+    assert ui_comum._aba_para_deep_link("legal", "privacidade") == "privacidade"
+
+
+def test_deep_link_padrao_termos_quando_aba_vazia():
+    assert ui_comum._aba_para_deep_link("legal", "") == "termos"
+
+
+def test_deep_link_aceita_lista_de_abas():
+    assert ui_comum._aba_para_deep_link("legal", ["privacidade", "termos"]) == "privacidade"
+
+
+def test_deep_link_ignora_outras_paginas():
+    assert ui_comum._aba_para_deep_link("triagem", "termos") is None
+    assert ui_comum._aba_para_deep_link("inicio", "privacidade") is None
+    assert ui_comum._aba_para_deep_link(None, "termos") is None

@@ -21,7 +21,7 @@ import sessao_persist
 import roteador
 import admin
 
-VERSAO = "v3.5.1"
+VERSAO = "v3.5.2"
 
 # Logo do sistema (SVG embutido como data URI para funcionar na Cloud).
 _LOGO_DATA_URI = (
@@ -721,6 +721,22 @@ def _rolar_topo() -> None:
         )
     except Exception:
         pass
+
+
+def _aba_para_deep_link(pag: object, aba: object) -> str | None:
+    """Devolve a aba da página Legal pedida por um deep-link externo.
+
+    A landing e o rodapé da status page apontam para a RAIZ com `?pag=legal
+    &aba=termos|privacidade` porque o Streamlit Cloud derruba subrotas
+    (`/legal`, `/triagem`) para a home na primeira carga. `home.py` lê esse
+    parâmetro e chama `_ir_para_legal` com a aba devolvida aqui; valores fora
+    do contrato devolvem None (o app segue no fluxo normal).
+    """
+    if str(pag).strip().lower() != "legal":
+        return None
+    if isinstance(aba, list):
+        aba = aba[0] if aba else "termos"
+    return "privacidade" if str(aba).strip().lower() == "privacidade" else "termos"
 
 
 def _ir_para_legal(aba: str) -> None:
