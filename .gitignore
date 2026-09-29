@@ -53,3 +53,7 @@ temp/
 tmp/
 *.temp
 .ai_env/
+
+# Memória local do dono (decisões de máquina, histórico de sessao).
+# Vive em ~/Documentos/MEMORIA.md — nunca versionada.
+MEMORIA.md

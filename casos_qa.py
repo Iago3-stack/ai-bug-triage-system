@@ -15,7 +15,8 @@ qualquer motor novo: `avaliar_lexico.py` (o léxico de produção) e
 do experimento descartado) medem exatamente estes casos, com estas definições.
 
 ⚠️ Estes 30 casos são sintéticos (texto de QA, não relato de cliente) — servem
-para filtrar candidatos, não para aprovar um motor. Ver `MEMORIA.md`.
+para filtrar candidatos, não para aprovar um motor. O histórico dessa decisão
+está na memória local do dono (fora do repo).
 """
 
 # (texto, {severidades aceitáveis})
