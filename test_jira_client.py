@@ -29,14 +29,12 @@ def test_prioridade_desconhecida_cai_em_medium():
 
 # --- Montagem do payload (sem rede) ---
 def test_payload_usa_chave_do_projeto():
-    jira_client.JIRA_PROJECT_KEY = "RD"
-    payload = jira_client._montar_payload("Resumo", "Descrição", "Medium")
+    payload = jira_client._montar_payload("Resumo", "Descrição", "Medium", config={"project_key": "RD"})
     assert payload["fields"]["project"]["key"] == "RD"
 
 
-def test_payload_issue_tipo_bug(monkeypatch):
-    monkeypatch.setattr(jira_client, "JIRA_ISSUE_TYPE", "Bug")
-    payload = jira_client._montar_payload("Resumo", "Descrição", "Medium")
+def test_payload_issue_tipo_bug():
+    payload = jira_client._montar_payload("Resumo", "Descrição", "Medium", config={"issue_type": "Bug"})
     assert payload["fields"]["issuetype"]["name"] == "Bug"
 
 
@@ -71,17 +69,34 @@ def test_configurado_false_com_algum_campo_vazio(monkeypatch):
     assert jira_client.configurado() is False
 
 
-# --- Normalização de entradas digitadas no sidebar ---
-def test_configurar_normaliza_chave_do_projeto(monkeypatch):
-    monkeypatch.setattr(jira_client, "JIRA_PROJECT_KEY", "xpto")
-    jira_client.configurar(project_key="  kan  ")
-    assert jira_client.JIRA_PROJECT_KEY == "KAN"
+# --- Normalização de entradas digitadas no sidebar (por-sessão, sem vazar p/ globals) ---
+def test_configurar_normaliza_chave_do_projeto():
+    cfg = jira_client.configurar(project_key="  kan  ")
+    assert cfg["project_key"] == "KAN"
 
 
 def test_payload_normaliza_chave_inclusive_com_espacos():
-    jira_client.JIRA_PROJECT_KEY = " kan "
-    payload = jira_client._montar_payload("R", "D", "Medium")
+    payload = jira_client._montar_payload("R", "D", "Medium", config={"project_key": " kan "})
     assert payload["fields"]["project"]["key"] == "KAN"
+
+
+def test_configurar_nao_vaza_para_globais(monkeypatch):
+    monkeypatch.setattr(jira_client, "JIRA_API_TOKEN", "token_do_env")
+    cfg = jira_client.configurar(email="a@b.com", token="token_da_sessao", project_key="KAN")
+    assert cfg["token"] == "token_da_sessao"
+    assert jira_client.JIRA_API_TOKEN == "token_do_env"
+
+
+def test_config_por_sessao_ignora_global(monkeypatch):
+    monkeypatch.setattr(jira_client, "JIRA_PROJECT_KEY", "ENV")
+    payload = jira_client._montar_payload("R", "D", "Medium", config={"project_key": "SESS"})
+    assert payload["fields"]["project"]["key"] == "SESS"
+
+
+def test_sessao_limpa_ignora_secrets_env(monkeypatch):
+    monkeypatch.setattr(jira_client, "JIRA_EMAIL", "a@b.com")
+    monkeypatch.setattr(jira_client, "JIRA_PROJECT_KEY", "KAN")
+    assert jira_client.configurado(jira_client.limpar_config()) is False
 
 
 # --- Sem credenciais: falha amigável, sem rede ---

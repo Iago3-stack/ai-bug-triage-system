@@ -49,34 +49,61 @@ PRIORIDADES_JIRA = {
 }
 
 
+def _base_config():
+    """Config padrão vinda de secrets/env/.env (jamais mutável pela sessão)."""
+    return {
+        "email": JIRA_EMAIL,
+        "token": JIRA_API_TOKEN,
+        "project_key": JIRA_PROJECT_KEY,
+        "issue_type": JIRA_ISSUE_TYPE,
+    }
+
+
+def _resolver(config=None):
+    """Mescla o que a sessão preencheu sobre os padrões de secrets/env/.env."""
+    cfg = _base_config()
+    if config:
+        cfg.update({k: v for k, v in config.items() if v})
+    return cfg
+
+
 def configurar(email="", token="", project_key="", issue_type=""):
-    """Permite que o home.py injete credenciais digitadas no sidebar."""
-    global JIRA_EMAIL, JIRA_API_TOKEN, JIRA_PROJECT_KEY, JIRA_ISSUE_TYPE
+    """Devolve um dict de config por-sessão (fica em st.session_state, NUNCA em global).
+
+    Nenhuma variável global do módulo é alterada — evita vazar credenciais
+    entre sessões no Streamlit (processo único).
+    """
+    cfg = _base_config()
     if email:
-        JIRA_EMAIL = email.strip()
+        cfg["email"] = email.strip()
     if token:
-        JIRA_API_TOKEN = token.strip()
+        cfg["token"] = token.strip()
     if project_key:
-        JIRA_PROJECT_KEY = project_key.strip().upper()
+        cfg["project_key"] = project_key.strip().upper()
     if issue_type:
-        JIRA_ISSUE_TYPE = issue_type.strip()
-
-
-def configurado():
-    return bool(JIRA_EMAIL and JIRA_API_TOKEN and JIRA_PROJECT_KEY)
+        cfg["issue_type"] = issue_type.strip()
+    return cfg
 
 
 def limpar_config():
-    """Zera as credenciais para permitir reconectar/trocar de conta."""
-    global JIRA_EMAIL, JIRA_API_TOKEN, JIRA_PROJECT_KEY, JIRA_ISSUE_TYPE
-    JIRA_EMAIL = ""
-    JIRA_API_TOKEN = ""
-    JIRA_PROJECT_KEY = ""
-    JIRA_ISSUE_TYPE = ""
+    """Sessão sem credenciais (inclusive ignorando secrets/env para trocar de conta)."""
+    return {}
 
 
-def _headers():
-    credencial = base64.b64encode(f"{JIRA_EMAIL}:{JIRA_API_TOKEN}".encode()).decode()
+def configurado(config=None):
+    """config None = usa padrões de secrets/env/.env; dict {} = explicitamente limpo."""
+    if config is None:
+        cfg = _base_config()
+    elif not config:
+        return False
+    else:
+        cfg = config
+    return bool(cfg.get("email") and cfg.get("token") and cfg.get("project_key"))
+
+
+def _headers(config=None):
+    cfg = _resolver(config)
+    credencial = base64.b64encode(f"{cfg['email']}:{cfg['token']}".encode()).decode()
     return {
         "Authorization": f"Basic {credencial}",
         "Content-Type": "application/json",
@@ -92,14 +119,15 @@ def prioridade_jira(gravidade):
     return "Medium"
 
 
-def _montar_payload(resumo, descricao, prioridade):
+def _montar_payload(resumo, descricao, prioridade, config=None):
     """Monta o corpo da requisição Jira no formato não-ADF (simple text)."""
+    cfg = _resolver(config)
     paragrafos = [p.strip() for p in descricao.splitlines() if p.strip()]
     conteudo = [{"type": "paragraph", "content": [{"type": "text", "text": p}]} for p in paragrafos]
     return {
         "fields": {
-            "project": {"key": JIRA_PROJECT_KEY.strip().upper()},
-            "issuetype": {"name": JIRA_ISSUE_TYPE.strip()},
+            "project": {"key": cfg["project_key"].strip().upper()},
+            "issuetype": {"name": cfg["issue_type"].strip()},
             "summary": resumo,
             "priority": {"name": prioridade},
             "description": {"type": "doc", "version": 1, "content": conteudo},
@@ -107,21 +135,21 @@ def _montar_payload(resumo, descricao, prioridade):
     }
 
 
-def criar_issue(resumo, descricao, gravidade="NORMAL", timeout=30):
+def criar_issue(resumo, descricao, gravidade="NORMAL", timeout=30, config=None):
     """Cria uma issue do tipo Bug no Jira.
 
     Retorna (ok, resultado, erro):
       - ok=True -> resultado = {"key": ..., "url": ...}
       - ok=False -> erro = mensagem legível da falha (HTTP/seeding, etc.)
     """
-    if not configurado():
+    if not configurado(config):
         return False, None, "Configure JIRA_EMAIL, JIRA_API_TOKEN e JIRA_PROJECT_KEY."
-    payload = _montar_payload(resumo, descricao, prioridade_jira(gravidade))
+    payload = _montar_payload(resumo, descricao, prioridade_jira(gravidade), config=config)
     url = f"{JIRA_BASE_URL}/rest/api/3/issue"
     request = urllib.request.Request(
         url,
         data=json.dumps(payload).encode("utf-8"),
-        headers=_headers(),
+        headers=_headers(config),
         method="POST",
     )
     try:

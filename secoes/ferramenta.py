@@ -945,10 +945,11 @@ def render():
 
         colunas[2].markdown('<div class="marca-jira-expo" style="display:none"></div>', unsafe_allow_html=True)
         if colunas[2].button("Exportar para Jira", use_container_width=True, key="btn_exportar_jira"):
-            if jira_client.configurado():
+            config_jira = st.session_state.get("jira_config")
+            if jira_client.configurado(config_jira):
                 with st.spinner("📋 Enviando issue ao Jira..."):
                     ok_export, resultado_jira, erro_jira = jira_client.criar_issue(
-                        descricao_limpa[:100], relatorio, gravidade
+                        descricao_limpa[:100], relatorio, gravidade, config=config_jira
                     )
                 if ok_export:
                     st.session_state["exportacao_jira"] = (True, resultado_jira["key"], resultado_jira["url"])

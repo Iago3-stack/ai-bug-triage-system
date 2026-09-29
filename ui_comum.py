@@ -112,7 +112,7 @@ def abrir_configuracoes():
         # 🔑 Jira — exportação de relatórios (sub-expander azul persistente p/ ficar visível no tema claro)
         with st.expander("🔑 Jira — configurar exportação"):
             st.markdown('<div class="marca-jira" style="display:none"></div>', unsafe_allow_html=True)
-            if not jira_client.configurado():
+            if not jira_client.configurado(st.session_state.get("jira_config")):
                 st.caption("Cole suas credenciais para ativar o botão 'Exportar para Jira'.")
                 _jc1, _jc2 = st.columns(2)
                 j_email = _jc1.text_input("E-mail Atlassian", key="jira_email")
@@ -120,8 +120,8 @@ def abrir_configuracoes():
                 j_key = _jc1.text_input("Chave do projeto", placeholder="ex.: KAN", key="jira_key")
                 j_issue_type = _jc2.text_input("Tipo de item (padrão: Tarefa)", placeholder="ex.: Tarefa", key="jira_issue_type")
                 if st.button("Salvar configuração (sessão)", use_container_width=True):
-                    jira_client.configurar(j_email, j_token, j_key, j_issue_type)
-                    if jira_client.configurado():
+                    st.session_state["jira_config"] = jira_client.configurar(j_email, j_token, j_key, j_issue_type)
+                    if jira_client.configurado(st.session_state["jira_config"]):
                         st.success("✅ Jira configurado nesta sessão!")
                     else:
                         st.error("Preencha e-mail, token e chave do projeto.")
@@ -132,7 +132,7 @@ def abrir_configuracoes():
                 if st.button("🔄 Reconectar / trocar credenciais", use_container_width=True):
                     limpar = getattr(jira_client, "limpar_config", None)
                     if limpar is not None:
-                        limpar()
+                        st.session_state["jira_config"] = limpar()
                         st.session_state["_reabrir_config"] = True
                         st.rerun()
                     else:
