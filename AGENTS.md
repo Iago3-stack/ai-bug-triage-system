@@ -20,12 +20,16 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
 .venv/bin/streamlit run home.py            # app
 .venv/bin/python webhook.py --porta 8080 --host 0.0.0.0
 .venv/bin/python triagem.py                # motor sem UI, sem chave
+.venv/bin/python scripts/checar_scroll_legal.py   # check no browser (app precisa estar no ar)
 ```
 
 Sem `pyproject.toml` e sem `[tool.pytest]`/`[tool.ruff]`: **pytest roda na raiz
 e pega `test_*.py` automaticamente**; ruff não tem config, é invocado com flags
 explícitas. `ruff` **não está em nenhum requirements** — se um comando precisar
 dele e não achar, instale à parte, não adicione aos requirements sem querer.
+Mesma regra para `playwright` (usado por `scripts/checar_scroll_legal.py`):
+fica **fora** de `requirements*.txt`, porque o `pytest` roda a cada push e
+depender de browser de verdade em todo push seria caro e instável.
 
 ## Ordem do CI (e por que importa)
 
@@ -87,6 +91,49 @@ do repo é descrever *o defeito*, não só a correção) — manter esse tom.
 - Ambientes externos são mockados por `monkeypatch` (`urlopen`, clients HTTP).
   `requests` e `urllib` usados em produção **todos** têm `timeout` — vale
   manter, é o padrão do repo (55 de 55 no momento).
+
+## UI no browser — o teste que quase mentiu
+
+O bug do `_rolar_topo` (v3.5.3) jogava quem rolasse a Legal de volta ao topo a
+cada 400ms. **Duas rodadas de teste automatizado disseram que não havia bug**,
+porque as duas mediram no lugar errado. As regras que saíram disso:
+
+1. **Arme o observador antes — e no lugar certo — em relação ao observado.**
+   Aqui isso significou rolar com `page.mouse.wheel`, que emite `WheelEvent`
+   real. Atribuir `el.scrollTop` por JS **não** dispara `wheel`/`keydown`, e o
+   `_rolar_topo` só libera o timer no primeiro gesto: um robô programático nunca
+   gera gesto, então mede um usuário que não existe e acusa uma puxada que
+   ninguém sente.
+2. **Nunca encerre a medição no primeiro acerto.** O teste que "confirmou a
+   ausência de bug" fazia `break` no primeiro `scrollTop != 0` — ou seja,
+   parava no primeiro zero, que era o próprio sintoma mascarado.
+3. **Julgue a forma, não o ponto.** O defeito era um padrão no tempo (dente-de-
+   serra de 400ms). Nenhuma asserção de valor único pega oscilação: grave pares
+   `[tempo, scrollTop]`.
+4. **Série vazia não é "nenhuma jogada".** Ausência de evidência não é evidência
+   de ausência. `scripts/checar_scroll_legal.py` tem piso de amostras e devolve
+   `INCONCLUSIVO` (exit 1) abaixo dele — sem isso, uma sonda que nem rodou dá
+   verde falso. Foi exatamente o que aconteceu na primeira versão dele.
+
+Armadilhas deste app, para não reprovar a sonda errada:
+
+- O alvo é o **botão** `⚖️ Termos & Privacidade` do menu (`st.switch_page` — é o
+  caminho que chama o `_rolar_topo`). Existe um `<a href="/legal">` no rodapé com
+  texto quase igual e é o caminho **errado**: full page load, sem `_rolar_topo`,
+  e redirecionado para `/` em servidor frio.
+- A rota inicial é `/inicio`, não `/`. E o deep link externo `/?pag=legal`
+  depende de `st.query_params` sobreviver ao cold-start, o que **não** se
+  reproduz no servidor local — por isso o check usa o botão, não o deep link.
+- O scroll é `[data-testid="stMain"]`, não `window` nem `documentElement`.
+- Meça em 1366x768: em 800x600 o conteúdo da Legal cabe e o defeito some sozinho.
+- sobra uma janela de armar de ~1s (o iframe do `components.html` monta depois,
+  e o `sobe()` inicial pode rodar antes do listener de gesto existir). **Uma**
+  jogada ali é tolerada e reportada; a puxada sustentada não é.
+
+O check roda **fora do `pytest`** e foi verificado nos dois lados: falha com o
+bug (12 jogadas, exit 1) e passa com a correção (3/3, exit 0). Os 2 testes de
+`test_ui_comum.py` travam a *estrutura* do JS; só o browser prende o
+*comportamento*.
 
 ## Segurança
 
