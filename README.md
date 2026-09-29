@@ -65,7 +65,7 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
 - 📋 **Colar falha bruta e preencher relato sozinho (Pilar 1 de automação)** — na Ferramenta, cole um **stack trace, log ou a mensagem do usuário** e o app extrai **título, categoria, módulo, versão, severidade prévia, erro principal (com local do frame) e passos para reproduzir**, preenchendo o relato pronto para revisar. 100% local, funciona sem internet e reconhece traces **Python, Java, JS/TS, C#/.NET, Go e Ruby**.
 - 🔷 **Transparência de QA**: o relatório informa o **motor de análise** usado e os **fatores identificados** em cada triagem.
 - 💚 **Relatório Gherkin** (`Dado/Quando/Então`) baseado na prioridade detectada.
-- 🟠 **Exportação**: baixar relatório (`.md`), abrir **Issue no GitHub** pré-preenchida ou **criar issue real no Jira** via API (com prioridade mapeada automaticamente).
+- 🟠 **Exportação**: baixar relatório (`.md`), abrir **Issue no GitHub** pré-preenchida (ou **criar de verdade via API no repositório da sua conta**) ou **criar issue real no Jira** (com prioridade mapeada automaticamente).
 - ⚪ **Histórico da sessão** em tabela (`pandas`) com opção de limpar.
 - 📁 **Histórico persistido (JSONL local + ☁️ Supabase)** — cada triagem vira um **snapshot fiel** em `data/historico.jsonl` (local, gitignored); quando o **Supabase** está configurado (URL + anon key nos secrets), o histórico passa a viver na **nuvem** e sobrevive a redeploys (com **failover** automático pra JSONL se a nuvem cair). **Seletor de data + download** do relatório em Markdown + vínculo com a issue criada no Jira. Backend visível no expander do histórico.
 - 🛡️ **Guardrails de entrada/saída (PII)** — detecta e **mascara** token Atlassian, chaves Gemini/Google/OpenAI, tokens GitHub, e-mails, **senhas numéricas, telefones e CPFs** digitados no relato: nada sensível vai para o Gemini, o Jira, o GitHub ou o histórico.
@@ -93,7 +93,7 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
 </div>
 
 - 🐍 **Python 3.13** — lógica e motor NLP (biblioteca `re` / stdlib)
-- 🚀 **Streamlit 1.62** — interface web e deploy na nuvem
+- 🚀 **Streamlit 1.64** — interface web e deploy na nuvem
 - 🔮 **Google Gemini (`google-genai`)** — análise de causa raiz via LLM (Fase 3)
 - 🐼 **pandas** — tabela de histórico de triagens
 - 🐧 Desenvolvido em **Linux Mint Debian** (Laboratório Hack28)
@@ -124,6 +124,40 @@ A análise por IA usa a chave `GEMINI_API_KEY` (gratuita em [aistudio.google.com
 
 - 🔑 **Local**: crie um arquivo `.env` na raiz com `GEMINI_API_KEY=...` (ele é ignorado pelo `.gitignore`).
 - ☁️ **Streamlit Cloud**: `Settings → Secrets → GEMINI_API_KEY` (nunca coloque a chave em código ou no repositório).
+
+**🧪 Rodar os testes** — a mesma suíte do CI (**721 testes**, número exato no badge dinâmico):
+
+```bash
+pip install -r requirements-dev.txt
+pytest -q                      # suíte completa
+pytest test_triagem.py -v      # um módulo só
+```
+
+**🔔 Rodar o webhook localmente** (Pilar 3 — recebe a falha direto do CI):
+
+```bash
+python webhook.py --porta 8080 --host 0.0.0.0
+curl -s localhost:8080/health
+```
+
+**🔐 Variáveis de ambiente** — todas opcionais (sem nenhuma delas o app roda só com o motor local):
+
+| Variável | Para quê |
+|---|---|
+| `GEMINI_API_KEY` | Análise por IA (Fase 3) — chave gratuita do Google AI Studio |
+| `SUPABASE_URL` + `SUPABASE_ANON_KEY` | Login multi-tenant + histórico na nuvem |
+| `JIRA_EMAIL`, `JIRA_API_TOKEN`, `JIRA_PROJECT_KEY`, `JIRA_URL` | Exportação para o Jira |
+| `ALERTA_EMAIL_TO`, `SMTP_USER`, `SMTP_PASS` (+ `SMTP_HOST`/`SMTP_PORT`) | Alertas de triagem CRÍTICA/ALTA por e-mail |
+| `DISCORD_WEBHOOK` | Alertas por Discord |
+| `WEBHOOK_TOKEN` (+ `WEBHOOK_REQUIRE_TOKEN=1`) | Autentica o webhook de CI (comparação em tempo constante) |
+| `PAGBANK_TOKEN` | Cobrança Pix automática |
+| `POSTHOG_API_KEY` | Telemetria anônima (sem PII e sem conteúdo do relato) |
+
+🔑 Segredo **nunca no git**: localmente em `.env` (ignorado pelo `.gitignore`); no Streamlit
+Cloud em `Settings → Secrets`. Listas completas em [05 — Persistência em Nuvem](docs/05-persistencia-nuvem.md),
+[06 — Webhook](docs/06-webhook.md) e [07 — Segurança](docs/07-seguranca.md).
+Para desenvolver com agentes (MCPs do Supabase/Render/semgrep), veja a seção 5 de
+[03 — Arquitetura](docs/03-arquitetura.md).
 
 ### 🔔 Alerta de triagens CRÍTICAS/ALTAS (e-mail ou Discord)
 
@@ -156,7 +190,32 @@ O botão **📋 Exportar para Jira** cria a issue do tipo **Tarefa** direto no s
 python jira_client.py   # 🧪 cria uma issue de teste via API
 ```
 
-🧪 Teste rápido dos motores sem interface:
+### 🐙 Exportação para o GitHub Issues (API REST)
+
+O botão **🐙 Criar Issue no GitHub** cria a issue de verdade **no repositório da sua
+conta/empresa** — o Jira continua sendo a via do time. São dois caminhos:
+
+- 🖱️ **Sem token** (padrão): o botão vira link **🐙 Nova Issue no GitHub** já preenchido
+  (título + relato) — abre o formulário no navegador para você revisar e enviar.
+- 🔑 **Com token**: em `⚙️ Configurações → 🐙 GitHub — configurar repositório para issues`
+  você informa o **token** e o **`dono/repo`** de destino. Aí o app chama
+  `POST https://api.github.com/repos/{dono}/{repo}/issues` e mostra o link da issue criada.
+
+**Escopo do token:** *fine-grained* → **Issues: Read and write** no repositório escolhido;
+*classic* → `repo` (ou `public_repo` se for público). Token e repositório ficam **só na
+sessão** (`st.session_state`) — nada em disco, banco ou histórico — e o botão
+**↩️ Limpar minha config do GitHub** apaga na hora.
+
+A criação **não envia labels** (label inexistente retorna `422`) e os erros vêm traduzidos:
+`404` → repositório/escopo errado · `401/403` → token sem permissão *Issues: write*.
+
+🧪 Teste rápido do cliente sem interface — com token e repo no ambiente:
+
+```bash
+python -c "import github_client; print(github_client.configurado({'token': 'ghp_...', 'repo': 'dono/repo'}))"
+```
+
+### 🧪 Teste rápido dos motores sem interface
 
 ```bash
 python triagem.py   # 🟢 motor determinístico local
@@ -177,36 +236,40 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
   <a href="docs/03-arquitetura.md"><img src="https://img.shields.io/badge/Arquitetura-9C27B0?style=for-the-badge&logo=diagramdotnet&logoColor=white" /></a>
   <a href="docs/04-estrategia-de-qualidade.md"><img src="https://img.shields.io/badge/Estrat%C3%A9gia%20de%20QA-FF9800?style=for-the-badge&logo=quality&logoColor=white" /></a>
   <a href="docs/05-persistencia-nuvem.md"><img src="https://img.shields.io/badge/Persist%C3%AAncia%20em%20Nuvem-38BDF8?style=for-the-badge&logo=libpostal&logoColor=white" /></a>
+  <a href="docs/06-webhook.md"><img src="https://img.shields.io/badge/Webhook%20de%20CI-25D366?style=for-the-badge&logo=githubactions&logoColor=white" /></a>
+  <a href="docs/07-seguranca.md"><img src="https://img.shields.io/badge/Seguran%C3%A7a-E91E63?style=for-the-badge&logo=shield&logoColor=white" /></a>
 </div>
 
 | Arquivo | Papel |
 |---|---|
 | 🖥️ `home.py` | Interface web (Streamlit): cabeçalho, ferramenta, export, histórico e **rodapé de doação Pix via `st.iframe`** |
 | 🧠 `triagem.py` | Motor NLP: léxico PT, padrões de negação e classificação de severidade (offline) |
-| 🔗 `jira_client.py` | Cliente da API REST v3 do Jira: cria issues (Tarefa) com prioridade mapeada |
+| 🔗 `jira_client.py` | Cliente da API REST v3 do Jira: cria issues (Tarefa) com prioridade mapeada — credenciais **por sessão** (`st.session_state`), sem global de módulo |
+| 🐙 `github_client.py` | Cliente da API REST do GitHub: cria issues no **repo da sua conta** via `POST /repos/{dono}/{repo}/issues`, sem labels (evita 422), erros amigáveis (404/401/403) — token só na sessão |
+| 🧪 `test_github_client.py` | 18 testes do cliente GitHub: normalização de `dono/repo` (URL/.git), config por sessão, payload sem labels e erros amigáveis (rodam no CI) |
 | 🔮 `ia.py` | Análise por IA via Google Gemini: causa raiz, categoria e passos (com fallback Groq e **modelo próprio** OpenAI-compatível/Gemini) |
 | 📚 `rag.py` | RAG leve no histórico: retrieval por similaridade Jaccard (offline) + geração que responde "já aconteceu? como resolvemos?" |
-| 🧪 `test_triagem.py` | 18 testes unitários do motor (rodam no CI) |
-| 🧪 `test_jira_client.py` | 15 testes unitários do cliente Jira (rodam no CI) |
+| 🧪 `test_triagem.py` | 90 testes unitários do motor (rodam no CI) |
+| 🧪 `test_jira_client.py` | 18 testes unitários do cliente Jira (rodam no CI) |
 | 📁 `persistencia.py` | Histórico em `data/historico.jsonl` (JSONL local, gitignored) — **facade**: com nuvem configurada, grava no Supabase; senão, JSONL puro |
 | ☁️ `nuvem_supabase.py` | Backend de persistência na nuvem (Supabase REST): insert/select/update e vínculo Jira — credenciais só em secrets/.env |
 | 🛡️ `guardrails.py` | Bloqueia vazamento de credenciais/PII: mascara tokens, chaves, e-mails, senhas numéricas, telefones e CPFs antes de IA/Jira/GitHub/histórico |
-| 🧪 `test_persistencia.py` | 11 testes unitários da persistência (rodam no CI) |
+| 🧪 `test_persistencia.py` | 15 testes unitários da persistência (rodam no CI) |
 | 🧪 `test_guardrails.py` | 18 testes de detecção/máscara de credenciais e PII (rodam no CI) |
 | 🧪 `test_dashboard.py` | 17 testes do Dashboard de QA: saúde da suíte, gauge, filtro por funcionalidade, top causas, divergências e provedor real (rodam no CI) |
-| 🧪 `test_rag.py` | 13 testes do RAG: tokenização, similaridade, recuperação top-k, contexto (com resolução) e orquestração (rodam no CI) |
-| 🧪 `test_nuvem_supabase.py` | 14 testes da persistência em nuvem: config, conversão, HTTP (mockado), resolução, failover e dispatch do facade (rodam no CI) |
+| 🧪 `test_rag.py` | 23 testes do RAG: tokenização, similaridade, recuperação top-k, contexto (com resolução) e orquestração (rodam no CI) |
+| 🧪 `test_nuvem_supabase.py` | 38 testes da persistência em nuvem: config, conversão, HTTP (mockado), resolução, failover e dispatch do facade (rodam no CI) |
 | 🧪 `test_pix.py` | 10 testes do Pix: payload EMV, CRC-CCITT, precedência link/QR e `chave_copia()` sem `+55` (rodam no CI) |
-| 🧪 `test_ia.py` | 32 testes da IA: dispatch de provedor (auto/Gemini/Groq/modelo próprio OpenAI-compatível e Gemini custom), JSON, fallback, mensagens de erro e orquestração RAG (rodam no CI) |
+| 🧪 `test_ia.py` | 38 testes da IA: dispatch de provedor (auto/Gemini/Groq/modelo próprio OpenAI-compatível e Gemini custom), JSON, fallback, mensagens de erro e orquestração RAG (rodam no CI) |
 | 🔐 `auth_supabase.py` | Autenticação (Supabase Auth/GoTrue via REST, stdlib): cadastro com confirmação, login e logout — credenciais reutilizam `SUPABASE_URL`/`SUPABASE_ANON_KEY` |
-| 🧪 `test_auth_supabase.py` | 29 testes do login: parser de erros, cadastro/login/logout, isolação por sessão e integração com a UI (rodam no CI) |
+| 🧪 `test_auth_supabase.py` | 46 testes do login: parser de erros, cadastro/login/logout, isolação por sessão e integração com a UI (rodam no CI) |
 | 🔔 `notificacoes.py` | Canais de alerta (e-mail SMTP + Discord) configuráveis por usuário/sessão, com testadores à prova de exceção |
-| 🧪 `test_notificacoes.py` | 30 testes dos alertas: envio SMTP/Discord (mockado), override por sessão e erros amigáveis (rodam no CI) |
+| 🧪 `test_notificacoes.py` | 45 testes dos alertas: envio SMTP/Discord (mockado), override por sessão e erros amigáveis (rodam no CI) |
 | 💳 `plano.py` | Planos Basic/Premium e isolamento por tenant: `PLANO=free|pago` liga/desliga recursos e `TENANT_ID` segmenta registros |
-| 🧪 `test_plano.py` | 10 testes do plano: gating de recursos free×pago e filtro por `tenant_id` (rodam no CI) |
+| 🧪 `test_plano.py` | 48 testes do plano: gating de recursos free×pago e filtro por `tenant_id` (rodam no CI) |
 | 💾 `sessao_persist.py` | Persistência de sessão no F5: enfileira salvar/limpar e grava via ponte persistente (cookie + iframe `localStorage`) |
-| 🧪 `test_sessao_persist.py` | 5 testes da ponte de escrita e da failover da sessão (rodam no CI) |
-| 🧪 `test_ferramenta.py` | 3 testes da página ferramenta: UI/triagem e integração (rodam no CI) |
+| 🧪 `test_sessao_persist.py` | 8 testes da ponte de escrita e da failover da sessão (rodam no CI) |
+| 🧪 `test_ferramenta.py` | 12 testes da página ferramenta: UI/triagem e integração (rodam no CI) |
 | 📈 `dashboard.py` | Dashboard de QA: KPIs + saúde da suíte (0–10) + gauge de críticas + filtro por funcionalidade + top causas (IA) + score/dia + divergências IA vs. léxico + provedor real (leitura do JSONL/Cloud) |
 | 🟦 `pix.py` | Gerador de pagamento Pix: payload EMV/QR (CRC-CCITT), QR Code PNG (base64), **link de pagamento** com valor fixo e chaves com/sem `+55` (`chave`/`chave_copia`) |
 | 📦 `requirements.txt` | Dependências pinadas |
@@ -220,7 +283,7 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 </div>
 
 <div align="center">
-  <img src="https://img.shields.io/badge/12%20conclu%C3%ADdas-4CAF50?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/13%20conclu%C3%ADdas-4CAF50?style=for-the-badge" />
   <img src="https://img.shields.io/badge/0%20em%20aberto-brightgreen?style=for-the-badge" />
 </div>
 
@@ -230,13 +293,14 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 - ✅ **Seletor de IA por triagem (checkbox 🔮 + provedor)** — você decide quando a IA entra: desligue para triagem 100% local, ou escolha **Automático (Gemini → Groq)**, **só Gemini** ou **só Groq** — ou **➕ adicione um modelo próprio** com a sua API (OpenAI-compatível ou Gemini pago), **renomeável e editável**, com chave que fica só na sessão. O relatório mostra qual provedor/modelo respondeu
 - ✅ **Testes unitários do motor (`pytest`)** — suíte extensa de arquivos (motor + Jira + persistência + guardrails + dashboard + RAG + nuvem + Pix + IA + Auth/Supabase + notificações + plano + persistência de sessão) rodando automaticamente via CI (GitHub Actions) com **contagem exibida ao vivo no badge dinâmico acima**
 - ✅ **Exportação via API do Jira** — cria issue do tipo Tarefa no `iagoqa.atlassian.net` (prioridade mapeada automaticamente)
+- ✅ **Exportação via API do GitHub Issues** — cada conta/empresa cria issue no **seu** repositório (`POST /repos/{dono}/{repo}/issues`, token só na sessão, sem labels para evitar 422); sem token, abre o link de issue já preenchida
 - ✅ **Persistência do histórico (JSONL)** — cada triagem vira um snapshot fiel em `data/historico.jsonl` (local, gitignored): com IA salva o relatório completo; sem IA, só o léxico. Seletor de data + download do relatório
 - ✅ **Guardrails de entrada/saída (PII/credenciais)** — detecta e mascara tokens Atlassian, chaves Gemini/Google/OpenAI, tokens GitHub, e-mails, senhas numéricas, telefones e CPFs digitados no relato: nada sensível vai para o Gemini, o Jira, o GitHub ou o histórico
 - ✅ **Dashboard de QA completo** — saúde da suíte (0–10), gauge de % de críticas/altas, filtro por funcionalidade, evolução do score médio/dia, top causas raiz (IA), taxa + lista das divergências IA vs. motor local e provedor real na coluna IA (100% local, sem enviar nada)
 - ✅ **RAG no histórico** — o Gemini consulta as triagens passadas (top-k similares, retrieval local por Jaccard) e responde **"isso já aconteceu? como resolvemos?"** com a resolução anterior; se não acha, sinaliza caso novo
 - ✅ **Alerta CRÍTICA/ALTA (e-mail SMTP + Discord)** — "monitor de QA": canais configuráveis por sessão no modal ⚙️ (nada em disco), com testadores que nunca derrubam o app e status real do envio
 - ✅ **App multi-página + Login multi-tenant** — `Início`/`Triagem`/`Dashboard` via `st.navigation`; cadastro com confirmação de e-mail e login (Supabase Auth); histórico isolado por conta (`tenant_id`); **sessão persiste no F5** (cookie + ponte)
-- ✅ **Roadmap 12/12 🎉** — MVP + SaaS esboçado concluídos; próximos passos rumo a billing/compartilhamento abaixo
+- ✅ **Roadmap 13/13 🎉** — MVP + SaaS esboçado concluídos; próximos passos rumo a billing/compartilhamento abaixo
 
 **🚀 Rumo a um SaaS de QA** (próximos passos):
 > - 💳 **Assinatura/billing** (Stripe) ligada ao `PLANO` atual + cobrança por plano pago (PASSO 4)
