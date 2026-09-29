@@ -84,3 +84,38 @@ def test_deep_link_ignora_outras_paginas():
     assert ui_comum._aba_para_deep_link("triagem", "termos") is None
     assert ui_comum._aba_para_deep_link("inicio", "privacidade") is None
     assert ui_comum._aba_para_deep_link(None, "termos") is None
+
+
+def _js_do_rolar_topo(monkeypatch) -> str:
+    """Captura o HTML que `_rolar_topo` injeta, sem renderizar o Streamlit."""
+    capturado = {}
+
+    def fake_html(html, height=None, **kwargs):
+        capturado["html"] = html
+        capturado["height"] = height
+
+    monkeypatch.setattr(ui_comum.components, "html", fake_html)
+    ui_comum._rolar_topo()
+    assert capturado["height"] == 0
+    return capturado["html"]
+
+
+def test_rolar_topo_cede_ao_primeiro_gesto_do_usuario(monkeypatch):
+    """O reset de scroll para no primeiro gesto: a pessoa vence o timer.
+
+    Regressão do `setInterval(400ms) × 12`, que segura o topo por 4,8s e
+    produz uma dente-de-serra de 400ms para quem rola na página Legal.
+    """
+    js = _js_do_rolar_topo(monkeypatch)
+    for evento in ("wheel", "touchstart", "keydown", "mousedown"):
+        assert evento in js, f"falta escutar {evento} para liberar o scroll"
+    assert "livre" in js
+    assert "setInterval" not in js, "setInterval fixo volta a brigar com o usuario"
+    assert "setTimeout(sobe,60)" in js
+
+
+def test_rolar_topo_ainda_reseta_o_container(monkeypatch):
+    """A correção não pode virar no-op: o topo continua sendo forçado."""
+    js = _js_do_rolar_topo(monkeypatch)
+    assert 'stMain' in js
+    assert "m.scrollTop=0" in js

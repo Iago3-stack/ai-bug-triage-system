@@ -21,7 +21,7 @@ import sessao_persist
 import roteador
 import admin
 
-VERSAO = "v3.5.2"
+VERSAO = "v3.5.3"
 
 # Logo do sistema (SVG embutido como data URI para funcionar na Cloud).
 _LOGO_DATA_URI = (
@@ -703,6 +703,16 @@ def _rolar_topo() -> None:
     o `scrollTop`; um loop curto garante o reset mesmo se o Streamlit reaplicar
     a rolagem logo após a montagem.
 
+    O loop CEDE o controle no primeiro gesto do usuário (`wheel`, `touchstart`,
+    `keydown`, `mousedown`) e para de reagendar. A versão anterior usava
+    `setInterval(400ms) × 12` — 4,8s em que o timer vencia a pessoa: rolar
+    produzia uma dente-de-serra de 400ms, com a página jogando de volta ao topo
+    a cada 400ms, e só normalizava depois que o intervalo morria. O sintoma
+    era pior que o defeito que o código existia para corrigir. Agora o `sobe`
+    roda a cada 60ms (janela total de ~720ms, o bastante para cobrir a
+    reaplicação do Streamlit na montagem) e o primeiro gesto do usuário encerra
+    o loop, então quem rola rápido não é mais Lutado.
+
     IMPORTANTE: NÃO usar `st.iframe` aqui — `height=0` é inválido
     (StreamlitInvalidHeightError) e o `except` engolia o erro, então o script
     nunca executava. `components.html` aceita height=0 e tem acesso ao parent.
@@ -710,11 +720,14 @@ def _rolar_topo() -> None:
     try:
         components.html(
             "<script>"
-            "(function(){var d=window.parent.document;"
-            "function sobe(){try{var m=d.querySelector('[data-testid=\"stMain\"]');"
-            "if(m){m.scrollTop=0;}else{window.parent.scrollTo(0,0);}}catch(e){}}"
-            "sobe();"
-            "var n=0;var id=setInterval(function(){sobe();if(++n>12){clearInterval(id);}},400);"
+            "(function(){var p=window.parent,d=p.document,livre=false;"
+            "['wheel','touchstart','keydown','mousedown'].forEach(function(ev){"
+            "d.addEventListener(ev,function(){livre=true;},{passive:true,once:true});});"
+            "var m=d.querySelector('[data-testid=\"stMain\"]');"
+            "var n=0;(function sobe(){"
+            "try{if(livre)return;"
+            "if(m){m.scrollTop=0;}else{p.scrollTo(0,0);}}catch(e){}"
+            "if(n++<12&&!livre){setTimeout(sobe,60);}})();"
             "})();"
             "</script>",
             height=0,

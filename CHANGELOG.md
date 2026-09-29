@@ -4,6 +4,12 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v3.5.3] - 2026-09-29
+
+### Corrigido
+- **Rolar a página Legal jogava de volta ao topo a cada 400ms** — o conserto do "a Legal abria no fim" (o `st.switch_page` preserva a posição de rolagem) foi implementado com `setInterval(400ms)` repetindo 12 vezes, ou seja, 4,8 segundos em que o timer reatribuía `scrollTop=0` sem olhar se alguém já estava rolando. Quem abria a página e começava a ler recebia uma leve puxada de volta ao topo a cada 400ms — uma dente-de-serra de 180px/180px/180px... — e só normalizava quando o intervalo morria. O sintoma era pior que o defeito que o código existia para corrigir. Agora o loop cede no primeiro gesto do usuário (`wheel`, `touchstart`, `keydown` e `mousedown` marcam `livre` e cancelam o reagendamento) e o passo virou `setTimeout(60ms)`, encurtando a janela de ~4,8s para ~720ms — o suficiente para cobrir a reaplicação de rolagem do Streamlit na montagem. Medido no browser a 1366x768: a dente-de-serra sumiu (0 puxadas em 10s de rolagem contínua, do início ao fim da página) **e** a página continua abrindo no topo (62/62 amostras em `scrollTop=0` quando ninguém rola) — corrigir a briga com a pessoa não pode reintroduzir o defeito original.
+- **2 testes de contrato do JS do rodapé** em `test_ui_comum.py` travando o modo de falha silencioso: o primeiro exige os quatro eventos de gesto e proíbe a volta do `setInterval` fixo; o segundo garante que o `scrollTop=0` continua no script, para o "abre no fim" não voltar junto. **723 testes**, todos passando.
+
 ## [v3.5.2] - 2026-09-28
 
 ### Corrigido
