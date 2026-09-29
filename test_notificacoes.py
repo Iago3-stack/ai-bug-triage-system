@@ -4,6 +4,7 @@
 
 import pytest
 import socket
+import threading
 
 import notificacoes
 
@@ -371,6 +372,21 @@ def test_limpar_config_sessao_esvazia():
     notificacoes.set_config(DISCORD_WEBHOOK="https://discord/sessao")
     notificacoes.limpar_config_sessao()
     assert notificacoes.config_sessao() == {}
+
+
+def test_override_nao_vaza_entre_contextos():
+    notificacoes.set_config(DISCORD_WEBHOOK="https://discord/ctx1")
+    segundo = {}
+
+    def roda():
+        notificacoes.set_config(DISCORD_WEBHOOK="https://discord/ctx2")
+        segundo["cfg"] = dict(notificacoes.config_sessao())
+
+    t = threading.Thread(target=roda)
+    t.start()
+    t.join(timeout=5)
+    assert segundo["cfg"]["DISCORD_WEBHOOK"] == "https://discord/ctx2"
+    assert notificacoes.config_sessao()["DISCORD_WEBHOOK"] == "https://discord/ctx1"
 
 
 # --- Testes manuais de canal (botões "Enviar teste" do modal) ---

@@ -5,6 +5,7 @@ sem abrir o app. Todas as funções são à prova de erro: uma falha de rede/cre
 ou canal não configurado NUNCA pode derrubar a triagem.
 """
 
+import contextvars
 import ipaddress
 import json
 import os
@@ -58,19 +59,33 @@ def _webhook_seguro(url: str | None) -> bool:
     return True
 
 # Override por sessão: cada usuário/visitante configura o SEU (webhook, e-mail,
-# remetente/senha SMTP). Fica em st.session_state (por navegador/aba) no Streamlit;
-# sem runtime do Streamlit (testes) cai num dict global. Nada é gravado em disco.
+# remetente/senha SMTP). No Streamlit fica em st.session_state (por navegador/aba);
+# sem runtime do Streamlit (testes, threads) cai num ContextVar por-contexto,
+# nunca num dict global compartilhado. Nada é gravado em disco.
 _CHAVE_OVERRIDE = "cfg_override_notif"
-_SESSAO: dict[str, str] = {}
+_SESSAO_CTX = contextvars.ContextVar("cfg_override_notif_sessao", default=None)
 
 
 def _dados_override() -> dict:
-    """Dicionário de override da sessão corrente (ou fallback p/ testes)."""
+    """Dicionário de override da sessão corrente (ou fallback por-contexto).
+
+    No Streamlit real (``streamlit run``) usa st.session_state (por navegador/aba).
+    Fora dele (testes, threads) cai num ContextVar por-contexto — nunca num dict
+    global compartilhado entre sessões.
+    """
     try:
         import streamlit as st
-        return st.session_state.setdefault(_CHAVE_OVERRIDE, {})
+        from streamlit.runtime import exists as _em_streamlit
+
+        if _em_streamlit():
+            return st.session_state.setdefault(_CHAVE_OVERRIDE, {})
     except Exception:
-        return _SESSAO
+        pass
+    dados = _SESSAO_CTX.get()
+    if dados is None:
+        dados = {}
+        _SESSAO_CTX.set(dados)
+    return dados
 
 
 def set_config(**campos: str) -> None:

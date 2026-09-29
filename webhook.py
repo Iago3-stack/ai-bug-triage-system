@@ -15,12 +15,15 @@ Payload (JSON):
      "repositorio": "...", "run_id": "...", "commit": "..."}  # opcional
 
 Segurança: se a env ``WEBHOOK_TOKEN`` estiver definida, exige o cabeçalho
-``X-Webhook-Token``. IA (``ia`` no payload ou env ``WEBHOOK_IA=1``) e
-persistência no histórico (env ``WEBHOOK_PERSISTE=1``) são opcionais.
+``X-Webhook-Token`` (comparação em tempo constante). ``WEBHOOK_REQUIRE_TOKEN=1``
+força o token mesmo sem valor configurado (falha fechada). IA (``ia`` no payload
+ou env ``WEBHOOK_IA=1``) e persistência no histórico (env ``WEBHOOK_PERSISTE=1``)
+são opcionais.
 
 Para rodar:  python webhook.py [--porta 8080] [--host 0.0.0.0]
 """
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import hmac
 import json
 import logging
 import os
@@ -33,14 +36,16 @@ MAX_BYTES = 200_000  # teto da evidência aceita (evita payload gigante)
 
 
 def token_exigido() -> bool:
-    return bool(os.environ.get("WEBHOOK_TOKEN"))
+    return bool(os.environ.get("WEBHOOK_TOKEN")) or os.environ.get("WEBHOOK_REQUIRE_TOKEN") == "1"
 
 
 def token_valido(cabecalho: str | None) -> bool:
+    """Comparação em tempo constante (evita timing attack) contra o segredo."""
     aceito = os.environ.get("WEBHOOK_TOKEN")
     if not aceito:
-        return True
-    return bool(cabecalho) and cabecalho.strip() == aceito.strip()
+        # Sem segredo definido: aberto, a menos que WEBHOOK_REQUIRE_TOKEN=1 (falha fechada).
+        return os.environ.get("WEBHOOK_REQUIRE_TOKEN") != "1"
+    return bool(cabecalho) and hmac.compare_digest(cabecalho.strip(), aceito.strip())
 
 
 def _quer_ia(dados: dict) -> bool:

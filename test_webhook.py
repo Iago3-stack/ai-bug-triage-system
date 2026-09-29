@@ -85,6 +85,14 @@ def test_token_exigido_quando_set(monkeypatch):
     assert webhook.token_valido(None) is False
 
 
+def test_require_token_sem_segredo_fecha(monkeypatch):
+    monkeypatch.delenv("WEBHOOK_TOKEN", raising=False)
+    monkeypatch.setenv("WEBHOOK_REQUIRE_TOKEN", "1")
+    assert webhook.token_exigido() is True
+    assert webhook.token_valido(None) is False
+    assert webhook.token_valido("qualquer-coisa") is False
+
+
 def test_quer_ia_flag_ou_env(monkeypatch):
     assert webhook._quer_ia({"ia": True}) is True
     assert webhook._quer_ia({}) is False
