@@ -1,0 +1,56 @@
+# Guard de tempo-constante para comparação de segredo (CWE-208).
+#
+# POR QUE ESTA REGRA EXISTE:
+# `webhook.py:48` (commit 8a72069) valida o X-Webhook-Token com
+# `hmac.compare_digest()` em vez de `==`. Essa é a ÚNICA comparação em tempo
+# constante do projeto — não há outra linha segurando esse padrão.
+#
+# O risco real não é alguém escrever `==` do zero: é alguém "simplificar"
+# um `compare_digest` de volta para `==` num refactor. Passa em review, parece
+# mais limpo, e reabre um timing attack no webhook de produção sem nenhum
+# aviso. Esta regra é a rede que pega isso.
+#
+# VALIDAÇÃO (2026-09-29): rodada nos 71 arquivos .py versionados -> 0 achados
+# (o código atual está limpo). Validada contra 6 casos isolados: detecta as 3
+# variantes vulneráveis e não acusa as 3 formas corretas (hmac.compare_digest,
+# secrets.compare_digest e a flag WEBHOOK_REQUIRE_TOKEN, que tem "TOKEN" no
+# nome mas é flag de modo, não segredo).
+#
+# LIMITE CONHECIDO: só enxerga segredo lido de `os.environ` / `os.environ[]`.
+# Segredo vindo de arquivo, `.env` parseado ou `os.getenv` com outra forma
+# escapa. Ampliar em src/ conforme aparecer necessidade.
+
+rules:
+  - id: python-secret-compared-with-equality
+    languages: [python]
+    mode: taint
+    severity: WARNING
+    message: >-
+      Comparacao de segredo/token por `==`/`!=` e vulneravel a timing attack
+      (CWE-208). Use `hmac.compare_digest()` ou `secrets.compare_digest()`.
+      Ver .semgrep/README.md para o padrao do projeto.
+    metadata:
+      category: security
+      cwe: "CWE-208: Observable Timing Discrepancy"
+      confidence: MEDIUM
+      likelihood: MEDIUM
+      impact: MEDIUM
+      subcategory: [vuln]
+      technology: [requests, flask]
+      references:
+        - https://cwe.mitre.org/data/definitions/208.html
+        - https://docs.python.org/3/library/hmac.html#hmac.compare_digest
+    pattern-sources:
+      - patterns:
+          - pattern-either:
+              - pattern: os.environ.get($NOME)
+              - pattern: os.environ[$NOME]
+          - metavariable-regex:
+              metavariable: $NOME
+              # O lookahead negativo impede o falso positivo classico:
+              # WEBHOOK_REQUIRE_TOKEN tem "TOKEN" no nome mas e flag de modo.
+              regex: (?i)^["']?(?!.*(REQUIRE|ENABLED|DISABLED|DEBUG|TIMEOUT|EXPIRE|_SET)).*(TOKEN|SECRET|SENHA|PASSWORD|PASSWD|API_?KEY|APIKEY|CREDENTIAL|SIGNATURE|LICEN[CS]A|CHAVE)
+    pattern-sinks:
+      - pattern-either:
+          - pattern: $T == $OUTRO
+          - pattern: $T != $OUTRO

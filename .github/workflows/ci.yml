@@ -43,6 +43,30 @@ jobs:
       - name: Rodar testes unitários
         run: pytest -v --junitxml=junit.xml
 
+      # DEPOIS do pytest, não antes: se o gate de segurança falhasse primeiro,
+      # o junit.xml nao existiria, o badge cairia no fallback "erro no CI" e o
+      # ci-falhas.yml reportaria um job de testes que nao falhou de verdade.
+      # Assim o badge sempre reflete os testes reais, e a falha de seguranca
+      # aparece separadamente.
+      #
+      # semgrep e instalado aqui (nao em requirements*.txt): e ferramenta de
+      # analise, nao dependencia do app nem de teste — nao deve ir para o build
+      # do Streamlit Cloud. Versao fixada para o CI nao surprisedo amanha.
+      - name: Guard de tempo-constante (semgrep)
+        env:
+          SEMGREP_SEND_METRICS: "off"
+        run: |
+          pip install "semgrep==1.178.0"
+          # --error faz o semgrep sair != 0 quando ha achado. Sem isso ele
+          # reporta e continua, e o gate nao trava nada.
+          semgrep scan \
+            --config .semgrep/ \
+            --error \
+            --metrics=off \
+            --disable-version-check \
+            --quiet \
+            $(git ls-files '*.py')
+
       # if: always() — o badge reflete o resultado REAL: se este job falhar,
       # ainda geramos o badge vermelho a partir do junit.xml. Assim a falha
       # não fica "escondida" num badge verde do último push bom.
