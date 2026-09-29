@@ -16,6 +16,7 @@
 # Requisito no painel do Supabase: Authentication -> Providers -> Email habilitado.
 # Com "Confirm email" ativo, o cadastro exige confirmação antes do 1º login.
 
+import contextvars
 import json
 
 import requests
@@ -24,7 +25,7 @@ from nuvem_supabase import _config
 
 _SESSAO_KEY = "_auth_sessao"
 
-_ARMARIO: dict = {}
+_ARMARIO_CTX: contextvars.ContextVar = contextvars.ContextVar("auth_sessao_sessao", default=None)
 
 
 def _registrar_usuario(sessao: dict | None) -> None:
@@ -48,13 +49,24 @@ def _registrar_usuario(sessao: dict | None) -> None:
 
 
 def _armazem():
-    """st.session_state em runtime; dict simples fora dele (testes)."""
+    """st.session_state em runtime (streamlit run); dict por-contexto fora dele.
+
+    Fora do Streamlit (testes, threads) usa um ContextVar — nunca um dict global
+    compartilhado, para dois contextos não verem a sessão um do outro.
+    """
     try:
         import streamlit as st
+        from streamlit.runtime import exists as _em_streamlit
 
-        return st.session_state
+        if _em_streamlit():
+            return st.session_state
     except Exception:
-        return _ARMARIO
+        pass
+    d = _ARMARIO_CTX.get()
+    if d is None:
+        d = {}
+        _ARMARIO_CTX.set(d)
+    return d
 
 
 def _mensagem_erro(status: int, texto: str) -> str:
