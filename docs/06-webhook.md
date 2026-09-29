@@ -13,7 +13,7 @@ Premium automaticamente (`POST /webhook/pagamento`).
 ```http
 POST /webhook/falha
 Content-Type: application/json
-X-Webhook-Token: <WEBHOOK_TOKEN>          # exigido apenas se a env estiver definida
+X-Webhook-Token: <WEBHOOK_TOKEN>          # exigido quando há WEBHOOK_TOKEN (ou sempre, com WEBHOOK_REQUIRE_TOKEN=1)
 
 {
   "evidencia": "<saída do Playwright / newman / log bruto>",
@@ -38,8 +38,7 @@ Resposta `200`:
 }
 ```
 
-Erros: `400` payload inválido, `401` token incorreto (se `WEBHOOK_TOKEN` setado),
-`413` evidência acima de **200 KB**, `404` rota desconhecida. O webhook **nunca cai**:
+Erros: `400` payload inválido, `401` token incorreto (se `WEBHOOK_TOKEN` setado; comparação em **tempo constante**), `413` evidência acima de **200 KB**, `404` rota desconhecida. O webhook **nunca cai**:
 IA e persistência são opcionais e qualquer exceção vira campo de `aviso_*`.
 
 ## Confirmação automática de pagamento (`POST /webhook/pagamento`)
@@ -65,12 +64,37 @@ curl -s localhost:8080/webhook/falha -X POST -H 'Content-Type: application/json'
 ```
 
 Env opcionais:
-- `WEBHOOK_TOKEN` — exige o cabeçalho `X-Webhook-Token` (recomendado em produção).
+- `WEBHOOK_TOKEN` — exige o cabeçalho `X-Webhook-Token` (recomendado em produção; comparação em **tempo constante** via `hmac.compare_digest`, sem vazar o segredo por timing).
+- `WEBHOOK_REQUIRE_TOKEN=1` — **fail-closed**: rejeita com `401` qualquer payload sem token, **mesmo sem `WEBHOOK_TOKEN` definido** (o default só exige token quando a env existe).
 - `WEBHOOK_IA=1` — adiciona a análise de IA ao relato em todo payload.
 - `WEBHOOK_PERSISTE=1` — grava a triagem no histórico (JSONL ou Supabase, via `persistencia.py`).
 
-O webhook roda **fora** do Streamlit (VPS/Railway/Render) — o app Streamlit continua
-na página Ferramenta; o relato gerado aqui pode ser colado direto nele.
+O webhook roda **fora** do Streamlit (hoje em produção no Render — ver seção abaixo); o
+app Streamlit continua na página Ferramenta; o relato gerado aqui pode ser colado direto nele.
+
+## Deploy em produção (Render)
+
+O webhook de produção é um **web service no Render** (`ai-bug-triage-system-webhook`,
+região oregon, plano free), com **auto-deploy a cada commit** na `main`
+(trigger `new_commit`). O app não é container: build `pip install -r requirements.txt`,
+início `python webhook.py --porta 8080`.
+
+- **URL**: `https://ai-bug-triage-system-webhook.onrender.com`
+- **Env de produção**: `WEBHOOK_TOKEN` definido (o token é obrigatório de fato — o
+  GitHub Action manda o `X-Webhook-Token`); `WEBHOOK_IA`/`WEBHOOK_PERSISTE` conforme o
+  painel.
+- **Free tier hiberna** sem tráfego: o primeiro hit depois de parado acorda a instância
+  (o `/health` pode levar ~10–12 s no cold start e depois responde normal) — não é
+  lentidão do app. O `memory_usage` fica folgado (~46 MB).
+- **Verificação rápida** (a mais recente, commit `f305842` live):
+  ```bash
+  curl -s -o /dev/null -w '%{http_code}\n' https://ai-bug-triage-system-webhook.onrender.com/health          # 200
+  curl -s -o /dev/null -w '%{http_code}\n' -X POST https://ai-bug-triage-system-webhook.onrender.com/webhook/falha  # 401 (sem token)
+  ```
+
+Operação (deploy/logs/métricas) pelo **MCP do Render** (`list_deploys`, `list_events`,
+`list_logs`, `get_metrics`) ou pelo CLI `render`. Detalhes de segurança do token na
+[07 — Segurança](07-seguranca.md).
 
 ## GitHub Actions
 
