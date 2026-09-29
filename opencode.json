@@ -1,0 +1,13 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "supabase": {
+      "type": "local",
+      "command": [
+        "/home/iago/ambientev/ai-bug-triage-system/.venv/bin/python",
+        "/home/iago/ambientev/ai-bug-triage-system/mcp_supabase.py"
+      ],
+      "enabled": true
+    }
+  }
+}

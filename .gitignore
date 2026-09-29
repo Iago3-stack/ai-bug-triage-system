@@ -44,6 +44,10 @@ credentials.json
 .env
 secrets.py
 
+# Homologação PagBank (contém CPF/PII de teste — nunca commitada)
+homologacao_pagbank.txt
+verif_pagbank.txt
+
 # Arquivos temporários
 temp/
 tmp/
