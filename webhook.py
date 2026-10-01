@@ -34,6 +34,8 @@ import colar_falha
 
 LOGGER = logging.getLogger("webhook-falhas")
 MAX_BYTES = 200_000  # teto da evidência aceita (evita payload gigante)
+_DRENAGEM_TIMEOUT = 5.0  # quanto esperar o corpo rejeitado chegar, apos responder
+_DRENAGEM_TETO = 1024 * 1024  # acima disso nao drena: fecha a conexao
 
 
 def token_exigido() -> bool:
@@ -202,6 +204,60 @@ class TratadorWebhook(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(corpo)
 
+    def _responder_rejeitando(self, status: int, payload: dict) -> None:
+        """Responde a um payload **ainda não lido**, sem corromper o keep-alive.
+
+        Rejeitar sem consumir o corpo deixa os bytes do request pendurados no
+        socket. Com ``protocol_version = HTTP/1.1``, a conexão seguinte
+        recomeça a leitura no meio desses bytes e o servidor interpreta a
+        sobra do JSON como método — ``501 Unsupported method ('{...}POST')``,
+        erro que aparece para um cliente que fez tudo certo. Foi observado em
+        produção depois de um ``401``.
+
+        Fechar a conexão não resolve: o cliente legítimo que reaproveita a
+        conexão toma ``BrokenPipeError`` na requisição seguinte. Drenar
+        **antes** de responder também não: o cliente espera a resposta antes
+        de terminar de enviar o corpo, então um ``rfile.read()`` bloqueante
+        antes do ``send_response`` é deadlock.
+
+        A ordem que funciona é responder, **depois** drenar, com timeout curto
+        no socket e sem esperar mais que o necessário. Se o corpo não chegar
+        inteiro nesse tempo, marcamos a conexão para fechar e seguimos — não
+        vale segurar uma thread por causa de cliente malformado.
+        """
+        pendente = 0
+        try:
+            n = int(self.headers.get("Content-Length") or 0)
+        except ValueError:
+            n = 0
+        if n <= 0 or n > _DRENAGEM_TETO:
+            # Corpo vazio não suja o socket; corpo enorme não vale drenar.
+            self.close_connection = n > _DRENAGEM_TETO
+        else:
+            pendente = n
+
+        self._responder(status, payload)
+
+        if pendente:
+            self._drenar(pendente)
+
+    def _drenar(self, pendente: int) -> None:
+        """Consome o resto do corpo já respondendo, com socket em timeout curto."""
+        try:
+            self.connection.settimeout(_DRENAGEM_TIMEOUT)
+            while pendente > 0:
+                lido = self.rfile.read(min(pendente, 8192))
+                if not lido:
+                    break
+                pendente -= len(lido)
+        except (OSError, ValueError):
+            self.close_connection = True
+        finally:
+            try:
+                self.connection.settimeout(self.timeout)
+            except OSError:
+                self.close_connection = True
+
     def _responder_sem_corpo(self, status: int, payload: dict) -> None:
         corpo = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
@@ -234,23 +290,20 @@ class TratadorWebhook(BaseHTTPRequestHandler):
         if token_exigido() and not token_valido(
             self.headers.get("X-Webhook-Token")
         ):
-            self._responder(401, {"status": "erro", "erro": "token ausente ou inválido"})
+            self._responder_rejeitando(401, {"status": "erro", "erro": "token ausente ou inválido"})
             return
 
         tamanho = self.headers.get("Content-Length")
         try:
             n = int(tamanho) if tamanho else 0
         except ValueError:
-            self._responder(400, {"status": "erro", "erro": "Content-Length inválida"})
+            self._responder_rejeitando(400, {"status": "erro", "erro": "Content-Length inválida"})
             return
         if n <= 0:
             self._responder(400, {"status": "erro", "erro": "corpo vazio"})
             return
         if n > MAX_BYTES:
-            # Não drenamos um corpo que rejeitamos: com keep-alive sobra lixo no
-            # socket e a conexão seguinte lê lixo. Fechar é a resposta correta.
-            self.close_connection = True
-            self._responder(413, {"status": "erro", "erro": "payload grande demais"})
+            self._responder_rejeitando(413, {"status": "erro", "erro": "payload grande demais"})
             return
         corpo = self.rfile.read(n)
         if not corpo:
@@ -283,16 +336,13 @@ class TratadorWebhook(BaseHTTPRequestHandler):
         try:
             n = int(tamanho) if tamanho else 0
         except ValueError:
-            self._responder(400, {"status": "erro", "erro": "Content-Length inválida"})
+            self._responder_rejeitando(400, {"status": "erro", "erro": "Content-Length inválida"})
             return
         if n <= 0:
             self._responder(200, {"status": "ok", "acao": "ignorada"})
             return
         if n > MAX_BYTES:
-            # Não drenamos um corpo que rejeitamos: com keep-alive sobra lixo no
-            # socket e a conexão seguinte lê lixo. Fechar é a resposta correta.
-            self.close_connection = True
-            self._responder(413, {"status": "erro", "erro": "payload grande demais"})
+            self._responder_rejeitando(413, {"status": "erro", "erro": "payload grande demais"})
             return
         corpo = self.rfile.read(n)
         if not corpo:
@@ -300,6 +350,8 @@ class TratadorWebhook(BaseHTTPRequestHandler):
             return
         if not assinatura_pagbank_valida(corpo, self.headers.get("X-Authenticity-Token")):
             LOGGER.warning("Assinatura do PagBank ausente ou inválida em %s", self.path)
+            # O corpo já foi lido em `corpo = self.rfile.read(n)`: drenar aqui
+            # corromperia a conexão em vez de protegê-la.
             self._responder(401, {"status": "erro", "erro": "assinatura ausente ou inválida"})
             return
         try:

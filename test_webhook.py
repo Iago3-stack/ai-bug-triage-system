@@ -458,3 +458,78 @@ def test_pagamento_tem_teto_de_payload(servidor, monkeypatch):
 
 def test_tratador_tem_timeout_de_socket():
     assert webhook.TratadorWebhook.timeout == 30
+
+
+def test_rejeicao_401_nao_quebra_a_conexao_seguinte(servidor, monkeypatch):
+    """Regressão do keep-alive: rejeitar sem drenar corrompia a conexão.
+
+    Duas requisições na MESMA conexão, a segunda logo depois de um 401. Sem
+    fechar a conexão, os bytes do corpo rejeitado sobram no socket e o
+    servidor lê a sobra como método — devolvendo
+    ``501 Unsupported method ('{...}POST')`` para um cliente que fez tudo
+    certo. Este teste falha com 501 se `close_connection` voltar a faltar.
+    """
+    monkeypatch.setenv("PAGBANK_TOKEN", SEGREDO_PAGBANK)
+    u = servidor.replace("http://", "")
+    conn = http.client.HTTPConnection(u)
+    try:
+        # 1) sem assinatura: 401, corpo NÃO consumido pelo servidor
+        conn.request(
+            "POST",
+            "/webhook/pagamento",
+            b'{"reference_id":"cob-keepalive"}',
+            {"Content-Type": "application/json"},
+        )
+        r1 = conn.getresponse()
+        assert r1.status == 401
+        r1.read()
+        # 2) mesma conexão, agora com assinatura válida
+        corpo = b'{"reference_id":"cob-keepalive"}'
+        conn.request(
+            "POST",
+            "/webhook/pagamento",
+            corpo,
+            {
+                "Content-Type": "application/json",
+                "X-Authenticity-Token": _assinar(corpo),
+            },
+        )
+        r2 = conn.getresponse()
+        assert r2.status == 200, (
+            f"conexão corrompida pelo 401 anterior: {r2.status} {r2.read()[:120]!r}"
+        )
+        assert json.loads(r2.read().decode("utf-8"))["acao"] == "ignorada"
+    finally:
+        conn.close()
+
+
+def test_falha_401_nao_quebra_a_conexao_seguinte(servidor, monkeypatch):
+    """A mesma corrupção existia em /webhook/falha; este era o CI, não o PagBank."""
+    monkeypatch.setenv("WEBHOOK_TOKEN", "segredo-do-ci")
+    u = servidor.replace("http://", "")
+    conn = http.client.HTTPConnection(u)
+    try:
+        conn.request(
+            "POST",
+            "/webhook/falha",
+            b'{"evidencia":"primeira"}',
+            {"Content-Type": "application/json"},
+        )
+        r1 = conn.getresponse()
+        assert r1.status == 401
+        r1.read()
+        conn.request(
+            "POST",
+            "/webhook/falha",
+            b'{"evidencia":"segunda"}',
+            {
+                "Content-Type": "application/json",
+                "X-Webhook-Token": "segredo-do-ci",
+            },
+        )
+        r2 = conn.getresponse()
+        assert r2.status == 200, (
+            f"conexão corrompida pelo 401 anterior: {r2.status} {r2.read()[:120]!r}"
+        )
+    finally:
+        conn.close()
