@@ -102,4 +102,4 @@ override não aparece na outra.
 | Token/tempo constante | `webhook.py` |
 | Sem root | `Dockerfile` |
 | Anti-SSRF / PII | `notificacoes.py`, `guardrails.py` |
-| RLS / read-only | migrations, MCP `mcp_supabase.py` |
+| RLS / read-only | `migrations/`, ponte MCP local read-only (não versionada) |
