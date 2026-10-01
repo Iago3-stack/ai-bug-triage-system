@@ -4,6 +4,22 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v3.5.4] - 2026-10-01
+
+### Corrigido
+- **A landing anunciava um PIX automático que não existe.** Três trechos diziam que a confirmação e a ativação chegavam sozinhas. O que roda em produção é Pix estático + "Já paguei" + confirmação à mão no Painel do Dono — o `POST /orders` do PagBank responde `403 ACCESS_DENIED` (whitelist), então o caminho automático nunca funcionou e a página anunciava um produto que o código não faz. A landing passou a descrever o fluxo manual e a atribuir a ativação ao dono. Três frases são travadas por teste em `test_landing.py`, que analisa **frase a frase** em vez do HTML inteiro, para não reprovar meta tag legítima como "Triagem automática".
+- **O consentimento da newsletter não era pedido no ponto da coleta, e "Cancele quando quiser" prometia um clique que não existe** — não há lista, não há `List-Unsubscribe`, o descadastro é responder o e-mail. A linha agora diz isso textualmente, e o link inline do consentimento ganhou sublinhado via `p a:not(.btn)`, que antes só existia no texto das regras.
+- **A política declarava 1 operador internacional onde há 2.** Ao religar o captcha o Google entrou no caminho dos dados e a Legal só nomeava o FormSubmit. O card agora separa os papéis: o **FormSubmit** leva o e-mail, o **reCAPTCHA** leva o comportamento de quem preenche (IP, navegador, interações) e **não recebe o e-mail**, com esse dado processado nos **Estados Unidos** e o Google na função de operador contratado desde 2026-04-02. O hedge anterior ("não informamos o país porque o serviço não publica") vale para o FormSubmit, cujo país não é verificável, e estava indevidamente estendido ao reCAPTCHA, onde o país é verificável.
+- **`AGENTS.md` descrevia o fixture de teste como se fosse produção.** O arquivo afirmava que o `webhook.py` escuta em `127.0.0.1` e "não expõe". Esse `127.0.0.1` vinha de `criar_servidor()`, função que **apenas `test_webhook.py` chama**; o caminho de produção é `principal()`, cujo default já é `0.0.0.0:8080` (travado em `test_interpretar_args_defaults`). O mesmo bullet ainda apresentava `MAX_BYTES` como teto geral: vale só para `/webhook/falha`; `/webhook/pagamento` responde **antes** da checagem de token e não tem teto. Como o `AGENTS.md` é a fonte de contexto de quem mexe no repo, a descrição errada tornava invisível a #1 da auditoria.
+- **`docs/03-arquitetura.md` descrevia o Render MCP como remoto** (`https://mcp.render.com/mcp`). Hoje é ponte stdio local, somente GET, que devolve o **nome** das env vars e nunca o valor. Tabela e parágrafo de higiene reescritos, incluindo de onde a chave é lida.
+
+### Segurança
+- **O formulário da newsletter estava sem captcha e com o e-mail cru no `action` — desde 19/09.** A linha `<input name="_captcha" value="false">` desligava o reCAPTCHA, que no FormSubmit **vem ligado por padrão** e cujo único valor documentado é `false`: a linha existia só para desligar. Além do spam, a documentação deles avisa que desligar sujeita o formulário às "technical limitations which we impose from time to time to filter out bots", o que pode **descartar inscrição legítima em silêncio** — problema de correção, não só de ruído. O alias aleatório que substitui o e-mail no `action` foi aplicado: ele chega no e-mail de *Ativar Formulário*, não no painel depois. `test_landing.py` trava o invariante (`action` sem `@`) e foi verificado pelo lado negativo — reintroduzir e-mail cru faz a suíte falhar.
+
+### Observações
+- **730 testes**, 7 a mais que os 723 da v3.5.3, todos passando: 3 de promessa de pagamento, 3 de copy/consentimento/descadastro da newsletter, 1 de sublinhado do link inline, 1 do `action` sem e-mail cru e 1 do captcha não estar desligado. Nenhuma mudança no app em execução — só landing, Legal, documentação e os testes que a protegem.
+- **Verificado antes de publicar, não depois:** a existência de link de descadastro, a entrega do formulário e a presença do captcha **não** foram observadas em produção — o reCAPTCHA é injetado no momento do submit e não aparece no HTML servido, e confirmar a entrega exigiria um envio real, que cria lead de verdade. O que os testes travam é o *flag de desligamento* e a ausência de e-mail no source, não o comportamento do serviço de terceiros.
+
 ## [v3.5.3] - 2026-09-29
 
 ### Corrigido

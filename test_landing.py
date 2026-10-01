@@ -58,6 +58,89 @@ def test_preco_exibido():
     assert "PIX" in _HTML
 
 
+def test_pagamento_nao_promete_confirmacao_automatica():
+    # A landing anunciava "PIX automático" e "confirmação automática" enquanto o
+    # POST /orders do PagBank respondia 403 ACCESS_DENIED: a página pública
+    # prometia uma cobrança automática que não existia. O teste cruza o
+    # vocabulário de pagamento com "automátic" em vez de banir a palavra —
+    # assim "Classificação automática da gravidade" (que é verdade) continua
+    # livre e só a promessa falsa é barrada.
+    #
+    # A unidade de julgamento é a FRASE, não a linha: o twitter:description
+    # junta "Triagem automática de bugs" a "Premium via PIX" no mesmo <meta>,
+    # e uma única linha com as duas coisas acusaria a afirmação verdadeira.
+    # Os <meta> entram como frases próprias porque são copy pública, visível em
+    # resultado de busca, mas o conteúdo delas morre se as tags forem removidas.
+    corpo = re.sub(r"(?is)<(script|style)[^>]*>.*?</\1>", " ", _HTML)
+    visivel = re.sub(r"(?s)<[^>]+>", " ", corpo)
+    metadados = re.findall(r'content="([^"]*)"', corpo)
+    frases = re.split(r"(?<=[.!?])\s+", visivel)
+    for meta in metadados:
+        frases += re.split(r"(?<=[.!?])\s+", meta)
+
+    pagamento = re.compile(r"pix|pagamento|cobran|assinatura|premium|renov", re.I)
+    for frase in frases:
+        if pagamento.search(frase):
+            assert not re.search(r"autom[áa]tic", frase, re.I), (
+                f"copy de pagamento promete automação: {frase.strip()[:120]}"
+            )
+    assert "PIX manual" in _HTML
+
+
+def test_newsletter_avisa_consentimento_no_ponto_da_coleta():
+    # LGPD art. 9º: transparência onde o dado é coletado. O aviso fica abaixo
+    # do botão e cita as duas vontades separadamente — Termos e tratamento do
+    # e-mail — porque consentir as duas num único clique enfraquece o
+    # consentimento de marketing.
+    assert "concorda com os" in _HTML
+    assert "processamento do seu e-mail para envio de novidades" in _HTML
+
+
+def test_action_do_formulario_nao_expoe_email_cru():
+    # O FormSubmit gera um alias aleatório e o manda no e-mail de ATIVAÇÃO (o
+    # próprio "Ativar Formulário"), não no painel depois. Enquanto o `action`
+    # apontar para o e-mail cru, qualquer um que abrir o source da landing extrai
+    # o endereço e spamma ele direto. Invariante: `action` sem "@".
+    acao = re.search(r'action="([^"]+)"', _HTML).group(1)
+    assert "@" not in acao, f"action expoe endereco de e-mail cru: {acao!r}"
+    assert acao.startswith("https://formsubmit.co/")
+    # e o alias sobreviveu à troca?
+    assert re.fullmatch(r"[0-9a-f]{32}", acao.rsplit("/", 1)[-1]), acao
+
+
+def test_formulario_nao_desliga_o_captcha():
+    # O reCAPTCHA do FormSubmit vem ligado por padrão; o único valor documentado
+    # de `_captcha` é "false", ou seja, a linha existe só para desligar. A
+    # documentação deles avisa que desligar sujeita o formulário às limitações
+    # que aplicam de vez em quando para filtrar bot — o que pode descartar
+    # inscrição legítima em silêncio. Linha presente = captcha desligado.
+    assert 'name="_captcha" value="false"' not in _HTML
+    # O honeypot continua como segunda camada, sem depender de terceiro.
+    assert 'name="_honey"' in _HTML
+
+
+def test_link_inline_em_texto_tem_sublinhado():
+    # WCAG 1.4.1: cor sozinha não pode ser o único indício de que algo é link.
+    # A regra global `a { text-decoration: none }` deixava o aviso de
+    # consentimento — justamente onde a pessoa precisa enxergar que está
+    # concordando — com um link verde sem sublinhado. O :not(.btn) mantém CTA,
+    # nav e rodapé como estão.
+    assert "p a:not(.btn) { text-decoration: underline; }" in _HTML
+
+
+def test_newsletter_descreve_o_descadastro_que_existe():
+    # O formulário só entrega o endereço no e-mail do responsável: não há lista,
+    # nem ferramenta de envio, e portanto nenhum botão de descadastro — esse
+    # header vem de quem envia (RFC 2369/8058), não do FormSubmit. A página
+    # diz "responder este e-mail" porque é o caminho que existe. Banir aqui o
+    # "um clique" impede que a volta da frase fácilaga a versão antiga.
+    assert "responder este e-mail" in _HTML
+    assert "Cancele quando quiser" not in _HTML
+    proibido = re.compile(r"um clique|clique para cancelar|descadastrar em", re.I)
+    visivel = re.sub(r"(?is)<(script|style)[^>]*>.*?</\1>", " ", _HTML)
+    assert not proibido.search(visivel), "promete descadastro que o relay nao faz"
+
+
 def test_links_legais():
     # Deep-link para a página Legal: aponta para a RAIZ com ?pag=legal (o
     # Streamlit Cloud derruba subrotas como /legal na primeira carga).

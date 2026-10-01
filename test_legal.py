@@ -38,3 +38,25 @@ def test_aba_da_url_privacidade_quando_pedida(monkeypatch):
 
     monkeypatch.setattr(st, "query_params", _Query())
     assert legal._aba_da_url() == "privacidade"
+
+
+def test_politica_declara_o_operador_internacional(monkeypatch):
+    # O formulário da landing entrega o e-mail ao FormSubmit, que fica fora do
+    # Brasil. A política listava Streamlit, Supabase, Render e PagBank, e omitia
+    # justamente o operador que recebe o dado do visitante — a omissão é o que
+    # o art. 9º proíbe. O teste renderiza a página e procura no texto emitido,
+    # não no fonte, para garantir que o card existe de fato na tela.
+    escritos = []
+    monkeypatch.setattr(st, "markdown", lambda texto, *a, **k: escritos.append(texto))
+    monkeypatch.delenv("WHATSAPP_NUMERO", raising=False)
+    monkeypatch.delenv("ADMIN_EMAIL", raising=False)
+
+    legal._privacidade()
+
+    pagina = " ".join(escritos).lower()
+    assert "formsubmit" in pagina
+    assert "transferência internacional" in pagina or "transferencia internacional" in pagina
+    # O reCAPTCHA (Google) entra no caminho quando o captcha do FormSubmit está
+    # ligado — e ele vê o comportamento de quem preenche, não o e-mail. Sem
+    # esse card, a política declararia um operador e omiria o outro.
+    assert "recaptcha" in pagina
