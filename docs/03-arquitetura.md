@@ -119,23 +119,13 @@ O sistema trabalha com **dois motores de análise** que se **reconciliam** pela 
    **failover** automático para o arquivo local. A issue do Jira criada depois é vinculada ao
    último registro no backend ativo.
 
-## 5. Infra de desenvolvimento com agentes (MCPs e skills)
+## 5. Configuração por ambiente
 
-O time (e o agente de código) desenvolvem com **MCPs de apoio** — nenhuma escrita de
-produção acontece por eles: o MCP do Supabase é **read-only** e o do Render só faz GET.
-O registro fica na config global do opencode (`~/.config/opencode/`); as pontes em si
-são arquivos **do repo**.
+Todo segredo vem de **variável de ambiente**, nunca de arquivo versionado: local
+via `.env` (gitignored), no Streamlit Cloud via Secrets, no Render via env do
+serviço. Dado de produção muda **pelo app ou por migration versionada** — nunca
+por edição manual de banco — para que toda alteração tenha CHANGELOG.
 
-| Ferramenta | Tipo | Papel | Segredo |
-|---|---|---|---|
-| `mcp_supabase.py` | MCP local (FastMCP, stdlib) | Leitura do Postgres do produto (tabelas, colunas, SELECT) pela role `mcp_readonly` — **nunca escreve** | role read-only no Supabase |
-| semgrep MCP | MCP local | Varredura por regras (`p/security-audit`, `p/owasp-top-ten`) nos arquivos | `SEMGREP_SEND_METRICS=off` |
-| Playwright MCP | MCP local | E2E e inspeção de UI | — |
-| `mcp_render.py` | MCP local (ponte stdio, stdlib) | Serviço, deploys, logs, health e **só os nomes** das env vars do webhook, pela API REST do Render — **somente GET**, nunca cria, altera ou apaga. O valor de uma env nunca sai da ponte: ela devolve a chave | `RENDER_API_KEY` via `{env:...}`, lido do ambiente ou do `.env` (gitignored) |
+As regras de higiene dessa camada (qual agente pode escrever o quê) vivem no
+`AGENTS.md` e no `SECURITY.md`, que é onde quem mexe no repo as procura.
 
-Regras de higiene dessa camada:
-
-- **Segredo por env, nunca inline**: a config referencia `{env:RENDER_API_KEY}` etc.; o valor vive no ambiente (`.zshrc`/secret do Render), não em arquivo versionado.
-- **Dado de produção = leitura por MCP**: qualquer escrita passa pelo app (ou migration versionada), auditável no CHANGELOG.
-- **No repo** ficam só skills e comandos próprios: `agent/skills/` (supabase, triagem, release, etc.) e `.opencode/command/` (`deploy.md`, `health.md`) — o ritual de release/CI do time.
-- **Telegram de rede**: MCPs locais abrem rede só para os destinos que o agente escolhe (Render/Supabase oficial); o semgrep roda local com métricas desligadas.
