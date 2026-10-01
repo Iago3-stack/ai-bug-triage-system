@@ -60,11 +60,12 @@ MEMORIA.md
 
 # Infra local de agente — config de máquina, ponte com path absoluto e skills
 # de terceiros. Nada aqui é do app; o repo é público e não precisa carregar
-# o tooling de quem desenvolve. `mcp_supabase.py` é a exceção: é ponte
-# read-only versionada de propósito.
+# o tooling de quem desenvolve. Nenhuma ponte MCP é versionada: `mcp_supabase.py`
+# e `mcp_render.py` moram em `~/Documentos/`.
 .opencode/
 .claude/
 agent/
 skills-lock.json
+mcp_supabase.py
 mcp_render.py
 opencode.json
