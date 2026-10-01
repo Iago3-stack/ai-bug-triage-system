@@ -57,3 +57,14 @@ tmp/
 # Memória local do dono (decisões de máquina, histórico de sessao).
 # Vive em ~/Documentos/MEMORIA.md — nunca versionada.
 MEMORIA.md
+
+# Infra local de agente — config de máquina, ponte com path absoluto e skills
+# de terceiros. Nada aqui é do app; o repo é público e não precisa carregar
+# o tooling de quem desenvolve. `mcp_supabase.py` é a exceção: é ponte
+# read-only versionada de propósito.
+.opencode/
+.claude/
+agent/
+skills-lock.json
+mcp_render.py
+opencode.json
