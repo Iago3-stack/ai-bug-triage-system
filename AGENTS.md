@@ -193,7 +193,9 @@ bug (12 jogadas, exit 1) e passa com a correção (3/3, exit 0). Os 2 testes de
 no `.gitignore` e não devem ser adicionados ao git. `opencode.json` só registra o
 MCP `supabase` com caminho absoluto para `.venv/bin/python` + `mcp_supabase.py`,
 o que não vale para mais ninguém. `mcp_supabase.py` **é** versionado (ponte
-read-only, útil a quem mexe no repo); `mcp_render.py` não.
+read-only, útil a quem mexe no repo); `mcp_render.py` não. O inventário dessa
+camada (qual ponte faz o quê, onde cada segredo mora) fica em
+`~/Documentos/infra-agente-local.md`, fora do repo.
 
 Comandos locais em `.opencode/command/`: `health`, `testes`, `qa`, `deploy`,
 `atualiza-memoria`, `guardas`. O OpenCode lê essa pasta **na subida do
