@@ -54,6 +54,7 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
   <img src="https://img.shields.io/badge/Sess%C3%A3o%20persiste%20no%20F5-0EA5E9?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Plano%20Basic%20%2F%20Premium-F59E0B?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Identidade%20visual-FF4B4B?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Webhook%20PagBank%20assinado-E91E63?style=for-the-badge" />
 </div>
 
 - 🔵 **Triagem em duas camadas**
@@ -86,17 +87,40 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
 
 <div align="center">
   <img src="https://img.shields.io/badge/Python%203.13-3776AB?style=for-the-badge&logo=python&logoColor=white" />
-  <img src="https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white" />
+  <img src="https://img.shields.io/badge/Streamlit-1.64-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white" />
   <img src="https://img.shields.io/badge/Google%20Gemini-8E75B2?style=for-the-badge&logo=googlegemini&logoColor=white" />
-  <img src="https://img.shields.io/badge/pandas-150458?style=for-the-badge&logo=pandas&logoColor=white" />
+  <img src="https://img.shields.io/badge/Groq-8E75B2?style=for-the-badge&logo=groq&logoColor=white" />
+  <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" />
+  <img src="https://img.shields.io/badge/pandas-3.0.6-150458?style=for-the-badge&logo=pandas&logoColor=white" />
+  <img src="https://img.shields.io/badge/Motor%20em%20Stdlib%20Puro-2E7CF6?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/pytest-2E7CF6?style=for-the-badge&logo=pytest&logoColor=white" />
+  <img src="https://img.shields.io/badge/Semgrep-0%20findings-E91E63?style=for-the-badge&logo=semgrep&logoColor=white" />
   <img src="https://img.shields.io/badge/Linux%20Mint-87CF3E?style=for-the-badge&logo=linuxmint&logoColor=white" />
 </div>
 
-- 🐍 **Python 3.13** — lógica e motor NLP (biblioteca `re` / stdlib)
-- 🚀 **Streamlit 1.64** — interface web e deploy na nuvem
-- 🔮 **Google Gemini (`google-genai`)** — análise de causa raiz via LLM (Fase 3)
-- 🐼 **pandas** — tabela de histórico de triagens
-- 🐧 Desenvolvido em **Linux Mint Debian** (Laboratório Hack28)
+| Camada | Tecnologia | Por quê |
+|---|---|---|
+| Motor de severidade | **Python stdlib** (`re`, sem dependência) | Roda offline, custo zero e resultado reproduzível — nenhum resultado depende de rede ou de modelo |
+| Interface | **Streamlit 1.64** | Entrega rápida sem manter front-end; `st.navigation` com 7 páginas |
+| Análise por IA | **Gemini** (`google-genai`) com fallback **Groq** | Causa raiz e passos de reprodução; se um provedor cai (503/429), o outro assume |
+| Dados | **pandas 3.0.6** para histórico em tela | Tabela de triagens e KPIs do Dashboard |
+| Persistência | **Supabase** (REST) com failover para **JSONL** | Histórico sobrevive a redeploy; se a nuvem cair, degrada para arquivo local em vez de perder dado |
+| Auth | **Supabase Auth** via REST | Multi-tenant sem gerenciar senha |
+| Pagamento | **PagBank Pix** + webhook assinado | Cobrança com verificação de assinatura; confirmação idempotente |
+| Testes | **pytest** (741) + **Semgrep** no CI | Regressão travada a cada push; regra de comparação em tempo constante (CWE-208) como gate |
+
+### Por que léxico e não embeddings
+
+Severidade é **impacto de negócio**, não similaridade semântica — e isso foi medido, não assumido. Dois experimentos de ML no histórico do projeto, mesmo corpus de 30 relatos rotulados:
+
+| Motor | Tolerante | Estrito |
+|---|---|---|
+| **Léxico local (em produção)** | **96,7%** | **95,7%** |
+| Protótipos (zero-shot, transformers) | 53,3% | 43,5% |
+| 1-NN treinado | 66,7% | 60,9% |
+| TF-IDF + centroides (sem transformer) | 53,3% | 39,1% |
+
+O dado que fecha a discussão: **TF-IDF sem transformer empatou com os transformers** — o gargalo é a quantidade de dado rotulado, não a capacidade do modelo. O motor léxico ficou, é mais leve e é determinístico. Detalhes em [03 — Arquitetura](docs/03-arquitetura.md).
 
 ---
 
@@ -125,7 +149,7 @@ A análise por IA usa a chave `GEMINI_API_KEY` (gratuita em [aistudio.google.com
 - 🔑 **Local**: crie um arquivo `.env` na raiz com `GEMINI_API_KEY=...` (ele é ignorado pelo `.gitignore`).
 - ☁️ **Streamlit Cloud**: `Settings → Secrets → GEMINI_API_KEY` (nunca coloque a chave em código ou no repositório).
 
-**🧪 Rodar os testes** — a mesma suíte do CI (**721 testes**, número exato no badge dinâmico):
+**🧪 Rodar os testes** — a mesma suíte do CI (**741 testes**, número exato no badge dinâmico):
 
 ```bash
 pip install -r requirements-dev.txt
@@ -158,6 +182,29 @@ Cloud em `Settings → Secrets`. Listas completas em [05 — Persistência em Nu
 [06 — Webhook](docs/06-webhook.md) e [07 — Segurança](docs/07-seguranca.md).
 Para desenvolver com agentes (MCPs do Supabase/Render/semgrep), veja a seção 5 de
 [03 — Arquitetura](docs/03-arquitetura.md).
+
+### 💳 Webhook do PagBank (assinatura verificada)
+
+O webhook é um **micro-serviço HTTP 100% stdlib** (`webhook.py`) — sem Flask, sem FastAPI, sem dependência. Ele recebe a confirmação de pagamento do PagBank e só libera o acesso quando a requisição é **autêntica**.
+
+**A assinatura não é um header customizado.** A conta do PagBank não permite header customizado: os documentados são `x-authenticity-token`, `x-product-origin` e `x-product-id`. A doc oficial define a assinatura como:
+
+```
+x-authenticity-token = SHA256(token_da_conta + "-" + corpo_cru)   # hex
+```
+
+Três detalhes que costumam ser o erro de quem implementa:
+
+- O hash é sobre os **bytes crus** do corpo. Reserializar o JSON já parseado muda o espaçamento e a validação falha **sempre**.
+- A comparação é em **tempo constante** (`hmac.compare_digest`) — `==` é vetor de timing (CWE-208), e é isso que o Semgrep do CI bloqueia.
+- O token que protege `/webhook/falha` (`WEBHOOK_TOKEN`) **não serviria** aqui: ele nunca chega nessa rota.
+
+Como **defesa em profundidade**: mesmo com corpo forjado, nada é confirmado sem a consulta server-side na API do PagBank. A confirmação (`pixbilling.confirmar_cobranca`) é **idempotente** — reenvio do PagBank não duplica cobrança.
+
+As duas rotas têm **teto de payload** (`MAX_BYTES`, validado no `Content-Length` antes de ler) e **timeout de socket** (30s); o `413` fecha a conexão em vez de deixar corpo não drenado sujar o socket sob keep-alive.
+
+> ⚠️ **Estado atual:** a cobrança automática está desligada — a API do PagBank responde `403 ACCESS_DENIED` até a whitelist cair. O endpoint já está endurecido antes disso.
+> ⚠️ **Recorrência:** a doc pública diz `x-authenticity-token`, mas há relatos no fórum do PagBank de receber `X-Payload-Signature` (RSA) em produção. A rota valida o header documentado; **se a recorrência for ativada, confirmar o header real em produção antes de confiar na validação.**
 
 ### 🔔 Alerta de triagens CRÍTICAS/ALTAS (e-mail ou Discord)
 
@@ -246,6 +293,9 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 | 🧠 `triagem.py` | Motor NLP: léxico PT, padrões de negação e classificação de severidade (offline) |
 | 🔗 `jira_client.py` | Cliente da API REST v3 do Jira: cria issues (Tarefa) com prioridade mapeada — credenciais **por sessão** (`st.session_state`), sem global de módulo |
 | 🐙 `github_client.py` | Cliente da API REST do GitHub: cria issues no **repo da sua conta** via `POST /repos/{dono}/{repo}/issues`, sem labels (evita 422), erros amigáveis (404/401/403) — token só na sessão |
+| 🔌 `webhook.py` | Micro-serviço HTTP **100% stdlib** que recebe a confirmação do PagBank. Valida `x-authenticity-token` (`SHA256(token + "-" + corpo_cru)`, tempo constante) sobre os **bytes crus**, tem teto de `MAX_BYTES` no `Content-Length`, timeout de 30s e `413` que fecha a conexão. Também serve `/webhook/falha` para CI |
+| 💳 `pixbilling.py` | Cobrança Pix no PagBank: gera a cobrança, referencia a triagem (`cob-…`) e **confirma de forma idempotente** (reenvio do PagBank não duplica) |
+| 🧪 `test_webhook.py` | Testes do webhook: assinatura válida/inválida, corpo cru vs. reparse, teto de payload, timeout e o parsing do payload de pagamento |
 | 🧪 `test_github_client.py` | 18 testes do cliente GitHub: normalização de `dono/repo` (URL/.git), config por sessão, payload sem labels e erros amigáveis (rodam no CI) |
 | 🔮 `ia.py` | Análise por IA via Google Gemini: causa raiz, categoria e passos (com fallback Groq e **modelo próprio** OpenAI-compatível/Gemini) |
 | 📚 `rag.py` | RAG leve no histórico: retrieval por similaridade Jaccard (offline) + geração que responde "já aconteceu? como resolvemos?" |
