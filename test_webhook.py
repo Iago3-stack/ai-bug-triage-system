@@ -1,5 +1,6 @@
 import json
 import http.client
+import hashlib
 import os
 import socket
 import subprocess
@@ -354,3 +355,106 @@ def test_analisar_pagamento_falha_consulta_nao_confirma(tmp_path, monkeypatch):
     assert status == 200
     assert resp["acao"] == "nao_verificado"
     assert pixbilling.buscar_cobranca(cobranca["id"])["status"] == "aguardando"
+
+
+# --------------------------------------------------------------------------
+# Autenticação do webhook do PagBank (x-authenticity-token)
+#
+# A assinatura oficial é SHA256(token_da_conta + "-" + corpo_cru) em hex. Os
+# testes abaixo travam os dois jeitos de errar que a doc do PagBank avisa:
+# hashear o JSON reserializado em vez do corpo cru, e comparar com "==" (o que
+# o Semgrep do repo bloqueia por CWE-208).
+# --------------------------------------------------------------------------
+
+SEGREDO_PAGBANK = "tok-de-teste-nao-e-real-0123456789"
+
+
+def _assinar(corpo: bytes, segredo: str = SEGREDO_PAGBANK) -> str:
+    return hashlib.sha256(segredo.encode("utf-8") + b"-" + corpo).hexdigest()
+
+
+def _postar_pagamento(base, corpo_bytes, assinatura=None, token=None):
+    u = base.replace("http://", "")
+    conn = http.client.HTTPConnection(u)
+    cab = {"Content-Type": "application/json"}
+    if assinatura is not None:
+        cab["X-Authenticity-Token"] = assinatura
+    if token:
+        cab["X-Webhook-Token"] = token
+    conn.request("POST", "/webhook/pagamento", corpo_bytes, cab)
+    r = conn.getresponse()
+    return r.status, json.loads(r.read().decode("utf-8"))
+
+
+def test_assinatura_calculada_sobre_o_corpo_cru(servidor, monkeypatch):
+    """A assinatura válida é aceita quando calculada sobre os bytes crus.
+
+    O corpo vai com espaçamento 'não canônico' de propósito: se alguém
+    reserializar o dict antes de hashear, a validação falha e o teste pega.
+    """
+    monkeypatch.setenv("PAGBANK_TOKEN", SEGREDO_PAGBANK)
+    corpo = b'{"reference_id":  "cob-x",   "id":"ORDE_1"}'
+    status, resp = _postar_pagamento(servidor, corpo, assinatura=_assinar(corpo))
+    # Não chega a 401; sem referência local cai no "ignorada" normal.
+    assert status == 200
+    assert resp["acao"] == "ignorada"
+
+
+def test_assinatura_invalida_recusa_com_401(servidor, monkeypatch):
+    monkeypatch.setenv("PAGBANK_TOKEN", SEGREDO_PAGBANK)
+    corpo = b'{"reference_id":"cob-x"}'
+    status, resp = _postar_pagamento(servidor, corpo, assinatura=_assinar(corpo, "outro-token"))
+    assert status == 401
+    assert resp["status"] == "erro"
+
+
+def test_assinatura_ausente_recusa_com_401(servidor, monkeypatch):
+    monkeypatch.setenv("PAGBANK_TOKEN", SEGREDO_PAGBANK)
+    status, resp = _postar_pagamento(servidor, b'{"reference_id":"cob-x"}')
+    assert status == 401
+    assert resp["status"] == "erro"
+
+
+def test_assinatura_de_payload_adulterado_recusa(servidor, monkeypatch):
+    """Reaproveitar a assinatura de um corpo com outro corpo não passa."""
+    monkeypatch.setenv("PAGBANK_TOKEN", SEGREDO_PAGBANK)
+    honesto = b'{"reference_id":"cob-x"}'
+    adulterado = b'{"reference_id":"cob-alheio"}'
+    status, _ = _postar_pagamento(servidor, adulterado, assinatura=_assinar(honesto))
+    assert status == 401
+
+
+def test_webhook_token_comum_nao_substitui_a_assinatura(servidor, monkeypatch):
+    """X-Webhook-Token não abre /webhook/pagamento: o PagBank não o envia."""
+    monkeypatch.setenv("PAGBANK_TOKEN", SEGREDO_PAGBANK)
+    monkeypatch.setenv("WEBHOOK_TOKEN", "segredo-do-ci")
+    status, _ = _postar_pagamento(servidor, b'{"reference_id":"cob-x"}', token="segredo-do-ci")
+    assert status == 401
+
+
+def test_assinatura_aceita_hex_em_caixa_alta(servidor, monkeypatch):
+    monkeypatch.setenv("PAGBANK_TOKEN", SEGREDO_PAGBANK)
+    corpo = b'{"reference_id":"cob-x"}'
+    status, _ = _postar_pagamento(servidor, corpo, assinatura=_assinar(corpo).upper())
+    assert status == 200
+
+
+def test_pagamento_aberto_sem_token_configurado(monkeypatch):
+    monkeypatch.delenv("PAGBANK_TOKEN", raising=False)
+    monkeypatch.delenv("WEBHOOK_REQUIRE_TOKEN", raising=False)
+    assert webhook.assinatura_pagbank_valida(b'{"a":1}', None) is True
+    monkeypatch.setenv("WEBHOOK_REQUIRE_TOKEN", "1")
+    assert webhook.assinatura_pagbank_valida(b'{"a":1}', None) is False
+
+
+def test_pagamento_tem_teto_de_payload(servidor, monkeypatch):
+    """A rota de pagamento não pode mais ler corpo ilimitado."""
+    monkeypatch.setenv("PAGBANK_TOKEN", SEGREDO_PAGBANK)
+    corpo = b'{"x":"' + b"a" * (webhook.MAX_BYTES + 10) + b'"}'
+    status, resp = _postar_pagamento(servidor, corpo, assinatura=_assinar(corpo))
+    assert status == 413
+    assert resp["erro"] == "payload grande demais"
+
+
+def test_tratador_tem_timeout_de_socket():
+    assert webhook.TratadorWebhook.timeout == 30

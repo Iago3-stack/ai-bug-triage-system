@@ -23,6 +23,7 @@ são opcionais.
 Para rodar:  python webhook.py [--porta 8080] [--host 0.0.0.0]
 """
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import hashlib
 import hmac
 import json
 import logging
@@ -46,6 +47,28 @@ def token_valido(cabecalho: str | None) -> bool:
         # Sem segredo definido: aberto, a menos que WEBHOOK_REQUIRE_TOKEN=1 (falha fechada).
         return os.environ.get("WEBHOOK_REQUIRE_TOKEN") != "1"
     return bool(cabecalho) and hmac.compare_digest(cabecalho.strip(), aceito.strip())
+
+
+def assinatura_pagbank_valida(corpo: bytes, cabecalho: str | None) -> bool:
+    """Confere o ``x-authenticity-token`` do PagBank.
+
+    A assinatura oficial é ``SHA256(token_da_conta + "-" + payload)`` em hex,
+    comparada em tempo constante. O hash é calculado sobre os **bytes crus** do
+    corpo: reserializar o JSON parseado muda espaçamento e a validação falha
+    sempre, que é o erro que a doc do PagBank avisa ("qualquer espaço adicional
+    fará com que o hash tenha divergência").
+
+    Sem ``PAGBANK_TOKEN`` no ambiente fica aberto, a menos que
+    ``WEBHOOK_REQUIRE_TOKEN=1`` force a falha fechada (mesma política de
+    ``token_valido``).
+    """
+    segredo = os.environ.get("PAGBANK_TOKEN")
+    if not segredo:
+        return os.environ.get("WEBHOOK_REQUIRE_TOKEN") != "1"
+    if not cabecalho:
+        return False
+    esperado = hashlib.sha256(segredo.encode("utf-8") + b"-" + corpo).hexdigest()
+    return hmac.compare_digest(cabecalho.strip().lower(), esperado)
 
 
 def _quer_ia(dados: dict) -> bool:
@@ -165,6 +188,9 @@ def analisar_pagamento(dados: dict) -> tuple[int, dict]:
 
 
 class TratadorWebhook(BaseHTTPRequestHandler):
+    # Socket não pode ficar aberto indefinidamente esperando um corpo que não vem.
+    timeout = 30
+
     server_version = "AI-BugTriage-Webhook/1.0"
     protocol_version = "HTTP/1.1"
 
@@ -221,6 +247,9 @@ class TratadorWebhook(BaseHTTPRequestHandler):
             self._responder(400, {"status": "erro", "erro": "corpo vazio"})
             return
         if n > MAX_BYTES:
+            # Não drenamos um corpo que rejeitamos: com keep-alive sobra lixo no
+            # socket e a conexão seguinte lê lixo. Fechar é a resposta correta.
+            self.close_connection = True
             self._responder(413, {"status": "erro", "erro": "payload grande demais"})
             return
         corpo = self.rfile.read(n)
@@ -243,6 +272,12 @@ class TratadorWebhook(BaseHTTPRequestHandler):
         de Pedidos (server-side) mostrar o charge com status PAID. Resposta 200
         sempre que a notificação foi recebida (o PagBank para de reenviar) e a
         confirmação é idempotente.
+
+        A autenticação é o header ``x-authenticity-token`` do próprio PagBank
+        (SHA256 do token da conta + corpo cru) — não há como configurar header
+        customizado na conta, então ``X-Webhook-Token`` não serviria aqui. É
+        defesa em profundidade: mesmo forjando o corpo, nada é confirmado sem
+        a consulta server-side na API.
         """
         tamanho = self.headers.get("Content-Length")
         try:
@@ -253,9 +288,19 @@ class TratadorWebhook(BaseHTTPRequestHandler):
         if n <= 0:
             self._responder(200, {"status": "ok", "acao": "ignorada"})
             return
+        if n > MAX_BYTES:
+            # Não drenamos um corpo que rejeitamos: com keep-alive sobra lixo no
+            # socket e a conexão seguinte lê lixo. Fechar é a resposta correta.
+            self.close_connection = True
+            self._responder(413, {"status": "erro", "erro": "payload grande demais"})
+            return
         corpo = self.rfile.read(n)
         if not corpo:
             self._responder(200, {"status": "ok", "acao": "ignorada"})
+            return
+        if not assinatura_pagbank_valida(corpo, self.headers.get("X-Authenticity-Token")):
+            LOGGER.warning("Assinatura do PagBank ausente ou inválida em %s", self.path)
+            self._responder(401, {"status": "erro", "erro": "assinatura ausente ou inválida"})
             return
         try:
             dados = json.loads(corpo.decode("utf-8"))

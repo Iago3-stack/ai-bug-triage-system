@@ -4,6 +4,23 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v3.5.5] - 2026-10-01
+
+### Segurança
+- **`/webhook/pagamento` era pública e sem autenticação nenhuma.** O endpoint público do PagBank respondia **antes** de qualquer checagem: não exigia token, não tinha teto de payload e não tinha timeout de socket. A primeira leitura dos logs do Render acotou o risco — **zero POST em `/webhook/pagamento` entre 29/09 e 01/10**, só health checks — e o `403 ACCESS_DENIED` (whitelist) mantinha a cobrança automática desligada, então o caminho nunca exercitou. Risco latente, não ativo; corrigido agora, antes da whitelist cair.
+- **A autenticação correta não é `X-Webhook-Token`.** A conta do PagBank **não permite header customizado** — os documentados são `x-authenticity-token`, `x-product-origin` e `x-product-id` —, então o token que protege `/webhook/falha` jamais chegaria nessa rota. A doc oficial define a assinatura como `SHA256(token_da_conta + "-" + payload_cru)` em hex, comparada em tempo constante (`hmac.compare_digest`, para não cair na regra CWE-208 do Semgrep do repo). O hash é calculado sobre os **bytes crus** do corpo: reserializar o JSON parseado muda o espaçamento e a validação falha sempre, que é o erro que a própria doc deles avisa e que já gera thread de "signature mismatch" no fórum deles.
+- **Teto de payload e timeout de socket nas duas rotas.** `MAX_BYTES` valida `Content-Length` antes de ler e agora vale também para `/webhook/pagamento`; o `413` **fecha a conexão** em vez de responder e deixar o corpo não drenado sujar o socket sob keep-alive (o sintoma aparecia como `Exception occurred during processing of request` no log do servidor durante os testes). `TratadorWebhook.timeout = 30` impede que uma conexão fique aberta indefinidamente esperando corpo que não vem.
+- **`.env` estava em modo `664`** — legível por qualquer usuário da máquina. Agora `600`. O arquivo é gitignored e não tem segredo hardcoded, então a exposição era local e curta, mas o custo do conserto é zero.
+
+### Corrigido
+- **`AGENTS.md` descrevia a rota de pagamento pelo comportamento antigo** e afirmava que `MAX_BYTES` valia só para `/webhook/falha`, tornando invisível a #1 da auditoria. Reescrito com o mecanismo real, o motivo de `X-Webhook-Token` não servir ali, e a armadilha do corpo cru.
+- **`/home/iago/Documentos/rotacao-credenciais.md` ensinava a passar o segredo como argumento de tool** (`cred-rotate RENDER_API_KEY <novo-valor>`) — exatamente o que o próprio documento proíbe dez linhas acima, porque o valor de argumento fica persistido em texto plano no banco do OpenCode. O comando estava também errado de fato: `cred-rotate` exige só o nome da variável e lê o valor de stdin ou de prompt sem eco, então a forma documentada abortava com erro de uso.
+
+### Observações
+- **739 testes**, 9 a mais que os 730 da v3.5.4, todos passando, e `semgrep` com 0 achados. Os 9 novos travam o que a auditoria apontou e o modo de falha que a doc do PagBank descreve: assinatura válida aceita, inválida em `401`, ausente em `401`, corpo adulterado reaproveitando assinatura alheia em `401`, `X-Webhook-Token` **não** abrindo a rota, hex em caixa alta aceito, teto de payload em `413`, rota aberta sem `PAGBANK_TOKEN` e falha fechada com `WEBHOOK_REQUIRE_TOKEN=1`, e `timeout` do tratador. O teste do corpo cru manda JSON com espaçamento não canônico de propósito — se alguém passar a reserializar o dict antes de hashear, ele quebra.
+- **Ressalva herdada da doc do PagBank:** em webhooks de **Assinaturas** (recorrente) há relatos no fórum deles de receber `X-Payload-Signature` com chave pública RSA via `GET /public-keys`, em produção e nunca em homologação, em URLs `api.assinaturas.pagseguro.com` — o que não bate com o `x-authenticity-token` documentado. A rota valida o header documentado. **Se a recorrência for ativada, confirmar o header real em produção antes de supor que a validação está pegando**: assinatura sempre inválida é o sintoma, e o fallback de hoje é rota aberta.
+- **O formato do corpo da notificação segue sob dúvida.** `analisar_pagamento` lê `reference_id` do topo do dict, que é o formato de **Assinaturas**; a notificação de **Pedidos** devolve `notificationCode`/`notificationType` e não traz `reference_id`. Não foi corrigido aqui — é mudança de contrato com a API, e a evidência real só aparece quando a whitelist cair e um pagamento de teste chegar. O que se sabe hoje: a confirmação **nunca** vem do corpo, sempre de `consultar_pedido` server-side.
+
 ## [v3.5.4] - 2026-10-01
 
 ### Corrigido

@@ -3,8 +3,13 @@
 O **Pilar 3** fecha o ciclo de automação: além de **colar** a falha na página
 (Pilar 1) e de reconhecer a saída de **Playwright/Postman** (Pilar 2), o app agora
 **recebe as falhas direto do CI** por um webhook HTTP e devolve o **relato já estruturado**.
-O mesmo servidor também **recebe a notificação de pagamento do PagBank** e ativa o
-Premium automaticamente (`POST /webhook/pagamento`).
+O mesmo servidor também **recebe a notificação de pagamento do PagBank**
+(`POST /webhook/pagamento`) e confirma a cobrança server-side. A ativação
+automática do Premium por esse caminho está **desligada**: o `POST /orders`
+responde `403 ACCESS_DENIED` (whitelist do PagBank pendente), então o que roda
+hoje é o Pix estático com "Já paguei" e confirmação à mão no Painel do Dono. A
+rota existe e está autenticada, mas **não deve ser tratada como ativa** antes de
+um pagamento de teste passar de ponta a ponta.
 
 ## Como funciona
 
@@ -49,6 +54,33 @@ consulta o estado real do pedido na API do PagBank (`/orders/{id}`) e, se `PAID`
 chama `pixbilling.confirmar_cobranca` — operação **idempotente** que vira o plano
 em `pago`. Ex.: `https://seu-host/webhook/pagamento`.
 
+### Autenticação: `x-authenticity-token`, não `X-Webhook-Token`
+
+Esta rota **não** usa `X-Webhook-Token`. A conta do PagBank não permite header
+customizado — os documentados são `x-authenticity-token`, `x-product-origin` e
+`x-product-id` — então o token que protege `/webhook/falha` jamais chegaria aqui.
+A verificação é a assinatura que o próprio PagBank envia:
+
+```
+x-authenticity-token: SHA256(token_da_conta + "-" + corpo_cru)   # hex
+```
+
+O hash é sobre os **bytes crus** do corpo. Reserializar o JSON parseado muda o
+espaçamento e a validação falha sempre — é o erro que a doc deles sinaliza e que
+gera "signature mismatch" em silêncio. A comparação é em tempo constante.
+
+Sem `PAGBANK_TOKEN` a rota fica **aberta** (mesmo default de `/webhook/falha`);
+com `WEBHOOK_REQUIRE_TOKEN=1` ela falha fechada. Nos logs do Render entre
+29/09 e 01/10 há **zero POST** nesta rota, e o `403 ACCESS_DENIED` (whitelist)
+mantém a cobrança automática desligada — o caminho ainda não foi exercitado em
+produção.
+
+> **Ao ativar a recorrência, confirme o header real.** Em webhooks de
+> *Assinaturas* há relatos de `X-Payload-Signature` (chave pública RSA via
+> `GET /public-keys`) em produção e nunca em homologação, o que não bate com a
+> doc. A rota valida o header documentado; assinatura sempre inválida é o
+> sintoma de que não é o header certo, e o fallback é rota aberta.
+
 ## Rodar
 
 ```bash
@@ -64,8 +96,9 @@ curl -s localhost:8080/webhook/falha -X POST -H 'Content-Type: application/json'
 ```
 
 Env opcionais:
-- `WEBHOOK_TOKEN` — exige o cabeçalho `X-Webhook-Token` (recomendado em produção; comparação em **tempo constante** via `hmac.compare_digest`, sem vazar o segredo por timing).
-- `WEBHOOK_REQUIRE_TOKEN=1` — **fail-closed**: rejeita com `401` qualquer payload sem token, **mesmo sem `WEBHOOK_TOKEN` definido** (o default só exige token quando a env existe).
+- `WEBHOOK_TOKEN` — exige o cabeçalho `X-Webhook-Token` em `/webhook/falha` (recomendado em produção; comparação em **tempo constante** via `hmac.compare_digest`, sem vazar o segredo por timing).
+- `PAGBANK_TOKEN` — exigido em `/webhook/pagamento`: valida o `x-authenticity-token` (`SHA256(token + "-" + corpo_cru)`). Sem ele, a rota fica aberta.
+- `WEBHOOK_REQUIRE_TOKEN=1` — **fail-closed**: rejeita com `401` qualquer payload sem token válido, **mesmo sem `WEBHOOK_TOKEN`/`PAGBANK_TOKEN` definidos** (o default só exige token quando a env existe).
 - `WEBHOOK_IA=1` — adiciona a análise de IA ao relato em todo payload.
 - `WEBHOOK_PERSISTE=1` — grava a triagem no histórico (JSONL ou Supabase, via `persistencia.py`).
 

@@ -76,13 +76,27 @@ do repo é descrever *o defeito*, não só a correção) — manter esse tom.
   Só `criar_servidor()` amarra em `127.0.0.1`, e quem o chama é **apenas
   `test_webhook.py`**; o caminho de produção é `principal()`, cujo default já é
   `0.0.0.0` (travado em `test_interpretar_args_defaults`).
-- **O teto de payload vale só para `/webhook/falha`** — é a única rota que valida
-  `Content-Length` antes de ler e devolve `413`. `/webhook/pagamento` responde
-  **antes** da checagem de token e não tem teto nenhum. Aceitável porque a
-  confirmação vai sempre à API do PagBank (corpo forjado não vira pagamento), mas
-  o endpoint é público, sem rate limiting e sem timeout de socket — se um dia
-  alguém tratar "exposto" como "não exposto" a partir deste arquivo, a #1 da
-  auditoria fica invisível.
+- **As duas rotas `/webhook/*` têm teto de `MAX_BYTES` e timeout de socket** — o
+  teto é `Content-Length` antes de ler, e o 413 fecha a conexão em vez de
+  deixar lixo no socket com keep-alive.
+- **`/webhook/pagamento` autentica pelo `x-authenticity-token` do próprio
+  PagBank**, não por `X-Webhook-Token`. A assinatura oficial é
+  `SHA256(token_da_conta + "-" + corpo_cru)` em hex. Não existe header
+  customizado configurável na conta do PagBank, então `X-Webhook-Token` — que
+  protege `/webhook/falha` — **não serviria** aqui. O hash é sobre os **bytes
+  crus**: reserializar o JSON parseado muda o espaçamento e a validação falha
+  sempre. Sem `PAGBANK_TOKEN` a rota fica aberta, a menos que
+  `WEBHOOK_REQUIRE_TOKEN=1` feche. Continua sendo defesa em profundidade: mesmo
+  com corpo forjado, nada é confirmado sem a consulta server-side na API.
+- O endpoint é público, **sem rate limiting**. O que fecha o abuso hoje é a
+  assinatura + o fato de a confirmação ir sempre à API do PagBank.
+- **Ressalva sobre `Assinaturas` (recorrente):** a doc pública diz
+  `x-authenticity-token`, mas há relatos no fórum do PagBank de receber
+  `X-Payload-Signature` (RSA, via `GET /public-keys`) em produção e nunca em
+  homologação — em URLs `api.assinaturas.pagseguro.com`. A rota atual valida o
+  header documentado. **Se a recorrência for ativada, confirmar o header real em
+  produção antes de confiar que a validação está ativa** — assinatura sempre
+  inválida é o sintoma, e o fallback atual é rota aberta.
 - Tema: `.streamlit/config.toml` trava o tema **nativo** em `light` de propósito
   (o app faz dark/light no CSS próprio, via seletor no sidebar). Não é esquecimento.
 - `web/landing/` é site estático separado do app e é publicado pelo **mesmo**

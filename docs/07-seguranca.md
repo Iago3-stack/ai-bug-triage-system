@@ -53,6 +53,16 @@ override não aparece na outra.
   sem token → `401`, `/health` → `200`.
 - A rota de pagamento **não confia no corpo**: consulta o estado real na API do PagBank
   antes de ativar o Premium (idempotente).
+- A rota de pagamento é autenticada pelo **`x-authenticity-token`** do próprio PagBank
+  (`SHA256(token_da_conta + "-" + corpo_cru)`, comparação em tempo constante) —
+  **não** por `X-Webhook-Token`, que a conta do PagBank não consegue enviar. O hash é
+  sobre os bytes crus; reserializar o JSON parseado invalida a assinatura. Também tem
+  teto de `MAX_BYTES` e `timeout` de socket.
+- **Sem `PAGBANK_TOKEN` definido, a rota de pagamento fica aberta** — o mesmo default
+  de `/webhook/falha`. Em produção ela **precisa** estar definida; `WEBHOOK_REQUIRE_TOKEN=1`
+  fecha as duas. Nunca testada com tráfego real: os logs do Render mostram zero POST em
+  `/webhook/pagamento` entre 29/09 e 01/10, porque a cobrança automática está bloqueada
+  por whitelist do PagBank.
 
 ## 5. Rede e SSRF
 
