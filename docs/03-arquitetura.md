@@ -121,16 +121,17 @@ O sistema trabalha com **dois motores de análise** que se **reconciliam** pela 
 
 ## 5. Infra de desenvolvimento com agentes (MCPs e skills)
 
-O time (e o agente de código) desenvolve com **MCPs de apoio** — nenhuma escrita de
-produção acontece por eles: o MCP do Supabase é **read-only** e o do Render só opera
-deploy/logs. Ficam na config global do opencode (`~/.config/opencode/`), **fora do repo**.
+O time (e o agente de código) desenvolvem com **MCPs de apoio** — nenhuma escrita de
+produção acontece por eles: o MCP do Supabase é **read-only** e o do Render só faz GET.
+O registro fica na config global do opencode (`~/.config/opencode/`); as pontes em si
+são arquivos **do repo**.
 
 | Ferramenta | Tipo | Papel | Segredo |
 |---|---|---|---|
 | `mcp_supabase.py` | MCP local (FastMCP, stdlib) | Leitura do Postgres do produto (tabelas, colunas, SELECT) pela role `mcp_readonly` — **nunca escreve** | role read-only no Supabase |
 | semgrep MCP | MCP local | Varredura por regras (`p/security-audit`, `p/owasp-top-ten`) nos arquivos | `SEMGREP_SEND_METRICS=off` |
 | Playwright MCP | MCP local | E2E e inspeção de UI | — |
-| Render MCP | MCP **remoto** (`https://mcp.render.com/mcp`) | Serviço, deploys, logs, eventos e métricas do webhook | `RENDER_API_KEY` via `{env:...}` |
+| `mcp_render.py` | MCP local (ponte stdio, stdlib) | Serviço, deploys, logs, health e **só os nomes** das env vars do webhook, pela API REST do Render — **somente GET**, nunca cria, altera ou apaga. O valor de uma env nunca sai da ponte: ela devolve a chave | `RENDER_API_KEY` via `{env:...}`, lido do ambiente ou do `.env` (gitignored) |
 
 Regras de higiene dessa camada:
 

@@ -71,9 +71,18 @@ do repo é descrever *o defeito*, não só a correção) — manter esse tom.
 - `roteador.py` registra 7 páginas via `st.navigation`, todas em `secoes/`.
   `painel_dono` só entra na lista para quem passa em `admin.eh_dono()` — não é
   só esconder a página, é omitir do roteador.
-- `webhook.py` = micro-serviço HTTP **100% stdlib** que escuta em
-  `127.0.0.1` (não expõe). Teto de payload `MAX_BYTES`, valida `Content-Length`
-  antes de ler.
+- `webhook.py` = micro-serviço HTTP **100% stdlib** que em produção escuta em
+  **`0.0.0.0:8080`**, exposto de propósito — é o endpoint público do PagBank.
+  Só `criar_servidor()` amarra em `127.0.0.1`, e quem o chama é **apenas
+  `test_webhook.py`**; o caminho de produção é `principal()`, cujo default já é
+  `0.0.0.0` (travado em `test_interpretar_args_defaults`).
+- **O teto de payload vale só para `/webhook/falha`** — é a única rota que valida
+  `Content-Length` antes de ler e devolve `413`. `/webhook/pagamento` responde
+  **antes** da checagem de token e não tem teto nenhum. Aceitável porque a
+  confirmação vai sempre à API do PagBank (corpo forjado não vira pagamento), mas
+  o endpoint é público, sem rate limiting e sem timeout de socket — se um dia
+  alguém tratar "exposto" como "não exposto" a partir deste arquivo, a #1 da
+  auditoria fica invisível.
 - Tema: `.streamlit/config.toml` trava o tema **nativo** em `light` de propósito
   (o app faz dark/light no CSS próprio, via seletor no sidebar). Não é esquecimento.
 - `web/landing/` é site estático separado do app e é publicado pelo **mesmo**
