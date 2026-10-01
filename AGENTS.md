@@ -188,13 +188,13 @@ bug (12 jogadas, exit 1) e passa com a correção (3/3, exit 0). Os 2 testes de
 
 ## OpenCode (config local, não versionada)
 
-`.opencode/`, `.claude/`, `agent/`, `mcp_render.py`, `skills-lock.json` e
-`opencode.json` são **config de agente do dono**, não artefatos do projeto — estão
-no `.gitignore` e não devem ser adicionados ao git. `opencode.json` só registra o
-MCP `supabase` com caminho absoluto para `.venv/bin/python` + `mcp_supabase.py`,
-o que não vale para mais ninguém. `mcp_supabase.py` **é** versionado (ponte
-read-only, útil a quem mexe no repo); `mcp_render.py` não. O inventário dessa
-camada (qual ponte faz o quê, onde cada segredo mora) fica em
+`.opencode/`, `.claude/`, `agent/`, `mcp_render.py`, `skills-lock.json`,
+`opencode.json` e `mcp_supabase.py` são **config de agente do dono**, não
+artefatos do projeto — estão no `.gitignore` e não devem ser adicionados ao git.
+Nenhuma ponte MCP é versionada: o `opencode.json` registra o MCP `supabase` com
+caminho absoluto para `~/Documentos/mcp_supabase.py` (read-only: `db_list_tables`,
+`db_describe`, `db_query`), o que não vale para mais ninguém. O inventário
+dessa camada (qual ponte faz o quê, onde cada segredo mora) fica em
 `~/Documentos/infra-agente-local.md`, fora do repo.
 
 Comandos locais em `.opencode/command/`: `health`, `testes`, `qa`, `deploy`,
