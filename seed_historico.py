@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Seed do histórico persistido para o Dashboard de QA.
 
-Reproduz os 30 textos de ~/Documentos/relatos-teste-dashboard-qa.md (mais 1
+Reproduz os 30 textos do corpus de teste do Dashboard de QA (mais 1
 duplicado = 32 registros) usando EXATAMENTE o mesmo motor que o app
 (triagem.triar) e o mesmo formato de snapshot do home.py, mas com timestamps
 sintéticos espalhados em dias recentes (para o Dashboard demonstrar a

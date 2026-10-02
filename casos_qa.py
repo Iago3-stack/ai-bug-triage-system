@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Ground truth dos 30 relatos de teste de triagem (fonte única da verdade).
 
-Vem da legenda de ~/Documentos/relatos-teste-dashboard-qa.md: a severidade
-esperada de cada relato. "ALTA" da legenda foi mapeado para CRÍTICA, porque o
+Vem da legenda do corpus de 30 relatos de teste do Dashboard de QA (documento
+local do dono, fora do repo): a severidade esperada de cada relato. "ALTA" da legenda foi mapeado para CRÍTICA, porque o
 app tem 3 níveis (CRÍTICA / MÉDIA / NORMAL) e a IA 4 (CRÍTICA/ALTA/MÉDIA/BAIXA,
 com ALTA e CRÍTICA se equivalentes e BAIXA ≈ NORMAL).
 
