@@ -357,7 +357,7 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 > - 🧠 **Causa raiz com histórico** (evolução do RAG ✅) → sugerir a correção que resolveu da última vez → *triage agent*
 > - 🔁 **Limpeza de warnings** de deprecação do Streamlit (`use_container_width` → `width='stretch'`)
 > - 🌐 **webhook/API** · 📧 **relatório agendado** · 📊 **LLMOps/evals**
-> - Roadmap completo acompanhado no brainstorming do projeto (`~/Documentos/roadmap-ia.md`).
+> - Roadmap completo acompanhado no documento de brainstorming do projeto (local, fora do repo).
 >
 > *Persistência em nuvem ☁️, login 🔐 e modelo alternativo (Groq) 🔁 já estão feitos (v2.6.x).*
 
