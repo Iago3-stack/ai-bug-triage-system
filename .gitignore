@@ -55,13 +55,13 @@ tmp/
 .ai_env/
 
 # Memória local do dono (decisões de máquina, histórico de sessao).
-# Vive em ~/Documentos/MEMORIA.md — nunca versionada.
+# Vive fora do repo, numa pasta local do dono — nunca versionada.
 MEMORIA.md
 
 # Infra local de agente — config de máquina, ponte com path absoluto e skills
 # de terceiros. Nada aqui é do app; o repo é público e não precisa carregar
 # o tooling de quem desenvolve. Nenhuma ponte MCP é versionada: `mcp_supabase.py`
-# e `mcp_render.py` moram em `~/Documentos/`.
+# e `mcp_render.py` moram fora do repo, numa pasta local do dono.
 .opencode/
 .claude/
 agent/
