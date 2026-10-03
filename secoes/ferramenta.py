@@ -688,11 +688,19 @@ def render():
                             similar_tex = (
                                 "`" + "`, `".join(ids_rag) + "`" if ids_rag else "sem registros similares"
                             )
+                            fonte_rag = resultado_llm.get("resolucao_fonte")
+                            if fonte_rag:
+                                data_fonte = f", {fonte_rag['data'][:10]}" if fonte_rag.get("data") else ""
+                                resolucao_tex = (
+                                    f"{fonte_rag['resolucao']} (caso `{fonte_rag['id']}`{data_fonte})"
+                                )
+                            else:
+                                resolucao_tex = "nenhum caso parecido tem resolução registrada"
                             relatorio += f"""
     📚 **Histórico consultado (RAG):**
     - **Já aconteceu antes?:** {estado_rag}
     - **Registros similares:** {similar_tex}
-    - **Como foi resolvido antes:** {resultado_llm.get('resolucao_anterior') or '—'}
+    - **Como foi resolvido antes:** {resolucao_tex}
     """
 
                 # --- 3. HISTÓRICO DA SESSÃO ---
@@ -734,6 +742,7 @@ def render():
                         snapshot.update({
                             "rag_ja_aconteceu": resultado_llm.get("ja_aconteceu"),
                             "rag_resolucao": resultado_llm.get("resolucao_anterior"),
+                            "rag_resolucao_id": (resultado_llm.get("resolucao_fonte") or {}).get("id"),
                             "rag_similares": resultado_llm.get("registros_similar") or [],
                         })
                 else:
@@ -856,10 +865,18 @@ def render():
                         f"⚠️ Este problema **já aconteceu antes**! "
                         f"Registro(s) similar(es): `{'`, `'.join(ids_rag) if ids_rag else '—'}`"
                     )
-                    if resultado_llm.get("resolucao_anterior"):
-                        st.write(f"🔧 **Como foi resolvido da última vez:** {resultado_llm['resolucao_anterior']}")
+                    fonte_rag = resultado_llm.get("resolucao_fonte")
+                    if fonte_rag:
+                        data_fonte = f" · {fonte_rag['data'][:10]}" if fonte_rag.get("data") else ""
+                        st.write(
+                            f"🔧 **Como foi resolvido antes** (caso `{fonte_rag['id']}`{data_fonte}): "
+                            f"{fonte_rag['resolucao']}"
+                        )
                     else:
-                        st.caption("Histórico não indicou uma resolução anterior para este caso.")
+                        st.caption(
+                            "Nenhum dos casos parecidos tem resolução registrada — "
+                            "não há solução anterior para citar."
+                        )
                 else:
                     st.success("✅ Nenhum registro anterior similar encontrado — possível caso novo.")
                 st.caption("Retrieval híbrido local (BM25 + vetores, com sinônimos e recência) sobre o histórico persistido — nada é enviado além do relato e dos registros similares.")

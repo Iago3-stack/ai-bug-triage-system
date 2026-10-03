@@ -264,6 +264,37 @@ def evidencia_de_recorrencia(relato, similares):
     return distintos, ""
 
 
+# Registro sem data não pode derrubar a ordenação por recência.
+_SEM_DATA = datetime.min.replace(tzinfo=timezone.utc)
+
+
+def _chave_data(reg):
+    return _data_referencia(reg) or _SEM_DATA
+
+
+def _fonte_de_resolucao(evidencia):
+    """Caso identificado que sustenta a resolução exibida.
+
+    Só conta registro com resolução gravada: a resolução mostrada tem de vir de
+    um caso real, nunca do resumo da IA. Entre vários, o mais recente — o mais
+    provável de refletir a correção vigente.
+    """
+    com_resolucao = [r for r in evidencia if (r.get("resolucao") or "").strip()]
+    if not com_resolucao:
+        return None
+    return max(com_resolucao, key=_chave_data)
+
+
+def _fonte_publica(reg):
+    """Resolução da fonte, com a proveniência junto (id/data), pronta a exibir."""
+    return {
+        "id": reg.get("id", "?"),
+        "data": str(reg.get("data_hora") or reg.get("data") or ""),
+        "resumo": (reg.get("resumo") or reg.get("descricao") or "")[:120],
+        "resolucao": (reg.get("resolucao") or "").strip(),
+    }
+
+
 def recuperar_similares(relato, registros, k=3):
     """Top-k registros do histórico mais parecidos com o relato (híbrido).
 
@@ -355,6 +386,9 @@ def analisar_com_rag(relato, registros, k=3, provedor=None):
     if resultado is not None:
         resultado.setdefault("ja_aconteceu", False)
         resultado.setdefault("resolucao_anterior", "")
+        # A resolução exibida nunca é a escrita pela IA: é a que está gravada no
+        # caso que a sustenta. Sem fonte identificada, não há resolução a mostrar.
+        resultado["resolucao_fonte"] = None
         # Confiável: marca os ids que DE FATO foram recuperados (retrieval local),
         # independente do que a IA listar como "registros_similar".
         resultado["registros_similar"] = [r.get("id", "?") for r in similares]
@@ -370,7 +404,14 @@ def analisar_com_rag(relato, registros, k=3, provedor=None):
             resultado["resolucao_anterior"] = ""
             resultado["registros_similar"] = []
         else:
-            resultado["registros_similar"] = [
-                r.get("id", "?") for r in evidencia
-            ]
+            resultado["registros_similar"] = [r.get("id", "?") for r in evidencia]
+            fonte = _fonte_de_resolucao(evidencia)
+            if fonte is not None:
+                resultado["resolucao_fonte"] = _fonte_publica(fonte)
+                resultado["resolucao_anterior"] = resultado["resolucao_fonte"]["resolucao"]
+            else:
+                # Há recorrência, mas nenhum caso tem resolução registrada: o
+                # texto que a IA escreveu é descartado. Sem caso de origem, não
+                # é resolução — é paráfrase.
+                resultado["resolucao_anterior"] = ""
     return resultado, erro
