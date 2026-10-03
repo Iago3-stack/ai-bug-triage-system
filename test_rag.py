@@ -350,6 +350,52 @@ def test_relato_distinto_e_triado_prova_recorrencia(monkeypatch):
     assert erro is None
     assert resultado["ja_aconteceu"] is True
     assert resultado["registros_similar"] == ["hist1"]
+    # A resolução exibida é a do caso, verbatim — não o "resolvido antes" da IA.
+    assert resultado["resolucao_anterior"] == "corrigido no tratamento de erro do carregamento"
+    assert resultado["resolucao_fonte"]["id"] == "hist1"
+
+
+def test_resolucao_exibida_vem_do_caso_mais_recente(monkeypatch):
+    """Com mais de um caso resolvido, o mais recente sustenta a resolução."""
+    monkeypatch.setattr(ia, "_chave", lambda: "chave-falsa")
+    monkeypatch.setattr(ia, "analisar_llm_rag", _rag_que_diz(resolucao="texto da IA"))
+    registros = [
+        {
+            "id": "antigo",
+            "descricao": "tela de faturas fecha sozinha ao abrir",
+            "gravidade": "CRÍTICA 🚨",
+            "data_hora": "2026-01-01T10:00:00+00:00",
+            "resolucao": "patch antigo",
+        },
+        {
+            "id": "novo",
+            "descricao": "aplicacao fecha sozinha na tela de faturas apos atualizar",
+            "gravidade": "CRÍTICA 🚨",
+            "data_hora": "2026-09-01T10:00:00+00:00",
+            "resolucao": "patch recente",
+        },
+    ]
+    resultado, erro = rag.analisar_com_rag("login falha de novo", registros)
+    assert erro is None
+    assert resultado["resolucao_anterior"] == "patch recente"
+    assert resultado["resolucao_fonte"]["id"] == "novo"
+
+
+def test_resolucao_fonte_traz_a_data_do_caso(monkeypatch):
+    """A resolução sai com a proveniência — sem ela não dá para verificar."""
+    monkeypatch.setattr(ia, "_chave", lambda: "chave-falsa")
+    monkeypatch.setattr(ia, "analisar_llm_rag", _rag_que_diz())
+    registros = [
+        {
+            "id": "hist9",
+            "descricao": "o botao de pagamento nao conclui a compra",
+            "gravidade": "MÉDIA ⚠️",
+            "data_hora": "2026-08-20T14:30:00+00:00",
+            "resolucao": "corrigido o retorno do gateway",
+        }
+    ]
+    resultado, _ = rag.analisar_com_rag("login falha de novo", registros)
+    assert resultado["resolucao_fonte"]["data"].startswith("2026-08-20")
 
 
 def test_ia_que_inventa_id_nao_passa(monkeypatch):
@@ -367,3 +413,6 @@ def test_ia_que_inventa_id_nao_passa(monkeypatch):
     assert erro is None
     assert "ia-inventou-esse-id" not in resultado["registros_similar"]
     assert resultado["registros_similar"] == ["real1"]
+    # A IA disse "resolvido antes", mas o caso real não tem resolução: descarta.
+    assert resultado["resolucao_anterior"] == ""
+    assert resultado["resolucao_fonte"] is None
