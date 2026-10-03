@@ -33,6 +33,23 @@ _ERROR_PW = re.compile(
 _EXPECTED_PW = re.compile(r"^\s*Expected:\s*(?P<val>[^\n]+)", re.MULTILINE)
 _RECEIVED_PW = re.compile(r"^\s*Received:\s*(?P<val>[^\n]+)", re.MULTILINE)
 _FRAME_PW = re.compile(r"\bat\s+([^\s()]+(?:\.spec|\.test)\.\w+):(\d+)")
+# A partir do Playwright 1.5x a linha `Received:` só aparece quando o elemento
+# EXISTE com outro texto. Quando ele não existe, a saída traz `Locator:` e um
+# `Error:` com o motivo. Sem ler os dois, todo defeito de seletor e todo
+# timeout viram o mesmo registro vazio.
+_LOCATOR_PW = re.compile(r"^\s*Locator:\s*(?:locator\()?\(?\s*(?P<sel>[^)\n]+?)\s*\)?\)?\s*$", re.MULTILINE)
+_MOTIVO_PW = re.compile(r"^\s*Error:\s*(?P<val>[^\n]+)", re.MULTILINE)
+_TIMEOUT_PW = re.compile(r"^\s*Timeout:\s*(?P<val>[^\n]+)", re.MULTILINE)
+# O nome do teste vem na linha do título, colado no separador de desenho da
+# caixa do reporter. Sem cortar, o título do relato herda os `────`.
+_TRACOS_PW = re.compile(r"[─━—\-–\s]+$")
+# O reporter `list` anexa a duração da asserção ao título: `... leva ao painel
+# (4.0s)`. Sem cortar, o nome do teste no relato vira "teste (4.0s)".
+_DURACAO_PW = re.compile(r"\s*\(\d+(?:[.,]\d+)?\s*m?s\)\s*$")
+
+
+def _limpar_nome_teste(nome: str) -> str:
+    return _TRACOS_PW.sub("", _DURACAO_PW.sub("", nome)).strip()
 _JSON_PW = re.compile(r'"failures"\s*:\s*\[|"status"\s*:\s*"failed"')
 
 _PADRAO_POSTMAN = re.compile(
@@ -52,6 +69,20 @@ _STATUS_PM = re.compile(
     re.IGNORECASE,
 )
 _ASSERT_PM = re.compile(r"^\s*AssertionError:.*$", re.MULTILINE)
+# Uma rodada do Newman tem N asserções quebradas em requisições diferentes. O
+# bloco de falhas do reporter é a fonte confiável: cada entrada é numerada,
+# traz o nome da asserção e diz `inside "nome da requisição"`.
+_FALHA_NM = re.compile(
+    r"^\s*(?P<num>\d+)\.\s+AssertionError\s*(?P<nome>[^\n]*)$", re.MULTILINE
+)
+_DETALHE_NM = re.compile(r"^\s+(?P<txt>expected\b.*|.*\bgot\b.*)$", re.MULTILINE)
+_DENTRO_NM = re.compile(r'inside\s+"(?P<req>[^"]+)"')
+# Linha de execução: o nome da requisição vem na linha `→` imediatamente acima.
+_REQ_NM = re.compile(
+    r"^\s*(?:→\s*)?(?P<metodo>GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\s+"
+    r"(?P<url>\S+)(?:\s*\[(?P<status>\d{3})[^]]*\])?\s*$",
+    re.MULTILINE,
+)
 _CORPO_PM = re.compile(r"(?i)^\s*(?:response|request)?[\s_]*body\s*:?\s*(?P<corpo>.{0,220})$")
 _JSON_ERRO = re.compile(r'"(?:error|message|msg)"\s*:\s*"([^"]{1,160})"')
 
@@ -106,10 +137,10 @@ def _pw_nome_teste(ev: str) -> str | None:
     for linha in _CABECALHO_PW.findall(ev):
         partes = [p.strip() for p in linha.split("›")]
         if len(partes) >= 2 and partes[-1]:
-            return partes[-1]
+            return _limpar_nome_teste(partes[-1]) or None
     linhas = [l.strip() for l in ev.splitlines() if "›" in l]
     for l in linhas:
-        nome = l.split("›")[-1].strip()
+        nome = _limpar_nome_teste(l.split("›")[-1])
         if nome:
             return nome
     return None
@@ -137,6 +168,20 @@ def estruturar_playwright(evidencia: str) -> dict:
         pass
     esperado = _EXPECTED_PW.search(texto)
     recebido = _RECEIVED_PW.search(texto)
+    locator = _LOCATOR_PW.search(texto)
+
+    timeout = _TIMEOUT_PW.search(texto)
+    seletor = (
+        locator.group("sel").strip().strip("'\"") if locator else None
+    )
+    # A saída tem DUAS linhas `Error:`: a do header (`Error: expect(...) failed`)
+    # e a do motivo real (`Error: element(s) not found`). O motivo é a que não
+    # repete o header.
+    motivos = [
+        _TRACOS_PW.sub("", m.group("val")).strip()
+        for m in _MOTIVO_PW.finditer(texto)
+    ]
+    motivo_falha = next((m for m in motivos if m and m != erro), None)
     frame = list(_FRAME_PW.finditer(texto))
     local = f"{frame[-1].group(1).split('/')[-1]}:{frame[-1].group(2)}" if frame else None
     nome = _pw_nome_teste(texto)
@@ -148,13 +193,22 @@ def estruturar_playwright(evidencia: str) -> dict:
     desc += f". Erro: {erro}" if erro else f". {_primeira_linha_util(texto)}"
     if esperado or recebido:
         desc += f". Esperado: {esperado.group('val').strip() if esperado else '—'} · Recebido: {recebido.group('val').strip() if recebido else '—'}"
+    if seletor:
+        desc += f". Locator: `{seletor}`"
+    if motivo_falha:
+        desc += f". Motivo: {motivo_falha}"
+    elif timeout and not motivo_falha:
+        desc += f". Motivo: excedeu {timeout.group('val').strip()}"
     passos = []
     if nome:
         passos.append(f"Rodar o teste: {nome}")
     passos.append(f"Observar a asserção que falhou: {erro or 'ver Expected/Received'}")
+    if seletor:
+        passos.append(f"Conferir se o elemento `{seletor}` existe na tela")
     if local:
         passos.append(f"Conferir o ponto do código: `{local}`")
-    passos.append("Reproduzir o fluxo que o teste automatiza no app")
+    if not any("Reproduzir" in p for p in passos):
+        passos.append("Reproduzir o fluxo que o teste automatiza no app")
     return {
         "tipo": "playwright",
         "ferramenta": "Playwright",
@@ -163,7 +217,7 @@ def estruturar_playwright(evidencia: str) -> dict:
         "categoria": _detectar_categoria(texto),
         "modulo": _detectar_modulo(texto),
         "versao": _extrair_versao(texto),
-        "severidade": _severidade(texto, erro),
+        "severidade": _severidade(texto, erro or motivo_falha or seletor or ""),
         "erro": erro,
         "local": local,
         "linguagem": linguagem,
@@ -171,12 +225,58 @@ def estruturar_playwright(evidencia: str) -> dict:
         "teste": nome,
         "esperado": esperado.group("val").strip() if esperado else None,
         "recebido": recebido.group("val").strip() if recebido else None,
+        "locator": seletor,
+        "motivo_falha": motivo_falha,
+        "timeout": timeout.group("val").strip() if timeout else None,
     }
+
+
+def _falhas_newman(ev: str) -> list[dict]:
+    """Todas as asserções quebradas da rodada, não só a primeira.
+
+    `search` num bloco com N falhas devolve a N-ésima linha e o resto some em
+    silêncio — foi assim que um HTTP 500 com TimeoutError no banco desapareceu
+    de um relatório que dizia ter uma falha só.
+    """
+    requisicoes = {}
+    nome_atual = ""
+    for linha in ev.splitlines():
+        limpa = linha.strip()
+        if limpa.startswith("→"):
+            nome_atual = limpa.lstrip("→ ").strip()
+            continue
+        achado = _REQ_NM.search(linha)
+        if achado:
+            requisicoes[nome_atual or achado.group("url")] = {
+                "requisicao": nome_atual or None,
+                "metodo": achado.group("metodo"),
+                "url": achado.group("url"),
+                "status": achado.group("status"),
+            }
+
+    falhas = []
+    for m in _FALHA_NM.finditer(ev):
+        nome = m.group("nome").strip() or "(sem nome)"
+        cauda = ev[m.end(): m.end() + 600]
+        dentro = _DENTRO_NM.search(cauda)
+        req = dentro.group("req").strip() if dentro else ""
+        info = requisicoes.get(req, {})
+        det = _DETALHE_NM.search(cauda)
+        falhas.append({
+            "nome": nome,
+            "requisicao": req or None,
+            "metodo": info.get("metodo"),
+            "url": info.get("url"),
+            "status": info.get("status"),
+            "detalhe": det.group("txt").strip() if det else None,
+        })
+    return falhas
 
 
 def estruturar_postman(evidencia: str) -> dict:
     """Extrai o relato de uma execução do Postman/newman (status + asserções)."""
     texto = evidencia.strip()
+    falhas = _falhas_newman(texto)
     metodo, url, status_colchete = _pm_metodo_url_status(texto)
     esp, rec = _pm_status_dupla(texto)
     recebido = status_colchete or rec
@@ -207,6 +307,20 @@ def estruturar_postman(evidencia: str) -> dict:
     desc = f"Falha em requisição (Postman/newman). {det_http}."
     if preenchido_esp and preenchido_rec and esp != rec:
         desc += f" A asserção esperava {esp}, mas a API retornou {rec}."
+    if len(falhas) > 1:
+        desc += (
+            f" A rodada teve {len(falhas)} asserções quebradas"
+            f" em {len({f['requisicao'] for f in falhas})} requisição(ões); "
+            "esta é a primeira."
+        )
+        outras = "; ".join(
+            f"{f['nome']}"
+            + (f" [{f['metodo']} {f['url']}]" if f.get("url") else "")
+            + (f" → HTTP {f['status']}" if f.get("status") else "")
+            for f in falhas[1:4]
+        )
+        if outras:
+            desc += f" Demais: {outras}."
     if assert_txt and not (preenchido_esp and preenchido_rec):
         desc += f" Detalhe: {assert_txt}."
     if corpo and corpo.group("corpo").strip():
@@ -239,6 +353,8 @@ def estruturar_postman(evidencia: str) -> dict:
         "url": url,
         "status_esperado": esp,
         "status_recebido": recebido,
+        "total_falhas": len(falhas),
+        "falhas": falhas,
     }
 
 

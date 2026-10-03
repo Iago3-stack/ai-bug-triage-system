@@ -216,6 +216,54 @@ def _recuperar_vetor_de(corpo, reg):
     return vetor, False
 
 
+# Jaccard acima do qual dois textos são tratados como o mesmo relato. Medido
+# em cópias do mesmo relatório: 1.0. Casos diferentes ficam bem abaixo, então
+# o corte é conservador — só colapsa duplicata, não bug parecido.
+_JACCARD_MESMO_RELATO = 0.85
+
+
+def _mesmo_relato(a, b):
+    """True se os dois registros são essencialmente o mesmo relato."""
+    ta, tb = _tokens(_texto_registro(a)), _tokens(_texto_registro(b))
+    if not ta or not tb:
+        return False
+    return _jaccard(ta, tb) >= _JACCARD_MESMO_RELATO
+
+
+def _tem_triagem(reg):
+    """Registro só vale como evidência se chegou a ser classificado.
+
+    Um registro sem severidade nunca foi triado: usá-lo como histórico faz o
+    RAG afirmar recorrência a partir de uma submissão que ninguém analisou.
+    """
+    return bool(reg.get("gravidade") or reg.get("severidade"))
+
+
+def evidencia_de_recorrencia(relato, similares):
+    """Reduz os registros recuperados à evidência real de recorrência.
+
+    Descarta o que não foi triado e colapsa cópias do mesmo relato. Devolve
+    (evidencia, motivo) — `motivo` explica quando a evidência é vazia, para o
+    chamador ajustar `ja_aconteceu` sem depender do julgamento da IA.
+    """
+    triados = [r for r in similares if _tem_triagem(r)]
+    if not triados:
+        return [], "nenhum registro recuperado foi triado"
+
+    distintos = []
+    for reg in triados:
+        if not any(_mesmo_relato(reg, kept) for kept in distintos):
+            distintos.append(reg)
+
+    if not distintos:
+        return [], "todos os registros recuperados eram o mesmo relato repetido"
+
+    if all(_mesmo_relato(reg, {"descricao": relato}) for reg in distintos):
+        return [], "os registros recuperados são cópias do relato atual"
+
+    return distintos, ""
+
+
 def recuperar_similares(relato, registros, k=3):
     """Top-k registros do histórico mais parecidos com o relato (híbrido).
 
@@ -310,4 +358,19 @@ def analisar_com_rag(relato, registros, k=3, provedor=None):
         # Confiável: marca os ids que DE FATO foram recuperados (retrieval local),
         # independente do que a IA listar como "registros_similar".
         resultado["registros_similar"] = [r.get("id", "?") for r in similares]
+        # A IA decide `ja_aconteceu` pelo que enxerga no contexto, e o contexto
+        # pode trazer o mesmo relato repetido. Aqui a recorrência é reduzida ao
+        # que sustenta: registro triado, distinto dos outros e diferente do
+        # relato atual. Sem evidência, `ja_aconteceu` é False por definição —
+        # a pergunta é "isso já aconteceu?", e uma cópia do texto de agora não
+        # responde nada.
+        evidencia, motivo = evidencia_de_recorrencia(relato, similares)
+        if not evidencia:
+            resultado["ja_aconteceu"] = False
+            resultado["resolucao_anterior"] = ""
+            resultado["registros_similar"] = []
+        else:
+            resultado["registros_similar"] = [
+                r.get("id", "?") for r in evidencia
+            ]
     return resultado, erro
