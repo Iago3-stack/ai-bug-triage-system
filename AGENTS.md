@@ -101,6 +101,15 @@ do repo é descrever *o defeito*, não só a correção) — manter esse tom.
   (o app faz dark/light no CSS próprio, via seletor no sidebar). Não é esquecimento.
 - `web/landing/` é site estático separado do app e é publicado pelo **mesmo**
   workflow de CI que o badge.
+- **O RAG é "só com fonte": recorrência exige evidência, resolução vem do registro.**
+  `ja_aconteceu` só é `true` se houver registro **triado** (tem severidade) e
+  **distinto** do relato atual — cópia do mesmo texto não é ocorrência nova
+  (colapsa por Jaccard ≥ 0.85). E "como foi resolvido antes" exibe a `resolucao`
+  **gravada** no caso, verbatim, com `id` e data em `resolucao_fonte`; havendo
+  vários, o mais recente. Sem caso com resolução registrada, o campo fica vazio:
+  o texto que a IA escreveu é descartado, porque sem origem não é resolução — é
+  paráfrase. `rag_resolucao_id` leva a fonte para o payload salvo. Não relaxe
+  essas duas regras achando que são excesso de zelo.
 
 ## Testes
 
