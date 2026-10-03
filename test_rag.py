@@ -263,8 +263,107 @@ def test_analisar_com_rag_marca_ids_recuperados(monkeypatch):
              "causa_raiz": "x", "passos_repro": ["1"], "resumo_tecnico": "y"}, None
         ),
     )
-    registros = [{"id": "zz1", "descricao": "login falha sempre"}]
+    # `gravidade` presente = registro triado, logo vale como evidência.
+    registros = [{"id": "zz1", "descricao": "login falha sempre",
+                  "gravidade": "CRÍTICA 🚨"}]
     resultado, erro = rag.analisar_com_rag("login falhou de novo", registros)
     assert erro is None
     assert resultado["ja_aconteceu"] is False
     assert resultado["registros_similar"] == ["zz1"]
+
+
+# --- Recorrência: o que realmente sustenta "já aconteceu" ------------
+#
+# Caso medido: três cópias do mesmo relatório sintético, salvas com 8 minutos
+# de diferença, sem severidade e sem resolução. A IA viu "3 registros
+# parecidos" e respondeu `ja_aconteceu: true`. Não tinha nenhuma evidência —
+# era o mesmo texto três vezes.
+
+_RELATO_SINTETICO = (
+    "Falha em teste automatizado (Playwright). Erro: "
+    "expect(locator).toHaveText(expected) failed. "
+    "Esperado: Bem-vindo. Recebido: Erro. Em login.spec.ts:20"
+)
+
+
+def _rag_que_diz(severidade="alta", ja_aconteceu=True, resolucao="resolvido antes"):
+    def _fake(relato, contexto, provedor=None):
+        return (
+            {
+                "severidade": severidade,
+                "categoria": "funcionalidade",
+                "causa_raiz": "x",
+                "passos_repro": ["1"],
+                "resumo_tecnico": "y",
+                "ja_aconteceu": ja_aconteceu,
+                "resolucao_anterior": resolucao,
+                "registros_similar": ["ia-inventou-esse-id"],
+            },
+            None,
+        )
+
+    return _fake
+
+
+def test_copia_do_relato_nao_prova_recorrencia(monkeypatch):
+    """Três cópias do mesmo relato, todas triadas: não é recorrência."""
+    monkeypatch.setattr(ia, "_chave", lambda: "chave-falsa")
+    monkeypatch.setattr(ia, "analisar_llm_rag", _rag_que_diz())
+    registros = [
+        {"id": f"dup{i}", "descricao": _RELATO_SINTETICO, "gravidade": "MÉDIA ⚠️"}
+        for i in range(3)
+    ]
+    resultado, erro = rag.analisar_com_rag(_RELATO_SINTETICO, registros)
+    assert erro is None
+    assert resultado["ja_aconteceu"] is False
+    assert resultado["resolucao_anterior"] == ""
+    assert resultado["registros_similar"] == []
+
+
+def test_registro_sem_triagem_nao_prova_recorrencia(monkeypatch):
+    """Nunca classificado: não é histórico, é só uma submissão."""
+    monkeypatch.setattr(ia, "_chave", lambda: "chave-falsa")
+    monkeypatch.setattr(ia, "analisar_llm_rag", _rag_que_diz())
+    registros = [
+        {"id": f"bruto{i}", "descricao": "erro de banco ao salvar o cadastro"}
+        for i in range(3)
+    ]
+    resultado, erro = rag.analisar_com_rag("erro de banco ao salvar o cadastro", registros)
+    assert erro is None
+    assert resultado["ja_aconteceu"] is False
+    assert resultado["registros_similar"] == []
+
+
+def test_relato_distinto_e_triado_prova_recorrencia(monkeypatch):
+    """Relato diferente, de fato triado: a recorrência se sustenta."""
+    monkeypatch.setattr(ia, "_chave", lambda: "chave-falsa")
+    monkeypatch.setattr(ia, "analisar_llm_rag", _rag_que_diz())
+    registros = [
+        {
+            "id": "hist1",
+            "descricao": "a aplicacao fecha sozinha ao abrir a tela de faturas",
+            "gravidade": "CRÍTICA 🚨",
+            "resolucao": "corrigido no tratamento de erro do carregamento",
+        }
+    ]
+    resultado, erro = rag.analisar_com_rag("login falha de novo", registros)
+    assert erro is None
+    assert resultado["ja_aconteceu"] is True
+    assert resultado["registros_similar"] == ["hist1"]
+
+
+def test_ia_que_inventa_id_nao_passa(monkeypatch):
+    """O id que a IA lista não entra: só o retrieval local define."""
+    monkeypatch.setattr(ia, "_chave", lambda: "chave-falsa")
+    monkeypatch.setattr(ia, "analisar_llm_rag", _rag_que_diz())
+    registros = [
+        {
+            "id": "real1",
+            "descricao": "perda de dados ao confirmar o formulario de pagamento",
+            "gravidade": "CRÍTICA 🚨",
+        }
+    ]
+    resultado, erro = rag.analisar_com_rag("login falha de novo", registros)
+    assert erro is None
+    assert "ia-inventou-esse-id" not in resultado["registros_similar"]
+    assert resultado["registros_similar"] == ["real1"]
