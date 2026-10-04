@@ -430,3 +430,27 @@ def test_embedding_vetor_vazio_retorna_none(monkeypatch):
     monkeypatch.setattr(ia, "_chave", lambda nome: "chave-teste")
     monkeypatch.setattr(ia, "_embed_gemini", lambda texto, chave: [0.0, 0.0])
     assert ia.embedding("erro no login") is None
+
+
+# --- Normalização dos passos (numeração dupla) -------------------------
+def test_normalizar_dados_tira_numeracao_dos_passos():
+    dados = {"passos_repro": ["1. Enviar POST", "2) Verificar status", "3º Conferir retorno"]}
+    assert ia._normalizar_dados(dados)["passos_repro"] == [
+        "Enviar POST",
+        "Verificar status",
+        "Conferir retorno",
+    ]
+
+
+def test_normalizar_dados_preserva_numero_no_inicio_do_texto():
+    dados = {"passos_repro": ["2FA não funciona", "3 itens aparecem", "- item com bullet"]}
+    assert ia._normalizar_dados(dados)["passos_repro"] == [
+        "2FA não funciona",
+        "3 itens aparecem",
+        "item com bullet",
+    ]
+
+
+def test_normalizar_dados_ignora_sem_passos():
+    assert ia._normalizar_dados(None) is None
+    assert ia._normalizar_dados({"severidade": "critica"}) == {"severidade": "critica"}

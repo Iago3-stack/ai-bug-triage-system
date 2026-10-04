@@ -195,6 +195,26 @@ def test_email_envia_critico(monkeypatch):
     assert correio.enviadas[0]["To"] == "qa@empresa.com"
 
 
+def test_email_assunto_multilinha_nao_quebra_o_envio(monkeypatch):
+    """Relato multi-linha (saída de newman/Playwright) não pode gerar header com
+    CR/LF: o EmailMessage recusa e o alerta nunca enviaria."""
+    def _ler(nome):
+        return {
+            "ALERTA_EMAIL_TO": "qa@empresa.com",
+            "SMTP_USER": "u",
+            "SMTP_PASS": "p",
+        }.get(nome, "")
+
+    monkeypatch.setattr(notificacoes, "_ler", _ler)
+    correio = _Correio("x", 0, 0)
+    monkeypatch.setattr(notificacoes.smtplib, "SMTP", lambda host, porta, timeout: correio)
+    relato = "newman\n\nAI Bug Triage — demo\n\n→ login com senha errada\n  POST http://127.0.0.1/api/login"
+    assert notificacoes.notificar_email("CRÍTICA 🚨", relato) is True
+    assunto = str(correio.enviadas[0]["Subject"])
+    assert "\n" not in assunto and "\r" not in assunto
+    assert "login com senha errada" in assunto
+
+
 def test_email_aceita_smtp_custom_secrets(monkeypatch):
     def _ler(nome):
         cfg = {
