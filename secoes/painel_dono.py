@@ -369,9 +369,11 @@ def _secao_rotulagem() -> None:
 
     fracao = prog["rotuladas"] / prog["total"]
     st.progress(min(fracao, 1.0))
+    pre = prog.get("pre_rotuladas", 0)
+    nota_agente = f" · **{pre}** pré-rotulada(s) por agente, ainda sem revisão" if pre else ""
     st.caption(
-        f"**{prog['rotuladas']} de {prog['total']}** triagens com rótulo "
-        f"({fracao:.0%}) · {prog['pendentes']} pendentes."
+        f"**{prog['rotuladas']} de {prog['total']}** triagens com rótulo humano "
+        f"({fracao:.0%}) · {prog['pendentes']} pendentes{nota_agente}."
     )
 
     rotulados = avaliacao.carregar_rotulados()
