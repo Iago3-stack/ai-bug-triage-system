@@ -4,6 +4,16 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v3.5.7] - 2026-10-03
+
+### Corrigido
+- **O alerta por e-mail nunca era enviado quando o relato tinha mais de uma linha.** O assunto era montado com o início do relato cru (`resumo[:60]`) direto no header `Subject`, e o `email.message` recusa header com quebra de linha (RFC 5322) — levanta `ValueError: Header values may not contain linefeed or carriage return characters`. Como a evidência de teste chega multi-linha (saída de Newman/Playwright), o assunto carregava o `\n` do relato e o envio falhava **sempre** que a prioridade era CRÍTICA/ALTA; o Discord seguia funcionando porque manda no corpo, não em header. O sintoma aparecia na tela como `✉️ e-mail FALHOU ❌` com o `ValueError` ao lado, e ficava invisível enquanto as triagens não passavam do gatilho de alerta. Agora todo valor de header passa por uma função que achata CR/LF antes de montar a mensagem, e o assunto deriva do relato já achatado.
+- **Os passos da IA saíam numerados em dobro ("1. 1. ...").** O relatório e a tela já numeram os passos, mas quando o modelo devolvia a lista com a própria numeração (`"1. Enviar..."`) o resultado virava `1. 1. Enviar...`. A normalização passou a remover numeração/bullet do início de cada passo logo após a resposta do LLM, num único ponto (`ia._normalizar_dados`), valendo tanto para a análise pura quanto para a com RAG. Número que faz parte do texto (ex.: `2FA`, `3 itens`) é preservado — só sai o que é separador (`1.`/`2)`, `3º`, `-`).
+
+### Observações
+- **759 testes**, 4 a mais que os 755 da v3.5.6, todos passando, e `ruff` sem achados. Os 4 novos travam os dois defeitos: o assunto multi-linha não quebra o envio e continua legível, e a limpeza dos passos remove numeração/bullet sem tocar em número no meio do texto.
+- **Verificado com o dado que reproduziu.** O caso que falhava foi uma rodada do Newman com prioridade CRÍTICA cujo relato começa com várias linhas (`newman\n\nAI Bug Triage — ...`); o teste usa esse mesmo formato.
+
 ## [v3.5.6] - 2026-10-03
 
 ### Corrigido

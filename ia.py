@@ -381,12 +381,37 @@ def _chamar_llm(conteudo, temperatura=0.2, max_output_tokens=4096, provedor=None
     return None, f"{erro} | {erro2}"
 
 
+_RE_NUMERACAO_PASSO = re.compile(r"^\s*(?:\d+\s*[.)ºo°]|[-*•])\s*")
+
+
+def _sem_numeracao(passos):
+    """Remove numeração/bullet que o próprio modelo já pôs nos passos.
+
+    A UI/relatório numera os passos; se o modelo devolve "1. Enviar...", a
+    renderização vira "1. 1. Enviar...". Se a limpeza esvaziar a lista, devolve
+    a original — não trocar dado por nada.
+    """
+    if not isinstance(passos, list):
+        return passos
+    limpos = [_RE_NUMERACAO_PASSO.sub("", str(p).strip()) for p in passos]
+    limpos = [p for p in limpos if p]
+    return limpos or passos
+
+
+def _normalizar_dados(dados):
+    """Ajustes pós-LLM no dict retornado (hoje: tira numeração dupla dos passos)."""
+    if isinstance(dados, dict) and isinstance(dados.get("passos_repro"), list):
+        dados["passos_repro"] = _sem_numeracao(dados["passos_repro"])
+    return dados
+
+
 def analisar_llm(relato, provedor=None):
     """Chama o LLM (Gemini → Groq ou escolha explícita) e retorna (dict | None, erro).
 
     dict com chaves: severidade, categoria, causa_raiz, passos_repro, resumo_tecnico
     """
     dados, erro = _chamar_llm(PROMPT.replace("{relato}", relato[:2000]), provedor=provedor)
+    dados = _normalizar_dados(dados)
     if dados is not None:
         telemetria.capturar(
             "ia_resposta",
@@ -446,6 +471,7 @@ def analisar_llm_rag(relato, contexto, provedor=None):
         .replace("{contexto}", (contexto or "")[:6000])
     )
     dados, erro = _chamar_llm(prompt, provedor=provedor)
+    dados = _normalizar_dados(dados)
     if dados is not None:
         telemetria.capturar(
             "ia_resposta",

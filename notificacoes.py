@@ -239,14 +239,24 @@ def ultimo_erro_email() -> str:
     return _ULTIMO_ERRO_EMAIL or ""
 
 
+def _cabecalho_uma_linha(valor: str) -> str:
+    """Achata CR/LF de um valor de header do e-mail.
+
+    O `email.message` recusa header com quebra de linha (RFC 5322) e levanta
+    ValueError. Relato de teste chega multi-linha (saída de newman/Playwright),
+    então o assunto precisa ser uma linha só — senão o alerta nunca envia.
+    """
+    return " ".join((valor or "").split())
+
+
 def _enviar_email(cfg: dict, para: str, assunto: str, corpo: str, corpo_html: str | None = None) -> bool:
     """Envia e-mail via SMTP. True se enviou; nunca levanta exceção."""
     global _ULTIMO_ERRO_EMAIL
     try:
         msg = EmailMessage()
-        msg["Subject"] = assunto
-        msg["From"] = cfg["user"]
-        msg["To"] = para
+        msg["Subject"] = _cabecalho_uma_linha(assunto)
+        msg["From"] = _cabecalho_uma_linha(cfg["user"])
+        msg["To"] = _cabecalho_uma_linha(para)
         msg.set_content(corpo)
         if corpo_html:
             msg.add_alternative(corpo_html, subtype="html")
@@ -380,7 +390,7 @@ def notificar_email(prioridade_final: str, resumo: str, provedor: str | None = N
     ok = _enviar_email(
         cfg,
         para,
-        f"🚨 [AI Bug Triage] {prioridade_final} — {resumo[:60]}",
+        f"🚨 [AI Bug Triage] {prioridade_final} — {_cabecalho_uma_linha(resumo)[:60]}",
         "🚨 Uma triagem crítica foi detectada pelo AI Bug Triage System.\n\n"
         f"Prioridade final: {prioridade_final}\n"
         f"Relato: {(resumo or '—')[:800]}\n"
