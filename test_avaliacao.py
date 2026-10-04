@@ -189,6 +189,50 @@ def test_carregar_rotulados_pula_quem_nao_tem_texto(monkeypatch):
     assert out[0]["gravidade"] == "MÉDIA"  # o que o motor tinha acertado
 
 
+def test_carregar_rotulados_ignora_rotulo_de_agente(monkeypatch):
+    """Pré-rotulagem do agente não é ground truth: fica fora da base por padrão."""
+    linhas = [
+        {"id": "1", "data_hora": "", "payload": {
+            "descricao": "app travou", "gravidade": "MÉDIA",
+            "avaliacao": {"rotulo": "CRÍTICA", "autor": "agente"}}},
+        {"id": "2", "data_hora": "", "payload": {
+            "descricao": "botao nao salva", "gravidade": "NORMAL",
+            "avaliacao": {"rotulo": "MÉDIA", "autor": "__VG_EMAIL_41d0f19dbd2e__"}}},
+    ]
+    monkeypatch.setattr(nuvem_supabase, "requests", _FakeRequests(get=lambda *a, **k: _Resposta(linhas)))
+    monkeypatch.setattr(nuvem_supabase, "_base_url", lambda: "http://api")
+    monkeypatch.setattr(nuvem_supabase, "_headers", lambda: {})
+    monkeypatch.setattr(nuvem_supabase, "_TABELA_PADRAO", "triagens")
+
+    out = avaliacao.carregar_rotulados()
+    assert [linha["id"] for linha in out] == ["2"]
+    assert out[0]["autor"] == "__VG_EMAIL_41d0f19dbd2e__"
+
+    tudo = avaliacao.carregar_rotulados(apenas_humanos=False)
+    assert [linha["id"] for linha in tudo] == ["1", "2"]
+
+
+def test_progresso_separa_pre_rotuladas(monkeypatch):
+    """O progresso conta como cobertura só o rótulo humano; o do agente é à parte."""
+    respostas = [
+        _Resposta([{"id": str(i)} for i in range(3)]),  # total
+        _Resposta([
+            {"id": "1", "data_hora": "", "payload": {"descricao": "a", "avaliacao": {"rotulo": "MÉDIA", "autor": "agente"}}},
+            {"id": "2", "data_hora": "", "payload": {"descricao": "b", "avaliacao": {"rotulo": "CRÍTICA", "autor": "__VG_EMAIL_41d0f19dbd2e__"}}},
+        ]),
+    ]
+    fake = _FakeRequests(get=lambda *a, **k: respostas.pop(0))
+    monkeypatch.setattr(nuvem_supabase, "requests", fake)
+    monkeypatch.setattr(nuvem_supabase, "_base_url", lambda: "http://api")
+    monkeypatch.setattr(nuvem_supabase, "_headers", lambda: {})
+    monkeypatch.setattr(nuvem_supabase, "_TABELA_PADRAO", "triagens")
+
+    p = avaliacao.progresso()
+    assert p["rotuladas"] == 1
+    assert p["pre_rotuladas"] == 1
+    assert p["pendentes"] == 1
+
+
 def test_progresso_conta(monkeypatch):
     respostas = [
         _Resposta([{"id": str(i)} for i in range(9)]),  # total

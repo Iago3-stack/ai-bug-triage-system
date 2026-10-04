@@ -4,6 +4,15 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v3.5.8] - 2026-10-04
+
+### Corrigido
+- **A métrica de concordância somaria qualquer rótulo como se fosse humano.** A premissa de `carregar_rotulados` é medir o léxico contra o julgamento de quem lê o relato, mas nada no código exigia que o rótulo tivesse vindo de gente: bastava existir `payload.avaliacao.rotulo`. Com uma rotulagem assistida no horizonte, um lote marcado automaticamente entraria na conta e faria o motor ser medido contra a própria saída — inflando a concordância. Agora o rótulo carrega `autor`, `carregar_rotulados(apenas_humanos=True)` descarta os de `autor="agente"` (a métrica e o CSV exportado contam só humano), e `progresso()` separa **com rótulo humano** de **pré-rotuladas por agente**: estas últimas aparecem na legenda do Painel do Dono como pendentes de revisão, não como cobertura.
+
+### Observações
+- **761 testes**, 2 a mais que os 759 da v3.5.7, todos passando. Um trava que o rótulo de `autor="agente"` fica fora de `carregar_rotulados` por padrão e volta com `apenas_humanos=False`; o outro, que `progresso()` conta o agente em `pre_rotuladas` sem inflar `rotuladas`.
+- **A separação é preventiva.** Não há rótulo de `autor="agente"` nas triagens atuais; o campo existe para que uma rotulagem assistida futura não contamine a métrica. Enquanto isso não acontece, `pre_rotuladas` é 0 e a tela não muda.
+
 ## [v3.5.7] - 2026-10-03
 
 ### Corrigido

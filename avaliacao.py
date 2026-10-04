@@ -172,17 +172,30 @@ def _linhas(limite: int = 1000, deslocamento: int = 0, apenas_rotuladas: bool = 
                 "rotulo": rotulo,
                 "comentario": (aval.get("comentario") or "").strip(),
                 "em": aval.get("em", ""),
+                "autor": (aval.get("autor") or "").strip(),
             })
         saida.append(linha_saida)
     return saida
 
 
-def carregar_rotulados(limite: int = 1000) -> list[dict]:
-    """Triagens com rótulo humano (texto + rótulo). Vazio lista se a nuvem falhar."""
+AUTOR_AGENTE = "agente"
+
+
+def carregar_rotulados(limite: int = 1000, apenas_humanos: bool = True) -> list[dict]:
+    """Triagens com rótulo humano (texto + rótulo). Vazio lista se a nuvem falhar.
+
+    `apenas_humanos=True` (padrão) descarta os rótulos gravados com
+    `autor=AUTOR_AGENTE`: o julgamento do agente não é ground truth, então não
+    pode entrar na métrica de concordância nem na base exportável. Passe `False`
+    para ver tudo, incluindo as pré-rotulagens do agente.
+    """
     try:
-        return _linhas(limite, apenas_rotuladas=True)
+        linhas = _linhas(limite, apenas_rotuladas=True)
     except Exception:
         return []
+    if not apenas_humanos:
+        return linhas
+    return [linha for linha in linhas if linha.get("autor") != AUTOR_AGENTE]
 
 
 def _chave_texto(texto: str) -> str:
@@ -257,8 +270,13 @@ def base_para_csv() -> str:
 
 
 def progresso() -> dict:
-    """Contagem para a UI (sem texto de relato): total, rótuladas,pendentes."""
-    vazio = {"total": 0, "rotuladas": 0, "pendentes": 0, "erro": False}
+    """Contagem para a UI (sem texto de relato): total, humanas, pré, pendentes.
+
+    `rotuladas` conta só o rótulo humano — o ground truth real. Os rótulos com
+    `autor=AUTOR_AGENTE` vão em `pre_rotuladas` e NÃO contam como cobertura: só um
+    leitor humano promove a pré-rotulagem, e é a métrica dele que mede o motor.
+    """
+    vazio = {"total": 0, "rotuladas": 0, "pre_rotuladas": 0, "pendentes": 0, "erro": False}
     try:
         resp = nuvem_supabase.requests.get(
             f"{nuvem_supabase._base_url()}/{nuvem_supabase._TABELA_PADRAO}",
@@ -269,11 +287,14 @@ def progresso() -> dict:
         resp.raise_for_status()
         total = len(resp.json() or [])
     except Exception:
-        return {**vazio, "total": 0, "rotuladas": 0, "pendentes": 0, "erro": True}
-    rotuladas = len(_linhas(apenas_rotuladas=True))
+        return {**vazio, "erro": True}
+    rotulados = _linhas(apenas_rotuladas=True)
+    humanas = sum(1 for linha in rotulados if linha.get("autor") != AUTOR_AGENTE)
+    pre = len(rotulados) - humanas
     return {
         "total": total,
-        "rotuladas": rotuladas,
-        "pendentes": max(total - rotuladas, 0),
+        "rotuladas": humanas,
+        "pre_rotuladas": pre,
+        "pendentes": max(total - humanas - pre, 0),
         "erro": False,
     }
