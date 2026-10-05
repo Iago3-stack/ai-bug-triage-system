@@ -4,6 +4,20 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v3.5.9] - 2026-10-05
+
+### Adicionado
+- **Tela "🤖 Pré-rotulados pelo agente" no Painel do Dono, com promoção a ground truth.** A v3.5.8 separou o rótulo de agente da métrica, e a consequência esperada de uma separação é que o rótulo de agente fica invisível: ele tem `rotulo`, então não volta para a fila de pendentes, e `carregar_rotulados` o descarta por `autor`, então não aparece na concordância. Não existia lugar nenhum onde a sugestão pudesse ser conferida — o agente podia rotular, a tela não mostrava, e a linha ficava fora da métrica sem caminho para entrar. Agora `avaliacao.carregar_pre_rotulados()` lê as linhas com `autor="agente"` com a mesma forma da fila (dedup por texto, `repeticoes`, `ids_irmaos`), e cada grupo mostra a sugestão do agente, o léxico e o que o usuário viu, com os três botões de severidade. O clique **regrava o mesmo rótulo com `autor` do dono logado** (`avaliacao.promover()`) — é isso que promove a linha a ground truth e a faz entrar na métrica. O guard de `promover()` recusa promover sem identidade de leitor e recusa `autor="agente"`: regravar com o autor do agente deixaria a linha fora da métrica e a tela diria que algo foi revisado sem ninguém ter lido. A fila de pendentes virou `_bloco_fila()` justamente para o `return` de "fila vazia" não engolir a tela nova.
+- Dedup e paginação das duas filas passam por uma função só (`_agrupar`): o rótulo é do bug, não da linha, e duas cópias da mesma regra divergem em silêncio, aparecendo como contagem errada em vez de erro.
+
+### Corrigido
+- **"Ver mais →" não paginava nada na fila de rotulagem.** Os botões escreviam `_rot_offset` no `session_state`, mas `carregar_pendentes()` era chamado só com `limite` — nunca com `deslocamento`. O offset era gravado e nunca lido, então o clique redesenhava exatamente a mesma primeira página, e o defeito era indistinguível de "não há mais nada". O mesmo valia para a sondagem que decide se o botão aparece: ela contava sempre a partir do começo, então oferecia "Ver mais" em página cheia sem ter o que mostrar. O mesmo no-op estava em "⏭️ Pular", que apenas redesenhava; agora os dois avançam o offset da sessão, e "Voltar ao início" (que só aparecia quando o offset era lido, ou seja, nunca) volta a ter a função que o nome promete.
+
+### Observações
+- **776 testes**, 15 a mais que os 761 da v3.5.8, todos passando. Oito no backend (filtro por `autor="agente"` contra humano e contra linha sem autor, consulta `not.is.null` no servidor, dedup do grupo, paginação, queda sem nuvem, promoção com autor humano e recusa em quatro casos de autor) e sete na UI (as duas filas são chamadas na mesma seção, o `return` de fila vazia não engole a tela nova, a tela nova não usa cor inline e diz que não conta na métrica, a promoção passa pelo guard, e a paginação da fila usa o offset da sessão).
+- **Verificado contra o dado real, não só no mock.** A leitura devolvou os 27 grupos / 51 linhas que a rotulagem assistida gravou (14 `CRÍTICA`, 7 `MÉDIA`, 6 `NORMAL`), e o guard se recusou nos dois casos sem leitor humano. Os testes unitários mockam o REST; a forma do payload no Supabase é o que o `jsonb` realmente devolve, e isso só a leitura real confirma.
+- **A promoção é o único caminho para a métrica.** Um rótulo de agente corrigido com outro rótulo é o mesmo PATCH: mesmo `payload.avaliacao`, campo `autor` trocado. Nada é copiado para outra tabela, então não há como um rótulo de agente entrar na concordância sem passar por `promover()`.
+
 ## [v3.5.8] - 2026-10-04
 
 ### Corrigido

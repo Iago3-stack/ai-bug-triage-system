@@ -540,3 +540,51 @@ def test_toda_marca_usada_no_painel_existe_no_css():
     assert usadas, "esperava marcas de rotulamento no painel"
     for marca in usadas:
         assert marca in css, f"{marca} é usada no painel mas não existe no CSS"
+
+
+# ─── Pré-rotulados do agente (v3.5.9): revisão e promoção ────────────────────
+# A tela é a única janela para o rótulo de agente, que é invisível nos outros
+# dois lugares: não volta para a fila de pendentes (já tem rótulo) e não entra
+# na métrica (filtro por autor). Estes testes travam o contrato dessa janela.
+
+def test_secao_de_rotulagem_chama_as_duas_filas():
+    corpo = __import__("inspect").getsource(painel_dono._secao_rotulagem)
+    # `return` de "fila vazia" não pode engolir a tela de pré-rotulados: são
+    # tarefas diferentes, e a fila vazia é justamente o caso em que sobra só a outra.
+    assert "_bloco_fila()" in corpo
+    assert "_secao_pre_rotulados()" in corpo
+
+
+def test_bloco_da_fila_devolve_so_quando_vazio():
+    corpo = __import__("inspect").getsource(painel_dono._bloco_fila)
+    guarda = corpo.index("if not fila:")
+    trecho = corpo[guarda:guarda + 300]
+    assert 'st.success("🎉 Tudo rotulado' in trecho
+    # o return precisa vir DEPOIS do success, dentro da guarda: antes dele, a
+    # seção de pré-rotulados nunca renderizaria.
+    assert trecho.index("return") > trecho.index("st.success")
+
+
+def test_tela_de_pre_rotulados_existe_e_nao_usa_cor_inline():
+    corpo = __import__("inspect").getsource(painel_dono._secao_pre_rotulados)
+    assert "🤖 Pré-rotulados pelo agente" in corpo
+    assert "carregar_pre_rotulados" in corpo
+    # Cor fixa = invisível no tema claro (mesmo defeito do .rot-cartao).
+    assert "color:#" not in corpo and "background:#" not in corpo
+    assert "agente sugeriu" in corpo  # a sugestão precisa ficar visível
+    assert "Não contam" in corpo and "métrica" in corpo
+
+
+def test_promover_passa_pelo_guard_de_autor_humano():
+    corpo = __import__("inspect").getsource(painel_dono._promover_grupo)
+    # Registrar direto deixaria o rótulo de agente na métrica sem revisão humana.
+    assert "avaliacao.promover(" in corpo
+    assert "registrar_varios" not in corpo
+
+
+def test_paginacao_da_fila_usa_o_deslocamento_da_sessao():
+    corpo = __import__("inspect").getsource(painel_dono._bloco_fila)
+    # Regressão: `_rot_offset` era escrito pelos botões e nunca lido, então
+    # "Ver mais →" apenas redesenhava a mesma primeira página.
+    assert 'st.session_state.get("_rot_offset", 0)' in corpo
+    assert corpo.count("deslocamento=deslocamento") >= 2  # a página e a sondagem do "mais"

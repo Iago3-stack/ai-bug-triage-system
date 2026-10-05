@@ -207,6 +207,29 @@ def _chave_texto(texto: str) -> str:
     return " ".join(sem_acento.split())
 
 
+def _agrupar(linhas: list[dict], limite: int, deslocamento: int, unicos: bool) -> list[dict]:
+    """Agrupa por texto e pagina o resultado.
+
+    Fica em uma função só porque a fila de pendentes e a de pré-rotulados
+    precisam exatamente da mesma regra: duas cópias da mesma regra divergem, e a
+    divergência aparece como contagem errada na métrica, não como erro.
+    """
+    if not unicos:
+        return linhas[deslocamento:deslocamento + limite]
+    vistos: dict[str, dict] = {}
+    for linha in linhas:
+        chave = _chave_texto(linha["descricao"])
+        if chave in vistos:
+            vistos[chave]["repeticoes"] += 1
+            vistos[chave]["ids_irmaos"].append(linha["id"])
+            continue
+        item = dict(linha)
+        item["repeticoes"] = 1
+        item["ids_irmaos"] = [linha["id"]]
+        vistos[chave] = item
+    return list(vistos.values())[deslocamento:deslocamento + limite]
+
+
 def carregar_pendentes(limite: int = 50, deslocamento: int = 0, unicos: bool = True) -> list[dict]:
     """Triagens sem rótulo, com texto e a prioridade prevista (para rotular).
 
@@ -221,23 +244,28 @@ def carregar_pendentes(limite: int = 50, deslocamento: int = 0, unicos: bool = T
     """
     try:
         janela = max(limite * 10, 200) if unicos else limite
-        linhas = _linhas(janela, 0, apenas_rotuladas=False)
-        if not unicos:
-            return linhas[deslocamento:deslocamento + limite]
+        return _agrupar(_linhas(janela, 0, apenas_rotuladas=False), limite, deslocamento, unicos)
+    except Exception:
+        return []
 
-        vistos: dict[str, dict] = {}
-        for linha in linhas:
-            chave = _chave_texto(linha["descricao"])
-            if chave in vistos:
-                vistos[chave]["repeticoes"] += 1
-                vistos[chave]["ids_irmaos"].append(linha["id"])
-                continue
-            item = dict(linha)
-            item["repeticoes"] = 1
-            item["ids_irmaos"] = [linha["id"]]
-            vistos[chave] = item
-        fila = list(vistos.values())
-        return fila[deslocamento:deslocamento + limite]
+
+def carregar_pre_rotulados(limite: int = 50, deslocamento: int = 0, unicos: bool = True) -> list[dict]:
+    """Triagens rotuladas por AGENTE, para o dono conferir e promover.
+
+    Mesma forma de `carregar_pendentes` (dedup por texto, `repeticoes`,
+    `ids_irmaos`) e as mesmas duas previsões, mais `rotulo` — que aqui é a
+    *sugestão* do agente, não ground truth.
+
+    Estas linhas são justamente as que somem da tela: já têm `rotulo`, então não
+    voltam para a fila de pendentes, e `carregar_rotulados` as descarta por
+    autor, então não aparecem na concordância. Sem esta leitura o dono não tem
+    onde conferir nem promover o que o agente sugeriu.
+    """
+    try:
+        janela = max(limite * 10, 200) if unicos else limite
+        linhas = [linha for linha in _linhas(janela, 0, apenas_rotuladas=True)
+                  if linha.get("autor") == AUTOR_AGENTE]
+        return _agrupar(linhas, limite, deslocamento, unicos)
     except Exception:
         return []
 
@@ -252,6 +280,20 @@ def registrar_varios(registro_ids: list[str], rotulo: str, comentario: str = "",
     PostgREST substitui o jsonb inteiro, não dá para fazer numa tacada só).
     """
     return sum(1 for rid in registro_ids if registrar(rid, rotulo, comentario, autor))
+
+
+def promover(registro_ids: list[str], rotulo: str, comentario: str = "", autor: str = "") -> int:
+    """Promove pré-rotulagem do agente a rótulo HUMANO — é isso que a métrica conta.
+
+    Exige identidade de leitor: sem `autor`, ou com `autor=AUTOR_AGENTE`, não
+    promove e devolve 0. O motivo do filtro não é burocracia: promover com o
+    autor do agente regravaria o mesmo rótulo de agente, e a tela passaria a
+    dizer que algo foi revisado sem que ninguém o tivesse lido.
+    """
+    limpo = (autor or "").strip()
+    if not limpo or limpo == AUTOR_AGENTE:
+        return 0
+    return registrar_varios(registro_ids, rotulo, comentario, limpo)
 
 
 def base_para_csv() -> str:
