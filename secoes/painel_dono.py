@@ -386,10 +386,23 @@ def _secao_rotulagem() -> None:
             file_name=f"base_rotulada_{len(rotulados)}.csv", mime="text/csv",
         )
 
+    _bloco_fila()
+    _secao_pre_rotulados()
+
+
+def _bloco_fila() -> None:
+    """Fila do que ainda NÃO tem rótulo. Sai cedo quando a fila está vazia.
+
+    Fica em função própria porque esse `return` não pode engolir a seção de
+    pré-rotulados: as duas são tarefas diferentes do mesmo dono, e a fila vazia
+    é justamente o caso em que sobra só a outra.
+    """
     st.markdown("#### Fila para rotular")
-    fila = avaliacao.carregar_pendentes(limite=_PAGINA)
+    deslocamento = st.session_state.get("_rot_offset", 0)
+    fila = avaliacao.carregar_pendentes(limite=_PAGINA, deslocamento=deslocamento)
     if not fila:
         st.success("🎉 Tudo rotulado. Não tem mais nada na fila.")
+        _voltar_ao_inicio("_rot_offset", deslocamento)
         return
 
     st.caption(
@@ -434,19 +447,93 @@ def _secao_rotulagem() -> None:
         with b4:
             _marca("marca-rot-pular")
             if st.button("⏭️ Pular", key=f"rot_{item['id']}_skip", use_container_width=True):
-                st.session_state["_rot_pular"] = item["id"]
+                st.session_state["_rot_offset"] = deslocamento + 1
                 st.rerun()
 
-    mais = len(avaliacao.carregar_pendentes(limite=_PAGINA + 1)) > _PAGINA
+    mais = len(avaliacao.carregar_pendentes(
+        limite=_PAGINA + 1, deslocamento=deslocamento)) > _PAGINA
     if mais:
         _marca("marca-rot-pag")
         if st.button(f"Ver mais {_PAGINA} →", key="rot_mais", use_container_width=True):
-            st.session_state["_rot_offset"] = st.session_state.get("_rot_offset", 0) + _PAGINA
+            st.session_state["_rot_offset"] = deslocamento + _PAGINA
             st.rerun()
-    elif st.session_state.get("_rot_offset"):
+    else:
+        _voltar_ao_inicio("_rot_offset", deslocamento)
+
+
+def _secao_pre_rotulados() -> None:
+    """Pré-rotulações do agente, esperando leitura do dono.
+
+    A tela existe porque o rótulo de agente é invisível por construção: tem
+    `rotulo`, logo não volta para a fila de pendentes, e é descartado por autor
+    em `carregar_rotulados`, logo não aparece na concordância. Confirmar aqui
+    regrava o mesmo rótulo com o autor humano — é esse clique que promove a linha
+    de sugestão a ground truth.
+    """
+    deslocamento = st.session_state.get("_pre_offset", 0)
+    fila = avaliacao.carregar_pre_rotulados(limite=_PAGINA, deslocamento=deslocamento)
+    if not fila:
+        # Enquanto sobrar pré-rotulação, o título fica: sem ele o sumiço depois
+        # de promover o último item da página vira tela vazia sem explicação.
+        if avaliacao.carregar_pre_rotulados(limite=1):
+            st.markdown("#### 🤖 Pré-rotulados pelo agente")
+            st.success("🎉 Todas as sugestões do agente foram revisadas.")
+        _voltar_ao_inicio("_pre_offset", deslocamento)
+        return
+
+    st.markdown("#### 🤖 Pré-rotulados pelo agente")
+    st.caption(
+        "Sugestões do agente sobre relatos que você ainda não rotulou. **Não contam "
+        "na métrica** — viram ground truth só depois que você confirmar aqui, com o "
+        "seu rótulo. O botão do rótulo que ele sugeriu é o que confirma; os outros "
+        "corrigem."
+    )
+
+    autor = admin.email_logado() or ""
+    for item in fila:
+        sugestao = avaliacao.normalizar(item.get("rotulo")) or "—"
+        previa = avaliacao.normalizar(item.get("prioridade") or item.get("gravidade")) or "—"
+        copias = f" · ×{item['repeticoes']} no histórico" if item.get("repeticoes", 1) > 1 else ""
+        st.markdown(
+            f'<div class="rot-topo">'
+            f'agente sugeriu: <b class="rot-visto">{sugestao}</b> · '
+            f'léxico: <b>{item.get("gravidade") or "—"}</b> · '
+            f'visto pelo usuário: <b>{previa}</b>{copias}</div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown(_cartao(item["descricao"][:600]), unsafe_allow_html=True)
+
+        comentario = st.text_area(
+            "Por que essa severidade? (opcional)", key=f"pre_com_{item['id']}",
+            placeholder="ex.: concordo — bloqueio de pagamento no app real",
+        )
+        b1, b2, b3 = st.columns(3)
+        acoes = (
+            (b1, "🚨 CRÍTICA", "CRÍTICA", "marca-rot-crit", "primary"),
+            (b2, "⚠️ MÉDIA", "MÉDIA", "marca-rot-med", "secondary"),
+            (b3, "✅ NORMAL", "NORMAL", "marca-rot-norm", "secondary"),
+        )
+        for coluna, titulo, rotulo, marca, tipo in acoes:
+            with coluna:
+                _marca(marca)
+                if st.button(titulo, key=f"pre_{item['id']}_{rotulo}",
+                             use_container_width=True, type=tipo):
+                    # Justificativa vazia não pode apagar a do agente: a tela
+                    # não mostra o comentário dele, então digitar nada é o
+                    # caminho fácil de perder a razão da sugestão.
+                    _promover_grupo(item, rotulo,
+                                    (comentario or "").strip() or (item.get("comentario") or ""),
+                                    autor)
+
+    mais = len(avaliacao.carregar_pre_rotulados(
+        limite=_PAGINA + 1, deslocamento=deslocamento)) > _PAGINA
+    if mais:
         _marca("marca-rot-pag")
-        st.button("⬅️ Voltar ao início", key="rot_voltar", use_container_width=True,
-                  on_click=lambda: st.session_state.__setitem__("_rot_offset", 0))
+        if st.button(f"Ver mais {_PAGINA} →", key="pre_mais", use_container_width=True):
+            st.session_state["_pre_offset"] = deslocamento + _PAGINA
+            st.rerun()
+    else:
+        _voltar_ao_inicio("_pre_offset", deslocamento)
 
 
 def _registrar_grupo(item: dict, rotulo: str, comentario: str, autor: str) -> None:
@@ -460,6 +547,22 @@ def _registrar_grupo(item: dict, rotulo: str, comentario: str, autor: str) -> No
     st.rerun()
 
 
+def _promover_grupo(item: dict, rotulo: str, comentario: str, autor: str) -> None:
+    """Promove a sugestão do agente a rótulo humano, no mesmo grupo inteiro."""
+    ids = item.get("ids_irmaos") or [item["id"]]
+    quantas = avaliacao.promover(ids, rotulo, comentario, autor)
+    if quantas:
+        copias = f" ({quantas} linhas)" if quantas > 1 else ""
+        st.session_state["dono_aviso"] = (
+            f"✅ Rótulo **{rotulo}** confirmado por você{copias} — agora conta na métrica."
+        )
+    else:
+        st.session_state["dono_aviso"] = (
+            "⚠️ Não consegui promover (Supabase?). Tente de novo."
+        )
+    st.rerun()
+
+
 def _campo_atalho(primeiro: dict) -> None:
     """Caixa de atalho: digitar 1/2/3/0 rotula o primeiro item da fila."""
     def _trata():
@@ -469,6 +572,9 @@ def _campo_atalho(primeiro: dict) -> None:
         if tecla in mapa:
             _registrar_grupo(primeiro, mapa[tecla], "", admin.email_logado() or "")
         elif tecla == "0":
+            # Avança o offset como o botão "Pular" faz. Só `rerun` redesenhava a
+            # mesma página, e a caption e o `help` anunciam "pular".
+            st.session_state["_rot_offset"] = st.session_state.get("_rot_offset", 0) + 1
             st.rerun()
 
     st.text_input("⌨️ atalho", key="_rot_tecla", on_change=_trata, max_chars=1,
@@ -477,6 +583,20 @@ def _campo_atalho(primeiro: dict) -> None:
                   help="Digite 1 (CRÍTICA), 2 (MÉDIA), 3 (NORMAL) ou 0 (pular).")
 
 
+
+
+def _voltar_ao_inicio(chave: str, deslocamento: int) -> None:
+    """Botão de voltar, que precisa existir ANTES do `return` de lista vazia.
+
+    Promover o último item estando na página 4 esvazia a lista e leva o offset
+    junto; sem este botão a seção sumiria sem nenhuma forma de voltar, porque o
+    `elif` que o desenhava fica depois do `return`.
+    """
+    if not deslocamento:
+        return
+    _marca("marca-rot-pag")
+    st.button("⬅️ Voltar ao início", key=f"{chave}_voltar", use_container_width=True,
+              on_click=lambda: st.session_state.__setitem__(chave, 0))
 
 
 def _marca(classe: str) -> None:

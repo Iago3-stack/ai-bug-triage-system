@@ -120,7 +120,8 @@ def estado_de(registro_id: str) -> dict:
         return dict(vazio)
 
 
-def _linhas(limite: int = 1000, deslocamento: int = 0, apenas_rotuladas: bool = True) -> list[dict]:
+def _linhas(limite: int = 1000, deslocamento: int = 0, apenas_rotuladas: bool = True,
+            autor: str = "") -> list[dict]:
     """Linhas com (ou sem) `payload->avaliacao->>rotulo`, filtradas no servidor.
 
     PostgREST aceita `payload->avaliacao->>rotulo` com `not.is.null` / `is.null`,
@@ -128,20 +129,29 @@ def _linhas(limite: int = 1000, deslocamento: int = 0, apenas_rotuladas: bool = 
     linha sem texto (pendente) ou sem rótulo canônico (rotulada): dado velho ou
     escrito à mão não entra na base.
 
+    `autor` desce para o servidor (mesmo mecanismo de chave jsonb irmã). Isso não
+    é detalhe: filtrar autor em Python depois da janela trunca o conjunto — a
+    janela vem ordenada por `data_hora.desc` e é contada sobre TODAS as linhas
+    rotuladas, então filtrar depois faz as linhas de autor mais antigo caírem
+    pela cauda e a tela esvaziar sem aviso.
+
     Devolve as DUAS previsões do app, porque elas respondem perguntas diferentes:
       gravidade  — o que o léxico (triagem.py) previu
       prioridade — o que o usuário viu (léxico x IA reconciliados em ferramenta.py)
     """
+    params = {
+        "select": "id,data_hora,payload",
+        "payload->avaliacao->>rotulo": "not.is.null" if apenas_rotuladas else "is.null",
+        "order": "data_hora.desc",
+        "limit": str(limite),
+        "offset": str(deslocamento),
+    }
+    if autor:
+        params["payload->avaliacao->>autor"] = f"eq.{autor}"
     resp = nuvem_supabase.requests.get(
         f"{nuvem_supabase._base_url()}/{nuvem_supabase._TABELA_PADRAO}",
         headers=nuvem_supabase._headers(),
-        params={
-            "select": "id,data_hora,payload",
-            "payload->avaliacao->>rotulo": "not.is.null" if apenas_rotuladas else "is.null",
-            "order": "data_hora.desc",
-            "limit": str(limite),
-            "offset": str(deslocamento),
-        },
+        params=params,
         timeout=20,
     )
     resp.raise_for_status()
@@ -207,6 +217,29 @@ def _chave_texto(texto: str) -> str:
     return " ".join(sem_acento.split())
 
 
+def _agrupar(linhas: list[dict], limite: int, deslocamento: int, unicos: bool) -> list[dict]:
+    """Agrupa por texto e pagina o resultado.
+
+    Fica em uma função só porque a fila de pendentes e a de pré-rotulados
+    precisam exatamente da mesma regra: duas cópias da mesma regra divergem, e a
+    divergência aparece como contagem errada na métrica, não como erro.
+    """
+    if not unicos:
+        return linhas[deslocamento:deslocamento + limite]
+    vistos: dict[str, dict] = {}
+    for linha in linhas:
+        chave = _chave_texto(linha["descricao"])
+        if chave in vistos:
+            vistos[chave]["repeticoes"] += 1
+            vistos[chave]["ids_irmaos"].append(linha["id"])
+            continue
+        item = dict(linha)
+        item["repeticoes"] = 1
+        item["ids_irmaos"] = [linha["id"]]
+        vistos[chave] = item
+    return list(vistos.values())[deslocamento:deslocamento + limite]
+
+
 def carregar_pendentes(limite: int = 50, deslocamento: int = 0, unicos: bool = True) -> list[dict]:
     """Triagens sem rótulo, com texto e a prioridade prevista (para rotular).
 
@@ -221,23 +254,46 @@ def carregar_pendentes(limite: int = 50, deslocamento: int = 0, unicos: bool = T
     """
     try:
         janela = max(limite * 10, 200) if unicos else limite
-        linhas = _linhas(janela, 0, apenas_rotuladas=False)
-        if not unicos:
-            return linhas[deslocamento:deslocamento + limite]
+        return _agrupar(_linhas(janela, 0, apenas_rotuladas=False), limite, deslocamento, unicos)
+    except Exception:
+        return []
 
-        vistos: dict[str, dict] = {}
-        for linha in linhas:
-            chave = _chave_texto(linha["descricao"])
-            if chave in vistos:
-                vistos[chave]["repeticoes"] += 1
-                vistos[chave]["ids_irmaos"].append(linha["id"])
-                continue
-            item = dict(linha)
-            item["repeticoes"] = 1
-            item["ids_irmaos"] = [linha["id"]]
-            vistos[chave] = item
-        fila = list(vistos.values())
-        return fila[deslocamento:deslocamento + limite]
+
+def carregar_pre_rotulados(limite: int = 50, deslocamento: int = 0, unicos: bool = True) -> list[dict]:
+    """Triagens rotuladas por AGENTE, para o dono conferir e promover.
+
+    Mesma forma de `carregar_pendentes` (dedup por texto, `repeticoes`,
+    `ids_irmaos`) e as mesmas duas previsões, mais `rotulo` — que aqui é a
+    *sugestão* do agente, não ground truth.
+
+    Estas linhas são justamente as que somem da tela: já têm `rotulo`, então não
+    voltam para a fila de pendentes, e `carregar_rotulados` as descarta por
+    autor, então não aparecem na concordância. Sem esta leitura o dono não tem
+    onde conferir nem promover o que o agente sugeriu.
+
+    Fica de fora o texto que JÁ tem rótulo humano. Sem esse filtro, promover uma
+    cópia pré-rotulada de um texto que o dono já rotulou na mão grava um segundo
+    rótulo para o mesmo bug, e a métrica (que deduplica por texto guardando a
+    linha mais recente) responderia pelo rótulo do clique, não pelo rótulo que o
+    dono escreveu antes. Pior: se a linha pré-rotulada for mais velha, o clique é
+    ignorado e o toast ainda afirma que a linha passou a contar.
+
+    O `autor` é conferido duas vezes de propósito: no servidor, para a janela
+    contar só as linhas que interessam, e aqui em Python, porque é o que os
+    testes observam (o REST é mockado e ignora `params`) e porque um servidor
+    que responde 200 sem filtrar não pode virar fonte de verdade do ground
+    truth.
+    """
+    try:
+        janela = max(limite * 10, 200) if unicos else limite
+        linhas = [linha for linha in _linhas(janela, 0, apenas_rotuladas=True,
+                                              autor=AUTOR_AGENTE)
+                  if linha.get("autor") == AUTOR_AGENTE]
+        ja_rotulados = {_chave_texto(linha["descricao"])
+                        for linha in carregar_rotulados(limite=janela)}
+        linhas = [linha for linha in linhas
+                  if _chave_texto(linha["descricao"]) not in ja_rotulados]
+        return _agrupar(linhas, limite, deslocamento, unicos)
     except Exception:
         return []
 
@@ -252,6 +308,20 @@ def registrar_varios(registro_ids: list[str], rotulo: str, comentario: str = "",
     PostgREST substitui o jsonb inteiro, não dá para fazer numa tacada só).
     """
     return sum(1 for rid in registro_ids if registrar(rid, rotulo, comentario, autor))
+
+
+def promover(registro_ids: list[str], rotulo: str, comentario: str = "", autor: str = "") -> int:
+    """Promove pré-rotulagem do agente a rótulo HUMANO — é isso que a métrica conta.
+
+    Exige identidade de leitor: sem `autor`, ou com `autor=AUTOR_AGENTE`, não
+    promove e devolve 0. O motivo do filtro não é burocracia: promover com o
+    autor do agente regravaria o mesmo rótulo de agente, e a tela passaria a
+    dizer que algo foi revisado sem que ninguém o tivesse lido.
+    """
+    limpo = (autor or "").strip()
+    if not limpo or limpo == AUTOR_AGENTE:
+        return 0
+    return registrar_varios(registro_ids, rotulo, comentario, limpo)
 
 
 def base_para_csv() -> str:
