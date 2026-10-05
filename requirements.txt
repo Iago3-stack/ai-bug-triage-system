@@ -21,7 +21,7 @@ fpdf2==2.8.8
 pillow==12.3.0
 # V3.0 — telemetria de produto (PostHog, server-side). Sem POSTHOG_API_KEY nos
 # Secrets/.env, tudo é no-op (nada enviado, zero custo). Host default EU (LGPD).
-posthog==7.60.0
+posthog==7.62.1
 # O experimento de NLP semântico (BERTabaporu ONNX, v3.1.0) saiu do app em
 # v3.2.0 e foi REMOVIDO do repo em v3.4.0: no histórico real ele só escalava bug
 # cosmético, e o benchmark local do brazembed-pt-br deu 43,5% estrito contra
