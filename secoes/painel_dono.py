@@ -397,10 +397,12 @@ def _bloco_fila() -> None:
     pré-rotulados: as duas são tarefas diferentes do mesmo dono, e a fila vazia
     é justamente o caso em que sobra só a outra.
     """
+    st.markdown("#### Fila para rotular")
     deslocamento = st.session_state.get("_rot_offset", 0)
     fila = avaliacao.carregar_pendentes(limite=_PAGINA, deslocamento=deslocamento)
     if not fila:
         st.success("🎉 Tudo rotulado. Não tem mais nada na fila.")
+        _voltar_ao_inicio("_rot_offset", deslocamento)
         return
 
     st.caption(
@@ -455,10 +457,8 @@ def _bloco_fila() -> None:
         if st.button(f"Ver mais {_PAGINA} →", key="rot_mais", use_container_width=True):
             st.session_state["_rot_offset"] = deslocamento + _PAGINA
             st.rerun()
-    elif deslocamento:
-        _marca("marca-rot-pag")
-        st.button("⬅️ Voltar ao início", key="rot_voltar", use_container_width=True,
-                  on_click=lambda: st.session_state.__setitem__("_rot_offset", 0))
+    else:
+        _voltar_ao_inicio("_rot_offset", deslocamento)
 
 
 def _secao_pre_rotulados() -> None:
@@ -473,6 +473,12 @@ def _secao_pre_rotulados() -> None:
     deslocamento = st.session_state.get("_pre_offset", 0)
     fila = avaliacao.carregar_pre_rotulados(limite=_PAGINA, deslocamento=deslocamento)
     if not fila:
+        # Enquanto sobrar pré-rotulação, o título fica: sem ele o sumiço depois
+        # de promover o último item da página vira tela vazia sem explicação.
+        if avaliacao.carregar_pre_rotulados(limite=1):
+            st.markdown("#### 🤖 Pré-rotulados pelo agente")
+            st.success("🎉 Todas as sugestões do agente foram revisadas.")
+        _voltar_ao_inicio("_pre_offset", deslocamento)
         return
 
     st.markdown("#### 🤖 Pré-rotulados pelo agente")
@@ -486,7 +492,7 @@ def _secao_pre_rotulados() -> None:
     autor = admin.email_logado() or ""
     for item in fila:
         sugestao = avaliacao.normalizar(item.get("rotulo")) or "—"
-        previa = avaliacao.normalizar(item.get("prioridade")) or "—"
+        previa = avaliacao.normalizar(item.get("prioridade") or item.get("gravidade")) or "—"
         copias = f" · ×{item['repeticoes']} no histórico" if item.get("repeticoes", 1) > 1 else ""
         st.markdown(
             f'<div class="rot-topo">'
@@ -512,7 +518,12 @@ def _secao_pre_rotulados() -> None:
                 _marca(marca)
                 if st.button(titulo, key=f"pre_{item['id']}_{rotulo}",
                              use_container_width=True, type=tipo):
-                    _promover_grupo(item, rotulo, comentario, autor)
+                    # Justificativa vazia não pode apagar a do agente: a tela
+                    # não mostra o comentário dele, então digitar nada é o
+                    # caminho fácil de perder a razão da sugestão.
+                    _promover_grupo(item, rotulo,
+                                    (comentario or "").strip() or (item.get("comentario") or ""),
+                                    autor)
 
     mais = len(avaliacao.carregar_pre_rotulados(
         limite=_PAGINA + 1, deslocamento=deslocamento)) > _PAGINA
@@ -521,10 +532,8 @@ def _secao_pre_rotulados() -> None:
         if st.button(f"Ver mais {_PAGINA} →", key="pre_mais", use_container_width=True):
             st.session_state["_pre_offset"] = deslocamento + _PAGINA
             st.rerun()
-    elif deslocamento:
-        _marca("marca-rot-pag")
-        st.button("⬅️ Voltar ao início", key="pre_voltar", use_container_width=True,
-                  on_click=lambda: st.session_state.__setitem__("_pre_offset", 0))
+    else:
+        _voltar_ao_inicio("_pre_offset", deslocamento)
 
 
 def _registrar_grupo(item: dict, rotulo: str, comentario: str, autor: str) -> None:
@@ -563,6 +572,9 @@ def _campo_atalho(primeiro: dict) -> None:
         if tecla in mapa:
             _registrar_grupo(primeiro, mapa[tecla], "", admin.email_logado() or "")
         elif tecla == "0":
+            # Avança o offset como o botão "Pular" faz. Só `rerun` redesenhava a
+            # mesma página, e a caption e o `help` anunciam "pular".
+            st.session_state["_rot_offset"] = st.session_state.get("_rot_offset", 0) + 1
             st.rerun()
 
     st.text_input("⌨️ atalho", key="_rot_tecla", on_change=_trata, max_chars=1,
@@ -571,6 +583,20 @@ def _campo_atalho(primeiro: dict) -> None:
                   help="Digite 1 (CRÍTICA), 2 (MÉDIA), 3 (NORMAL) ou 0 (pular).")
 
 
+
+
+def _voltar_ao_inicio(chave: str, deslocamento: int) -> None:
+    """Botão de voltar, que precisa existir ANTES do `return` de lista vazia.
+
+    Promover o último item estando na página 4 esvazia a lista e leva o offset
+    junto; sem este botão a seção sumiria sem nenhuma forma de voltar, porque o
+    `elif` que o desenhava fica depois do `return`.
+    """
+    if not deslocamento:
+        return
+    _marca("marca-rot-pag")
+    st.button("⬅️ Voltar ao início", key=f"{chave}_voltar", use_container_width=True,
+              on_click=lambda: st.session_state.__setitem__(chave, 0))
 
 
 def _marca(classe: str) -> None:

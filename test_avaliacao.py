@@ -401,12 +401,23 @@ def _linha_avaliada(id, texto, rotulo="CRÍTICA", autor=None):
     return linha
 
 
+def _mock_pre_rotulados(monkeypatch, linhas_agente, linhas_humanas=()):
+    """Duas respostas: `carregar_pre_rotulados` consulta os dois conjuntos.
+
+    A ordem importa: primeiro os pré-rotulados (`autor=agente`), depois os
+    rótulos humanos que já contam na métrica e por isso não podem aparecer de
+    novo como sugestão.
+    """
+    return _mock(monkeypatch, [_Resposta(list(linhas_agente)),
+                               _Resposta(list(linhas_humanas))])
+
+
 def test_carregar_pre_rotulados_traz_so_o_que_agente_rotulou(monkeypatch):
-    _mock(monkeypatch, [_Resposta([
+    _mock_pre_rotulados(monkeypatch, [
         _linha_avaliada("a", "app caiu", rotulo="CRÍTICA", autor=avaliacao.AUTOR_AGENTE),
         _linha_avaliada("b", "botão sumiu", rotulo="MÉDIA", autor="dono@exemplo"),
         _linha_avaliada("c", "texto sem autor"),  # humano legado: sem a chave
-    ])])
+    ])
 
     out = avaliacao.carregar_pre_rotulados()
 
@@ -414,22 +425,39 @@ def test_carregar_pre_rotulados_traz_so_o_que_agente_rotulou(monkeypatch):
     assert out[0]["rotulo"] == "CRÍTICA"
 
 
-def test_carregar_pre_rotulados_consulta_ja_rotuladas(monkeypatch):
-    fake = _mock(monkeypatch, [_Resposta([])])
+def test_filtro_de_autor_desce_para_o_postgrest(monkeypatch):
+    fake = _mock_pre_rotulados(monkeypatch, [])
 
     avaliacao.carregar_pre_rotulados()
 
-    # not.is.null (e não varrer a tabela) pelo mesmo motivo da fila: aqui o
-    # filtro de autor ainda é local, mas a base é pequena e o filtro no
-    # servidor evita trazer o histórico inteiro para filtrar no painel.
-    assert fake.chamadas[0][2]["payload->avaliacao->>rotulo"] == "not.is.null"
+    # Filtrar autor em Python depois da janela trunca o conjunto: a janela vem
+    # ordenada por data_hora.desc e conta todas as linhas rotuladas, então as de
+    # agente mais antigas caem pela cauda e a tela esvazia sem aviso.
+    params = fake.chamadas[0][2]
+    assert params["payload->avaliacao->>rotulo"] == "not.is.null"
+    assert params["payload->avaliacao->>autor"] == "eq.agente"
+
+
+def test_texto_que_ja_tem_rotulo_humano_nao_volta_como_sugestao(monkeypatch):
+    # A métrica deduplica por texto e guarda a linha mais recente; oferecer de
+    # novo um texto já rotulado na mão deixa o clique do dono competindo com o
+    # rótulo que ele mesmo escreveu.
+    _mock_pre_rotulados(
+        monkeypatch,
+        [_linha_avaliada("a", "app caiu", autor=avaliacao.AUTOR_AGENTE)],
+        [_linha_avaliada("z", "App caiu", autor="dono@exemplo")],  # mesmo texto
+    )
+
+    out = avaliacao.carregar_pre_rotulados()
+
+    assert out == []
 
 
 def test_carregar_pre_rotulados_agrupa_texto_repetido(monkeypatch):
-    _mock(monkeypatch, [_Resposta([
+    _mock_pre_rotulados(monkeypatch, [
         _linha_avaliada("a", "Falha em POST pagamento", autor=avaliacao.AUTOR_AGENTE),
         _linha_avaliada("b", "falha em post  pagamento", autor=avaliacao.AUTOR_AGENTE),
-    ])])
+    ])
 
     out = avaliacao.carregar_pre_rotulados()
 
@@ -439,11 +467,11 @@ def test_carregar_pre_rotulados_agrupa_texto_repetido(monkeypatch):
 
 
 def test_carregar_pre_rotulados_pagina(monkeypatch):
-    _mock(monkeypatch, [_Resposta([
+    _mock_pre_rotulados(monkeypatch, [
         _linha_avaliada("a", "bug 1", autor=avaliacao.AUTOR_AGENTE),
         _linha_avaliada("b", "bug 2", autor=avaliacao.AUTOR_AGENTE),
         _linha_avaliada("c", "bug 3", autor=avaliacao.AUTOR_AGENTE),
-    ])])
+    ])
 
     pagina = avaliacao.carregar_pre_rotulados(limite=1, deslocamento=1)
 
@@ -473,6 +501,30 @@ def test_promover_grava_o_grupo_com_autor_humano(monkeypatch):
 
     assert quantas == 2
     assert [g[2] for g in gravados] == ["dono@exemplo", "dono@exemplo"]
+
+
+def test_promover_agrava_o_autor_aparado(monkeypatch):
+    gravados = []
+    monkeypatch.setattr(avaliacao, "registrar",
+                        lambda rid, rot, com, aut: gravados.append(aut) or True)
+
+    avaliacao.promover(["a"], "MÉDIA", "", "  dono@exemplo  ")
+
+    # O que a métrica lê depois é este campo: gravar o valor com espaço faria a
+    # linha não casar com o filtro de autor humano.
+    assert gravados == ["dono@exemplo"]
+
+
+def test_promover_de_lista_vazia_nao_grava_nada(monkeypatch):
+    monkeypatch.setattr(avaliacao, "registrar", lambda *a, **k: pytest.fail("gravou sem id"))
+
+    assert avaliacao.promover([], "CRÍTICA", "", "dono@exemplo") == 0
+
+
+def test_promover_de_id_inexistente_devolve_zero(monkeypatch):
+    monkeypatch.setattr(avaliacao, "registrar", lambda *a, **k: False)
+
+    assert avaliacao.promover(["inexistente"], "CRÍTICA", "", "dono@exemplo") == 0
 
 
 @pytest.mark.parametrize("autor", ["", "   ", None, avaliacao.AUTOR_AGENTE])

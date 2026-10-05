@@ -120,7 +120,8 @@ def estado_de(registro_id: str) -> dict:
         return dict(vazio)
 
 
-def _linhas(limite: int = 1000, deslocamento: int = 0, apenas_rotuladas: bool = True) -> list[dict]:
+def _linhas(limite: int = 1000, deslocamento: int = 0, apenas_rotuladas: bool = True,
+            autor: str = "") -> list[dict]:
     """Linhas com (ou sem) `payload->avaliacao->>rotulo`, filtradas no servidor.
 
     PostgREST aceita `payload->avaliacao->>rotulo` com `not.is.null` / `is.null`,
@@ -128,20 +129,29 @@ def _linhas(limite: int = 1000, deslocamento: int = 0, apenas_rotuladas: bool = 
     linha sem texto (pendente) ou sem rótulo canônico (rotulada): dado velho ou
     escrito à mão não entra na base.
 
+    `autor` desce para o servidor (mesmo mecanismo de chave jsonb irmã). Isso não
+    é detalhe: filtrar autor em Python depois da janela trunca o conjunto — a
+    janela vem ordenada por `data_hora.desc` e é contada sobre TODAS as linhas
+    rotuladas, então filtrar depois faz as linhas de autor mais antigo caírem
+    pela cauda e a tela esvaziar sem aviso.
+
     Devolve as DUAS previsões do app, porque elas respondem perguntas diferentes:
       gravidade  — o que o léxico (triagem.py) previu
       prioridade — o que o usuário viu (léxico x IA reconciliados em ferramenta.py)
     """
+    params = {
+        "select": "id,data_hora,payload",
+        "payload->avaliacao->>rotulo": "not.is.null" if apenas_rotuladas else "is.null",
+        "order": "data_hora.desc",
+        "limit": str(limite),
+        "offset": str(deslocamento),
+    }
+    if autor:
+        params["payload->avaliacao->>autor"] = f"eq.{autor}"
     resp = nuvem_supabase.requests.get(
         f"{nuvem_supabase._base_url()}/{nuvem_supabase._TABELA_PADRAO}",
         headers=nuvem_supabase._headers(),
-        params={
-            "select": "id,data_hora,payload",
-            "payload->avaliacao->>rotulo": "not.is.null" if apenas_rotuladas else "is.null",
-            "order": "data_hora.desc",
-            "limit": str(limite),
-            "offset": str(deslocamento),
-        },
+        params=params,
         timeout=20,
     )
     resp.raise_for_status()
@@ -260,11 +270,29 @@ def carregar_pre_rotulados(limite: int = 50, deslocamento: int = 0, unicos: bool
     voltam para a fila de pendentes, e `carregar_rotulados` as descarta por
     autor, então não aparecem na concordância. Sem esta leitura o dono não tem
     onde conferir nem promover o que o agente sugeriu.
+
+    Fica de fora o texto que JÁ tem rótulo humano. Sem esse filtro, promover uma
+    cópia pré-rotulada de um texto que o dono já rotulou na mão grava um segundo
+    rótulo para o mesmo bug, e a métrica (que deduplica por texto guardando a
+    linha mais recente) responderia pelo rótulo do clique, não pelo rótulo que o
+    dono escreveu antes. Pior: se a linha pré-rotulada for mais velha, o clique é
+    ignorado e o toast ainda afirma que a linha passou a contar.
+
+    O `autor` é conferido duas vezes de propósito: no servidor, para a janela
+    contar só as linhas que interessam, e aqui em Python, porque é o que os
+    testes observam (o REST é mockado e ignora `params`) e porque um servidor
+    que responde 200 sem filtrar não pode virar fonte de verdade do ground
+    truth.
     """
     try:
         janela = max(limite * 10, 200) if unicos else limite
-        linhas = [linha for linha in _linhas(janela, 0, apenas_rotuladas=True)
+        linhas = [linha for linha in _linhas(janela, 0, apenas_rotuladas=True,
+                                              autor=AUTOR_AGENTE)
                   if linha.get("autor") == AUTOR_AGENTE]
+        ja_rotulados = {_chave_texto(linha["descricao"])
+                        for linha in carregar_rotulados(limite=janela)}
+        linhas = [linha for linha in linhas
+                  if _chave_texto(linha["descricao"]) not in ja_rotulados]
         return _agrupar(linhas, limite, deslocamento, unicos)
     except Exception:
         return []

@@ -585,6 +585,42 @@ def test_promover_passa_pelo_guard_de_autor_humano():
 def test_paginacao_da_fila_usa_o_deslocamento_da_sessao():
     corpo = __import__("inspect").getsource(painel_dono._bloco_fila)
     # Regressão: `_rot_offset` era escrito pelos botões e nunca lido, então
-    # "Ver mais →" apenas redesenhava a mesma primeira página.
+    # "Ver mais →" apenas redesenhavam a mesma primeira página.
     assert 'st.session_state.get("_rot_offset", 0)' in corpo
     assert corpo.count("deslocamento=deslocamento") >= 2  # a página e a sondagem do "mais"
+
+
+def test_bloco_da_fila_preserva_o_titulo_da_secao():
+    corpo = __import__("inspect").getsource(painel_dono._bloco_fila)
+    # Regressão: ao extrair a fila para função própria, o `#### Fila para rotular`
+    # ficou para trás e a fila passou a ler como preâmbulo da tela de
+    # pré-rotulados, sem landmark próprio.
+    assert "#### Fila para rotular" in corpo
+    assert corpo.index("#### Fila para rotular") < corpo.index("if not fila:")
+
+
+def test_atalho_zero_avanca_o_offset_como_o_botao_pular():
+    corpo = __import__("inspect").getsource(painel_dono._campo_atalho)
+    # A caption e o `help` do campo anunciam "0 pular"; o botão foi consertado
+    # para avançar o offset, e o teclado ficava só com `rerun` — as duas
+    # afordâncias de "pular" discordando entre si.
+    assert 'st.session_state["_rot_offset"]' in corpo
+    assert '_rot_offset", 0) + 1' in corpo
+
+
+def test_promover_comentario_vazio_preserva_o_do_agente():
+    corpo = __import__("inspect").getsource(painel_dono._secao_pre_rotulados)
+    # A tela não mostra o comentário que o agente gravou, então promover sem
+    # digitar nada é o caminho fácil de apagar a justificativa da sugestão.
+    assert "item.get(\"comentario\")" in corpo
+    assert "(comentario or \"\").strip() or" in corpo
+
+
+def test_voltar_ao_inicio_existe_antes_do_return_de_lista_vazia():
+    corpo = __import__("inspect").getsource(painel_dono._bloco_fila)
+    guarda = corpo.index("if not fila:")
+    trecho = corpo[guarda:guarda + 400]
+    # Promover o último item da página esvazia a lista e leva o offset junto; sem
+    # o botão antes do `return` não há como voltar.
+    assert "_voltar_ao_inicio(" in trecho
+    assert trecho.index("_voltar_ao_inicio(") < trecho.index("return")
