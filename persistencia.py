@@ -14,13 +14,18 @@ _FUSO = ZoneInfo(os.environ.get("PERSISTENCIA_FUSO", "America/Sao_Paulo"))
 
 
 def _usar_nuvem() -> bool:
-    """Nuvem ativa quando configurada; JSONL é sempre o fallback padrão."""
+    """Nuvem ativa quando configurada; JSONL é sempre o fallback padrão.
+
+    Exige sessão autenticada: a leitura vai sob o JWT do usuário e quem filtra
+    é a RLS, no banco. Sem sessão o registro cai no JSONL local da sessão — que
+    também evita que anônimos disputem o mesmo tenant 'global'.
+    """
     if os.environ.get("PERSISTENCIA_BACKEND") == "jsonl":
         return False
     if os.environ.get("PERSISTENCIA_ARQUIVO"):
         # Caminho local explícito (testes/uso local) nunca depende da rede.
         return False
-    return nuvem_supabase.disponivel()
+    return nuvem_supabase.disponivel() and nuvem_supabase.sessao_ativa()
 
 
 def _caminho() -> pathlib.Path:

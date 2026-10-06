@@ -136,9 +136,10 @@ def test_definir_plano_no_banco_delega_upsert(monkeypatch):
     gravado = {}
     _mock_login(monkeypatch, uid="u-abc")
 
-    def _falso(uid, plano, clear_teste=False):
+    def _falso(uid, plano, clear_teste=False, servico=False):
         gravado[uid] = plano
         gravado["clear"] = clear_teste
+        gravado["servico"] = servico
         return True
 
     monkeypatch.setattr(plano, "nuvem_supabase", type("NS", (), {
@@ -157,7 +158,7 @@ def test_definir_plano_offline_nao_levanta(monkeypatch):
 
     class Falso:
         @staticmethod
-        def gravar_plano_banco(uid, plano, clear_teste=False):
+        def gravar_plano_banco(uid, plano, clear_teste=False, servico=False):
             raise RuntimeError("offline")
 
     monkeypatch.setattr(plano, "nuvem_supabase", Falso)
@@ -186,12 +187,13 @@ def _mock_nuvem_assinatura(monkeypatch, plano_b="free", vencimento=None, coluna=
             return coluna
 
         @staticmethod
-        def gravar_assinatura_banco(uid, ate_iso):
+        def gravar_assinatura_banco(uid, ate_iso, servico=False):
             registra["ate"] = ate_iso
             return True
 
         @staticmethod
-        def gravar_plano_banco(uid, p_novo, clear_teste=False, clear_assinatura=False):
+        def gravar_plano_banco(uid, p_novo, clear_teste=False,
+                               clear_assinatura=False, servico=False):
             registra["plano"] = p_novo
             registra["clear"] = clear_teste
             registra["clear_assinatura"] = clear_assinatura

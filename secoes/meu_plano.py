@@ -204,7 +204,9 @@ def render():
                 st.success(f"Seu **Premium** está ativo — pago em **{pixbilling.preco_texto()}/mês**, assinatura {_quanto}.")
                 _marcador("marca-plano-estorno")
                 if paga and st.button("↩️ Solicitar estorno", key="btn_solicitar_estorno"):
-                    pedido = pixbilling.solicitar_estorno(paga["id"], motivo="Solicitado pelo usuário")
+                    pedido = pixbilling.solicitar_estorno(
+                        paga["id"], motivo="Solicitado pelo usuário", uid=uid
+                    )
                     if pedido:
                         _avisar_admin(
                             f"Estorno solicitado: cobrança {pedido['id']} de {pedido.get('uid')} "
