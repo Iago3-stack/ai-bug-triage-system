@@ -6,17 +6,15 @@ ou canal não configurado NUNCA pode derrubar a triagem.
 """
 
 import contextvars
-import ipaddress
 import json
 import os
 import smtplib
-import socket
 from email.message import EmailMessage
-import urllib.parse
 import urllib.request
 import urllib.error
 
 import telemetria
+from url_segura import url_segura
 
 _SOPADRA = "***"
 
@@ -25,38 +23,6 @@ _SOPADRA = "***"
 # o webhook responde 204 normal.
 _USER_AGENT = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36")
-
-_resolver = socket.getaddrinfo
-
-
-def _webhook_seguro(url: str | None) -> bool:
-    """Valida uma URL de webhook (anti-SSRF) sem tocar na rede.
-
-    Bloqueia esquemas fora de http/https e destinos que resolvam para endereços
-    de rede interna, loopback, link-local (inclui o metadata 169.254.169.254),
-    multicast, reservados ou não-globais. Não faz requisição: só resolve host e
-    inspeciona os endereços.
-    """
-    try:
-        u = urllib.parse.urlparse((url or "").strip())
-    except Exception:
-        return False
-    if u.scheme not in ("http", "https") or not u.hostname:
-        return False
-    try:
-        registros = _resolver(u.hostname, u.port or 443, proto=socket.IPPROTO_TCP)
-    except (socket.gaierror, OSError, ValueError):
-        return False
-    for _af, _tipo, _proto, _canon, saida in registros:
-        try:
-            ip = ipaddress.ip_address(saida[0])
-        except (ValueError, IndexError):
-            return False
-        if (ip.is_loopback or ip.is_link_local or ip.is_private
-                or ip.is_multicast or ip.is_reserved or ip.is_unspecified
-                or not ip.is_global):
-            return False
-    return True
 
 # Override por sessão: cada usuário/visitante configura o SEU (webhook, e-mail,
 # remetente/senha SMTP). No Streamlit fica em st.session_state (por navegador/aba);
@@ -177,7 +143,7 @@ def notificar_discord(prioridade_final: str, resumo: str, provedor: str | None =
     if not _merece_alerta(prioridade_final):
         return False
     url = webhook_discord()
-    if not url or not _webhook_seguro(url):
+    if not url or not url_segura(url):
         return False
     try:
         payload = {
@@ -295,7 +261,7 @@ def testar_discord() -> tuple[bool, str]:
         url = webhook_discord()
         if not url:
             return False, "Sem webhook do Discord configurado."
-        if not _webhook_seguro(url):
+        if not url_segura(url):
             return False, "Webhook bloqueado (URL interna/privada não é permitida)."
         payload = {"content": "✅ Teste de notificação — AI Bug Triage System"}
         corpo = json.dumps(payload, ensure_ascii=False).encode("utf-8")
@@ -355,7 +321,7 @@ def notificar_evento(titulo: str, corpo: str) -> bool:
         pass
     try:
         url = webhook_discord()
-        if url and _webhook_seguro(url):
+        if url and url_segura(url):
             payload = {
                 "content": f"💳 **{titulo}**\n{corpo[:800]}",
             }

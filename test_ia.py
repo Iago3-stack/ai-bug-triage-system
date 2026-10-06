@@ -2,9 +2,12 @@
 # Roda com: pytest -v
 # 100% offline: chaves, HTTP e dispatcher são mockados — nunca sai da máquina.
 
+import socket
+
 import pytest
 
 import ia
+import url_segura
 
 
 class _FakeResposta:
@@ -19,6 +22,13 @@ class _FakeResposta:
 
 def _sem_chaves(monkeypatch):
     monkeypatch.setattr(ia, "_chave", lambda nome: None)
+
+
+def _resolver_publico(monkeypatch):
+    """DNS offline para a validação anti-SSRF do _chamar_openai_compat."""
+    def fake(host, porta, proto=socket.IPPROTO_TCP):
+        return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("8.8.8.8", porta))]
+    monkeypatch.setattr(url_segura, "_resolver", fake)
 
 
 def test_groq_sem_chave_retorna_erro(monkeypatch):
@@ -92,9 +102,11 @@ def test_groq_guarda_contra_injecao_de_prompt(monkeypatch):
 
 def test_openai_compat_usa_mesma_guarda_de_instrucao(monkeypatch):
     _sem_chaves(monkeypatch)
+    _resolver_publico(monkeypatch)
     chamadas = {}
 
-    def _fake_post(url, headers=None, json=None, timeout=None):
+    def _fake_post(url, headers=None, json=None, timeout=None,
+                    allow_redirects=True):
         chamadas["json"] = json
         conteudo = '{"severidade": "media", "categoria": "outro", ' \
                    '"causa_raiz": "x", "passos_repro": ["1"], ' \
@@ -273,9 +285,11 @@ def test_disponivel_true_com_modelo_proprio(monkeypatch):
 
 def test_openai_compat_sucesso_parseia_json(monkeypatch):
     _sem_chaves(monkeypatch)
+    _resolver_publico(monkeypatch)
     chamadas = {}
 
-    def _fake_post(url, headers=None, json=None, timeout=None):
+    def _fake_post(url, headers=None, json=None, timeout=None,
+                    allow_redirects=True):
         chamadas["url"] = url
         chamadas["json"] = json
         chamadas["headers"] = headers
@@ -302,11 +316,13 @@ def test_openai_compat_sucesso_parseia_json(monkeypatch):
 
 def test_openai_compat_sem_json_mode_quando_servidor_rejeita(monkeypatch):
     _sem_chaves(monkeypatch)
+    _resolver_publico(monkeypatch)
     chamadas = []
     conteudo = '{"severidade": "media", "categoria": "outro", "causa_raiz": "x", ' \
                '"passos_repro": [], "resumo_tecnico": "y"}'
 
-    def _fake_post(url, headers=None, json=None, timeout=None):
+    def _fake_post(url, headers=None, json=None, timeout=None,
+                    allow_redirects=True):
         chamadas.append(json)
         if len(chamadas) == 1:
             return _FakeResposta({}, status_code=400, texto="response_format not supported")
@@ -334,6 +350,109 @@ def test_openai_compat_config_incompleta(monkeypatch):
     assert "incompleta" in erro
 
 
+# --- Anti-SSRF no caminho do modelo custom (validação no momento do POST) ---
+def test_openai_compat_bloqueia_destino_interno_sem_conectar(monkeypatch):
+    """URL privada não conecta: o requests.post nem é chamado."""
+    _sem_chaves(monkeypatch)
+    monkeypatch.setattr(ia.requests, "post",
+                        lambda *a, **k: (_ for _ in ()).throw(AssertionError("conectou")))
+    dados, erro = ia._chamar_openai_compat(
+        "relato", {"tipo": "openai", "base_url": "http://192.168.1.1:8080/v1",
+                   "chave": "k", "modelo": "m", "rotulo": "X"}
+    )
+    assert dados is None
+    assert "bloqueada" in erro
+
+
+def test_openai_compat_localhost_bloqueado_sem_flag(monkeypatch):
+    _sem_chaves(monkeypatch)
+    monkeypatch.delenv("ALLOW_LOCAL_MODELS", raising=False)
+    monkeypatch.setattr(url_segura, "_resolver",
+                        lambda h, p, proto=socket.IPPROTO_TCP:
+                            [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("127.0.0.1", p))])
+    monkeypatch.setattr(ia.requests, "post",
+                        lambda *a, **k: (_ for _ in ()).throw(AssertionError("conectou")))
+    dados, erro = ia._chamar_openai_compat(
+        "relato", {"tipo": "openai", "base_url": "http://localhost:11434/v1",
+                   "chave": "k", "modelo": "m", "rotulo": "X"}
+    )
+    assert dados is None and "bloqueada" in erro
+
+
+def test_openai_compat_localhost_conecta_com_flag(monkeypatch):
+    """ALLOW_LOCAL_MODELS=1 abre o Ollama local — e só ele."""
+    _sem_chaves(monkeypatch)
+    monkeypatch.setenv("ALLOW_LOCAL_MODELS", "1")
+    monkeypatch.setattr(url_segura, "_resolver",
+                        lambda h, p, proto=socket.IPPROTO_TCP:
+                            [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("127.0.0.1", p))])
+    conteudo = '{"severidade": "baixa", "categoria": "design", "causa_raiz": "c", ' \
+               '"passos_repro": [], "resumo_tecnico": "r"}'
+    chamadas = []
+
+    def _fake_post(url, headers=None, json=None, timeout=None, allow_redirects=True):
+        chamadas.append(url)
+        return _FakeResposta(
+            {"choices": [{"message": {"content": conteudo}}]}, status_code=200
+        )
+
+    monkeypatch.setattr(ia.requests, "post", _fake_post)
+    dados, erro = ia._chamar_openai_compat(
+        "relato", {"tipo": "openai", "base_url": "http://localhost:11434/v1",
+                   "chave": "k", "modelo": "m", "rotulo": "X"}
+    )
+    assert dados is not None and erro is None and chamadas
+
+
+def test_openai_compat_nao_segue_redirect(monkeypatch):
+    """3xx não é seguido: destino público não pode redirecionar o servidor."""
+    _sem_chaves(monkeypatch)
+    _resolver_publico(monkeypatch)
+    chamadas = []
+
+    def _fake_post(url, headers=None, json=None, timeout=None, allow_redirects=True):
+        chamadas.append(allow_redirects)
+        return _FakeResposta({}, status_code=302)
+
+    monkeypatch.setattr(ia.requests, "post", _fake_post)
+    dados, erro = ia._chamar_openai_compat(
+        "relato", {"tipo": "openai", "base_url": "https://api.exemplo.com/v1",
+                   "chave": "k", "modelo": "m", "rotulo": "X"}
+    )
+    assert dados is None
+    assert chamadas and chamadas[0] is False
+    assert "edirecionamento" in erro
+
+
+def test_openai_compat_nao_expor_corpo_de_erro(monkeypatch):
+    """Corpo cru do endpoint (possível serviço interno) não vai para a UI."""
+    _sem_chaves(monkeypatch)
+    _resolver_publico(monkeypatch)
+
+    def _fake_post(url, headers=None, json=None, timeout=None, allow_redirects=True):
+        return _FakeResposta({}, status_code=500,
+                             texto="segredo interno: senha do admin 123")
+
+    monkeypatch.setattr(ia.requests, "post", _fake_post)
+    dados, erro = ia._chamar_openai_compat(
+        "relato", {"tipo": "openai", "base_url": "https://api.exemplo.com/v1",
+                   "chave": "k", "modelo": "m", "rotulo": "X"}
+    )
+    assert dados is None
+    assert "segredo" not in erro and "senha" not in erro
+    assert "HTTP 500" in erro
+
+
+def test_tradutor_sem_expor_texto_reconhece_padrao():
+    """expor_texto=False não mata o reconhecimento de padrões comuns."""
+    msg = ia._traduzir_erro_ia("Error: rate limit exceeded",
+                               status=429, expor_texto=False)
+    assert "Limite de requisições" in msg
+    generico = ia._traduzir_erro_ia("corpo de um servidor qualquer",
+                                    status=599, expor_texto=False)
+    assert "corpo de um servidor" not in generico
+
+
 def test_dispatcher_dict_gemini_chama_modelo_especifico(monkeypatch):
     _sem_chaves(monkeypatch)
     chamado = {}
@@ -357,8 +476,10 @@ def test_dispatcher_dict_gemini_chama_modelo_especifico(monkeypatch):
 
 def test_dispatcher_dict_openai_nao_tenta_gemini_groq(monkeypatch):
     _sem_chaves(monkeypatch)
+    _resolver_publico(monkeypatch)
 
-    def _fake_post(url, headers=None, json=None, timeout=None):
+    def _fake_post(url, headers=None, json=None, timeout=None,
+                    allow_redirects=True):
         conteudo = '{"severidade": "baixa", "categoria": "design", "causa_raiz": "c", ' \
                    '"passos_repro": [], "resumo_tecnico": "r"}'
         return _FakeResposta(

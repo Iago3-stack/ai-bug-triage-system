@@ -21,6 +21,7 @@ import persistencia
 import guardrails
 import notificacoes
 import plano
+from url_segura import url_modelo_segura
 import telemetria
 
 _FPDF_ERRO = ""
@@ -509,7 +510,7 @@ def render():
             base_url_custom = st.text_input(
                 "Base URL (OpenAI-compatível)", key="cm_base",
                 value="https://api.openai.com/v1",
-                placeholder="Ex: api.openai.com/v1 · api.deepseek.com/v1 · localhost:11434/v1")
+                placeholder="Ex: https://api.deepseek.com/v1 · http://localhost:11434/v1")
             modelo_custom = st.text_input(
                 "Modelo", key="cm_modelo_openai",
                 placeholder="Ex: gpt-4o · gpt-4o-mini · deepseek-chat")
@@ -526,6 +527,10 @@ def render():
                 st.error("Informe o nome exibido e o modelo.")
             elif tipo == "openai" and (not base or not chave_custom.strip()):
                 st.error("Para APIs OpenAI-compatíveis, informe a Base URL e a API Key.")
+            elif tipo == "openai" and not url_modelo_segura(base):
+                st.error("Base URL inválida ou bloqueada — use http:// ou https:// de um "
+                         "destino público (ex.: https://api.deepseek.com/v1). Só o loopback "
+                         "de Ollama local passa com ALLOW_LOCAL_MODELS=1 no ambiente.")
             elif any(m["nome"] == nome for m in modelos_custom):
                 st.error(f"Já existe um modelo com o nome '{nome}'.")
             else:

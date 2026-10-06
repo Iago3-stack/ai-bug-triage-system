@@ -66,12 +66,30 @@ override não aparece na outra.
 
 ## 5. Rede e SSRF
 
-- Webhooks do Discord passam por `_webhook_seguro` (bloqueia loopback/privado/
-  link-local/multicast) antes de qualquer `urlopen`.
+- **`url_segura.py` é a fonte única da validação anti-SSRF do repo**: bloqueia
+  esquema fora de http/https, host ausente, DNS inválido e qualquer destino
+  loopback/privado/link-local (inclui o metadata `169.254.169.254`),
+  multicast, reservado ou não-global — sem tocar na rede, só resolvendo o host e
+  inspecionando os endereços.
+- Webhooks do Discord passam por `url_segura()` (sem nenhuma exceção) antes de
+  qualquer `urlopen`.
+- A **Base URL do modelo custom** (OpenAI-compatível, trazida pelo usuário) passa
+  por `url_modelo_segura()` **em dois momentos**: ao salvar na UI e **de novo
+  antes do `requests.post`** — a resolução do salvar não vale para depois, porque
+  o DNS pode rebindar de público para privado entre os dois. O POST também é
+  `allow_redirects=False` (um 302 de destino público não pode apontar o servidor
+  para um interno) e o corpo da resposta de erro **não vai cru para a UI**
+  (`_traduzir_erro_ia(expor_texto=False)`: os padrões comuns continuam
+  reconhecidos, o resto vira mensagem genérica com o status).
+- Loopback do modelo local (Ollama em `localhost:11434`) só com
+  **`ALLOW_LOCAL_MODELS=1`** no ambiente, e a flag relaxa **apenas** o loopback:
+  privado e metadata continuam bloqueados com ela ligada. Default é negar, então a
+  cloud (que nunca se beneficia de `localhost`) fecha sozinha se ninguém setar nada.
 - Os `urlopen` "dinâmicos" do semgrep (`p/security-audit`) foram revisados: as URLs
   vêm de **config** (`JIRA_BASE_URL` de env, `api.github.com` com prefixo literal,
-  webhook do Discord já guardado) —   nenhum host é controlado por input do usuário.
-  Os achados são **informativos**, sem correção de código.
+  webhook do Discord já guardado por `url_segura`) — nenhum host de `urlopen` é
+  controlado por input do usuário. Os achados são **informativos**, sem correção
+  de código.
 
 ## 6. Dados e banco
 
