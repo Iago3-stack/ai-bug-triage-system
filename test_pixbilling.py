@@ -175,10 +175,14 @@ def test_estorno_volta_a_basic(tmp_path, monkeypatch):
     assert pedido and pedido["status"] == "estorno"
     assert pixbilling.estornos()[0]["id"] == doc["id"]
     voltou = {}
-    monkeypatch.setattr("pixbilling.plano.encerrar_assinatura", lambda uid: voltou.update(uid=uid) or True)
+    monkeypatch.setattr(
+        "pixbilling.plano.encerrar_assinatura",
+        lambda uid, servico=False: voltou.update(uid=uid, servico=servico) or True,
+    )
     estornado = pixbilling.estornar(doc["id"])
     assert estornado and estornado["status"] == "estornado"
-    assert voltou == {"uid": "u-um"}
+    # o estorno encerra o ciclo pago de outra conta: só o dono faz isso
+    assert voltou == {"uid": "u-um", "servico": True}
     assert pixbilling.estornar(doc["id"]) is None  # já estornado
 
 
@@ -228,3 +232,48 @@ def test_status_rotulo():
     assert pixbilling.status_rotulo("estornado") == "Estornado"
     assert pixbilling.status_rotulo("cancelado") == "Cancelado"
     assert pixbilling.status_rotulo("x") == "x"
+
+# --- Escopo: anônimo vai para o JSONL local, nunca para o bucket "global" ----
+
+def test_usar_nuvem_exige_sessao(monkeypatch):
+    """A decisão da opção A, em teste.
+
+    Nuvem configurada e sem sessão: tem que ser False. Sem isso, o anônimo
+    gravaria no tenant compartilhado e leria o que os outros gravaram.
+    """
+    monkeypatch.delenv("PIXBILLING_BACKEND", raising=False)
+    monkeypatch.delenv("PIXBILLING_ARQUIVO", raising=False)
+    monkeypatch.setattr(pixbilling.nuvem_supabase, "disponivel", lambda: True)
+    monkeypatch.setattr(pixbilling.nuvem_supabase, "sessao_ativa", lambda: False)
+    assert pixbilling._usar_nuvem() is False
+
+    monkeypatch.setattr(pixbilling.nuvem_supabase, "sessao_ativa", lambda: True)
+    assert pixbilling._usar_nuvem() is True
+
+
+def test_cobranca_anonima_fica_no_jsonl_local(tmp_path, monkeypatch):
+    """Anônimo grava em arquivo local — o caminho que nunca cruza tenants."""
+    _caminho_tmp(tmp_path, monkeypatch)
+    monkeypatch.setattr(pixbilling.nuvem_supabase, "disponivel", lambda: True)
+    monkeypatch.setattr(pixbilling.nuvem_supabase, "sessao_ativa", lambda: False)
+    monkeypatch.setattr(
+        pixbilling.nuvem_supabase, "gravar_cobranca",
+        lambda *a, **k: (_ for _ in ()).throw(AssertionError("anônimo não vai à nuvem")),
+    )
+    doc = pixbilling.gerar_cobranca("anon-123")
+    assert doc["uid"] == "anon-123"
+    assert (tmp_path / "cobrancas.jsonl").exists()
+
+
+def test_solicitar_estorno_do_usuario_so_agenda_na_cobranca_dele(tmp_path, monkeypatch):
+    """O caminho do usuário não pode alcançar a cobrança de outra pessoa."""
+    _caminho_tmp(tmp_path, monkeypatch)
+    doc = pixbilling.gerar_cobranca("u-um")
+    pixbilling.confirmar_cobranca(doc["id"])
+    outros = pixbilling.gerar_cobranca("u-dois")
+
+    chamado = {}
+    monkeypatch.setattr(pixbilling, "_buscar", lambda doc_id, uid=None: chamado.update(uid=uid) or None)
+
+    pixbilling.solicitar_estorno(outros["id"], motivo="mio", uid="u-um")
+    assert chamado["uid"] == "u-um"

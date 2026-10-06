@@ -2,8 +2,25 @@
 # Roda com: pytest -v
 # 100% offline: config e HTTP são mockados — nunca sai da máquina.
 
+import pytest
+
 import persistencia
 import nuvem_supabase
+
+
+@pytest.fixture(autouse=True)
+def _ambiente_padrao(monkeypatch):
+    """Sessão autenticada e service_role disponíveis por padrão.
+
+    A maioria dos caminhos é de usuário e precisa de sessão; os de dono
+    precisam da service_role. Quem precisa do ambiente vazio sobrescreve com
+    monkeypatch.setenv(..., raising=False)/delenv. Fica aqui em vez de
+    conftest.py porque o repo não tem fixture compartilhada.
+    """
+    monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-teste")
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "service-teste")
+    _sessao(monkeypatch)
 
 
 class _FakeResposta:
@@ -18,18 +35,34 @@ class _FakeResposta:
         return self._dados
 
 
+def _sem_env(monkeypatch):
+    """Limpa as três variáveis — para os testes que precisam de ambiente vazio."""
+    for v in ("SUPABASE_URL", "SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY"):
+        monkeypatch.delenv(v, raising=False)
+
+
 def _sem_config(monkeypatch):
     monkeypatch.setattr(nuvem_supabase, "_carregar_env", lambda: {})
+
+
+def _sessao(monkeypatch, uid="uid-teste", token="jwt-teste"):
+    """Sessão autenticada falsa. Todo caminho de usuário depende dela: sem ela
+    a nuvem falha fechado em vez de cair para service_role."""
+    monkeypatch.setattr(
+        nuvem_supabase, "_sessao", lambda: {"access_token": token, "user": {"id": uid}}
+    )
 
 
 # --- Configuração ------------------------------------------------------
 def test_disponivel_falso_sem_credenciais(monkeypatch):
     _sem_config(monkeypatch)
+    _sem_env(monkeypatch)
     assert nuvem_supabase.disponivel() is False
 
 
 def test_config_ignora_meias_credenciais(monkeypatch):
     _sem_config(monkeypatch)
+    _sem_env(monkeypatch)
     monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
     assert nuvem_supabase._config() is None
 
@@ -43,27 +76,119 @@ def test_config_lida_secrets_e_env(monkeypatch):
     assert chave == "anon-teste"
 
 
-def test_headers_fallback_anon_sem_service_role(monkeypatch):
+def test_headers_usuario_usa_anon_como_apikey_e_jwt_como_bearer(monkeypatch):
+    """Modo usuário: o apikey identifica o projeto e o Bearer carrega a identidade.
+
+    Se o apikey fosse a service_role, a RLS não veria nada — a service_role
+    bypassa. A identidade tem que vir no Bearer.
+    """
     _sem_config(monkeypatch)
+    _sessao(monkeypatch, token="jwt-do-usuario")
     monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
     monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-teste")
-    h = nuvem_supabase._headers()
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "service-teste")
+    h = nuvem_supabase._headers("usuario")
     assert h["apikey"] == "anon-teste"
-    assert h["Authorization"] == "Bearer anon-teste"
+    assert h["Authorization"] == "Bearer jwt-do-usuario"
 
 
-def test_headers_usam_service_role_quando_disponivel(monkeypatch):
+def test_headers_servico_usa_service_role_nos_dois_lugares(monkeypatch):
     _sem_config(monkeypatch)
     monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
     monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-teste")
     monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "service-teste")
-    h = nuvem_supabase._headers()
+    h = nuvem_supabase._headers("servico")
     assert h["apikey"] == "service-teste"
     assert h["Authorization"] == "Bearer service-teste"
 
 
+def test_headers_usuario_sem_sessao_falha_em_vez_de_usar_service_role(monkeypatch):
+    """O teste que trava a decisão do N2.
+
+    Havia service_role configurada neste ambiente de propósito: sem sessão, o
+    caminho tem que falhar. Se algum dia voltar o fallback, este teste quebra.
+    """
+    _sem_config(monkeypatch)
+    monkeypatch.setattr(nuvem_supabase, "_sessao", lambda: None)
+    monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-teste")
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "service-teste")
+    try:
+        nuvem_supabase._headers("usuario")
+    except nuvem_supabase._SemSessao:
+        return
+    raise AssertionError("modo usuário sem sessão não pode cair para service_role")
+
+
+def test_headers_padrao_e_usuario(monkeypatch):
+    """Sem argumento o modo é 'usuario' — o padrão seguro, não o privilegiado."""
+    _sem_config(monkeypatch)
+    _sessao(monkeypatch, token="jwt-do-usuario")
+    monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-teste")
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "service-teste")
+    assert nuvem_supabase._headers()["Authorization"] == "Bearer jwt-do-usuario"
+
+
+def test_servico_sem_service_role_configurada_falha(monkeypatch):
+    _sem_config(monkeypatch)
+    monkeypatch.delenv("SUPABASE_SERVICE_ROLE_KEY", raising=False)
+    monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-teste")
+    try:
+        nuvem_supabase._headers("servico")
+    except RuntimeError:
+        return
+    raise AssertionError("modo serviço sem service_role tem que falhar explícito")
+
+
+def test_uid_da_sessao_nao_fallback_para_email(monkeypatch):
+    """uid precisa ser o uuid: é com ele que a policy compara auth.uid().
+
+    plano.uid_logado() cai para e-mail; aqui isso seria o usuário perdendo o
+    próprio registro sem nenhum erro visível.
+    """
+    monkeypatch.setattr(
+        nuvem_supabase,
+        "_sessao",
+        lambda: {"access_token": "t", "user": {"email": "alguem@exemplo.com"}},
+    )
+    assert nuvem_supabase._uid_da_sessao() is None
+
+
+def test_uid_proprio_recusa_uid_alheio(monkeypatch):
+    _sessao(monkeypatch, uid="uid-da-A")
+    try:
+        nuvem_supabase._uid_proprio("uid-da-B")
+    except nuvem_supabase._SemSessao:
+        return
+    raise AssertionError("uid de outra pessoa tem que ser recusado")
+
+
+def test_uid_proprio_aceita_o_da_sessao(monkeypatch):
+    _sessao(monkeypatch, uid="uid-da-A")
+    assert nuvem_supabase._uid_proprio("uid-da-A") == "uid-da-A"
+
+
+def test_sessao_ativa_exige_token_e_uid(monkeypatch):
+    _sem_config(monkeypatch)
+    monkeypatch.setattr(nuvem_supabase, "_sessao", lambda: None)
+    assert nuvem_supabase.sessao_ativa() is False
+    monkeypatch.setattr(
+        nuvem_supabase, "_sessao", lambda: {"user": {"id": "u"}},  # sem access_token
+    )
+    assert nuvem_supabase.sessao_ativa() is False
+    monkeypatch.setattr(
+        nuvem_supabase,
+        "_sessao",
+        lambda: {"access_token": "t", "user": {"id": "u"}},
+    )
+    assert nuvem_supabase.sessao_ativa() is True
+
+
 def test_headers_nao_vazam_service_role_sem_url(monkeypatch):
     _sem_config(monkeypatch)
+    monkeypatch.delenv("SUPABASE_URL", raising=False)
     monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-teste")
     monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "service-teste")
     assert nuvem_supabase._config_service() is None
@@ -118,9 +243,50 @@ def test_registrar_triagem_envia_post(monkeypatch):
     monkeypatch.setattr(nuvem_supabase.requests, "post", _fake_post)
     dados = {"id": "abc", "resumo": "bug na nuvem"}
     retorno = nuvem_supabase.registrar_triagem(dados)
-    assert retorno is dados
+    assert retorno is not dados  # cópia: o chamador não é mutado
+    assert retorno["resumo"] == "bug na nuvem"
     assert "rest/v1/triagens" in chamadas["url"]
-    assert chamadas["json"]["payload"] is dados
+    payload = chamadas["json"]["payload"]
+    assert payload["id"] == "abc"
+    # o tenant gravado é o da sessão, não o que veio no payload
+    assert payload["tenant_id"] == "uid-teste"
+
+
+def test_registrar_triagem_ignora_tenant_forjado_no_payload(monkeypatch):
+    """O teste que trava a decisão do N2 para triagens.
+
+    Se alguém mandar tenant_id de outra pessoa, o que vai para a coluna é o da
+    sessão. Sem isso, daria para escrever triagem na conta alheia.
+    """
+    _sem_config(monkeypatch)
+    _sessao(monkeypatch, uid="uid-da-A")
+    enviados = {}
+
+    def _fake_post(url, headers=None, json=None, timeout=None):
+        enviados["json"] = json
+        enviados["headers"] = headers
+        return _FakeResposta([json])
+
+    monkeypatch.setattr(nuvem_supabase.requests, "post", _fake_post)
+    nuvem_supabase.registrar_triagem({"id": "x", "tenant_id": "uid-do-vitima"})
+    assert enviados["json"]["payload"]["tenant_id"] == "uid-da-A"
+    # e a chamada vai com o JWT, não com a service_role
+    assert enviados["headers"]["Authorization"] == "Bearer jwt-teste"
+    assert enviados["headers"]["apikey"] != "service-teste"
+
+
+def test_registrar_triagem_sem_sessao_falha(monkeypatch):
+    _sem_config(monkeypatch)
+    monkeypatch.setattr(nuvem_supabase, "_sessao", lambda: None)
+    monkeypatch.setattr(
+        nuvem_supabase.requests, "post",
+        lambda *a, **k: (_ for _ in ()).throw(AssertionError("não deve chegar na rede")),
+    )
+    try:
+        nuvem_supabase.registrar_triagem({"id": "x"})
+    except nuvem_supabase._SemSessao:
+        return
+    raise AssertionError("triagem sem sessão tem que falhar, não gravar como 'global'")
 
 
 def test_carregar_registros_retorna_payloads(monkeypatch):
@@ -186,6 +352,7 @@ def test_registrar_resolucao_id_inexistente_retorna_falso(monkeypatch):
 # --- Feedbacks (pós-triagem) -------------------------------------------
 def test_registrar_feedback_envia_post(monkeypatch):
     _sem_config(monkeypatch)
+    _sessao(monkeypatch, uid="uid1")
     monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
     monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-test")
     chamadas = {}
@@ -241,6 +408,7 @@ def test_carregar_feedbacks_falha_suave(monkeypatch):
 
 def test_ultimo_feedback_em_filtra_por_uid(monkeypatch):
     _sem_config(monkeypatch)
+    _sessao(monkeypatch, uid="uid1")
     monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
     monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-test")
 
@@ -255,6 +423,7 @@ def test_ultimo_feedback_em_filtra_por_uid(monkeypatch):
 
 def test_ultimo_feedback_em_sem_registro_e_falha(monkeypatch):
     _sem_config(monkeypatch)
+    _sessao(monkeypatch, uid="uid1")
     monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
     monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-test")
     monkeypatch.setattr(nuvem_supabase.requests, "get", lambda *a, **k: _FakeResposta([]))
@@ -359,6 +528,7 @@ def test_facade_registrar_resolucao_id_inexistente_falha(monkeypatch, tmp_path):
 
 def test_carregar_teste_auto_le_a_coluna(monkeypatch):
     _sem_config(monkeypatch)
+    _sessao(monkeypatch, uid="u-1")
     monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
     monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-test")
 
@@ -373,6 +543,7 @@ def test_carregar_teste_auto_le_a_coluna(monkeypatch):
 
 def test_carregar_teste_auto_sem_linha_e_none(monkeypatch):
     _sem_config(monkeypatch)
+    _sessao(monkeypatch, uid="u-1")
     monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
     monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-test")
     monkeypatch.setattr(nuvem_supabase.requests, "get",
@@ -387,6 +558,7 @@ def test_carregar_teste_auto_offline_e_none(monkeypatch):
 
 def test_teste_auto_disponivel_confirma_coluna(monkeypatch):
     _sem_config(monkeypatch)
+    _sessao(monkeypatch, uid="u-1")
     monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
     monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-test")
     monkeypatch.setattr(nuvem_supabase.requests, "get",
@@ -411,6 +583,7 @@ def test_teste_auto_disponivel_offline_falso(monkeypatch):
 
 def test_ativar_teste_usuario_atualiza_com_patch_condicional(monkeypatch):
     _sem_config(monkeypatch)
+    _sessao(monkeypatch, uid="u-1")
     monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
     monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-test")
     patch_info = {}
@@ -435,6 +608,7 @@ def test_ativar_teste_usuario_atualiza_com_patch_condicional(monkeypatch):
 def test_ativar_teste_usuario_sem_linha_cria_upsert(monkeypatch):
     # PATCH vazio (não há linha) -> lê de novo (nada) -> POST upsert cria.
     _sem_config(monkeypatch)
+    _sessao(monkeypatch, uid="u-1")
     monkeypatch.setenv("SUPABASE_URL", "https://x.supabase.co")
     monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-test")
     post_info = {}
@@ -528,3 +702,62 @@ def test_carregar_todos_planos_degrada_sem_coluna_teste_auto(monkeypatch):
     assert docs == [{"uid": "u-1", "plano": "free", "teste_ate": "x", "teste_auto": None, "assinatura_ate": None}]
     # tentou "uid,plano,teste_ate" depois (sem a coluna nova) e funcionou
     assert "uid,plano,teste_ate" in chamadas
+
+# --- Cache por tenant: o teste que trava a decisão do N2 ------------------
+
+def test_cache_nao_atravessa_usuarios(monkeypatch):
+    """O cache é global ao processo Streamlit, que serve mais de uma pessoa.
+
+    Se a chave não carregasse o uid, a segunda pessoa a abrir o app leria o
+    histórico da primeira sem nenhuma requisição ao banco. Foi por isso que a
+    chave passou a incluir o escopo.
+    """
+    _sem_config(monkeypatch)
+    chamadas = []
+
+    def _fake_get(url, headers=None, params=None, timeout=None):
+        chamadas.append((headers["Authorization"], params))
+        # o banco devolve a linha com o registro dentro de `payload`
+        if headers["Authorization"] == "Bearer jwt-A":
+            return _FakeResposta([{
+                "id": "a", "data": "2026-10-01", "data_hora": "2026-10-01T10:00:00-03:00",
+                "payload": {"id": "a", "resumo": "da A", "data": "2026-10-01",
+                            "data_hora": "2026-10-01T10:00:00-03:00"},
+            }])
+        return _FakeResposta([{
+            "id": "b", "data": "2026-10-01", "data_hora": "2026-10-01T11:00:00-03:00",
+            "payload": {"id": "b", "resumo": "da B", "data": "2026-10-01",
+                        "data_hora": "2026-10-01T11:00:00-03:00"},
+        }])
+
+    monkeypatch.setattr(nuvem_supabase.requests, "get", _fake_get)
+
+    _sessao(monkeypatch, uid="uid-A", token="jwt-A")
+    da_a = nuvem_supabase.carregar_registros()
+
+    _sessao(monkeypatch, uid="uid-B", token="jwt-B")
+    da_b = nuvem_supabase.carregar_registros()
+
+    assert [r["resumo"] for r in da_a] == ["da A"]
+    assert [r["resumo"] for r in da_b] == ["da B"]
+    # duas requisições: se a chave fosse só "registros", a segunda nem sairia
+    assert len(chamadas) == 2
+    # e a query já vai filtrada pelo tenant, não confiando só na RLS
+    assert chamadas[0][1]["tenant_id"] == "eq.uid-A"
+    assert chamadas[1][1]["tenant_id"] == "eq.uid-B"
+
+
+def test_cache_de_registros_por_data_inclui_o_dia(monkeypatch):
+    """Bug anterior: a chave era só 'registros_por_data', então o histórico de
+    uma data servia para a consulta de outra dentro da janela de TTL."""
+    _sem_config(monkeypatch)
+    vistos = []
+
+    def _fake_get(url, headers=None, params=None, timeout=None):
+        vistos.append(params["data"])
+        return _FakeResposta([])
+
+    monkeypatch.setattr(nuvem_supabase.requests, "get", _fake_get)
+    nuvem_supabase.registros_por_data("2026-10-01")
+    nuvem_supabase.registros_por_data("2026-10-02")
+    assert vistos == ["eq.2026-10-01", "eq.2026-10-02"]

@@ -58,12 +58,17 @@ def preco_texto() -> str:
 
 
 def _usar_nuvem() -> bool:
-    """Nuvem ativa quando configurada; JSONL local é o fallback (testes/offline)."""
+    """Nuvem ativa quando configurada; JSONL local é o fallback (testes/offline).
+
+    Exige sessão autenticada pelo mesmo motivo da triagem: a leitura vai sob o
+    JWT e quem filtra é a RLS. Sem sessão, cai no JSONL da sessão em vez de
+    ir para o tenant compartilhado.
+    """
     if os.environ.get("PIXBILLING_BACKEND") == "jsonl":
         return False
     if os.environ.get("PIXBILLING_ARQUIVO"):
         return False
-    return nuvem_supabase.disponivel()
+    return nuvem_supabase.disponivel() and nuvem_supabase.sessao_ativa()
 
 
 def _caminho() -> pathlib.Path:
@@ -104,12 +109,12 @@ def _todas_local() -> list[dict]:
     return _ler_jsonl()
 
 
-def _todas_nuvem() -> list[dict]:
-    return nuvem_supabase.carregar_cobrancas() or []
+def _todas_nuvem(escopo: str = "usuario") -> list[dict]:
+    return nuvem_supabase.carregar_cobrancas(escopo) or []
 
 
-def _persistir_nuvem(doc: dict) -> bool:
-    return nuvem_supabase.gravar_cobranca(doc)
+def _persistir_nuvem(doc: dict, uid: str | None = None) -> bool:
+    return nuvem_supabase.gravar_cobranca(doc, uid=uid)
 
 
 def _atualizar_local(nova: dict) -> None:
@@ -154,7 +159,7 @@ def gerar_cobranca(uid: str, cpf: str = "", nome: str = "", email: str = "") -> 
         except pagbank.PagbankErro as ex:
             doc["pagbank_erro"] = str(ex)
     if _usar_nuvem():
-        return doc if _persistir_nuvem(doc) else doc
+        return doc if _persistir_nuvem(doc, uid=uid) else doc
     return _salvar_jsonl(doc)
 
 
@@ -188,31 +193,54 @@ def regenerar_pagamento(doc: dict, cpf: str = "", nome: str = "", email: str = "
     return nova
 
 
+def _ordenar(docs: list[dict]) -> list[dict]:
+    """Mais recentes primeiro — a ordem que as listas do painel e do plano usam."""
+    return sorted(docs, key=lambda d: d.get("criado_em", ""), reverse=True)
+
+
 def cobrancas_do_uid(uid: str) -> list[dict]:
     """Cobranças do usuário, mais recentes primeiro."""
-    docs = _todas_nuvem() if _usar_nuvem() else _todas_local()
-    do_uid = [d for d in docs if (d.get("uid") or "").lower() == (uid or "").lower()]
-    return sorted(do_uid, key=lambda d: d.get("criado_em", ""), reverse=True)
+    if _usar_nuvem():
+        # A nuvem já devolve filtrado por uid; o comprehension abaixo é o
+        # caminho local (JSONL), que não tem RLS nem filtro de banco.
+        return _ordenar(_todas_nuvem("usuario"))
+    do_uid = [d for d in _todas_local() if (d.get("uid") or "").lower() == (uid or "").lower()]
+    return _ordenar(do_uid)
 
 
 def pendentes() -> list[dict]:
     """Cobranças aguardando confirmação (painel do admin). Mais recentes primeiro."""
-    docs = _todas_nuvem() if _usar_nuvem() else _todas_local()
+    docs = _todas_nuvem("servico") if _usar_nuvem() else _todas_local()
     abertas = [d for d in docs if d.get("status") == _STATUS_ABERTO]
-    return sorted(abertas, key=lambda d: d.get("criado_em", ""), reverse=True)
+    return _ordenar(abertas)
 
 
 def estornos() -> list[dict]:
     """Pedidos de estorno aguardando devolução (painel do admin)."""
-    docs = _todas_nuvem() if _usar_nuvem() else _todas_local()
+    docs = _todas_nuvem("servico") if _usar_nuvem() else _todas_local()
     pedidos = [d for d in docs if d.get("status") == _STATUS_ESTORNO]
-    return sorted(pedidos, key=lambda d: d.get("criado_em", ""), reverse=True)
+    return _ordenar(pedidos)
 
 
-def _buscar(doc_id: str) -> dict | None:
-    for d in (_todas_nuvem() if _usar_nuvem() else _todas_local()):
-        if d.get("id") == doc_id:
-            return d
+def _buscar(doc_id: str, uid: str | None = None) -> dict | None:
+    """Localiza a cobrança. Com `uid`, só aceita uma que seja daquele usuário.
+
+    Sem o uid a busca é de serviço (painel do dono, webhook). Com o uid, é a
+    checagem que substitui a lista-vazia: mesmo que a RLS deixasse passar, o
+    chamador não consegue obter o documento de outra pessoa.
+    """
+    if _usar_nuvem():
+        escopo = "servico" if uid is None else "usuario"
+        docs = _todas_nuvem(escopo)
+    else:
+        docs = _todas_local()
+    alvo = (uid or "").lower()
+    for d in docs:
+        if d.get("id") != doc_id:
+            continue
+        if uid is not None and (d.get("uid") or "").lower() != alvo:
+            return None
+        return d
     return None
 
 
@@ -221,14 +249,16 @@ def buscar_cobranca(doc_id: str) -> dict | None:
     return _buscar(doc_id)
 
 
-def _transicao(doc: dict, novo_status: str, extra: dict | None = None) -> dict:
+def _transicao(doc: dict, novo_status: str, extra: dict | None = None, uid: str | None = None) -> dict:
     novo = dict(doc)
     novo["status"] = novo_status
     novo["atualizado_em"] = _agora()
     if extra:
         novo.update(extra)
     if _usar_nuvem():
-        nuvem_supabase.atualizar_cobranca(doc["id"], novo)
+        # UPDATE por id só: quem garante a posse é a RLS (o PATCH volta vazio
+        # se a linha não for do uid da sessão) mais o _uid_proprio da nuvem.
+        nuvem_supabase.atualizar_cobranca(doc["id"], novo, uid=uid)
     else:
         _atualizar_local(novo)
     return novo
@@ -326,12 +356,17 @@ def cancelar_cobranca(doc_id: str) -> dict | None:
     return _transicao(doc, _STATUS_CANCELADO)
 
 
-def solicitar_estorno(doc_id: str, motivo: str = "") -> dict | None:
-    """Cliente pede devolução de um pagamento confirmado."""
-    doc = _buscar(doc_id)
+def solicitar_estorno(doc_id: str, motivo: str = "", uid: str | None = None) -> dict | None:
+    """Cliente pede devolução de um pagamento confirmado.
+
+    Passe `uid` (o da sessão) para que a cobrança precise ser dele: sem isso a
+    busca é de serviço e qualquer pessoa que descubra um doc_id pediria a
+    devolução de outra pessoa.
+    """
+    doc = _buscar(doc_id, uid)
     if not doc or doc.get("status") != _STATUS_CONFIRMADO:
         return None
-    return _transicao(doc, _STATUS_ESTORNO, {"motivo": motivo})
+    return _transicao(doc, _STATUS_ESTORNO, {"motivo": motivo}, uid=uid)
 
 
 def estornar(doc_id: str, motivo: str = "") -> dict | None:
@@ -340,7 +375,7 @@ def estornar(doc_id: str, motivo: str = "") -> dict | None:
     if not doc or doc.get("status") != _STATUS_ESTORNO:
         return None
     atualizado = _transicao(doc, _STATUS_ESTORNADO, {"motivo": motivo})
-    plano.encerrar_assinatura(doc["uid"])
+    plano.encerrar_assinatura(doc["uid"], servico=True)
     return atualizado
 
 

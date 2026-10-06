@@ -16,9 +16,14 @@
 #     payload    jsonb not null default '{}'::jsonb
 #   );
 #   alter table triagens enable row level security;
-#   create policy "anon insert" on triagens for insert to anon with check (true);
-#   create policy "anon select" on triagens for select to anon using (true);
-#   create policy "anon update" on triagens for update to anon using (true);
+#
+# ─── Policies (N2): por auth.uid(), nunca `using (true)` ──────────────────────
+#
+# As tabelas abaixo existem; as policies NÃO ficam neste arquivo, de propósito:
+# a regra de isolamento tem um só lugar, o SQL do dono. O que este módulo
+# garante é o outro lado da mesma regra — nunca chamar com service_role o que é
+# do usuário. Policy com `using (true)` devolveria o isolamento para o tenant
+# compartilhado "global".
 #
 # Tabela de planos por usuário (Passo 3 do caminho SaaS):
 #   create table if not exists planos_usuario (
@@ -27,9 +32,6 @@
 #     atualizado_em timestamptz not null default now()
 #   );
 #   alter table planos_usuario enable row level security;
-#   create policy "anon insert" on planos_usuario for insert to anon with check (true);
-#   create policy "anon select" on planos_usuario for select to anon using (true);
-#   create policy "anon update" on planos_usuario for update to anon using (true);
 #
 # Tabela de cobranças Pix (Passo 4 do caminho SaaS — "nosso Stripe"):
 #   create table if not exists solicitacoes_pagamento (
@@ -38,9 +40,6 @@
 #     payload    jsonb not null default '{}'::jsonb
 #   );
 #   alter table solicitacoes_pagamento enable row level security;
-#   create policy "anon insert" on solicitacoes_pagamento for insert to anon with check (true);
-#   create policy "anon select" on solicitacoes_pagamento for select to anon using (true);
-#   create policy "anon update" on solicitacoes_pagamento for update to anon using (true);
 #
 # Tabela de perfis (Passo 5 do caminho SaaS — perfil do usuário):
 #   create table if not exists perfis_usuario (
@@ -52,9 +51,6 @@
 #     atualizado_em timestamptz not null default now()
 #   );
 #   alter table perfis_usuario enable row level security;
-#   create policy "anon insert" on perfis_usuario for insert to anon with check (true);
-#   create policy "anon select" on perfis_usuario for select to anon using (true);
-#   create policy "anon update" on perfis_usuario for update to anon using (true);
 #
 # Tabela de contas (Passo 6 do caminho SaaS — painel do dono):
 #   create table if not exists usuarios (
@@ -64,9 +60,6 @@
 #     ultimo_login timestamptz not null default now()
 #   );
 #   alter table usuarios enable row level security;
-#   create policy "anon insert" on usuarios for insert to anon with check (true);
-#   create policy "anon select" on usuarios for select to anon using (true);
-#   create policy "anon update" on usuarios for update to anon using (true);
 #
 # Tabela de feedbacks (avaliação pós-triagem — estrelas 1-5 + comentário):
 #   create table if not exists feedbacks (
@@ -78,9 +71,6 @@
 #     criado_em   timestamptz not null default now()
 #   );
 #   alter table feedbacks enable row level security;
-#   create policy "anon insert" on feedbacks for insert to anon with check (true);
-#   create policy "anon select" on feedbacks for select to anon using (true);
-#   create policy "anon update" on feedbacks for update to anon using (true);
 #
 # Teste Premium com validade (Passo 6 — expira sozinho):
 #   alter table planos_usuario add column if not exists teste_ate timestamptz;
@@ -102,10 +92,20 @@
 # existir ou a leitura falhar, o app cai no plano por variável de ambiente.
 #
 # ─── SEGURANÇA (Rota B) ─────────────────────────────────────────────────────
-# O REST roda SOBR service_role (bypassa RLS) — anon NÃO tem mais acesso.
-# Aplicar migrations/fechar_anon_rest.sql (drop das policies "anon ...") no
-# SQL Editor DEPOIS de configurar SUPABASE_SERVICE_ROLE_KEY em todos os
-# ambientes. /auth/v1 (login) continua usando a anon key — inalterado.
+# Dois modos de credencial, e a escolha é explícita em toda chamada:
+#
+#   _headers("usuario")  → apikey = ANON, Authorization = Bearer <JWT da sessão>.
+#                           A identidade vem do token, o PostgREST monta
+#                           auth.uid() e a RLS é quem filtra. É o modo de TODO
+#                           dado que pertence a uma pessoa.
+#   _headers("servico")  → apikey = Authorization = SERVICE_ROLE. Bypassa a RLS
+#                           (BYPASSRLS). Reservado ao que não tem usuário:
+#                           painel do dono, webhook do PagBank, stats e
+#                           manutenção. Nunca para dado de usuário.
+#
+# Modo "usuario" SEM sessão é erro (_SemSessao), nunca um rebaixamento para
+# service_role: foi exatamente esse fallback silencioso que mantinha a RLS
+# inerte. /auth/v1 (login) continua usando a anon key — inalterado.
 
 import os
 import time
@@ -178,6 +178,18 @@ def _config_service():
     return (url, chave) if url and chave else None
 
 
+def sessao_ativa() -> bool:
+    """Há sessão autenticada com token?
+
+    A nuvem só é usada por usuário logado. Visitante anônimo grava no JSONL da
+    própria sessão: sem identidade não há `auth.uid()`, então uma policy de RLS
+    não teria com o que comparar — e o tenant 'global' que ele receberia é
+    compartilhado por todos os anônimos, o que faria o histórico de um
+    aparecer para o outro.
+    """
+    return bool(_token_usuario() and _uid_da_sessao())
+
+
 def disponivel() -> bool:
     return _config() is not None or _config_service() is not None
 
@@ -185,21 +197,35 @@ def disponivel() -> bool:
 # Cache de leitura com TTL: evita que cada rerun de página dispare as 3 chamadas
 # ao Supabase (histórico) de uma vez — os blocos montam "instantâneos" na troca
 # de página em vez de deixar sombras vazias aguardando a rede (~3s).
+#
+# A chave NÃO é só o nome da função. _leitura_cache é um dict de módulo e o
+# Streamlit serve todas as sessões no mesmo processo, então a chave precisa
+# carregar quem pediu e com quais argumentos. Sem isso, a leitura da pessoa A
+# volta para a B sem nenhuma requisição — e a RLS nem é consultada, porque não
+# houve HTTP. Os argumentos entram porque registros_por_data(data_iso) cacheava
+# o dia 1 para o dia 2 também.
 _LEITURA_TTL = 60  # segundos
 _leitura_cache: dict[str, tuple[float, object]] = {}
 
 
-def _leitura_cacheada(chave: str):
+def _chave_cache(chave: str, modo: str, args: tuple, kwargs: dict) -> str:
+    """Identidade completa do cache: função + escopo + argumentos."""
+    escopo = _uid_da_sessao() if modo == "usuario" else "servico"
+    return f"{chave}|{escopo or 'sem-sessao'}|{args!r}|{sorted(kwargs.items())!r}"
+
+
+def _leitura_cacheada(chave: str, modo: str = "usuario"):
     """Cache TTL para leituras que demoram (Supabase). Retorna o valor ou None (expirou)."""
 
     def _decorator(fn):
         def _wrapper(*args, **kwargs):
             agora = time.monotonic()
-            item = _leitura_cache.get(chave)
+            k = _chave_cache(chave, modo, args, kwargs)
+            item = _leitura_cache.get(k)
             if item and (agora - item[0]) < _LEITURA_TTL:
                 return item[1]
             valor = fn(*args, **kwargs)
-            _leitura_cache[chave] = (agora, valor)
+            _leitura_cache[k] = (agora, valor)
             return valor
 
         return _wrapper
@@ -208,10 +234,16 @@ def _leitura_cacheada(chave: str):
 
 
 def _invalidar_leitura(chaves: tuple[str, ...] | None = None) -> None:
-    """Zera o cache de leitura (depois de um INSERT/PATCH no histórico)."""
-    alvos = chaves if chaves is not None else tuple(_leitura_cache)
-    for c in alvos:
-        _leitura_cache.pop(c, None)
+    """Zera o cache de leitura (depois de um INSERT/PATCH no histórico).
+
+    Com a chave por escopo, o nome da função é só o prefixo antes do primeiro
+    "|", então a comparação é por prefixo e a assinatura antiga continua valendo.
+    """
+    if chaves is None:
+        _leitura_cache.clear()
+        return
+    for k in [k for k in list(_leitura_cache) if k.split("|", 1)[0] in chaves]:
+        _leitura_cache.pop(k, None)
 
 
 def _base_url() -> str:
@@ -220,12 +252,100 @@ def _base_url() -> str:
     return str(url).rstrip("/") + "/rest/v1"
 
 
-def _headers() -> dict:
-    cfg = _config_service() or _config()
-    _, chave = cfg
+class _SemSessao(Exception):
+    """Operação de usuário sem sessão autenticada.
+
+    Existe para não virar rebaixamento: o modo 'usuario' sem token PRECISA
+    falhar, porque cair para service_role devolveria a leitura sem dono — que é
+    o vazamento que a RLS existe para impedir.
+    """
+
+
+def _sessao() -> dict | None:
+    """Sessão do Supabase sem estourar exceção se o módulo não estiver pronto."""
+    try:
+        import auth_supabase
+
+        return auth_supabase.sessao()
+    except Exception:
+        return None
+
+
+def _uid_da_sessao() -> str | None:
+    """UID (uuid) da sessão, ou None.
+
+    Sem fallback para e-mail, ao contrário de plano.uid_logado(): as policies
+    comparam com auth.uid(), que é o uuid. Um e-mail aqui faria o usuário
+    perder o acesso ao próprio registro.
+    """
+    sessao = _sessao()
+    if not sessao:
+        return None
+    user = sessao.get("user") or {}
+    uid = user.get("id")
+    return str(uid) if uid else None
+
+
+def _token_usuario() -> str | None:
+    """access_token da sessão — é o Bearer que carrega a identidade para a RLS."""
+    sessao = _sessao()
+    if not sessao:
+        return None
+    token = sessao.get("access_token")
+    return str(token) if token else None
+
+
+def _uid_obrigatorio() -> str:
+    """uid da sessão ou _SemSessao. Use no filtro de toda query de usuário."""
+    uid = _uid_da_sessao()
+    if not uid:
+        raise _SemSessao("Operação de usuário exige sessão autenticada.")
+    return uid
+
+
+def _uid_proprio(uid) -> str:
+    """Confere que o uid pedido é o da sessão; senão falha.
+
+    Existe porque várias funções recebem o uid como parâmetro — e a RLS não
+    salva se o filtro vai para o banco com o uid de outra pessoa: ela checa
+    `uid = auth.uid()`, que é da sessão, e nega. Mas negar aqui é melhor que
+    depender disso, porque dá erro na origem em vez de uma lista vazia que
+    parece "não tem nada gravado".
+    """
+    atual = _uid_obrigatorio()
+    if str(uid or "") != atual:
+        raise _SemSessao("uid diferente do da sessão.")
+    return atual
+
+
+def _headers(modo: str = "usuario") -> dict:
+    """Headers do REST no modo pedido.
+
+    'usuario': apikey é a ANON (identifica o projeto) e o Bearer é o JWT da
+    sessão — quem filtra é a RLS, no banco.
+    'servico': apikey e Bearer são a service_role, que tem BYPASSRLS. Só para o
+    que não pertence a uma pessoa.
+    """
+    if modo == "servico":
+        cfg = _config_service()
+        if not cfg:
+            raise RuntimeError("SUPABASE_SERVICE_ROLE_KEY não configurado.")
+        _, chave = cfg
+        return {
+            "apikey": chave,
+            "Authorization": f"Bearer {chave}",
+            "Content-Type": "application/json",
+        }
+    token = _token_usuario()
+    if not token:
+        raise _SemSessao("Operação de usuário exige sessão autenticada.")
+    cfg = _config()
+    if not cfg:
+        raise RuntimeError("Supabase não configurado.")
+    _, anon = cfg
     return {
-        "apikey": chave,
-        "Authorization": f"Bearer {chave}",
+        "apikey": anon,
+        "Authorization": f"Bearer {token}",
         "Content-Type": "application/json",
     }
 
@@ -261,9 +381,12 @@ def registrar_triagem(dados: dict) -> dict:
     config = _config()
     if not config:
         raise RuntimeError("Supabase não configurado.")
+    # O tenant vai no registro, mas é o da sessão — nunca o que veio no payload.
+    dados = dict(dados or {})
+    dados["tenant_id"] = _uid_obrigatorio()
     resposta = requests.post(
         f"{_base_url()}/{_TABELA_PADRAO}",
-        headers=_headers(),
+        headers=_headers("usuario"),
         json=_linha_para_doc(dados),
         timeout=15,
     )
@@ -274,14 +397,22 @@ def registrar_triagem(dados: dict) -> dict:
 
 @_leitura_cacheada("registros")
 def carregar_registros() -> list[dict]:
-    """Todos os registros em ordem cronológica (do mais antigo para o mais novo)."""
+    """Registros do usuário logado, em ordem cronológica (antigo → novo).
+
+    O filtro por tenant vai na QUERY, não depois em Python: é o que a RLS exige
+    e o que garante que o dado de outra pessoa nunca chegue a este processo.
+    """
     config = _config()
     if not config:
         raise RuntimeError("Supabase não configurado.")
     resposta = requests.get(
         f"{_base_url()}/{_TABELA_PADRAO}",
-        headers=_headers(),
-        params={"select": "*", "order": "data_hora.asc"},
+        headers=_headers("usuario"),
+        params={
+            "select": "*",
+            "tenant_id": f"eq.{_uid_obrigatorio()}",
+            "order": "data_hora.asc",
+        },
         timeout=15,
     )
     resposta.raise_for_status()
@@ -298,8 +429,13 @@ def registros_por_data(data_iso: str) -> list[dict]:
         raise RuntimeError("Supabase não configurado.")
     resposta = requests.get(
         f"{_base_url()}/{_TABELA_PADRAO}",
-        headers=_headers(),
-        params={"select": "*", "data": f"eq.{data_iso}", "order": "data_hora.asc"},
+        headers=_headers("usuario"),
+        params={
+            "select": "*",
+            "tenant_id": f"eq.{_uid_obrigatorio()}",
+            "data": f"eq.{data_iso}",
+            "order": "data_hora.asc",
+        },
         timeout=15,
     )
     resposta.raise_for_status()
@@ -313,8 +449,12 @@ def datas_disponiveis() -> list[str]:
         raise RuntimeError("Supabase não configurado.")
     resposta = requests.get(
         f"{_base_url()}/{_TABELA_PADRAO}",
-        headers=_headers(),
-        params={"select": "data", "order": "data.desc"},
+        headers=_headers("usuario"),
+        params={
+            "select": "data",
+            "tenant_id": f"eq.{_uid_obrigatorio()}",
+            "order": "data.desc",
+        },
         timeout=15,
     )
     resposta.raise_for_status()
@@ -329,7 +469,7 @@ def registrar_exportacao_jira(chave: str, url: str) -> bool:
     mais_recente = registros[-1]
     resposta = requests.patch(
         f"{_base_url()}/{_TABELA_PADRAO}",
-        headers=_headers(),
+        headers=_headers("usuario"),
         params={"id": f"eq.{mais_recente['id']}"},
         json={"jira_key": chave, "jira_url": url},
         timeout=15,
@@ -346,7 +486,7 @@ def registrar_resolucao(registro_id: str, texto: str) -> bool:
         raise RuntimeError("Supabase não configurado.")
     doc = requests.get(
         f"{_base_url()}/{_TABELA_PADRAO}",
-        headers=_headers(),
+        headers=_headers("usuario"),
         params={"select": "*", "id": f"eq.{registro_id}", "limit": "1"},
         timeout=15,
     )
@@ -358,7 +498,7 @@ def registrar_resolucao(registro_id: str, texto: str) -> bool:
     payload["resolucao"] = texto
     resposta = requests.patch(
         f"{_base_url()}/{_TABELA_PADRAO}",
-        headers=_headers(),
+        headers=_headers("usuario"),
         params={"id": f"eq.{registro_id}"},
         json={"payload": payload},
         timeout=15,
@@ -386,8 +526,8 @@ def carregar_plano_banco(uid: str) -> str | None:
         return None
     resposta = requests.get(
         _planos_url(),
-        headers=_headers(),
-        params={"select": "plano", "uid": f"eq.{uid}", "limit": "1"},
+        headers=_headers("usuario"),
+        params={"select": "plano", "uid": f"eq.{_uid_proprio(uid)}", "limit": "1"},
         timeout=15,
     )
     resposta.raise_for_status()
@@ -398,25 +538,31 @@ def carregar_plano_banco(uid: str) -> str | None:
     return plano if plano in ("free", "pago") else None
 
 
-def gravar_plano_banco(uid: str, plano: str, clear_teste: bool = False, clear_assinatura: bool = False) -> bool:
+def gravar_plano_banco(uid: str, plano: str, clear_teste: bool = False,
+                       clear_assinatura: bool = False, servico: bool = False) -> bool:
     """Define o plano de um usuário na nuvem (upsert por uid).
 
     Pagar ('pago') encerra qualquer Teste Premium ativo automaticamente;
     `clear_teste=True` faz o mesmo mesmo quando mantendo/voltando a 'free'.
     `clear_assinatura=True` limpa também o vencimento da assinatura (usado no
     estorno e no "voltar a Basic" do painel — encerra o ciclo mensal).
+
+    `servico=True` é para quando quem chama é o dono agindo sobre a conta de
+    outra pessoa (painel do dono, estorno confirmado). Sem ele, o uid precisa
+    ser o da sessão — o usuário nunca escreve no plano de terceiros.
     """
     config = _config()
     if not config:
         return False
     plano = plano if plano in ("free", "pago") else "free"
-    linha = {"uid": uid, "plano": plano}
+    modo = "servico" if servico else "usuario"
+    linha = {"uid": uid if servico else _uid_proprio(uid), "plano": plano}
     # Prefer: resolution=merge-duplicates + on_conflict=uid faz o UPSERT
     # (null não é aplicado num merge — por isso o teste é limpo via PATCH).
     resposta = requests.post(
         _planos_url(),
         headers={
-            **_headers(),
+            **_headers(modo),
             "Prefer": "resolution=merge-duplicates,return=minimal",
         },
         params={"on_conflict": "uid"},
@@ -430,8 +576,8 @@ def gravar_plano_banco(uid: str, plano: str, clear_teste: bool = False, clear_as
         try:
             requests.patch(
                 _planos_url(),
-                headers=_headers(),
-                params={"uid": f"eq.{uid}"},
+                headers=_headers(modo),
+                params={"uid": f"eq.{_uid_proprio(uid) if not servico else uid}"},
                 json={"teste_ate": None},
                 timeout=15,
             )
@@ -442,8 +588,8 @@ def gravar_plano_banco(uid: str, plano: str, clear_teste: bool = False, clear_as
         try:
             requests.patch(
                 _planos_url(),
-                headers=_headers(),
-                params={"uid": f"eq.{uid}"},
+                headers=_headers(modo),
+                params={"uid": f"eq.{_uid_proprio(uid) if not servico else uid}"},
                 json={"assinatura_ate": None},
                 timeout=15,
             )
@@ -460,8 +606,8 @@ def carregar_teste_banco(uid: str) -> str | None:
     try:
         resposta = requests.get(
             _planos_url(),
-            headers=_headers(),
-            params={"select": "teste_ate", "uid": f"eq.{uid}", "limit": "1"},
+            headers=_headers("usuario"),
+            params={"select": "teste_ate", "uid": f"eq.{_uid_proprio(uid)}", "limit": "1"},
             timeout=15,
         )
         resposta.raise_for_status()
@@ -474,15 +620,22 @@ def carregar_teste_banco(uid: str) -> str | None:
         return None
 
 
-def gravar_teste_banco(uid: str, ate_iso: str) -> bool:
-    """Define o fim do Teste Premium de um usuário (upsert por uid)."""
+def gravar_teste_banco(uid: str, ate_iso: str, servico: bool = False) -> bool:
+    """Define o fim do Teste Premium de um usuário (upsert por uid).
+
+    `servico=True` só quando é o dono concedendo o teste a outra conta
+    (painel do dono). Sem ele, o uid precisa ser o da sessão.
+    """
     config = _config()
     if not config:
         return False
-    linha = {"uid": uid, "teste_ate": ate_iso}
+    linha = {"uid": uid if servico else _uid_proprio(uid), "teste_ate": ate_iso}
     resposta = requests.post(
         _planos_url(),
-        headers={**_headers(), "Prefer": "resolution=merge-duplicates,return=minimal"},
+        headers={
+            **_headers("servico" if servico else "usuario"),
+            "Prefer": "resolution=merge-duplicates,return=minimal",
+        },
         params={"on_conflict": "uid"},
         json=linha,
         timeout=15,
@@ -504,7 +657,7 @@ def assinatura_disponivel() -> bool:
     try:
         resposta = requests.get(
             _planos_url(),
-            headers=_headers(),
+            headers=_headers("usuario"),
             params={"select": "assinatura_ate", "limit": "1"},
             timeout=15,
         )
@@ -521,8 +674,8 @@ def carregar_assinatura_banco(uid: str) -> str | None:
     try:
         resposta = requests.get(
             _planos_url(),
-            headers=_headers(),
-            params={"select": "assinatura_ate", "uid": f"eq.{uid}", "limit": "1"},
+            headers=_headers("usuario"),
+            params={"select": "assinatura_ate", "uid": f"eq.{_uid_proprio(uid)}", "limit": "1"},
             timeout=15,
         )
         resposta.raise_for_status()
@@ -535,15 +688,25 @@ def carregar_assinatura_banco(uid: str) -> str | None:
         return None
 
 
-def gravar_assinatura_banco(uid: str, ate_iso: str) -> bool:
-    """Define o fim da assinatura Premium de um usuário (upsert por uid)."""
+def gravar_assinatura_banco(uid: str, ate_iso: str, servico: bool = False) -> bool:
+    """Define o fim da assinatura Premium de um usuário (upsert por uid).
+
+    `servico=True` só no estorno confirmado pelo dono; sem ele, o uid precisa
+    ser o da sessão.
+    """
     config = _config()
     if not config:
         return False
-    linha = {"uid": uid, "assinatura_ate": ate_iso}
+    linha = {
+        "uid": uid if servico else _uid_proprio(uid),
+        "assinatura_ate": ate_iso,
+    }
     resposta = requests.post(
         _planos_url(),
-        headers={**_headers(), "Prefer": "resolution=merge-duplicates,return=minimal"},
+        headers={
+            **_headers("servico" if servico else "usuario"),
+            "Prefer": "resolution=merge-duplicates,return=minimal",
+        },
         params={"on_conflict": "uid"},
         json=linha,
         timeout=15,
@@ -565,7 +728,7 @@ def teste_auto_disponivel() -> bool:
     try:
         resposta = requests.get(
             _planos_url(),
-            headers=_headers(),
+            headers=_headers("usuario"),
             params={"select": "teste_auto", "limit": "1"},
             timeout=15,
         )
@@ -585,8 +748,8 @@ def carregar_teste_auto(uid: str) -> str | None:
     try:
         resposta = requests.get(
             _planos_url(),
-            headers=_headers(),
-            params={"select": "teste_auto", "uid": f"eq.{uid}", "limit": "1"},
+            headers=_headers("usuario"),
+            params={"select": "teste_auto", "uid": f"eq.{_uid_proprio(uid)}", "limit": "1"},
             timeout=15,
         )
         resposta.raise_for_status()
@@ -614,8 +777,8 @@ def ativar_teste_usuario(uid: str, ate_iso: str, auto_iso: str) -> bool:
     try:
         resposta = requests.patch(
             _planos_url(),
-            headers={**_headers(), "Prefer": "return=representation"},
-            params={"uid": f"eq.{uid}", "teste_auto": "is.null"},
+            headers={**_headers("usuario"), "Prefer": "return=representation"},
+            params={"uid": f"eq.{_uid_proprio(uid)}", "teste_auto": "is.null"},
             json={"teste_ate": ate_iso, "teste_auto": auto_iso},
             timeout=15,
         )
@@ -628,10 +791,15 @@ def ativar_teste_usuario(uid: str, ate_iso: str, auto_iso: str) -> bool:
     if carregar_teste_auto(uid):
         return False
     try:
-        linha = {"uid": uid, "plano": "free", "teste_ate": ate_iso, "teste_auto": auto_iso}
+        linha = {
+            "uid": _uid_proprio(uid),
+            "plano": "free",
+            "teste_ate": ate_iso,
+            "teste_auto": auto_iso,
+        }
         resposta = requests.post(
             _planos_url(),
-            headers={**_headers(), "Prefer": "resolution=merge-duplicates,return=minimal"},
+            headers={**_headers("usuario"), "Prefer": "resolution=merge-duplicates,return=minimal"},
             params={"on_conflict": "uid"},
             json=linha,
             timeout=15,
@@ -657,7 +825,7 @@ def teste_disponivel() -> bool:
     try:
         resposta = requests.get(
             _planos_url(),
-            headers=_headers(),
+            headers=_headers("usuario"),
             params={"select": "teste_ate", "limit": "1"},
             timeout=15,
         )
@@ -685,7 +853,7 @@ def carregar_todos_planos() -> list[dict]:
             selecao = ",".join(campos[: len(campos) - tentativa])
             resposta = requests.get(
                 _planos_url(),
-                headers=_headers(),
+                headers=_headers("servico"),
                 params={"select": selecao},
                 timeout=15,
             )
@@ -712,8 +880,17 @@ def migrar_tenant_global(uid: str) -> int:
     config = _config()
     if not config:
         return 0
-    registros = carregar_registros()
-    legados = [r for r in registros if (r.get("tenant_id") or "global") == "global"]
+    # Leitura de SERVIÇO: precisa enxergar os legados 'global', que não são de
+    # ninguém — a query de usuário os filtraria para fora e a migração não
+    # acharia o que adotar. Requer service_role porque cruza tenants.
+    resposta = requests.get(
+        f"{_base_url()}/{_TABELA_PADRAO}",
+        headers=_headers("servico"),
+        params={"select": "*", "tenant_id": "is.null"},
+        timeout=15,
+    )
+    resposta.raise_for_status()
+    legados = [_doc_para_linha(doc) for doc in (resposta.json() or [])]
     if not legados:
         return 0
     for reg in legados:
@@ -721,11 +898,12 @@ def migrar_tenant_global(uid: str) -> int:
         payload["tenant_id"] = uid
         requests.patch(
             f"{_base_url()}/{_TABELA_PADRAO}",
-            headers=_headers(),
+            headers=_headers("servico"),
             params={"id": f"eq.{reg.get('id')}"},
             json={"payload": payload},
             timeout=15,
         )
+    _invalidar_leitura()
     return len(legados)
 
 
@@ -735,12 +913,24 @@ def _cobrancas_url() -> str:
     return f"{_base_url()}/{_TABELA_COBRANCAS}"
 
 
-def carregar_cobrancas() -> list[dict]:
-    """Todas as linhas da tabela, decodificando o payload jsonb (último formato)."""
+def carregar_cobrancas(escopo: str = "usuario") -> list[dict]:
+    """Cobranças decodificando o payload jsonb (último formato).
+
+    escopo='usuario' (padrão): só as do usuário logado, filtradas na query.
+    escopo='servico': todas — só o painel do dono, que precisa ver as pedentes
+    e os estornos de todo mundo. Esta tabela guarda CPF e e-mail, então ler
+    'todas' é decisão de dono, não padrão.
+    """
     config = _config()
     if not config:
         return []
-    resposta = requests.get(_cobrancas_url(), headers=_headers(), params={"select": "*"}, timeout=15)
+    if escopo == "servico":
+        modo = "servico"
+        params = {"select": "*"}
+    else:
+        modo = "usuario"
+        params = {"select": "*", "uid": f"eq.{_uid_obrigatorio()}"}
+    resposta = requests.get(_cobrancas_url(), headers=_headers(modo), params=params, timeout=15)
     resposta.raise_for_status()
     docs = resposta.json() or []
     resultado = []
@@ -755,11 +945,19 @@ def carregar_cobrancas() -> list[dict]:
     return resultado
 
 
-def gravar_cobranca(cobranca: dict) -> bool:
-    """Insere uma cobrança na nuvem (payload em jsonb)."""
+def gravar_cobranca(cobranca: dict, uid: str | None = None) -> bool:
+    """Insere uma cobrança na nuvem (payload em jsonb).
+
+    uid=None é o caminho de serviço (owner confirming by hand). Com uid, o
+    dono da cobrança passa a ser o da sessão — o `uid` que veio no payload é
+    sobrescrito, senão bastaria mandar o de outra pessoa no corpo da requisição.
+    """
     config = _config()
     if not config:
         return False
+    cobranca = dict(cobranca or {})
+    if uid is not None:
+        cobranca["uid"] = _uid_proprio(uid)
     linha = {
         "id": cobranca.get("id"),
         "data_hora": cobranca.get("criado_em") or cobranca.get("data_hora"),
@@ -767,7 +965,7 @@ def gravar_cobranca(cobranca: dict) -> bool:
     }
     resposta = requests.post(
         _cobrancas_url(),
-        headers={**_headers(), "Prefer": "return=minimal"},
+        headers={**_headers("usuario" if uid is not None else "servico"), "Prefer": "return=minimal"},
         json=linha,
         timeout=15,
     )
@@ -775,14 +973,24 @@ def gravar_cobranca(cobranca: dict) -> bool:
     return True
 
 
-def atualizar_cobranca(doc_id: str, cobranca: dict) -> bool:
-    """Atualiza o payload de uma cobrança (status, motivo, etc.)."""
+def atualizar_cobranca(doc_id: str, cobranca: dict, uid: str | None = None) -> bool:
+    """Atualiza o payload de uma cobrança (status, motivo, etc.).
+
+    uid=None é o caminho de serviço (painel do dono, webhook do PagBank).
+    Com uid, exige que o documento pertença a esse usuário — o _uid_proprio
+    para na origem, e a RLS barra o PATCH de qualquer forma.
+    """
     config = _config()
     if not config:
         return False
+    if uid is not None:
+        _uid_proprio(uid)
+        modo = "usuario"
+    else:
+        modo = "servico"
     resposta = requests.patch(
         _cobrancas_url(),
-        headers=_headers(),
+        headers=_headers(modo),
         params={"id": f"eq.{doc_id}"},
         json={"payload": cobranca},
         timeout=15,
@@ -804,8 +1012,8 @@ def carregar_perfil_banco(uid: str) -> dict | None:
         return None
     resposta = requests.get(
         _perfis_url(),
-        headers=_headers(),
-        params={"select": "nome,empresa,fuso,avatar", "uid": f"eq.{uid}", "limit": "1"},
+        headers=_headers("usuario"),
+        params={"select": "nome,empresa,fuso,avatar", "uid": f"eq.{_uid_proprio(uid)}", "limit": "1"},
         timeout=15,
     )
     resposta.raise_for_status()
@@ -817,16 +1025,16 @@ def carregar_perfil_banco(uid: str) -> dict | None:
 
 
 def gravar_perfil_banco(uid: str, perfil: dict) -> bool:
-    """Upsert do perfil de um usuário na nuvem (por uid)."""
+    """Upsert do perfil do próprio usuário na nuvem (o uid vem da sessão)."""
     config = _config()
     if not config:
         return False
-    linha = {"uid": uid}
+    linha = {"uid": _uid_proprio(uid)}
     for k in ("nome", "empresa", "fuso", "avatar"):
         linha[k] = (perfil.get(k) or "").strip() if k != "avatar" else (perfil.get(k) or "")
     resposta = requests.post(
         _perfis_url(),
-        headers={**_headers(), "Prefer": "resolution=merge-duplicates,return=minimal"},
+        headers={**_headers("usuario"), "Prefer": "resolution=merge-duplicates,return=minimal"},
         params={"on_conflict": "uid"},
         json=linha,
         timeout=15,
@@ -851,13 +1059,13 @@ def registrar_usuario_banco(uid: str, email: str) -> bool:
         return False
     try:
         linha = {
-            "uid": uid,
+            "uid": _uid_proprio(uid),
             "email": (email or "").strip(),
             "ultimo_login": datetime.now(timezone.utc).isoformat(),
         }
         requests.post(
             _usuarios_url(),
-            headers={**_headers(), "Prefer": "resolution=merge-duplicates,return=minimal"},
+            headers={**_headers("usuario"), "Prefer": "resolution=merge-duplicates,return=minimal"},
             params={"on_conflict": "uid"},
             json=linha,
             timeout=15,
@@ -874,7 +1082,7 @@ def carregar_usuarios() -> list[dict]:
         return []
     resposta = requests.get(
         _usuarios_url(),
-        headers=_headers(),
+        headers=_headers("servico"),
         params={"select": "*", "order": "ultimo_login.desc"},
         timeout=15,
     )
@@ -889,7 +1097,7 @@ def carregar_todos_perfis() -> list[dict]:
         return []
     resposta = requests.get(
         _perfis_url(),
-        headers=_headers(),
+        headers=_headers("servico"),
         params={"select": "uid,nome,empresa,avatar"},
         timeout=15,
     )
@@ -913,14 +1121,14 @@ def registrar_feedback(uid: str, email: str, estrelas: int, comentario: str) -> 
         return False
     try:
         linha = {
-            "uid": (uid or "").strip(),
+            "uid": _uid_proprio(uid),
             "email": (email or "").strip(),
             "estrelas": int(estrelas),
             "comentario": (comentario or "").strip(),
         }
         resposta = requests.post(
             _feedbacks_url(),
-            headers={**_headers(), "Prefer": "resolution=merge-duplicates,return=minimal"},
+            headers={**_headers("usuario"), "Prefer": "resolution=merge-duplicates,return=minimal"},
             json=linha,
             timeout=15,
         )
@@ -940,7 +1148,7 @@ def carregar_feedbacks() -> list[dict]:
     try:
         resposta = requests.get(
             _feedbacks_url(),
-            headers=_headers(),
+            headers=_headers("servico"),
             params={"select": "*", "order": "criado_em.desc"},
             timeout=15,
         )
@@ -958,8 +1166,13 @@ def ultimo_feedback_em(uid: str) -> str | None:
     try:
         resposta = requests.get(
             _feedbacks_url(),
-            headers=_headers(),
-            params={"select": "criado_em", "uid": f"eq.{uid}", "order": "criado_em.desc", "limit": "1"},
+            headers=_headers("usuario"),
+            params={
+                "select": "criado_em",
+                "uid": f"eq.{_uid_proprio(uid)}",
+                "order": "criado_em.desc",
+                "limit": "1",
+            },
             timeout=15,
         )
         resposta.raise_for_status()
@@ -979,7 +1192,7 @@ def excluir_feedback(fb_id) -> bool:
     try:
         resposta = requests.delete(
             _feedbacks_url(),
-            headers=_headers(),
+            headers=_headers("servico"),
             params={"id": f"eq.{fb_id}"},
             timeout=15,
         )

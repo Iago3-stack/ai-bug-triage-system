@@ -4,9 +4,28 @@
 from datetime import datetime, timedelta, timezone
 
 
+import pytest
+
 import admin
 import plano
 import nuvem_supabase
+
+
+@pytest.fixture(autouse=True)
+def _ambiente_padrao(monkeypatch):
+    """Sessão do u1 + service_role disponíveis.
+
+    O painel do dono alterna entre os dois escopos — leitura agregada e
+    cobrança pedem service_role; o resto vai com o JWT do próprio usuário. Os
+    testes que querem ambiente vazio sobrescrevem patchando `_config`.
+    """
+    monkeypatch.setenv("SUPABASE_URL", "https://supa.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-teste")
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "service-teste")
+    monkeypatch.setattr(
+        nuvem_supabase, "_sessao",
+        lambda: {"access_token": "jwt-do-u1", "user": {"id": "u1"}},
+    )
 
 
 # ─── plano: Teste Premium com validade ────────────────────────────────────────
@@ -29,12 +48,13 @@ def _mock_nuvem_trial(monkeypatch, teste_ate=None, plano_b="free", ativa=True):
             return teste_ate
 
         @staticmethod
-        def gravar_teste_banco(uid, ate_iso):
+        def gravar_teste_banco(uid, ate_iso, servico=False):
             registros_trial["ate"] = ate_iso
             return True
 
         @staticmethod
-        def gravar_plano_banco(uid, plano_novo, clear_teste=False, clear_assinatura=False):
+        def gravar_plano_banco(uid, plano_novo, clear_teste=False,
+                               clear_assinatura=False, servico=False):
             registros_trial["plano"] = plano_novo
             registros_trial["clear"] = clear_teste
             registros_trial["clear_assinatura"] = clear_assinatura
@@ -49,7 +69,7 @@ def _mock_nuvem_trial(monkeypatch, teste_ate=None, plano_b="free", ativa=True):
             return None
 
         @staticmethod
-        def gravar_assinatura_banco(uid, ate_iso):
+        def gravar_assinatura_banco(uid, ate_iso, servico=False):
             return True
 
     registros_trial.clear()

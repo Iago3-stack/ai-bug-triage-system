@@ -156,12 +156,37 @@ def test_gravar_perfil_banco_envia_upsert(monkeypatch):
         return _Resp()
 
     monkeypatch.setattr(nuvem_supabase, "_config", lambda: ("https://supa.supabase.co", "chave"))
+    monkeypatch.setattr(
+        nuvem_supabase, "_sessao",
+        lambda: {"access_token": "jwt", "user": {"id": "u1"}},
+    )
     monkeypatch.setattr(nuvem_supabase.requests, "post", _fake_post)
     assert nuvem_supabase.gravar_perfil_banco("u1", {"nome": "Iago", "empresa": "QA", "fuso": "America/Manaus", "avatar": ""}) is True
     assert calls["url"].endswith("/perfis_usuario")
     assert calls["params"] == {"on_conflict": "uid"}
     assert calls["json"]["uid"] == "u1"
     assert calls["json"]["nome"] == "Iago"
+    # o JWT vai no Bearer e a service_role fica de fora
+    assert calls["headers"]["Authorization"] == "Bearer jwt"
+
+
+def test_gravar_perfil_banco_de_outro_uid_recusado(monkeypatch):
+    """O perfil é o da sessão. Escrever no de outra pessoa tem que falhar antes
+    de qualquer chamada HTTP."""
+    monkeypatch.setattr(nuvem_supabase, "_config", lambda: ("https://supa.supabase.co", "chave"))
+    monkeypatch.setattr(
+        nuvem_supabase, "_sessao",
+        lambda: {"access_token": "jwt", "user": {"id": "u1"}},
+    )
+    monkeypatch.setattr(
+        nuvem_supabase.requests, "post",
+        lambda *a, **k: (_ for _ in ()).throw(AssertionError("não deve chegar na rede")),
+    )
+    try:
+        nuvem_supabase.gravar_perfil_banco("outro", {"nome": "x"})
+    except nuvem_supabase._SemSessao:
+        return
+    raise AssertionError("gravação de perfil em uid alheio tem que ser recusada")
 
 
 def test_carregar_perfil_banco_offline_retorna_none(monkeypatch):
