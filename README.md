@@ -149,7 +149,7 @@ A análise por IA usa a chave `GEMINI_API_KEY` (gratuita em [aistudio.google.com
 - 🔑 **Local**: crie um arquivo `.env` na raiz com `GEMINI_API_KEY=...` (ele é ignorado pelo `.gitignore`).
 - ☁️ **Streamlit Cloud**: `Settings → Secrets → GEMINI_API_KEY` (nunca coloque a chave em código ou no repositório).
 
-**🧪 Rodar os testes** — a mesma suíte do CI (**741 testes**, número exato no badge dinâmico):
+**🧪 Rodar os testes** — a mesma suíte do CI (**814 testes**, número exato no badge dinâmico):
 
 ```bash
 pip install -r requirements-dev.txt
@@ -176,6 +176,7 @@ curl -s localhost:8080/health
 | `WEBHOOK_TOKEN` (+ `WEBHOOK_REQUIRE_TOKEN=1`) | Autentica o webhook de CI (comparação em tempo constante) |
 | `PAGBANK_TOKEN` | Cobrança Pix automática |
 | `POSTHOG_API_KEY` | Telemetria anônima (sem PII e sem conteúdo do relato) |
+| `ALLOW_LOCAL_MODELS=1` | Libera **só loopback** na Base URL do modelo próprio (ex.: Ollama `http://localhost:11434/v1`); destino privado continua bloqueado e a cloud deixa apagado |
 
 🔑 Segredo **nunca no git**: localmente em `.env` (ignorado pelo `.gitignore`); no Streamlit
 Cloud em `Settings → Secrets`. Listas completas em [05 — Persistência em Nuvem](docs/05-persistencia-nuvem.md),

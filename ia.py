@@ -14,6 +14,7 @@ import re
 import requests
 
 import telemetria
+from url_segura import url_modelo_segura
 
 MODELO = "gemini-3.5-flash"
 
@@ -181,7 +182,7 @@ def _provedor_normalizado(provedor: str | None) -> str | None:
     return None
 
 
-def _traduzir_erro_ia(texto, status=None):
+def _traduzir_erro_ia(texto, status=None, expor_texto=True):
     """Converte um erro cru da API em mensagem amigável em pt-BR.
 
     O SDK do Gemini às vezes devolve mensagens cruas em inglês (ex.:
@@ -189,6 +190,11 @@ def _traduzir_erro_ia(texto, status=None):
     precisa ler isso; aqui capturamos os padrões comuns (rate limit, quota,
     503, chave inválida, rede) e devolvemos algo direto. Se nada bater,
     devolvemos o texto truncado mesmo, sem perder a causa.
+
+    ``expor_texto=False`` mantém o reconhecimento de padrões mas **nunca**
+    devolve o texto cru: é o caminho do modelo custom, onde o "texto" vem de um
+    servidor apontado pelo usuário — corpo de resposta de destino interno não
+    pode vazar para a UI (anti-SSRF).
     """
     s = status
     t = (texto or "").lower()
@@ -210,8 +216,13 @@ def _traduzir_erro_ia(texto, status=None):
     if "unterminated string" in t or "truncat" in t or "expecting value" in t or "jsondecode" in t:
         return ("A resposta do modelo veio incompleta ou em formato inválido (JSON "
                 "cortado/malformado). Tente rodar a triagem de novo.")
+    if "certificate" in t or "ssl" in t:
+        return ("Falha de certificado TLS ao falar com a API — confira se a Base URL "
+                "usa https com certificado válido.")
     if "timeout" in t or "timed out" in t or ("connect" in t and ("error" in t or "failed" in t)):
         return "Falha de rede ou tempo esgotado ao falar com a API. Tente de novo."
+    if not expor_texto:
+        return f"Falha ao chamar a API (HTTP {status})." if status else "Falha ao chamar a API."
     return (texto or "").strip()[:180] or "Falha ao chamar a API."
 
 
@@ -291,12 +302,22 @@ def _chamar_openai_compat(conteudo, config, temperatura=0.2, max_output_tokens=4
     Cobre OpenAI, DeepSeek, Ollama/LM Studio local e espelhos do OpenAI.
     Tenta primeiro com JSON mode; se o endpoint não suportar, refaz sem o campo.
     Retorna (dict | None, erro).
+
+    Anti-SSRF, em dois pontos: a Base URL é validada aqui de novo (antes de
+    conectar), mesmo que já tenha sido validada ao salvar na UI — o DNS pode
+    mudar entre os dois momentos. E o POST não segue redirecionamento, para o
+    destino público não apontar o servidor para um interno. O corpo da resposta
+    de erro também não vai cru para a UI (``expor_texto=False``).
     """
     base = (config.get("base_url") or "").strip().rstrip("/")
     chave = (config.get("chave") or "").strip()
     modelo = (config.get("modelo") or "").strip()
     if not base or not chave or not modelo:
         return None, "Configuração do modelo personalizado incompleta (base_url/chave/modelo)."
+    if not url_modelo_segura(base):
+        return None, (f"Custom ({modelo}): Base URL inválida ou bloqueada — só passa "
+                      f"http(s):// de destino público. Para Ollama local, defina "
+                      f"ALLOW_LOCAL_MODELS=1 no ambiente.")
     url = base if base.endswith("/chat/completions") else f"{base}/chat/completions"
     cabecalho = {"Authorization": f"Bearer {chave}", "Content-Type": "application/json"}
     ultimo_erro = "sem resposta"
@@ -314,9 +335,16 @@ def _chamar_openai_compat(conteudo, config, temperatura=0.2, max_output_tokens=4
         if com_json:
             corpo["response_format"] = {"type": "json_object"}
         try:
-            resposta = requests.post(url, headers=cabecalho, json=corpo, timeout=60)
+            resposta = requests.post(url, headers=cabecalho, json=corpo, timeout=60,
+                                     allow_redirects=False)
+            if resposta.status_code in (301, 302, 303, 307, 308):
+                ultimo_erro = ("Redirecionamento não é suportado pela Base URL — "
+                               "aponte direto para o endpoint /chat/completions.")
+                continue
             if resposta.status_code != 200:
-                ultimo_erro = _traduzir_erro_ia(str(resposta.text)[:200], status=resposta.status_code)
+                ultimo_erro = _traduzir_erro_ia(str(resposta.text)[:200],
+                                                status=resposta.status_code,
+                                                expor_texto=False)
                 continue
             payload = resposta.json()
             texto = payload["choices"][0]["message"]["content"]
@@ -325,7 +353,7 @@ def _chamar_openai_compat(conteudo, config, temperatura=0.2, max_output_tokens=4
             ULTIMO_MODELO = modelo
             return _extrair_json(texto), None
         except Exception as exc:
-            ultimo_erro = _traduzir_erro_ia(str(exc))
+            ultimo_erro = _traduzir_erro_ia(str(exc), expor_texto=False)
             continue
     return None, f"Custom ({modelo}): {ultimo_erro}"
 
