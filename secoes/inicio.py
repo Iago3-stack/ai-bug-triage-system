@@ -117,7 +117,7 @@ def render():
   <div class="marca-cta-título">🤖 Pronto para triar bugs?</div>
   <div class="marca-cta-sub">🛠️ O que a Ferramenta de QA faz</div>
   <div class="marca-cta-passo"><b>1.</b> Cole o relato do bug</div>
-  <div class="marca-cta-passo"><b>2.</b> Motor NLP + IA (<b style="color:#86efac">Gemini/Groq</b>, sem segredo: enumera causa raiz, gravidade e plano de ação)</div>
+  <div class="marca-cta-passo"><b>2.</b> Motor NLP — e, no Premium, IA (<b style="color:#86efac">Gemini/Groq</b>): enumera causa raiz, gravidade e plano de ação</div>
   <div class="marca-cta-passo"><b>3.</b> IA compara com o motor determinístico</div>
   <div class="marca-cta-passo"><b>4.</b> RAG busca <i>“como foi resolvido”</i> em casos similares</div>
   <div class="marca-cta-passo"><b>5.</b> Tudo vai pro Histórico/Dashboard com alertas automáticos (e-mail/Discord) para CRÍTICA/ALTA</div>

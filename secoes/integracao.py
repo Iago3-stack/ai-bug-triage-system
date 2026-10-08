@@ -94,7 +94,7 @@ def render() -> None:
         _ac_cards = [
             ("🖥️", "1. Rode o teste", "Playwright, Postman Runner ou newman na sua máquina — mesmo fluxo de sempre.", "#15803d"),
             ("📋", "2. Cole a falha aqui", "Copie a saída do erro e cole no campo da Ferramenta (ou use um exemplo pronto).", "#b45309"),
-            ("🤖", "3. App estrutura e analisa", "Motor NLP + IA (Gemini/Groq) + RAG → relatório Gherkin pronto para JIRA/GitHub.", "#6d28d9"),
+            ("🤖", "3. App estrutura e analisa", "Motor NLP determinístico — e, no Premium, IA (Gemini/Groq) + RAG → relatório Gherkin pronto para JIRA/GitHub.", "#6d28d9"),
         ]
         cols = st.columns(3)
         for col, (icone, titulo, desc, cor) in zip(cols, _ac_cards):
