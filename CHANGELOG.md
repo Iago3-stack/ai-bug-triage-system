@@ -4,6 +4,19 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v3.6.0] - 2026-10-08
+
+### Alterado
+- **A análise por IA passa a ser do Premium, e o Teste de 7 dias é a porta de experimentação.** Antes, o Basic chamava o LLM com o mesmo motor do Premium: o custo por triagem não tinha contrapartida e o teste não significava nada. Agora o Basic roda só o motor léxico local — offline, determinístico e sem custo — e a IA (Gemini/Groq e modelo próprio) fica atrás de `plano.pago()`, que já cobre a assinatura e o Teste Premium vigente (`plano_atual`). O gate tem **duas camadas independentes**: para o free, o checkbox e o seletor de provedor somem e dão lugar a um aviso de upsell; e `_pode_usar_ia()` reconfere o plano no ponto exato onde o LLM é chamado, de modo que uma UI que vaze não gasta cota. Resultados de IA **já persistidos** continuam visíveis no histórico — o que muda é não haver chamada nova.
+- **As tabelas de comparação (Início e Meu Plano), as pills do hero, a frase de plano e os cards de preço da landing diziam que "Triagem NLP + IA" era liberada no Basic e, na linha seguinte, que "Análises de IA" eram Premium** — a contradição estava dentro da mesma tabela. A linha virou uma só: *IA (Gemini/Groq) — causa raiz, passos e comparativo IA×local*, `—` no Basic e `liberado` no Premium.
+
+### Corrigido
+- **A landing prometia triagem com IA "grátis no cadastro".** A prévia do navegador é heurística local — é o que o próprio teste garante —, mas a nota ao lado vendia IA gratuita. Agora ela diz que a triagem acontece no app, grátis no cadastro, e que a análise por IA está liberada nos 7 dias de teste Premium.
+
+### Observações
+- **819 testes**, 5 a mais que os 814 da v3.5.9, todos passando. Os novos cobrem o gate (`_pode_usar_ia`): free bloqueia mesmo com o checkbox marcado, pago libera, pago com o checkbox desmarcado não chama, trial vigente conta como pago e trial expirado volta a bloquear; e um teste de contrato garante que o gate está no site da chamada do LLM, não só na UI.
+- **A segunda camada é a que importa.** O teste do trial não mocka `plano.pago()`: ele monta o caminho real de `plano_atual()` (login + banco + `_teste_em_vigor`), porque é o que garante que os 7 dias grátis continuam abrindo a IA sem tocar no gate.
+
 ## [v3.5.9] - 2026-10-05
 
 ### Adicionado

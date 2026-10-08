@@ -279,6 +279,15 @@ def _gerar_pdf_relatorio(dados: dict) -> bytes:
     return bytes(pdf.output())
 
 
+def _pode_usar_ia(usar_llm: bool) -> bool:
+    """Gate de plano: só Premium (ou trial de 7 dias) chama o LLM.
+
+    O checkbox do usuário é condição necessária, mas não suficiente: o plano
+    também. Assim, mesmo que a UI vaze, o Basic não gasta cota de IA.
+    """
+    return bool(usar_llm) and plano.pago()
+
+
 def render():
     # Divisória que separa o card "Sobre Mim" do título da ferramenta
     st.markdown("""
@@ -447,11 +456,19 @@ def render():
                                  key="relato_entrada",
                                  label_visibility="collapsed")
 
-    usar_llm = st.checkbox(
-        "🔮 Usar IA para esta triagem",
-        value=True,
-        help="Ativa a análise por LLM. Se desmarcado, só o motor local determinístico roda."
-    )
+    if plano.pago():
+        usar_llm = st.checkbox(
+            "🔮 Usar IA para esta triagem",
+            value=True,
+            help="Ativa a análise por LLM. Se desmarcado, só o motor local determinístico roda."
+        )
+    else:
+        usar_llm = False
+        st.caption(
+            "🔒 Plano **Basic**: triagem pelo motor léxico local — offline e sem custo. "
+            "A análise por IA (causa raiz, passos de reprodução e comparativo IA×local) "
+            "é do Premium: ative os **7 dias grátis** em 💼 Meu Plano para experimentar com IA."
+        )
 
     modelos_custom = st.session_state.setdefault("modelos_custom", [])
     for m in modelos_custom:
@@ -465,116 +482,117 @@ def render():
     if provedor_ia not in _opcoes_provedor:
         provedor_ia = _opcoes_provedor[0]
 
-    st.markdown('<div class="campo-tit" style="font-weight:600;color:#0f172a;margin-bottom:4px">🤖️ Provedor de IA:</div>', unsafe_allow_html=True)
-    _cols = st.columns(len(_opcoes_provedor))
-    for _i, (_col, _op) in enumerate(zip(_cols, _opcoes_provedor)):
-        _classe = _provid_classe.get(_op, "custom")
-        _sel = _op == provedor_ia
-        if _op == "Gemini":
-            _icone = "✨"
-        elif _op == "Groq":
-            _icone = "⚡"
-        elif _classe == "auto":
-            _icone = "🔄"
-        else:
-            _icone = "⭐"
-        with _col:
-            st.markdown(
-                f'<div class="marca-provid marca-prov-{_classe}{" prov-provid-sel" if _sel else ""}" style="display:none"></div>',
-                unsafe_allow_html=True,
-            )
-            if st.button(f"{_icone} {_op}", key=f"prov_{_i}", width="stretch"):
-                st.session_state["provedor_svg"] = _op
-                st.rerun()
-    st.caption("Escolha quem analisa o relato. Automático usa o Gemini e, se cair, troca para o Groq — "
-               "ou adicione um modelo próprio no expander abaixo.")
-
-    with st.expander("➕ Adicionar modelo próprio (use sua API de qualquer provedor)"):
-        st.markdown('<div class="marca-modelo" style="display:none"></div>', unsafe_allow_html=True)
-        nome_custom = st.text_input(
-            "🏷️ Nome (aparece no seletor)", key="cm_nome",
-            placeholder="Ex: Meu GPT-4o · Gemini Pro pago · DeepSeek")
-        tipo_custom = st.radio(
-            "Tipo:", ["Gemini (google-genai)", "OpenAI-compatível (OpenAI/DeepSeek/local)"],
-            key="cm_tipo", horizontal=True)
-        base_url_custom = ""
-        if tipo_custom.startswith("Gemini"):
-            modelo_custom = st.text_input(
-                "Modelo", key="cm_modelo_gemini",
-                placeholder="Ex: gemini-3-pro — qualquer modelo que sua chave acesse")
-            chave_custom = st.text_input(
-                "API Key (opcional — se vazia, usa a GEMINI_API_KEY do Sistema)",
-                type="password", key="cm_chave_gemini",
-                placeholder="Cole sua chave (ex.: AQ.Ab...) — fica só na sessão, não é salva")
-        else:
-            base_url_custom = st.text_input(
-                "Base URL (OpenAI-compatível)", key="cm_base",
-                value="https://api.openai.com/v1",
-                placeholder="Ex: https://api.deepseek.com/v1 · http://localhost:11434/v1")
-            modelo_custom = st.text_input(
-                "Modelo", key="cm_modelo_openai",
-                placeholder="Ex: gpt-4o · gpt-4o-mini · deepseek-chat")
-            chave_custom = st.text_input(
-                "API Key", type="password", key="cm_chave_openai",
-                placeholder="Cole sua chave (ex.: sk-...) — fica só na sessão, não é salva")
-        st.markdown('<div class="marca-modelo-btn" style="display:none"></div>', unsafe_allow_html=True)
-        editando = st.session_state.get("cm_editando")
-        if st.button("💾 Salvar alterações" if editando is not None else "💾 Adicionar modelo", key="cm_add"):
-            nome, modelo = nome_custom.strip(), modelo_custom.strip()
-            base = base_url_custom.strip().rstrip("/")
-            tipo = "gemini" if tipo_custom.startswith("Gemini") else "openai"
-            if not nome or not modelo:
-                st.error("Informe o nome exibido e o modelo.")
-            elif tipo == "openai" and (not base or not chave_custom.strip()):
-                st.error("Para APIs OpenAI-compatíveis, informe a Base URL e a API Key.")
-            elif tipo == "openai" and not url_modelo_segura(base):
-                st.error("Base URL inválida ou bloqueada — use http:// ou https:// de um "
-                         "destino público (ex.: https://api.deepseek.com/v1). Só o loopback "
-                         "de Ollama local passa com ALLOW_LOCAL_MODELS=1 no ambiente.")
-            elif any(m["nome"] == nome for m in modelos_custom):
-                st.error(f"Já existe um modelo com o nome '{nome}'.")
+    if plano.pago():
+        st.markdown('<div class="campo-tit" style="font-weight:600;color:#0f172a;margin-bottom:4px">🤖️ Provedor de IA:</div>', unsafe_allow_html=True)
+        _cols = st.columns(len(_opcoes_provedor))
+        for _i, (_col, _op) in enumerate(zip(_cols, _opcoes_provedor)):
+            _classe = _provid_classe.get(_op, "custom")
+            _sel = _op == provedor_ia
+            if _op == "Gemini":
+                _icone = "✨"
+            elif _op == "Groq":
+                _icone = "⚡"
+            elif _classe == "auto":
+                _icone = "🔄"
             else:
-                modelos_custom.append({
-                    "nome": nome, "tipo": tipo, "modelo": modelo,
-                    "base_url": base, "chave": chave_custom.strip(), "rotulo": nome,
-                })
+                _icone = "⭐"
+            with _col:
+                st.markdown(
+                    f'<div class="marca-provid marca-prov-{_classe}{" prov-provid-sel" if _sel else ""}" style="display:none"></div>',
+                    unsafe_allow_html=True,
+                )
+                if st.button(f"{_icone} {_op}", key=f"prov_{_i}", width="stretch"):
+                    st.session_state["provedor_svg"] = _op
+                    st.rerun()
+        st.caption("Escolha quem analisa o relato. Automático usa o Gemini e, se cair, troca para o Groq — "
+                   "ou adicione um modelo próprio no expander abaixo.")
+
+        with st.expander("➕ Adicionar modelo próprio (use sua API de qualquer provedor)"):
+            st.markdown('<div class="marca-modelo" style="display:none"></div>', unsafe_allow_html=True)
+            nome_custom = st.text_input(
+                "🏷️ Nome (aparece no seletor)", key="cm_nome",
+                placeholder="Ex: Meu GPT-4o · Gemini Pro pago · DeepSeek")
+            tipo_custom = st.radio(
+                "Tipo:", ["Gemini (google-genai)", "OpenAI-compatível (OpenAI/DeepSeek/local)"],
+                key="cm_tipo", horizontal=True)
+            base_url_custom = ""
+            if tipo_custom.startswith("Gemini"):
+                modelo_custom = st.text_input(
+                    "Modelo", key="cm_modelo_gemini",
+                    placeholder="Ex: gemini-3-pro — qualquer modelo que sua chave acesse")
+                chave_custom = st.text_input(
+                    "API Key (opcional — se vazia, usa a GEMINI_API_KEY do Sistema)",
+                    type="password", key="cm_chave_gemini",
+                    placeholder="Cole sua chave (ex.: AQ.Ab...) — fica só na sessão, não é salva")
+            else:
+                base_url_custom = st.text_input(
+                    "Base URL (OpenAI-compatível)", key="cm_base",
+                    value="https://api.openai.com/v1",
+                    placeholder="Ex: https://api.deepseek.com/v1 · http://localhost:11434/v1")
+                modelo_custom = st.text_input(
+                    "Modelo", key="cm_modelo_openai",
+                    placeholder="Ex: gpt-4o · gpt-4o-mini · deepseek-chat")
+                chave_custom = st.text_input(
+                    "API Key", type="password", key="cm_chave_openai",
+                    placeholder="Cole sua chave (ex.: sk-...) — fica só na sessão, não é salva")
+            st.markdown('<div class="marca-modelo-btn" style="display:none"></div>', unsafe_allow_html=True)
+            editando = st.session_state.get("cm_editando")
+            if st.button("💾 Salvar alterações" if editando is not None else "💾 Adicionar modelo", key="cm_add"):
+                nome, modelo = nome_custom.strip(), modelo_custom.strip()
+                base = base_url_custom.strip().rstrip("/")
+                tipo = "gemini" if tipo_custom.startswith("Gemini") else "openai"
+                if not nome or not modelo:
+                    st.error("Informe o nome exibido e o modelo.")
+                elif tipo == "openai" and (not base or not chave_custom.strip()):
+                    st.error("Para APIs OpenAI-compatíveis, informe a Base URL e a API Key.")
+                elif tipo == "openai" and not url_modelo_segura(base):
+                    st.error("Base URL inválida ou bloqueada — use http:// ou https:// de um "
+                             "destino público (ex.: https://api.deepseek.com/v1). Só o loopback "
+                             "de Ollama local passa com ALLOW_LOCAL_MODELS=1 no ambiente.")
+                elif any(m["nome"] == nome for m in modelos_custom):
+                    st.error(f"Já existe um modelo com o nome '{nome}'.")
+                else:
+                    modelos_custom.append({
+                        "nome": nome, "tipo": tipo, "modelo": modelo,
+                        "base_url": base, "chave": chave_custom.strip(), "rotulo": nome,
+                    })
+                    st.session_state.pop("cm_editando", None)
+                    st.success(f"Modelo '{nome}' {'atualizado' if editando is not None else 'adicionado'}! "
+                               f"Selecione ⭐ {nome} no seletor acima.")
+                    for k in ("cm_nome", "cm_modelo_gemini", "cm_chave_gemini",
+                              "cm_modelo_openai", "cm_chave_openai"):
+                        st.session_state.pop(k, None)
+            if modelos_custom or st.session_state.get("cm_editando") is not None:
+                st.markdown("##### Modelos adicionados:")
+                if modelos_custom:
+                    for i, m in enumerate(modelos_custom):
+                        c1, c2, c3 = st.columns([5, 1, 1])
+                        c1.caption(f"⭐ {m['nome']} · {m['tipo']} · {m['modelo']}")
+                        if c2.button("✏️", key=f"cm_edit_{i}", help=f"Editar '{m['nome']}'"):
+                            st.session_state["cm_editando"] = i
+                            st.session_state["cm_nome"] = m["nome"]
+                            st.session_state["cm_tipo"] = (
+                                "Gemini (google-genai)" if m["tipo"] == "gemini"
+                                else "OpenAI-compatível (OpenAI/DeepSeek/local)"
+                            )
+                            st.session_state["cm_modelo_gemini"] = m.get("modelo", "") if m["tipo"] == "gemini" else ""
+                            st.session_state["cm_chave_gemini"] = m.get("chave", "") if m["tipo"] == "gemini" else ""
+                            st.session_state["cm_modelo_openai"] = m.get("modelo", "") if m["tipo"] == "openai" else ""
+                            st.session_state["cm_chave_openai"] = m.get("chave", "") if m["tipo"] == "openai" else ""
+                            st.session_state["cm_base"] = m.get("base_url", "https://api.openai.com/v1")
+                            modelos_custom.pop(i)
+                            st.rerun()
+                        if c3.button("🗑", key=f"cm_del_{i}", help="Remover este modelo"):
+                            modelos_custom.pop(i)
+                            st.rerun()
+                else:
+                    st.caption("Nenhum modelo na lista — preencha o formulário acima e clique em 💾.")
+            if st.session_state.get("cm_editando") is not None and st.button("✖ Cancelar edição", key="cm_cancel"):
                 st.session_state.pop("cm_editando", None)
-                st.success(f"Modelo '{nome}' {'atualizado' if editando is not None else 'adicionado'}! "
-                           f"Selecione ⭐ {nome} no seletor acima.")
                 for k in ("cm_nome", "cm_modelo_gemini", "cm_chave_gemini",
                           "cm_modelo_openai", "cm_chave_openai"):
                     st.session_state.pop(k, None)
-        if modelos_custom or st.session_state.get("cm_editando") is not None:
-            st.markdown("##### Modelos adicionados:")
-            if modelos_custom:
-                for i, m in enumerate(modelos_custom):
-                    c1, c2, c3 = st.columns([5, 1, 1])
-                    c1.caption(f"⭐ {m['nome']} · {m['tipo']} · {m['modelo']}")
-                    if c2.button("✏️", key=f"cm_edit_{i}", help=f"Editar '{m['nome']}'"):
-                        st.session_state["cm_editando"] = i
-                        st.session_state["cm_nome"] = m["nome"]
-                        st.session_state["cm_tipo"] = (
-                            "Gemini (google-genai)" if m["tipo"] == "gemini"
-                            else "OpenAI-compatível (OpenAI/DeepSeek/local)"
-                        )
-                        st.session_state["cm_modelo_gemini"] = m.get("modelo", "") if m["tipo"] == "gemini" else ""
-                        st.session_state["cm_chave_gemini"] = m.get("chave", "") if m["tipo"] == "gemini" else ""
-                        st.session_state["cm_modelo_openai"] = m.get("modelo", "") if m["tipo"] == "openai" else ""
-                        st.session_state["cm_chave_openai"] = m.get("chave", "") if m["tipo"] == "openai" else ""
-                        st.session_state["cm_base"] = m.get("base_url", "https://api.openai.com/v1")
-                        modelos_custom.pop(i)
-                        st.rerun()
-                    if c3.button("🗑", key=f"cm_del_{i}", help="Remover este modelo"):
-                        modelos_custom.pop(i)
-                        st.rerun()
-            else:
-                st.caption("Nenhum modelo na lista — preencha o formulário acima e clique em 💾.")
-        if st.session_state.get("cm_editando") is not None and st.button("✖ Cancelar edição", key="cm_cancel"):
-            st.session_state.pop("cm_editando", None)
-            for k in ("cm_nome", "cm_modelo_gemini", "cm_chave_gemini",
-                      "cm_modelo_openai", "cm_chave_openai"):
-                st.session_state.pop(k, None)
-            st.rerun()
+                st.rerun()
 
     st.markdown('<div class="marca-executar" style="display:none"></div>', unsafe_allow_html=True)
     if st.button("Executar Triagem Inteligente"):
@@ -631,7 +649,10 @@ def render():
                 erro_llm = None
                 prioridade_final = None
                 divergente = None
-                if usar_llm and ia.disponivel(modelos_custom):
+                # Gate de plano: o Basic nunca chama o LLM, mesmo que a UI vaze.
+                # O trial de 7 dias conta como pago (ver plano_atual), então o
+                # free que quer IA ativa o teste em 💼 Meu Plano.
+                if _pode_usar_ia(usar_llm) and ia.disponivel(modelos_custom):
                     # Blindagem extra: nenhum erro da camada de IA/RAG pode derrubar
                     # o app. Qualquer exceção vira aviso + diagnóstico salvo na sessão.
                     try:

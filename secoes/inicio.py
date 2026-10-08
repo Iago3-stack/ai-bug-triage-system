@@ -21,7 +21,7 @@ def render():
             '<span style="background:rgba(37,211,102,.16);color:#86efac;border:1px solid rgba(37,211,102,.5);'
             'border-radius:999px;padding:4px 14px;font-size:12px;font-weight:800;letter-spacing:.03em">🔓 Plano Basic</span>'
         )
-        _frase_plano = "Você está no <b style='color:#86efac'>plano Basic</b> — a ferramenta já funciona 100%. O plano Premium libera RAG, causas raiz via IA e canais de alerta múltiplos (veja a tabela abaixo)."
+        _frase_plano = "Você está no <b style='color:#86efac'>plano Basic</b> — a ferramenta já funciona 100% com o motor léxico local. O plano Premium libera a análise por IA (Gemini/Groq), RAG, causas raiz e canais de alerta múltiplos (veja a tabela abaixo)."
         _emojis_feats = "🧠 📚 🔔 🧺"
 
     _pill_on = 'background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:4px 13px;font-size:12px;color:#e2e8f0'
@@ -34,7 +34,7 @@ def render():
     <div style="margin:0 0 18px;width:100%;background:linear-gradient(135deg,#0f172a 0%,#16233c 60%,#7c3aed 190%);border-radius:16px;padding:22px 26px;color:#e2e8f0;border:1px solid rgba(255,255,255,.12)">
       <div role="heading" aria-level="2" style="margin:0 0 12px;font-size:26px;font-weight:900;color:#ffffff;line-height:1.25;text-shadow:0 2px 4px rgba(0,0,0,.45)">Triagem de bugs com IA para QA — classifique a severidade, priorize e gere o relatório em segundos</div>
       <div style="height:3px;width:100%;background:linear-gradient(90deg,#25D366,#2E7CF6,#7c3aed);border-radius:999px;margin:0 0 12px"></div>
-      <p style="margin:0 0 10px;font-size:15px;line-height:1.65"><b style="color:#86efac">AI Bug Triage System</b> é um sistema de <b style="color:#ffffff">triagem de bugs com Inteligência Artificial</b> para times de <b style="color:#ffffff">QA e teste de software</b> — comece de <b style="color:#fde68a">graça no plano Basic</b>. Cole o relato do bug — ou a <b style="color:#ffffff">saída de um teste Playwright ou Postman·newman</b>, reconhecida automaticamente com método + URL e HTTP esperado × recebido — e o motor <b style="color:#ffffff">NLP determinístico (offline, custo zero)</b> calcula a prioridade; a IA <b style="color:#ffffff">Gemini</b> (com fallback automático para <b style="color:#ffffff">Groq</b>) aprofunda com <b style="color:#ffffff">causa raiz</b> e plano de ação; o <b style="color:#ffffff">RAG</b> busca casos similares já resolvidos; e o sistema monta o <b style="color:#ffffff">relatório Gherkin pronto para JIRA e GitHub</b>, com alertas automáticos para bugs <b style="color:#ffffff">críticos ou de alta severidade</b>.</p>
+      <p style="margin:0 0 10px;font-size:15px;line-height:1.65"><b style="color:#86efac">AI Bug Triage System</b> é um sistema de <b style="color:#ffffff">triagem de bugs com Inteligência Artificial</b> para times de <b style="color:#ffffff">QA e teste de software</b> — comece de <b style="color:#fde68a">graça no plano Basic</b>. Cole o relato do bug — ou a <b style="color:#ffffff">saída de um teste Playwright ou Postman·newman</b>, reconhecida automaticamente com método + URL e HTTP esperado × recebido — e o motor <b style="color:#ffffff">NLP determinístico (offline, custo zero)</b> calcula a prioridade e monta o <b style="color:#ffffff">relatório Gherkin pronto para JIRA e GitHub</b>, com alertas automáticos para bugs <b style="color:#ffffff">críticos ou de alta severidade</b>. No <b style="color:#fde68a">Premium</b> — experimente <b style="color:#fde68a">7 dias grátis</b> — a IA <b style="color:#ffffff">Gemini</b> (com fallback automático para <b style="color:#ffffff">Groq</b>) aprofunda com <b style="color:#ffffff">causa raiz</b> e plano de ação, e o <b style="color:#ffffff">RAG</b> busca casos similares já resolvidos.</p>
       <p style="margin:0;font-size:14px;color:#94a3b8">Ferramenta ideal para QA, analistas de qualidade e desenvolvedores que automatizam a gestão e a priorização de defeitos de software.</p>
     </div>
     """, unsafe_allow_html=True)
@@ -51,8 +51,8 @@ def render():
       <div style="color:#ffffff;font-size:26px;font-weight:800;margin-top:16px;letter-spacing:-.01em">Conheça o plano {'⭐' if plano.pago() else '💎'}</div>
       <div style="color:#cbd5e1;font-size:16px;line-height:1.65;margin-top:8px;max-width:94%">{_frase_plano}</div>
       <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:18px">
-        <span style="{_pill_feat(True)}">✅ Triagem NLP + IA (Gemini/Groq)</span>
-        <span style="{_pill_feat(plano.pago())}">🧠 Causas raiz + comparativo IA×local</span>
+        <span style="{_pill_feat(True)}">✅ Triagem NLP + motor determinístico</span>
+        <span style="{_pill_feat(plano.pago())}">🔮 IA (Gemini/Groq) — causa raiz + comparativo IA×local</span>
         <span style="{_pill_feat(plano.pago())}">📚 RAG · \u201ccomo foi resolvido\u201d</span>
         <span style="{_pill_feat(plano.pago())}">🔔 Alertas multi-canal (e-mail + Discord)</span>
         <span style="{_pill_feat(plano.pago())}">🧺 Histórico completo (Dashboard)</span>
@@ -68,8 +68,7 @@ def render():
     | Recurso | 🔓 Basic | ⭐ Premium |
     |---|---|---|
     | ✅ Triagem NLP + motor determinístico | liberado | liberado |
-    | 🔮 IA (Gemini / Groq / modelo próprio) | liberado | liberado |
-    | 🧠 Análises de IA — *causas raiz* e *comparativo IA×local* | — | liberado |
+    | 🔮 IA (Gemini / Groq / modelo próprio) — *causa raiz*, *passos de reprodução* e *comparativo IA×local* | — | liberado |
     | 📚 RAG — consulta casos similares + \u201ccomo foi resolvido\u201d | — | liberado |
     | 🧺 Histórico / Dashboard de QA | últimas **{plano.limite_historico_free_fixo()}** triagens | completo |
     | 🔔 Canais de alerta (e-mail/Discord) | **1** canal | múltiplos canais |

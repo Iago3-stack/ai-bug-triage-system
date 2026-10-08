@@ -171,3 +171,55 @@ def test_feedback_ui_tem_chaves_frequencia_e_estado_obrigado():
     # Estado 'obrigado' discreto quando já avaliou (mantém a régua semanal)
     assert "_fb_agradecimento" in ferra and "fb-aviso" in ferra and "fb-aviso" in css
     assert "volta" in ferra and "obrigado" in ferra
+
+# ─── Gate de plano: só Premium (ou trial de 7 dias) chama o LLM ─────────────
+
+def test_pode_usar_ia_free_bloqueia(monkeypatch):
+    """Basic nunca roda IA, mesmo com o checkbox marcado."""
+    from secoes import ferramenta as f
+    monkeypatch.setenv("PLANO", "free")
+    assert f._pode_usar_ia(True) is False
+    assert f._pode_usar_ia(False) is False
+
+
+def test_pode_usar_ia_pago_permite(monkeypatch):
+    from secoes import ferramenta as f
+    monkeypatch.setenv("PLANO", "pago")
+    assert f._pode_usar_ia(True) is True
+    # Usuário desmarcou o checkbox: o plano autoriza, mas ele não quer.
+    assert f._pode_usar_ia(False) is False
+
+
+def test_pode_usar_ia_trial_ativo_conta_como_pago(monkeypatch):
+    """O trial de 7 dias é a porta de experimentação: cai em plano_atual."""
+    import plano
+    from secoes import ferramenta as f
+    monkeypatch.setenv("PLANO", "free")
+    monkeypatch.setattr(plano, "uid_logado", lambda: "u-abc")
+    monkeypatch.setattr(plano, "plano_no_banco", lambda uid: "free")
+    monkeypatch.setattr(plano, "_teste_em_vigor", lambda uid: True)
+    assert plano.plano_atual() == "pago"
+    assert f._pode_usar_ia(True) is True
+
+
+def test_pode_usar_ia_trial_expirado_bloqueia(monkeypatch):
+    import plano
+    from secoes import ferramenta as f
+    monkeypatch.setenv("PLANO", "free")
+    monkeypatch.setattr(plano, "uid_logado", lambda: "u-abc")
+    monkeypatch.setattr(plano, "plano_no_banco", lambda uid: "free")
+    monkeypatch.setattr(plano, "_teste_em_vigor", lambda uid: False)
+    assert plano.plano_atual() == "free"
+    assert f._pode_usar_ia(True) is False
+
+
+def test_gate_ia_presente_no_site_da_chamada():
+    """Defesa em profundidade: o gate protege a chamada real do LLM, não só a UI."""
+    from pathlib import Path
+    fonte = (Path(__file__).resolve().parent / "secoes" / "ferramenta.py").read_text(encoding="utf-8")
+    # O site que dispara o LLM precisa passar pelo gate de plano.
+    assert "_pode_usar_ia(usar_llm) and ia.disponivel(" in fonte
+    # E o checkbox do free é substituído por aviso, não por um valor True.
+    assert "usar_llm = False" in fonte
+    # O seletor de provedor e o expander de modelo próprio ficam atrás do gate.
+    assert "    if plano.pago():\n        st.markdown('<div class=\"campo-tit\"" in fonte

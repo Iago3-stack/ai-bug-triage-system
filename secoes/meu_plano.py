@@ -94,7 +94,7 @@ def render():
             '<span style="background:rgba(37,211,102,.16);color:#86efac;border:1px solid rgba(37,211,102,.5);'
             'border-radius:999px;padding:4px 14px;font-size:12px;font-weight:800;letter-spacing:.03em">🔓 Plano Basic</span>'
         )
-        _frase = "Você está no <b style='color:#86efac'>plano Basic</b> — a ferramenta já funciona 100%. O Premium libera RAG, causas raiz via IA e alertas multi-canal."
+        _frase = "Você está no <b style='color:#86efac'>plano Basic</b> — a ferramenta já funciona 100% com o motor léxico local. O Premium libera a análise por IA (Gemini/Groq), RAG, causas raiz e alertas multi-canal."
 
     st.markdown(f"""
     <div class="marca-mastro" style="width:100%;background:linear-gradient(135deg,#0f172a 0%,#16233c 52%,#25D366 175%);border-radius:16px;padding:30px 34px 26px 34px;margin:4px 0 18px;box-shadow:0 8px 22px rgba(15,23,42,.18)">
@@ -289,8 +289,7 @@ def render():
 | Recurso | 🔓 Basic | ⭐ Premium |
 |---|---|---|
 | ✅ Triagem NLP + motor determinístico | liberado | liberado |
-| 🔮 IA (Gemini / Groq / modelo próprio) | liberado | liberado |
-| 🧠 Análises de IA — *causas raiz* e *comparativo IA×local* | — | liberado |
+| 🔮 IA (Gemini / Groq / modelo próprio) — *causa raiz*, *passos de reprodução* e *comparativo IA×local* | — | liberado |
 | 📚 RAG — consulta casos similares + \u201ccomo foi resolvido\u201d | — | liberado |
 | 🧺 Histórico / Dashboard de QA | últimas **{plano.limite_historico_free_fixo()}** triagens | completo |
 | 🔔 Canais de alerta (e-mail/Discord) | **1** canal | múltiplos canais |
