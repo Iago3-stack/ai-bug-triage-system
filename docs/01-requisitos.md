@@ -39,7 +39,7 @@ O app recebe o **relato de um bug** em linguagem natural e o **classifica automa
 | RNF-03 | **Baixa latência**: triagem instantânea na interface | Performance |
 | RNF-04 | **Fallback automático** para o motor local quando a API de IA falhar | Confiabilidade |
 | RNF-05 | Interface **intuitiva e com identidade visual** própria | Usabilidade |
-| RNF-06 | Código **testado** por `pytest` (**225 casos**) e validado por **CI** | Qualidade |
+| RNF-06 | Código **testado** por `pytest` (**819 casos**) e validado por **CI** | Qualidade |
 | RNF-07 | **Transparência**: informar qual motor foi usado em cada triagem | Auditoria |
 | RNF-08 | **Privacidade**: chaves/credenciais do visitante ficam só na sessão (nunca em disco/histórico); campos do modal nascem vazios (não expõem secrets do dono) | Segurança |
 | RNF-09 | **Isolamento multi-tenant**: cada conta lê/grava apenas os registros do seu `tenant_id` | Segurança |
