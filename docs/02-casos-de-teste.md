@@ -1,6 +1,6 @@
 # 02 — Casos de Teste
 
-Casos de teste documentados em **Gherkin** (padrão BDD) para validar o motor de triagem. A matriz abaixo traz **12 cenários representativos**, que `test_triagem.py` automatiza — o arquivo do motor tem **90 testes** hoje, crescendo com os casos de QA reais. Todos rodam no **CI** (GitHub Actions) a cada push junto com os demais (Jira, persistência, guardrails, dashboard completo, RAG híbrido, nuvem, Pix, IA, Auth/Supabase, notificações, plano, cobrança Pix, perfil do usuário, GitHub por usuário, painel do dono, **colar falha + adaptadores Playwright/Postman + webhook de CI**, persistência de sessão no F5, **cobrança automática PagBank**, **landing/Pages com domínio próprio**, páginas **legal** e **ui_comum**, casos de QA, rotulagem e telemetria — **759 no total**).
+Casos de teste documentados em **Gherkin** (padrão BDD) para validar o motor de triagem. A matriz abaixo traz **12 cenários representativos**, que `test_triagem.py` automatiza — o arquivo do motor tem **90 testes** hoje, crescendo com os casos de QA reais. Todos rodam no **CI** (GitHub Actions) a cada push junto com os demais (Jira, persistência, guardrails, dashboard completo, RAG híbrido, nuvem, Pix, IA, Auth/Supabase, notificações, plano, cobrança Pix, perfil do usuário, GitHub por usuário, painel do dono, **colar falha + adaptadores Playwright/Postman + webhook de CI**, persistência de sessão no F5, **cobrança automática PagBank**, **landing/Pages com domínio próprio**, páginas **legal** e **ui_comum**, casos de QA, rotulagem e telemetria — **819 no total**).
 
 ## Matriz de casos de teste
 
@@ -44,7 +44,7 @@ pip install -r requirements-dev.txt
 pytest -v
 ```
 
-Resultado esperado: **759 passed** — motor léxico (90), casos de QA (36), colar falha (13), adaptadores Playwright/Postman (24), Jira (18), persistência (15), guardrails (18), dashboard (17), RAG (29), nuvem/Supabase (38), Pix (10), IA (41), Auth/Supabase (46), notificações (46), plano (48), **cobrança Pix ("nosso Stripe") (21)**, perfil (16), **GitHub (18)**, **painel do dono (43)**, **PagBank (QR dinâmico automático) (23)**, persistência de sessão (8), rotulagem (30), telemetria (7), ferramenta (12), **webhook de CI (+ pagamento) (40)**, **landing/Pages (32)**, **páginas legais (6)** e **`ui_comum` (14)** — também validado automaticamente pelo CI.
+Resultado esperado: **819 passed** — motor léxico (90), casos de QA (36), colar falha (13), adaptadores Playwright/Postman (24), Jira (18), persistência (15), guardrails (18), dashboard (17), RAG (29), nuvem/Supabase (49), Pix (10), IA (47), Auth/Supabase (46), notificações (40), plano (48), **cobrança Pix ("nosso Stripe") (24)**, perfil (17), **GitHub (18)**, **painel do dono (52)**, **PagBank (QR dinâmico automático) (23)**, persistência de sessão (8), rotulagem (46), telemetria (7), ferramenta (17), **webhook de CI (+ pagamento) (40)**, **landing/Pages (32)**, **páginas legais (6)**, **`ui_comum` (14)** e **`url_segura` (15)** — também validado automaticamente pelo CI.
 
 ## Guardrails (casos de teste da camada de segurança)
 

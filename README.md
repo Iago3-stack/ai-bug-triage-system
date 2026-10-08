@@ -149,7 +149,7 @@ A análise por IA usa a chave `GEMINI_API_KEY` (gratuita em [aistudio.google.com
 - 🔑 **Local**: crie um arquivo `.env` na raiz com `GEMINI_API_KEY=...` (ele é ignorado pelo `.gitignore`).
 - ☁️ **Streamlit Cloud**: `Settings → Secrets → GEMINI_API_KEY` (nunca coloque a chave em código ou no repositório).
 
-**🧪 Rodar os testes** — a mesma suíte do CI (**814 testes**, número exato no badge dinâmico):
+**🧪 Rodar os testes** — a mesma suíte do CI (**819 testes**, número exato no badge dinâmico):
 
 ```bash
 pip install -r requirements-dev.txt
@@ -308,19 +308,19 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 | 🧪 `test_persistencia.py` | 15 testes unitários da persistência (rodam no CI) |
 | 🧪 `test_guardrails.py` | 18 testes de detecção/máscara de credenciais e PII (rodam no CI) |
 | 🧪 `test_dashboard.py` | 17 testes do Dashboard de QA: saúde da suíte, gauge, filtro por funcionalidade, top causas, divergências e provedor real (rodam no CI) |
-| 🧪 `test_rag.py` | 23 testes do RAG: tokenização, Jaccard, BM25, sinônimos, recência/resolução, rerank vetorial híbrido com vetores mockados, contexto (com resolução) e orquestração sem chave (rodam no CI) |
-| 🧪 `test_nuvem_supabase.py` | 38 testes da persistência em nuvem: config, conversão, HTTP (mockado), resolução, failover e dispatch do facade (rodam no CI) |
+| 🧪 `test_rag.py` | 29 testes do RAG: tokenização, Jaccard, BM25, sinônimos, recência/resolução, rerank vetorial híbrido com vetores mockados, contexto (com resolução) e orquestração sem chave (rodam no CI) |
+| 🧪 `test_nuvem_supabase.py` | 49 testes da persistência em nuvem: config, conversão, HTTP (mockado), resolução, failover e dispatch do facade (rodam no CI) |
 | 🧪 `test_pix.py` | 10 testes do Pix: payload EMV, CRC-CCITT, precedência link/QR e `chave_copia()` sem `+55` (rodam no CI) |
-| 🧪 `test_ia.py` | 38 testes da IA: dispatch de provedor (auto/Gemini/Groq/modelo próprio OpenAI-compatível e Gemini custom), JSON, fallback, mensagens de erro e orquestração RAG (rodam no CI) |
+| 🧪 `test_ia.py` | 47 testes da IA: dispatch de provedor (auto/Gemini/Groq/modelo próprio OpenAI-compatível e Gemini custom), JSON, fallback, mensagens de erro e orquestração RAG (rodam no CI) |
 | 🔐 `auth_supabase.py` | Autenticação (Supabase Auth/GoTrue via REST, stdlib): cadastro com confirmação, login e logout — credenciais reutilizam `SUPABASE_URL`/`SUPABASE_ANON_KEY` |
 | 🧪 `test_auth_supabase.py` | 46 testes do login: parser de erros, cadastro/login/logout, isolação por sessão e integração com a UI (rodam no CI) |
 | 🔔 `notificacoes.py` | Canais de alerta (e-mail SMTP + Discord) configuráveis por usuário/sessão, com testadores à prova de exceção |
-| 🧪 `test_notificacoes.py` | 45 testes dos alertas: envio SMTP/Discord (mockado), override por sessão e erros amigáveis (rodam no CI) |
+| 🧪 `test_notificacoes.py` | 40 testes dos alertas: envio SMTP/Discord (mockado), override por sessão e erros amigáveis (rodam no CI) |
 | 💳 `plano.py` | Planos Basic/Premium e isolamento por tenant: `PLANO=free|pago` liga/desliga recursos e `TENANT_ID` segmenta registros |
 | 🧪 `test_plano.py` | 48 testes do plano: gating de recursos free×pago e filtro por `tenant_id` (rodam no CI) |
 | 💾 `sessao_persist.py` | Persistência de sessão no F5: enfileira salvar/limpar e grava via ponte persistente (cookie + iframe `localStorage`) |
 | 🧪 `test_sessao_persist.py` | 8 testes da ponte de escrita e da failover da sessão (rodam no CI) |
-| 🧪 `test_ferramenta.py` | 12 testes da página ferramenta: UI/triagem e integração (rodam no CI) |
+| 🧪 `test_ferramenta.py` | 17 testes da página ferramenta: UI/triagem e integração (rodam no CI) |
 | 📈 `dashboard.py` | Dashboard de QA: KPIs + saúde da suíte (0–10) + gauge de críticas + filtro por funcionalidade + top causas (IA) + score/dia + divergências IA vs. léxico + provedor real (leitura do JSONL/Cloud) |
 | 🟦 `pix.py` | Gerador de pagamento Pix: payload EMV/QR (CRC-CCITT), QR Code PNG (base64), **link de pagamento** com valor fixo e chaves com/sem `+55` (`chave`/`chave_copia`) |
 | 📦 `requirements.txt` | Dependências pinadas |
