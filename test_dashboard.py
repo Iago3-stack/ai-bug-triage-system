@@ -187,3 +187,22 @@ def test_saude_suite_base_e_punicao_por_divergencia():
     assert 0.0 <= baixo <= 10.0
     assert baixo < alto
     assert dashboard.saude_suite([]) == 0.0
+
+def test_resumo_recorrencia_conta_clusters_e_recorrentes():
+    registros = [
+        {"id": "a1", "bug_id": "a1", "repeticoes": 1},
+        {"id": "a2", "bug_id": "a1", "repeticoes": 2},
+        {"id": "a3", "bug_id": "a1", "repeticoes": 3},
+        {"id": "b1", "bug_id": "b1", "repeticoes": 1},
+    ]
+    r = dashboard.resumo_recorrencia(registros)
+    assert r["clusters"] == 2
+    assert r["recorrentes"] == 1
+    assert r["maior"] == 3
+
+
+def test_resumo_recorrencia_sem_bug_id_usa_id():
+    registros = [{"id": "x"}, {"id": "y"}]
+    r = dashboard.resumo_recorrencia(registros)
+    assert r["clusters"] == 2
+    assert r["recorrentes"] == 0
