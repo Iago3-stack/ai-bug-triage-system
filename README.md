@@ -270,6 +270,30 @@ python triagem.py   # 🟢 motor determinístico local
 python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 ```
 
+### 🧩 Servidor MCP — use o motor no seu agente
+
+O app expõe o **próprio motor** via **Model Context Protocol (MCP)**: `servidor_mcp.py` é uma ponte **stdio**, **read-only** e **offline** que dá ao seu agente (**Claude Desktop**, **Cursor**, **OpenCode**...) três ferramentas — **triar severidade**, **ler evidência de Playwright/Postman** e **gerar Gherkin**. A ponte importa `triagem.triar` e `adaptadores.estruturar` (fonte única), então ela e o app nunca divergem.
+
+```bash
+pip install -r requirements-mcp.txt     # SDK mcp (fora do requirements do app)
+python servidor_mcp.py                  # sobe o servidor em stdio
+```
+
+Registro no Claude Desktop / Cursor (`mcpServers`) — use o caminho do seu clone:
+
+```json
+{
+  "mcpServers": {
+    "ai-bug-triage": {
+      "command": "python",
+      "args": ["/caminho/para/ai-bug-triage-system/servidor_mcp.py"]
+    }
+  }
+}
+```
+
+Configuração completa (Claude Desktop, Cursor e OpenCode), as três ferramentas e como verificar o handshake em [08 — Servidor MCP](docs/08-mcp.md).
+
 ---
 
 <div align="center">
@@ -286,6 +310,7 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
   <a href="docs/05-persistencia-nuvem.md"><img src="https://img.shields.io/badge/Persist%C3%AAncia%20em%20Nuvem-38BDF8?style=for-the-badge&logo=libpostal&logoColor=white" /></a>
   <a href="docs/06-webhook.md"><img src="https://img.shields.io/badge/Webhook%20de%20CI-25D366?style=for-the-badge&logo=githubactions&logoColor=white" /></a>
   <a href="docs/07-seguranca.md"><img src="https://img.shields.io/badge/Seguran%C3%A7a-E91E63?style=for-the-badge&logo=shield&logoColor=white" /></a>
+  <a href="docs/08-mcp.md"><img src="https://img.shields.io/badge/Servidor%20MCP-7C4DFF?style=for-the-badge&logo=modelcontextprotocol&logoColor=white" /></a>
 </div>
 
 | Arquivo | Papel |
@@ -295,6 +320,8 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 | 🔗 `jira_client.py` | Cliente da API REST v3 do Jira: cria issues (Tarefa) com prioridade mapeada — credenciais **por sessão** (`st.session_state`), sem global de módulo |
 | 🐙 `github_client.py` | Cliente da API REST do GitHub: cria issues no **repo da sua conta** via `POST /repos/{dono}/{repo}/issues`, sem labels (evita 422), erros amigáveis (404/401/403) — token só na sessão |
 | 🔌 `webhook.py` | Micro-serviço HTTP **100% stdlib** que recebe a confirmação do PagBank. Valida `x-authenticity-token` (`SHA256(token + "-" + corpo_cru)`, tempo constante) sobre os **bytes crus**, tem teto de `MAX_BYTES` no `Content-Length`, timeout de 30s e `413` que fecha a conexão. Também serve `/webhook/falha` para CI |
+| 🧩 `servidor_mcp.py` | Ponte **MCP** (stdio) que expõe o **próprio motor** a agentes (Claude Desktop, Cursor, OpenCode): triar severidade, ler evidência de Playwright/Postman e gerar Gherkin — **read-only** e offline; importa `triagem`/`adaptadores` (fonte única). SDK `mcp` fica em `requirements-mcp.txt` |
+| 🧪 `test_servidor_mcp.py` | Testes da lógica pura do servidor MCP (nome da funcionalidade e Gherkin) — rodam no CI **sem** o SDK |
 | 💳 `pixbilling.py` | Cobrança Pix no PagBank: gera a cobrança, referencia a triagem (`cob-…`) e **confirma de forma idempotente** (reenvio do PagBank não duplica) |
 | 🧪 `test_webhook.py` | Testes do webhook: assinatura válida/inválida, corpo cru vs. reparse, teto de payload, timeout e o parsing do payload de pagamento |
 | 🧪 `test_github_client.py` | 18 testes do cliente GitHub: normalização de `dono/repo` (URL/.git), config por sessão, payload sem labels e erros amigáveis (rodam no CI) |
@@ -324,6 +351,7 @@ python ia.py        # 🔮 análise por IA (Gemini) — exige a chave
 | 📈 `dashboard.py` | Dashboard de QA: KPIs + saúde da suíte (0–10) + gauge de críticas + filtro por funcionalidade + top causas (IA) + score/dia + divergências IA vs. léxico + provedor real (leitura do JSONL/Cloud) |
 | 🟦 `pix.py` | Gerador de pagamento Pix: payload EMV/QR (CRC-CCITT), QR Code PNG (base64), **link de pagamento** com valor fixo e chaves com/sem `+55` (`chave`/`chave_copia`) |
 | 📦 `requirements.txt` | Dependências pinadas |
+| 📦 `requirements-mcp.txt` | SDK `mcp` (opcional) para rodar o servidor MCP — fora do build do app e do CI |
 | 🎨 `.streamlit/config.toml` | Tema e configurações da app |
 | 📚 `docs/` | Documentação de engenharia e qualidade |
 

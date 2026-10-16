@@ -1,0 +1,13 @@
+# Dependências do SERVIDOR MCP (opcional).
+#
+# Não vão para o Streamlit Cloud nem para o CI de testes: o SDK `mcp` traz
+# pydantic/starlette/uvicorn/httpx, e o app em si é 100% stdlib no motor. Instale
+# só se você for expor o motor para um agente (Claude Desktop, Cursor, OpenCode):
+#
+#   pip install -r requirements-mcp.txt
+#   python servidor_mcp.py
+#
+# Mesmo motivo de `playwright`/`semgrep` ficarem fora de `requirements*.txt`:
+# não é dependência do app, é ferramenta de quem conecta um agente. Versão
+# fixada para o servidor não quebrar sozinho com uma release nova do SDK.
+mcp==1.29.0
