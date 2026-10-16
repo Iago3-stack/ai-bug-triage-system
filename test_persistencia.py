@@ -146,3 +146,37 @@ def test_migrar_tenant_global_sem_legados(tmp_path, monkeypatch):
     _caminho_tmp(tmp_path, monkeypatch)
     persistencia._salvar_jsonl({"resumo": "meu", "tenant_id": "u-user"})
     assert persistencia.migrar_tenant_global("u-user") == 0
+
+
+# ─── Bug canônico: bug_id/repeticoes gravados em toda triagem ────────────────
+
+def test_dedup_primeira_triagem_e_o_proprio_canonico(tmp_path, monkeypatch):
+    _caminho_tmp(tmp_path, monkeypatch)
+    r = persistencia.registrar_triagem({"descricao": "App crasha no login"})
+    assert r["bug_id"] == r["id"]
+    assert r["repeticoes"] == 1
+
+
+def test_dedup_repetido_herda_canonico_e_conta(tmp_path, monkeypatch):
+    _caminho_tmp(tmp_path, monkeypatch)
+    a = persistencia.registrar_triagem({"descricao": "App crasha no login"})
+    b = persistencia.registrar_triagem({"descricao": "app crasha no login"})
+    assert b["bug_id"] == a["id"]
+    assert b["repeticoes"] == 2
+    assert b["bug_primeiro_em"]
+
+
+def test_dedup_texto_diferente_e_canonico_novo(tmp_path, monkeypatch):
+    _caminho_tmp(tmp_path, monkeypatch)
+    persistencia.registrar_triagem({"descricao": "App crasha no login"})
+    c = persistencia.registrar_triagem({"descricao": "a cor de fundo esta escura"})
+    assert c["bug_id"] == c["id"]
+    assert c["repeticoes"] == 1
+
+
+def test_dedup_webhook_usa_relato(tmp_path, monkeypatch):
+    _caminho_tmp(tmp_path, monkeypatch)
+    a = persistencia.registrar_triagem({"relato": "Timeout ao salvar"})
+    b = persistencia.registrar_triagem({"relato": "timeout ao salvar"})
+    assert b["bug_id"] == a["id"]
+    assert b["repeticoes"] == 2
