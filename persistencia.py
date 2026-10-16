@@ -5,6 +5,7 @@ import uuid
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
+import dedup
 import nuvem_supabase
 import plano
 
@@ -71,6 +72,21 @@ def registrar_triagem(dados: dict) -> dict:
     }
     registro.update(dados)
     plano.integrar_tenant(registro)
+    # Bug canônico: o cluster a que esta triagem pertence. Offline e por tenant —
+    # `carregar_registros()` já filtra pela RLS. Falha de leitura não pode custar
+    # a triagem: sem histórico, o registro vira raiz do próprio cluster.
+    try:
+        anteriores = carregar_registros()
+    except Exception:
+        anteriores = []
+    canonico = dedup.identificar_canonico(dedup._texto_canonico(registro), anteriores)
+    if canonico["bug_id"]:
+        registro["bug_id"] = canonico["bug_id"]
+        registro["repeticoes"] = canonico["repeticoes"] + 1
+        registro["bug_primeiro_em"] = canonico["primeiro_em"]
+    else:
+        registro["bug_id"] = registro["id"]
+        registro["repeticoes"] = 1
     if _usar_nuvem():
         try:
             return nuvem_supabase.registrar_triagem(registro)

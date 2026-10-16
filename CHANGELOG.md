@@ -4,6 +4,15 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v3.8.0] - 2026-10-16
+
+### Adicionado
+- **Dedup de bug canônico**: toda triagem gravada (app e webhook) recebe `bug_id`
+  (o cluster a que pertence) e `repeticoes`, calculados **offline** — texto exato e
+  similaridade por tokens (Jaccard, com sinônimos), no `payload`, sem migração de banco.
+- Faixa de **"bug recorrente"** ao fim do relatório quando a triagem se repete.
+- Métrica **"Bugs recorrentes"** no Dashboard de QA.
+
 ## [v3.7.0] - 2026-10-16
 
 ### Adicionado

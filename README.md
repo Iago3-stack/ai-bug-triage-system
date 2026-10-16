@@ -105,9 +105,10 @@ Motor de **triagem inteligente de bugs** desenvolvido para Engenharia de Garanti
 | Análise por IA | **Gemini** (`google-genai`) com fallback **Groq** | Causa raiz e passos de reprodução; se um provedor cai (503/429), o outro assume |
 | Dados | **pandas 3.0.6** para histórico em tela | Tabela de triagens e KPIs do Dashboard |
 | Persistência | **Supabase** (REST) com failover para **JSONL** | Histórico sobrevive a redeploy; se a nuvem cair, degrada para arquivo local em vez de perder dado |
+| Dedup de bug canônico | **Python stdlib** (`re`, tokens + Jaccard) | Reconhece o mesmo bug reportado várias vezes — offline, por texto exato e por similaridade, no app e no webhook |
 | Auth | **Supabase Auth** via REST | Multi-tenant sem gerenciar senha |
 | Pagamento | **PagBank Pix** + webhook assinado | Cobrança com verificação de assinatura; confirmação idempotente |
-| Testes | **pytest** (741) + **Semgrep** no CI | Regressão travada a cada push; regra de comparação em tempo constante (CWE-208) como gate |
+| Testes | **pytest** (843) + **Semgrep** no CI | Regressão travada a cada push; regra de comparação em tempo constante (CWE-208) como gate |
 
 ### Por que léxico e não embeddings
 
@@ -149,7 +150,7 @@ A análise por IA usa a chave `GEMINI_API_KEY` (gratuita em [aistudio.google.com
 - 🔑 **Local**: crie um arquivo `.env` na raiz com `GEMINI_API_KEY=...` (ele é ignorado pelo `.gitignore`).
 - ☁️ **Streamlit Cloud**: `Settings → Secrets → GEMINI_API_KEY` (nunca coloque a chave em código ou no repositório).
 
-**🧪 Rodar os testes** — a mesma suíte do CI (**819 testes**, número exato no badge dinâmico):
+**🧪 Rodar os testes** — a mesma suíte do CI (**843 testes**, número exato no badge dinâmico):
 
 ```bash
 pip install -r requirements-dev.txt

@@ -167,6 +167,20 @@ def guardrails_auditoria(registros: list[dict]) -> Counter:
     return Counter(tipo for reg in registros for tipo in _sensiveis(reg))
 
 
+def resumo_recorrencia(registros: list[dict]) -> dict:
+    """Quantos bugs distintos e quantos se repetem (por bug_id canônico)."""
+    por_bug: dict[str, int] = {}
+    for reg in registros:
+        chave = reg.get("bug_id") or reg.get("id")
+        por_bug[chave] = por_bug.get(chave, 0) + 1
+    recorrentes = sum(1 for n in por_bug.values() if n > 1)
+    return {
+        "clusters": len(por_bug),
+        "recorrentes": recorrentes,
+        "maior": max(por_bug.values(), default=0),
+    }
+
+
 def _contagem_por(registros: list[dict], chave: str, ordenar: list[str] | None = None) -> pd.DataFrame:
     contagem = Counter(reg.get(chave, "—") for reg in registros)
     linhas = [(valor, n) for valor, n in contagem.items() if valor != "—"]
@@ -249,6 +263,7 @@ def render_dashboard(registros: list[dict]) -> None:
     c3.metric("⚠️ Médias", n_media)
     c4.metric("✅ Normais", n_normal)
     c5.metric("📉 Score médio", f"{score_medio:.2f}")
+    st.metric("🧩 Bugs recorrentes", resumo_recorrencia(registros)["recorrentes"])
 
     fp_col, mask_col = st.columns(2)
     fp_col.metric("🟫 Falso-positivo evitado (vocab. de teste)", fp)
