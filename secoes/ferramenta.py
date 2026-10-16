@@ -17,6 +17,7 @@ import colar_falha
 from hero_animado import _svg_groq
 import jira_client
 import github_client
+import dedup
 import persistencia
 import guardrails
 import notificacoes
@@ -776,7 +777,10 @@ def render():
                 snapshot["relatorio_completo"] = relatorio
                 # Guarda o id persistido: permite registrar a resolução depois e
                 # alimentar o RAG ("como foi resolvido da última vez").
-                st.session_state["ultimo_registro_id"] = persistencia.registrar_triagem(snapshot).get("id", "")
+                _registro = persistencia.registrar_triagem(snapshot)
+                st.session_state["ultimo_registro_id"] = _registro.get("id", "")
+                st.session_state["ultimo_repeticoes"] = _registro.get("repeticoes", 1)
+                st.session_state["ultimo_bug_primeiro_em"] = _registro.get("bug_primeiro_em", "")
 
                 # Telemetria de produto (no-op sem POSTHOG_API_KEY): métricas do
                 # funil — nunca conteúdo do relato nem dados pessoais.
@@ -858,6 +862,14 @@ def render():
 
         st.markdown("### 📝 Relatório Gerado! ✅")
         st.code(relatorio, language="markdown")
+
+        _linha_rec = dedup.linha_recorrencia({
+            "repeticoes": st.session_state.get("ultimo_repeticoes", 1),
+            "bug_primeiro_em": st.session_state.get("ultimo_bug_primeiro_em", ""),
+        })
+        if _linha_rec:
+            st.info(_linha_rec)
+
 
         status_alerta = st.session_state.get("status_alerta")
         if status_alerta:
