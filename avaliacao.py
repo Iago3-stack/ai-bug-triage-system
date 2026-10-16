@@ -19,6 +19,11 @@ import unicodedata
 
 import nuvem_supabase
 
+# A chave de agrupamento por texto é a mesma da dedup de bug canônico — uma só
+# definição (em `dedup`), reexportada aqui porque a fila de rotulagem e o painel
+# do dono (`secoes/painel_dono.py`) a consomem por este nome.
+from dedup import _chave_texto
+
 ROTULOS = ("CRÍTICA", "MÉDIA", "NORMAL")
 
 # A camada de IA usa 4 níveis (CRÍTICA/ALTA/MÉDIA/BAIXA) e o léxico 3
@@ -206,15 +211,6 @@ def carregar_rotulados(limite: int = 1000, apenas_humanos: bool = True) -> list[
     if not apenas_humanos:
         return linhas
     return [linha for linha in linhas if linha.get("autor") != AUTOR_AGENTE]
-
-
-def _chave_texto(texto: str) -> str:
-    """Chave de agrupamento: minúsculas, sem acento, espaços normalizados."""
-    sem_acento = "".join(
-        c for c in unicodedata.normalize("NFKD", (texto or "").lower())
-        if not unicodedata.combining(c)
-    )
-    return " ".join(sem_acento.split())
 
 
 def _agrupar(linhas: list[dict], limite: int, deslocamento: int, unicos: bool) -> list[dict]:
