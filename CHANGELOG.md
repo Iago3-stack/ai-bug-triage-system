@@ -4,6 +4,15 @@ Todas as mudanças notáveis do **AI Bug Triage System** são registradas neste 
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [v3.7.0] - 2026-10-16
+
+### Adicionado
+- **Servidor MCP (`servidor_mcp.py`), que expõe o motor a agentes.** Uma ponte **stdio** com três ferramentas — `triar_bug`, `estruturar_evidencia` e `gerar_gherkin` — para Claude Desktop, Cursor, OpenCode e afins. A ponte **importa** `triagem.triar` e `adaptadores.estruturar` em vez de recopiar léxico/parser: é a mesma fonte de verdade do app, então engine e ponte não divergem. Read-only e offline — nenhuma ferramenta escreve, toca a rede ou lê `.env`. O SDK `mcp` fica **fora** de `requirements.txt`/`requirements-dev.txt`, em `requirements-mcp.txt` pinado (`mcp==1.29.0`): não é dependência do app, é ferramenta de quem conecta um agente. Documentação em `docs/08-mcp.md`.
+
+### Observações
+- **828 testes**, 9 a mais que os 819 da v3.6.0, todos passando. Os novos cobrem só a lógica pura do servidor (`nome_funcionalidade` e `montar_gherkin`) e **não importam o SDK** — assim rodam no CI, que não instala o `mcp`. As três ferramentas são wrappers finos sobre `triagem`/`adaptadores`, já cobertos por seus próprios testes; o import do SDK é lazy, dentro de `criar_servidor()`, para o módulo ser importável sem ele.
+- **O handshake real foi verificado fora do `pytest`.** O servidor foi iniciado por um cliente MCP e respondeu `tools/list` com as três ferramentas e `tools/call` com a triagem correta — no mesmo espírito do check de browser em `scripts/checar_scroll_legal.py`: o que depende de ambiente externo não entra na suíte.
+
 ## [v3.6.0] - 2026-10-08
 
 ### Alterado

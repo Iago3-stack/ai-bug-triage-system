@@ -13,3 +13,4 @@ Processo de engenharia e qualidade do **AI Bug Triage System**, documentado de f
 | [05 — Persistência em Nuvem](05-persistencia-nuvem.md) | Supabase como backend opcional (secrets → `.env` → JSONL), passo a passo de ativação e limitações |
 | [06 — Webhook de CI](06-webhook.md) | Pilar 3: webhook HTTP que recebe falhas do CI e devolve o relato pronto (payload, resposta, envs, GitHub Action e deploy em produção no Render) |
 | [07 — Segurança](07-seguranca.md) | Hardening de atendimento: segredos por sessão, token do webhook em tempo constante, sem dicts globais (ContextVar), Dockerfile sem root e auditoria estática (semgrep) |
+| [08 — Servidor MCP](08-mcp.md) | Ponte MCP (stdio) que expõe o motor para agentes (Claude Desktop, Cursor, OpenCode): triagem por léxico, evidência de Playwright/Postman e Gherkin — read-only e offline |
