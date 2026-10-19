@@ -1,12 +1,12 @@
 # O motor de triagem (triagem.py) usa apenas a biblioteca padrão do Python.
 # TextBlob foi removido: a antiga chamada ao Google Translate falha em datacenter.
-streamlit==1.64.0
+streamlit==1.66.0
 pandas==3.0.6
 # Fase 3 — análise por IA via Google Gemini (google-genai).
 # A chave GEMINI_API_KEY NUNCA vai para o repositório:
 #   - Streamlit Cloud: Settings -> Secrets -> GEMINI_API_KEY
 #   - Local: arquivo .env (ignorado pelo .gitignore)
-google-genai==2.28.0
+google-genai==2.31.0
 # V2.1 — persistência em nuvem (Supabase REST).
 # SUPABASE_URL / SUPABASE_ANON_KEY NUNCA vão para o repositório:
 #   - Streamlit Cloud: Settings -> Secrets
@@ -21,9 +21,9 @@ fpdf2==2.8.9
 pillow==12.3.0
 # V3.0 — telemetria de produto (PostHog, server-side). Sem POSTHOG_API_KEY nos
 # Secrets/.env, tudo é no-op (nada enviado, zero custo). Host default EU (LGPD).
-posthog==7.62.1
+posthog==7.70.2
 # O experimento de NLP semântico (BERTabaporu ONNX, v3.1.0) saiu do app em
 # v3.2.0 e foi REMOVIDO do repo em v3.4.0: no histórico real ele só escalava bug
 # cosmético, e o benchmark local do brazembed-pt-br deu 43,5% estrito contra
 # 95,7% do léxico. O app é 100% léxico local, sem modelo e sem download.
-numpy==2.5.3
+numpy==2.5.4

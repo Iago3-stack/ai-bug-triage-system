@@ -10,4 +10,4 @@
 # Mesmo motivo de `playwright`/`semgrep` ficarem fora de `requirements*.txt`:
 # não é dependência do app, é ferramenta de quem conecta um agente. Versão
 # fixada para o servidor não quebrar sozinho com uma release nova do SDK.
-mcp==1.29.0
+mcp==2.3.0
