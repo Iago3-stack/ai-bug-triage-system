@@ -26,4 +26,4 @@ posthog==7.70.2
 # v3.2.0 e foi REMOVIDO do repo em v3.4.0: no histórico real ele só escalava bug
 # cosmético, e o benchmark local do brazembed-pt-br deu 43,5% estrito contra
 # 95,7% do léxico. O app é 100% léxico local, sem modelo e sem download.
-numpy==2.5.3
+numpy==2.5.4
