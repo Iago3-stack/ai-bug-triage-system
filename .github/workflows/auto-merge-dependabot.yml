@@ -18,6 +18,7 @@ jobs:
       - name: Habilitar auto-merge (squash)
         continue-on-error: true
         run: |
-          gh pr merge "$PR" --auto --squash --delete-branch
+          gh pr merge "$PR" --repo "$REPO" --auto --squash --delete-branch
         env:
           PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
